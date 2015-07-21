@@ -1,0 +1,13 @@
+.*.swp
+pod2htmd.tmp
+.csync_journal.db
+.csync_journal.db.ctmp
+cur
+cur.tmp
+META.*
+MYMETA.*
+_build
+Build
+*.tar.gz
+blib
+*.bak
