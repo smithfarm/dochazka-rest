@@ -2972,3 +2972,7 @@ SPLIT OFF App::MREST into separate distribution
 - Adapt to rename of App::Dochazka to App::Dochazka::Common
 - release.sh: new release script
 
+0.468  2015-07-21 16:01 CEST
+- Update Copyright statement to include 2015
+- release.sh: add "osc update"
+
