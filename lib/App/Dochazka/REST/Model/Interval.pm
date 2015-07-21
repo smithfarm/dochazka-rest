@@ -41,7 +41,7 @@ use App::Dochazka::REST::Model::Shared qw( canonicalize_tsrange cud load load_mu
 use Params::Validate qw( :all );
 
 # we get 'spawn', 'reset', and accessors from parent
-use parent 'App::Dochazka::Model::Interval';
+use parent 'App::Dochazka::Common::Model::Interval';
 
 
 

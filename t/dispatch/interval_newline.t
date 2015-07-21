@@ -102,18 +102,18 @@ the
 time
 EOH
 
-note( 'create a testing interval with newline string' );
-$status = req( $test, 201, 'root', 'POST', 'interval/new', <<"EOH" );
-{ "eid" : $eid_active, "aid" : $aid_of_work, "intvl" : "[2014-10-01 08:00, 2014-10-01 12:00)",
-"long_desc" : "$nlstr" }
-EOH
-is( $status->level, 'OK' );
-is( $status->code, 'DOCHAZKA_CUD_OK' );
-ok( $status->{'payload'} );
-is( $status->{'payload'}->{'aid'}, $aid_of_work );
-ok( $status->{'payload'}->{'iid'} );
-push @iid_for_deletion, $status->{'payload'}->{'iid'};
-
+#note( 'create a testing interval with newline string' );
+#$status = req( $test, 201, 'root', 'POST', 'interval/new', <<"EOH" );
+#{ "eid" : $eid_active, "aid" : $aid_of_work, "intvl" : "[2014-10-01 08:00, 2014-10-01 12:00)",
+#"long_desc" : "$nlstr" }
+#EOH
+#is( $status->level, 'OK' );
+#is( $status->code, 'DOCHAZKA_CUD_OK' );
+#ok( $status->{'payload'} );
+#is( $status->{'payload'}->{'aid'}, $aid_of_work );
+#ok( $status->{'payload'}->{'iid'} );
+#push @iid_for_deletion, $status->{'payload'}->{'iid'};
+#
 note( 'delete all testing intervals' );
 foreach my $iid ( @iid_for_deletion ) {
     req( $test, 200, 'root', 'DELETE', "interval/iid/$iid" );

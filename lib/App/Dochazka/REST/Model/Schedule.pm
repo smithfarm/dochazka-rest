@@ -43,7 +43,7 @@ use Params::Validate qw( :all );
 use Try::Tiny;
 
 # we get 'spawn', 'reset', and accessors from parent
-use parent 'App::Dochazka::Model::Schedule';
+use parent 'App::Dochazka::Common::Model::Schedule';
 
 
 

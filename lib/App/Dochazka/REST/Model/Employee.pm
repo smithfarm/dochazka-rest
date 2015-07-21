@@ -59,7 +59,7 @@ $SIG{__WARN__} = sub {
 };
 
 # we get 'spawn', 'reset', and accessors from parent
-use parent 'App::Dochazka::Model::Employee';
+use parent 'App::Dochazka::Common::Model::Employee';
 
 
 

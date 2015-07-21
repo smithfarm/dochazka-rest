@@ -346,7 +346,7 @@ sub shared_insert_employee {
     hash_the_password( $new_emp_props );
 
     # spawn an object, filtering the properties first
-    my @filtered_args = App::Dochazka::Model::Employee::filter( %$new_emp_props );
+    my @filtered_args = App::Dochazka::Common::Model::Employee::filter( %$new_emp_props );
     my %proplist_after = @filtered_args;
     $log->debug( "Properties after filter: " . join( ' ', keys %proplist_after ) );
     my $emp = App::Dochazka::REST::Model::Employee->spawn( @filtered_args );
@@ -710,7 +710,7 @@ sub shared_insert_activity {
     $log->debug( "Properties before filter: " . join( ' ', keys %proplist_before ) );
         
     # spawn an object, filtering the properties first
-    my @filtered_args = App::Dochazka::Model::Activity::filter( %proplist_before );
+    my @filtered_args = App::Dochazka::Common::Model::Activity::filter( %proplist_before );
     my %proplist_after = @filtered_args;
     $log->debug( "Properties after filter: " . join( ' ', keys %proplist_after ) );
     my $act = App::Dochazka::REST::Model::Activity->spawn( @filtered_args );
@@ -763,8 +763,8 @@ sub shared_insert_intlock {
 
     # dispatch
     my %dispatch = (
-        'Interval' => \&App::Dochazka::Model::Interval::filter,
-        'Lock' => \&App::Dochazka::Model::Lock::filter,
+        'Interval' => \&App::Dochazka::Common::Model::Interval::filter,
+        'Lock' => \&App::Dochazka::Common::Model::Lock::filter,
     );
 
     # spawn an object, filtering the properties first

@@ -41,7 +41,7 @@ use Data::Dumper;
 use Params::Validate qw( :all );
 
 # we get 'spawn', 'reset', and accessors from parent
-use parent 'App::Dochazka::Model::Schedhistory';
+use parent 'App::Dochazka::Common::Model::Schedhistory';
 
 
 

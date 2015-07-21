@@ -40,7 +40,7 @@ use strict;
 use warnings;
 
 use App::CELL qw( $CELL $meta $site );
-use App::Dochazka;
+use App::Dochazka::Common;
 use App::Dochazka::REST::ConnBank qw( $dbix_conn conn_status );
 use App::Dochazka::REST::Util qw( hash_the_password );
 use App::Dochazka::REST::Model::Privhistory qw( get_privhistory );
