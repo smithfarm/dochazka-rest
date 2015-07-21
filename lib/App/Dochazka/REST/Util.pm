@@ -49,17 +49,6 @@ App::Dochazka::REST::Util - miscellaneous utilities
 
 
 
-=head1 VERSION
-
-Version 0.466
-
-=cut
-
-our $VERSION = '0.466';
-
-
-
-
 =head1 SYNOPSIS
 
 Miscellaneous utilities

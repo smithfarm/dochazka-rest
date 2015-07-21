@@ -51,16 +51,6 @@ App::Dochazka::REST::ConnBank - Provide DBIx::Connector objects
 
 
 
-=head1 VERSION
-
-Version 0.466
-
-=cut
-
-our $VERSION = '0.466';
-
-
-
 =head1 SYNOPSIS
 
     use App::Dochazka::REST::ConnBank qw( $dbix_conn conn_status );

@@ -55,6 +55,7 @@ use Data::Dumper;
 use Params::Validate qw( :all );
 use Try::Tiny;
 
+my $fail = $CELL->status_not_ok;
 
 
 =head1 NAME
@@ -64,26 +65,10 @@ App::Dochazka::REST::Dispatch::Shared - Shared dispatch functions
 
 
 
-
-=head1 VERSION
-
-Version 0.466
-
-=cut
-
-our $VERSION = '0.466';
-
-my $fail = $CELL->status_not_ok;
-
-
-
-
 =head1 DESCRIPTION
 
 This module provides code that is, or may be, used by more than one resource
 handler method.
-
-=cut
 
 
 

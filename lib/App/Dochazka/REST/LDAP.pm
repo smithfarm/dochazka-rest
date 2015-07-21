@@ -52,18 +52,6 @@ App::Dochazka::REST::LDAP - LDAP module (for authentication)
 
 
 
-=head1 VERSION
-
-Version 0.466
-
-=cut
-
-our $VERSION = '0.466';
-
-
-
-
-
 =head1 DESCRIPTION
 
 Container for LDAP-related stuff.

@@ -87,16 +87,6 @@ App::Dochazka::REST::Dispatch - Implementation of top-level resources
 
 
 
-
-=head1 VERSION
-
-Version 0.466
-
-=cut
-
-our $VERSION = '0.466';
-
-
 =head1 DESCRIPTION
 
 This module contains the C<init_router> method as well as all the resource

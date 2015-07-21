@@ -53,17 +53,6 @@ App::Dochazka::REST::Model::Schedhistory - schedule history functions
 
 
 
-=head1 VERSION
-
-Version 0.466
-
-=cut
-
-our $VERSION = '0.466';
-
-
-
-
 =head1 SYNOPSIS
 
     use App::Dochazka::REST::Model::Schedhistory;

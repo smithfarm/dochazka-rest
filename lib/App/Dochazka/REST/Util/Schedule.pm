@@ -56,17 +56,6 @@ App::Dochazka::REST::Util::Schedule - schedule-related utilities
 
 
 
-=head1 VERSION
-
-Version 0.466
-
-=cut
-
-our $VERSION = '0.466';
-
-
-
-
 =head1 SYNOPSIS
 
 Schedule-related utilities

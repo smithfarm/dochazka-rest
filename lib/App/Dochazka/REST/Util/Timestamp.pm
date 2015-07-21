@@ -47,17 +47,6 @@ App::Dochazka::REST::Util::Timestamp - date/time-related utilities
 
 
 
-=head1 VERSION
-
-Version 0.466
-
-=cut
-
-our $VERSION = '0.466';
-
-
-
-
 =head1 SYNOPSIS
 
 Date/time-related utilities

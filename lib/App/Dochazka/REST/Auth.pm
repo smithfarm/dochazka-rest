@@ -66,19 +66,6 @@ App::Dochazka::REST::Auth - HTTP request authentication and authorization
 
 
 
-
-=head1 VERSION
-
-Version 0.466
-
-=cut
-
-our $VERSION = '0.466';
-
-
-
-
-
 =head1 SYNOPSIS
 
 To be determined

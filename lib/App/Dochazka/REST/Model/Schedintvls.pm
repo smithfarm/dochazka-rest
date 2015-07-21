@@ -56,38 +56,12 @@ App::Dochazka::REST::Model::Schedintvls - object class for "scratch schedules"
 
 
 
-=head1 VERSION
-
-Version 0.466
-
-=cut
-
-our $VERSION = '0.466';
-
-
-
-
 =head1 SYNOPSIS
 
     use App::Dochazka::REST::Model::Schedintvls;
 
     ...
 
-
-
-
-#=head1 EXPORTS
-#
-#This module provides the following exports:
-#
-#=over 
-#
-#=back
-#
-#=cut
-#
-#use Exporter qw( import );
-#our @EXPORT_OK = qw( );
 
 
 

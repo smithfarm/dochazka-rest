@@ -70,17 +70,6 @@ App::Dochazka::REST::Model::Employee - Employee data model
 
 
 
-=head1 VERSION
-
-Version 0.466
-
-=cut
-
-our $VERSION = '0.466';
-
-
-
-
 =head1 SYNOPSIS
 
 Employee data model

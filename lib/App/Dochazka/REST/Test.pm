@@ -66,18 +66,6 @@ App::Dochazka::REST::Test - Test helper functions
 
 
 
-=head1 VERSION
-
-Version 0.466
-
-=cut
-
-our $VERSION = '0.466';
-
-
-
-
-
 =head1 DESCRIPTION
 
 This module provides helper code for unit tests.

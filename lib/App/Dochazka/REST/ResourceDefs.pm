@@ -43,26 +43,20 @@ use warnings;
 use App::CELL qw( $log );
 use Web::MREST::InitRouter;
 
+my $defs;
+my $tsrange_validation = qr/^[[(].*,.*[])]$/;
+my $term_validation = qr/^[[:alnum:]_][[:alnum:]_-]*$/;
+my $date_validation = qr/^\d{2,4}-\d{1,2}-\d{1,2}$/;
+my $priv_validation = qr/^(admin)|(active)|(inactive)|(passerby)$/i;
+
+
+
 
 
 =head1 NAME
 
 App::Dochazka::REST::ResourceDefs - Resource definitions
 
-
-
-
-=head1 VERSION
-
-Version 0.466
-
-=cut
-
-our $VERSION = '0.466';
-my $tsrange_validation = qr/^[[(].*,.*[])]$/;
-my $term_validation = qr/^[[:alnum:]_][[:alnum:]_-]*$/;
-my $date_validation = qr/^\d{2,4}-\d{1,2}-\d{1,2}$/;
-my $priv_validation = qr/^(admin)|(active)|(inactive)|(passerby)$/i;
 
 
 
@@ -77,10 +71,6 @@ and provide a hook for loading them.
 
 
 =head1 RESOURCE DEFINITIONS
-
-=cut
-
-my $defs;
 
 =head2 Top-level resources
 
