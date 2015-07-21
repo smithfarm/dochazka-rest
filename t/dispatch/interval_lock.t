@@ -1,5 +1,5 @@
 # ************************************************************************* 
-# Copyright (c) 2014, SUSE LLC
+# Copyright (c) 2014-2015, SUSE LLC
 # 
 # All rights reserved.
 # 

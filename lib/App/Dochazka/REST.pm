@@ -1,5 +1,5 @@
 # ************************************************************************* 
-# Copyright (c) 2014, SUSE LLC
+# Copyright (c) 2014-2015, SUSE LLC
 # 
 # All rights reserved.
 # 
@@ -1606,7 +1606,7 @@ L<http://annocpan.org/dist/App-Dochazka-REST>
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright (c) 2014, SUSE LLC
+Copyright (c) 2014-2015, SUSE LLC
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without

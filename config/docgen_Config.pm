@@ -1,5 +1,5 @@
 # ************************************************************************* 
-# Copyright (c) 2014, SUSE LLC
+# Copyright (c) 2014-2015, SUSE LLC
 # 
 # All rights reserved.
 # 
@@ -37,7 +37,7 @@
 #     the copyright notice
 set( 'DOCHAZKA_DOCGEN_COPYRIGHT_NOTICE', <<'EOHC' );
 # ************************************************************************* 
-# Copyright (c) 2014, SUSE LLC
+# Copyright (c) 2014-2015, SUSE LLC
 # 
 # All rights reserved.
 # 
