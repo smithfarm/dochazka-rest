@@ -2967,3 +2967,8 @@ SPLIT OFF App::MREST into separate distribution
 - t/dispatch/supervisor.t: test that inactive supervisors cannot see their
   peons' attendance data
 
+0.467  2015-07-21 15:27 CEST
+- REST.pm: define $VERSION in top-level module only
+- Adapt to rename of App::Dochazka to App::Dochazka::Common
+- release.sh: new release script
+
