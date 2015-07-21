@@ -7,7 +7,7 @@ WriteMakefile
   'VERSION_FROM' => 'lib/App/Dochazka/REST.pm',
   'PREREQ_PM' => {
                    'App::CELL' => '0.209',
-                   'App::Dochazka' => '0.189',
+                   'App::Dochazka::Common' => '0.189',
                    'Authen::Passphrase::SaltedDigest' => '0.008',
                    'DBD::Pg' => 0,
                    'DBI' => 0,
