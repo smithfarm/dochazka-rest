@@ -738,6 +738,33 @@ foreach my $eid ( @invalid_eids ) {
 
 
 #=============================
+# "employee/eid/:eid/minimal" resource
+#=============================
+$base = 'employee/eid';
+docu_check($test, "$base/:eid/minimal");
+
+note( 'root attempt to get non-existent EID (minimal)' );
+req( $test, 404, 'root', 'GET', "$base/53432/minimal" );
+
+note( 'demo attempt to get non-existent EID (minimal)' );
+req( $test, 403, 'demo', 'GET', "$base/53432/minimal" );
+
+note( 'demo attempt to get existent EID (minimal)' );
+req( $test, 403, 'demo', 'GET', "$base/" . $site->DOCHAZKA_EID_OF_ROOT . "/minimal" );
+
+note( 'root get active (minimal)' );
+$status = req( $test, 200, 'root', 'GET', "$base/$ts_eid_active/minimal" );
+is( $status->level, 'OK' );
+is( $status->code, 'DOCHAZKA_EMPLOYEE_MINIMAL' );
+ok( $status->payload );
+is( ref( $status->payload ), 'HASH' );
+ok( $status->payload->{'nick'} );
+is( $status->payload->{'nick'}, 'active' );
+is( $status->payload->{'eid'}, $ts_eid_active );
+is( join( '', sort( keys( %{ $status->payload } ) ) ),
+    join( '', sort( @{ $site->DOCHAZKA_EMPLOYEE_MINIMAL_FIELDS } ) ) );
+
+#=============================
 # "employee/eid/:eid/team" resource
 #=============================
 $base = "employee/eid";
@@ -1141,6 +1168,34 @@ dbi_err( $test, 500, 'root', 'DELETE', "$base/root", undef, qr/immutable/i );
 
 
 #=============================
+# "employee/nick/:nick/minimal" resource
+#=============================
+$base = 'employee/nick';
+docu_check($test, "$base/:nick/minimal");
+
+note( 'root attempt to get non-existent nick (minimal)' );
+req( $test, 404, 'root', 'GET', "$base/53432/minimal" );
+
+note( 'demo attempt to get non-existent nick (minimal)' );
+req( $test, 403, 'demo', 'GET', "$base/53432/minimal" );
+
+note( 'demo attempt to get existent nick (minimal)' );
+req( $test, 403, 'demo', 'GET', "$base/root/minimal" );
+
+note( 'root get active (minimal)' );
+$status = req( $test, 200, 'root', 'GET', "$base/active/minimal" );
+is( $status->level, 'OK' );
+is( $status->code, 'DOCHAZKA_EMPLOYEE_MINIMAL' );
+ok( $status->payload );
+is( ref( $status->payload ), 'HASH' );
+ok( $status->payload->{'nick'} );
+is( $status->payload->{'nick'}, 'active' );
+is( $status->payload->{'eid'}, $ts_eid_active );
+is( join( '', sort( keys( %{ $status->payload } ) ) ),
+    join( '', sort( @{ $site->DOCHAZKA_EMPLOYEE_MINIMAL_FIELDS } ) ) );
+
+
+#=============================
 # "employee/nick/:nick/team" resource
 #=============================
 $base = "employee/nick";
@@ -1189,6 +1244,51 @@ $status = req( $test, 200, 'root', 'GET', "employee/sec_id/1024" );
 is( $status->level, "OK" );
 is( $status->code, 'DISPATCH_EMPLOYEE_FOUND' );
 is_deeply( $status->payload, $mustr );
+
+
+#=============================
+# "employee/sec_id/:sec_id/minimal" resource
+#=============================
+$base = 'employee/sec_id';
+docu_check($test, "$base/:sec_id/minimal");
+
+note( 'root attempt to get non-existent sec_id (minimal)' );
+req( $test, 404, 'root', 'GET', "$base/53432/minimal" );
+
+note( 'demo attempt to get non-existent sec_id (minimal)' );
+req( $test, 403, 'demo', 'GET', "$base/53432/minimal" );
+
+note( 'set root\'s sec_id to be foobar' );
+my $eid_of_root = $site->DOCHAZKA_EID_OF_ROOT;
+$status = req( $test, 200, 'root', 'POST', 'employee/eid', <<"EOS" );
+{ "eid" : $eid_of_root, "sec_id" : "foobar" }
+EOS
+is( $status->level, 'OK' );
+is( $status->code, 'DOCHAZKA_CUD_OK' );
+
+note( 'demo attempt to get existent sec_id (minimal)' );
+req( $test, 403, 'demo', 'GET', "$base/foobar/minimal" );
+
+note( 'root get itself (minimal)' );
+$status = req( $test, 200, 'root', 'GET', "$base/foobar/minimal" );
+is( $status->level, 'OK' );
+is( $status->code, 'DOCHAZKA_EMPLOYEE_MINIMAL' );
+ok( $status->payload );
+is( ref( $status->payload ), 'HASH' );
+ok( $status->payload->{'nick'} );
+is( $status->payload->{'nick'}, 'root' );
+is( $status->payload->{'eid'}, $eid_of_root );
+is( join( '', sort( keys( %{ $status->payload } ) ) ),
+    join( '', sort( @{ $site->DOCHAZKA_EMPLOYEE_MINIMAL_FIELDS } ) ) );
+
+note( 'set root\'s sec_id back to undef' );
+$status = req( $test, 200, 'root', 'POST', 'employee/eid', <<"EOS" );
+{ "eid" : $eid_of_root, "sec_id" : null }
+EOS
+is( $status->level, 'OK' );
+is( $status->code, 'DOCHAZKA_CUD_OK' );
+
+
 
 #=============================
 # "employee/team" resource
