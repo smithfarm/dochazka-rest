@@ -1053,6 +1053,45 @@ sub handler_get_employee_eid {
     return shared_get_employee( $self, $pass, 'EID', $self->context->{'mapping'}->{'eid'} );
 }
 
+
+=head3 handler_get_employee_minimal
+
+Handler for 'GET employee/eid/:eid/minimal' resource.
+Handler for 'GET employee/nick/:nick/minimal' resource.
+Handler for 'GET employee/sec_id/:sec_id/minimal' resource.
+
+=cut
+
+sub handler_get_employee_minimal {
+    my ( $self, $pass ) = @_;
+    $log->debug( "Entering " . __PACKAGE__ . "::handler_get_employee_minimal" ); 
+
+    if ( $pass == 1 ) {
+
+        # populate $emp
+        my $resource_name = $self->context->{'resource_name'};
+        my $emp;
+        if ( $resource_name eq 'employee/eid/:eid/minimal' ) {
+            $emp = shared_first_pass_lookup( $self, 'EID', $self->context->{'mapping'}->{'eid'} );
+        } elsif ( $resource_name eq 'employee/nick/:nick/minimal' ) {
+            $emp = shared_first_pass_lookup( $self, 'nick', $self->context->{'mapping'}->{'nick'} );
+        } elsif ( $resource_name eq 'employee/sec_id/:sec_id/minimal' ) {
+            $emp = shared_first_pass_lookup( $self, 'sec_id', $self->context->{'mapping'}->{'sec_id'} );
+        }
+        return 0 unless $emp;
+
+        # populate stashed value
+        foreach my $prop ( @{ $site->DOCHAZKA_EMPLOYEE_MINIMAL_FIELDS } ) {
+            $self->context->{'stashed_value'}->{ $prop } = $emp->get( $prop );
+        }
+
+        return 1;
+    }
+
+    return $CELL->status_ok( 'DOCHAZKA_EMPLOYEE_MINIMAL', payload => $self->context->{'stashed_value'} );
+}
+
+
 =head3 handler_get_employee_eid_team
 
 Handler for 'GET employee/eid/:eid/team'

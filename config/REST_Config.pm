@@ -224,6 +224,13 @@ set( 'DOCHAZKA_PROFILE_EDITABLE_FIELDS', {
 #     overly huge result sets)
 set( 'DOCHAZKA_INTERVAL_SELECT_LIMIT', undef );
 
+# DOCHAZKA_EMPLOYEE_MINIMAL_FIELDS
+#     list of fields to include in "GET employee/eid/:eid/minimal" and
+#     "GET employee/nick/:nick/minimal" and "GET employee/sec_id/:sec_id/minimal"
+set( 'DOCHAZKA_EMPLOYEE_MINIMAL_FIELDS', [ 
+    qw( sec_id nick fullname email eid supervisor )
+] );
+
 # -----------------------------------
 # DO NOT EDIT ANYTHING BELOW THIS LINE
 # -----------------------------------

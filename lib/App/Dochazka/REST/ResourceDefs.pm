@@ -760,6 +760,28 @@ exists and nothing in the database refers to it).
 EOH
     },
 
+    # /employee/eid/:eid/minimal
+    'employee/eid/:eid/minimal' =>
+    {
+        parent => 'employee/eid/:eid',
+        handler => {
+            GET => 'handler_get_employee_minimal', 
+        },
+        acl_profile => 'inactive',
+        cli => 'employee eid $EID minimal',
+        validations => {
+            eid => 'Int',
+        },
+        description => 'List minimal info on an employee',
+        documentation => <<'EOH',
+=pod
+
+This resource enables any employee to get minimal information
+on any other employee. Useful for EID to nick conversion or to
+look up another employee's email address or name.
+EOH
+    },
+
     # /employee/eid/:eid/team
     'employee/eid/:eid/team' =>
     { 
@@ -889,6 +911,28 @@ in question.
 EOH
     },
 
+    # /employee/nick/:nick/minimal
+    'employee/nick/:nick/minimal' =>
+    {
+        parent => 'employee/nick/:nick',
+        handler => {
+            GET => 'handler_get_employee_minimal', 
+        },
+        acl_profile => 'inactive',
+        cli => 'employee nick $nick minimal',
+        validations => {
+            nick => $term_validation,
+        },
+        description => 'List minimal info on an employee',
+        documentation => <<'EOH',
+=pod
+
+This resource enables any employee to get minimal information
+on any other employee. Useful for nick to EID conversion or to
+look up another employee's email address or name.
+EOH
+    },
+
     # /employee/nick/:nick/team
     'employee/nick/:nick/team' =>
     { 
@@ -967,12 +1011,34 @@ EOH
         cli => 'employee sec_id $SEC_ID',
         description => 'GET an employee profile by the employee\'s secondary ID',
         validations => {
-            'sec_id' => qr/^[%[:alnum:]_][%[:alnum:]_-]*$/,
+            'sec_id' => $term_validation,
         },
         documentation => <<'EOH',
 =pod
 
 Retrieves an employee object by the secondary ID (must be an exact match)
+EOH
+    },
+
+    # /employee/sec_id/:sec_id/minimal
+    'employee/sec_id/:sec_id/minimal' =>
+    {
+        parent => 'employee/sec_id/:sec_id',
+        handler => {
+            GET => 'handler_get_employee_minimal', 
+        },
+        acl_profile => 'inactive',
+        cli => 'employee sec_id $sec_id minimal',
+        validations => {
+            'sec_id' => $term_validation,
+        },
+        description => 'List minimal info on an employee',
+        documentation => <<'EOH',
+=pod
+
+This resource enables any employee to get minimal information
+on any other employee. Useful for sec_id to EID conversion or to
+look up another employee's email address or name.
 EOH
     },
 
