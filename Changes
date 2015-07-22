@@ -2976,3 +2976,12 @@ SPLIT OFF App::MREST into separate distribution
 - Update Copyright statement to include 2015
 - release.sh: add "osc update"
 
+0.469  2015-07-22 22:17 CEST
+- implement new resources:
+  - GET employee/eid/:eid/minimal
+  - GET employee/nick/:nick/minimal
+  - GET employee/sec_id/:sec_id/minimal
+- t/dispatch/employee.t: add some basic test cases for the new
+  GET employee/.../minimal resources
+- t/: adapt test suite to App::Dochazka::Common rename
+
