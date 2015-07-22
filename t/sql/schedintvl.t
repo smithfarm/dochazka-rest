@@ -40,7 +40,7 @@ use warnings FATAL => 'all';
 
 #use App::CELL::Test::LogToFile;
 use App::CELL qw( $meta $site );
-use App::Dochazka qw( $today );
+use App::Dochazka::Common qw( $today );
 use App::Dochazka::REST::ConnBank qw( $dbix_conn );
 use App::Dochazka::REST::Test;
 use Data::Dumper;

@@ -152,8 +152,8 @@ sub initialize_unit {
     # add Web::Machine object to payload
     $status->payload( Web::Machine->new( resource => 'App::Dochazka::REST::Dispatch', )->to_app );
 
-    # initialize App::Dochazka package variables $t, $today, etc.
-    App::Dochazka::init_timepiece();
+    # initialize App::Dochazka::Common package variables $t, $today, etc.
+    App::Dochazka::Common::init_timepiece();
 
     return $status;
 }

@@ -40,7 +40,7 @@ use strict;
 use warnings;
 
 use App::CELL qw( $CELL $log $core $meta $site );
-use App::Dochazka qw( $today init_timepiece );
+use App::Dochazka::Common qw( $today init_timepiece );
 use App::Dochazka::REST::ACL qw( 
     check_acl_context 
     acl_check_is_me 

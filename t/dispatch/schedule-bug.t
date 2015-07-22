@@ -39,7 +39,7 @@ use strict;
 use warnings FATAL => 'all';
 
 use App::CELL qw( $meta $site );
-use App::Dochazka qw( $today );
+use App::Dochazka::Common qw( $today );
 use App::Dochazka::REST::ConnBank qw( $dbix_conn );
 use App::Dochazka::REST::Model::Schedule;
 use App::Dochazka::REST::Test;

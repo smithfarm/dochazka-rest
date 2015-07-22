@@ -38,7 +38,7 @@ use Test::More;
 
 BEGIN {
     use_ok( 'App::CELL' );
-    use_ok( 'App::Dochazka' );
+    use_ok( 'App::Dochazka::Common' );
     use_ok( 'DBIx::Connector' );
     use_ok( 'JSON' );
     use_ok( 'Params::Validate' );

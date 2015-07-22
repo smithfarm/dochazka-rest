@@ -38,7 +38,7 @@ use warnings FATAL => 'all';
 #use App::CELL::Test::LogToFile;
 use App::CELL qw( $log $meta $site );
 use Data::Dumper;
-use App::Dochazka qw( $today $yesterday $tomorrow );
+use App::Dochazka::Common qw( $today $yesterday $tomorrow );
 use App::Dochazka::REST::ConnBank qw( $dbix_conn );
 use App::Dochazka::REST::Model::Employee;
 use App::Dochazka::REST::Model::Privhistory qw( phid_exists get_privhistory );

@@ -42,7 +42,7 @@ use strict;
 use warnings;
 
 use App::CELL qw( $CELL $log $meta $site );
-use App::Dochazka qw( $today init_timepiece );
+use App::Dochazka::Common qw( $today init_timepiece );
 use App::Dochazka::REST;
 use App::Dochazka::REST::ConnBank qw( $dbix_conn conn_status );
 use App::Dochazka::REST::ACL qw( check_acl );
