@@ -767,7 +767,7 @@ EOH
         handler => {
             GET => 'handler_get_employee_minimal', 
         },
-        acl_profile => 'inactive',
+        acl_profile => 'passerby',
         cli => 'employee eid $EID minimal',
         validations => {
             eid => 'Int',
@@ -918,7 +918,7 @@ EOH
         handler => {
             GET => 'handler_get_employee_minimal', 
         },
-        acl_profile => 'inactive',
+        acl_profile => 'passerby',
         cli => 'employee nick $nick minimal',
         validations => {
             nick => $term_validation,
@@ -1027,7 +1027,7 @@ EOH
         handler => {
             GET => 'handler_get_employee_minimal', 
         },
-        acl_profile => 'inactive',
+        acl_profile => 'passerby',
         cli => 'employee sec_id $sec_id minimal',
         validations => {
             'sec_id' => $term_validation,

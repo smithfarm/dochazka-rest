@@ -1068,16 +1068,31 @@ sub handler_get_employee_minimal {
 
     if ( $pass == 1 ) {
 
-        # populate $emp
+        # determine key and value
         my $resource_name = $self->context->{'resource_name'};
-        my $emp;
+        my ( $key, $value );
         if ( $resource_name eq 'employee/eid/:eid/minimal' ) {
-            $emp = shared_first_pass_lookup( $self, 'EID', $self->context->{'mapping'}->{'eid'} );
-        } elsif ( $resource_name eq 'employee/nick/:nick/minimal' ) {
-            $emp = shared_first_pass_lookup( $self, 'nick', $self->context->{'mapping'}->{'nick'} );
+            $key = 'EID';
+            $value = $self->context->{'mapping'}->{'eid'};
+        } elsif ( $resource_name eq 'employee/nick/:nick/minimal' ) { 
+            $key = 'nick';
+            $value = $self->context->{'mapping'}->{'nick'};
         } elsif ( $resource_name eq 'employee/sec_id/:sec_id/minimal' ) {
-            $emp = shared_first_pass_lookup( $self, 'sec_id', $self->context->{'mapping'}->{'sec_id'} );
+            $key = 'sec_id';
+            $value = $self->context->{'mapping'}->{'sec_id'};
         }
+
+        # ACL check
+        my $priv = $self->context->{'current_priv'};
+        if ( $priv eq 'passerby' ) {
+            if ( ! acl_check_is_me( $self, ( lc $key ) => $value ) ) { 
+                $self->mrest_declare_status( code => 403, explanation => "DISPATCH_KEEP_TO_YOURSELF" );
+                return 0;
+            }
+        }
+
+        # populate $emp
+        my $emp = shared_first_pass_lookup( $self, $key, $value );
         return 0 unless $emp;
 
         # populate stashed value

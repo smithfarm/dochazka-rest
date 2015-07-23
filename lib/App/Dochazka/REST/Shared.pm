@@ -239,7 +239,7 @@ sub shared_get_employee {
     # first pass
     if ( $pass == 1 ) {
         #
-        # ACL check - passerby can only look up him- or herself
+        # ACL checks
         #
         if ( 
                 ! acl_check_is_my_report( $d_obj, ( lc $key ) => $value ) and
