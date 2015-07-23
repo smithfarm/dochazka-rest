@@ -41,7 +41,9 @@ use warnings FATAL => 'all';
 #use App::CELL::Test::LogToFile;
 use App::CELL qw( $meta $site );
 use Data::Dumper;
-use App::Dochazka::REST::LDAP;
+use App::Dochazka::REST::ConnBank qw( $dbix_conn );
+use App::Dochazka::REST::LDAP qw( populate_employee );;
+use App::Dochazka::REST::Model::Employee qw( nick_exists );
 use App::Dochazka::REST::Test;
 use Test::More;
 
@@ -55,15 +57,25 @@ SKIP: {
     skip "LDAP testing disabled", 2 unless $site->DOCHAZKA_LDAP;
     diag( "DOCHAZKA_LDAP is " . $site->DOCHAZKA_LDAP );
 
-    # known existent LDAP user exists in LDAP?
+    note( 'known existent LDAP user exists in LDAP' );
     ok( App::Dochazka::REST::LDAP::ldap_exists( 
         $site->DOCHAZKA_LDAP_TEST_UID_EXISTENT
     ) );
 
-    # known non-existent LDAP user does not exist in LDAP?
+    note( 'known non-existent LDAP user does not exist in LDAP' );
     ok( ! App::Dochazka::REST::LDAP::ldap_exists( 
         $site->DOCHAZKA_LDAP_TEST_UID_NON_EXISTENT
     ) );
+
+    note( 'create LDAP user in database' );
+    my $uid = $site->DOCHAZKA_LDAP_TEST_UID_EXISTENT;
+    my $emp = App::Dochazka::REST::Model::Employee->spawn( 'nick' => $uid );
+    $emp->load_by_nick( $dbix_conn, $uid );
+
+    note( "Populate $uid employee object from LDAP" );
+    $status = populate_employee( $emp );
+    is( $status->level, 'OK' );
+    diag( Dumper $emp );
 }
 
 done_testing;
