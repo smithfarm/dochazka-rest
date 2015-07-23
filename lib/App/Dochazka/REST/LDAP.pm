@@ -217,6 +217,7 @@ sub populate_employee {
     foreach my $key ( keys( %{ $site->DOCHAZKA_LDAP_POPULATE_MATRIX } ) ) {
         my $prop = $site->DOCHAZKA_LDAP_POPULATE_MATRIX->{ $key };
         my $value = ldap_search( $ldap, $emp->nick, $prop );
+        last unless $value;
         $log->debug( "Setting $key to $value" );
         $emp->set( $key, $value );
         $count += 1;
@@ -224,7 +225,8 @@ sub populate_employee {
 
     $ldap->unbind;
 
-    return $CELL->status_ok( "$count properties populated from LDAP", payload => $emp );
+    return $CELL->status_ok( "$count properties populated from LDAP", payload => $emp ) if $count > 0;
+    return $CELL->status_not_ok;
 }
 
 
