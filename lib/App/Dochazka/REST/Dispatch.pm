@@ -47,6 +47,7 @@ use App::Dochazka::REST::ACL qw(
     acl_check_is_my_report 
 );
 use App::Dochazka::REST::ConnBank qw( conn_status );
+use App::Dochazka::REST::LDAP qw( populate_employee );
 use App::Dochazka::REST::Model::Activity;
 use App::Dochazka::REST::Model::Employee qw( 
     list_employees_by_priv 
@@ -1051,6 +1052,30 @@ sub handler_get_employee_eid {
     my ( $self, $pass ) = @_;
     $log->debug( "Entering " . __PACKAGE__ . "::handler_get_employee_eid" ); 
     return shared_get_employee( $self, $pass, 'EID', $self->context->{'mapping'}->{'eid'} );
+}
+
+
+=head3 handler_get_employee_ldap
+
+Handler for 'GET employee/nick/:nick/ldap' resource.
+
+=cut
+
+sub handler_get_employee_ldap {
+    my ( $self, $pass ) = @_;
+    $log->debug( "Entering " . __PACKAGE__ . "::handler_get_employee_nick" ); 
+
+    my $context = $self->context;
+
+    if ( $pass == 1 ) {
+        my $nick = $self->context->{'mapping'}->{'nick'};
+        my $emp = shared_first_pass_lookup( $self, 'nick', $nick );
+        return 0 unless $emp;
+        $context->{'stashed_employee_object'} = $emp;
+        return 1;
+    }
+
+    return populate_employee( $context->{'stashed_employee_object'} );
 }
 
 
