@@ -40,7 +40,7 @@ use 5.012;
 use strict;
 use warnings;
 
-use App::CELL qw( $log $site );
+use App::CELL qw( $CELL $log $site );
 use Params::Validate qw( :all );
 
 
@@ -66,7 +66,7 @@ Container for LDAP-related stuff.
 =cut
 
 use Exporter qw( import );
-our @EXPORT_OK = qw( ldap_exists ldap_auth );
+our @EXPORT_OK = qw( ldap_exists ldap_auth ldap_search populate_employee );
 
 
 
@@ -98,7 +98,7 @@ sub ldap_exists {
 
     $log->info( "Connected to LDAP server $server to look up $nick" );
     
-    if ( $dn = ldap_search( $ldap, $nick ) ) {
+    if ( ldap_search( $ldap, $nick, 'uid' ) ) {
         $log->info( "Found employee $nick in LDAP (DN $dn)" );
         return 1;
     }
@@ -109,16 +109,18 @@ sub ldap_exists {
 =head2 ldap_search
 
 Given Net::LDAP handle, LDAP field, and nick, search for the nick in
-the given field (e.g. 'uid', 'cn' etc.). 
+the given field (e.g. 'uid', 'cn' etc.). Returns value of LDAP property
+specified in $prop.
 
 =cut
 
 sub ldap_search {
-    my ( $ldap, $nick ) = @_;
+    my ( $ldap, $nick, $prop ) = @_;
     $nick = $nick || '';
     my $base = $site->DOCHAZKA_LDAP_BASE || '';
     my $field = $site->DOCHAZKA_LDAP_NICK_MAPPING || ''; 
     my $filter = $site->DOCHAZKA_LDAP_FILTER || '';
+    my $prop_value;
 
     require Net::LDAP::Filter;
 
@@ -146,10 +148,11 @@ sub ldap_search {
         $count += 1;
         if ($count == 1) {
             $dn = $entry->dn();
+            $prop_value = $entry->get_value( $prop );
             last;
         }
     }
-    return $dn if $count > 0;
+    return $prop_value if $count > 0;
     return;
 }
 
@@ -183,5 +186,46 @@ sub ldap_auth {
     $log->info("Access denied to $nick because LDAP server returned code " . $mesg->code);
     return 0;
 }
+
+
+=head2 populate_employee
+
+Populate employee profile from LDAP. Takes employee object which must have the
+'nick' property already populated. Returns a status object.
+
+=cut
+
+sub populate_employee {
+    my ( $emp ) = @_;
+    $log->debug( "Entering " . __PACKAGE__ . "::populate_employee()" );
+
+    return $CELL->status_err( "LDAP not enabled" ) unless $site->DOCHAZKA_LDAP;
+    return $CELL->status_err( "nick property not populated" ) unless $emp->nick;
+
+    $log->debug( "About to populate " . $emp->nick . " from LDAP" );
+
+    require Net::LDAP;
+
+    # initiate connection to LDAP server (anonymous bind)
+    my $server = $site->DOCHAZKA_LDAP_SERVER;
+    my $ldap = Net::LDAP->new( $server );
+    $log->error("$@") unless $ldap;
+    return $CELL->status_err( 'Could not connect to LDAP server' ) unless $ldap;
+
+    # get LDAP properties and stuff them into the employee object
+    my $count = 0;
+    foreach my $key ( keys( %{ $site->DOCHAZKA_LDAP_POPULATE_MATRIX } ) ) {
+        my $prop = $site->DOCHAZKA_LDAP_POPULATE_MATRIX->{ $key };
+        my $value = ldap_search( $ldap, $emp->nick, $prop );
+        $log->debug( "Setting $key to $value" );
+        $emp->set( $key, $value );
+        $count += 1;
+    }
+
+    $ldap->unbind;
+
+    return $CELL->status_ok( "$count properties populated from LDAP", payload => $emp );
+}
+
 
 1;
