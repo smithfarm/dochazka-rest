@@ -2985,3 +2985,15 @@ SPLIT OFF App::MREST into separate distribution
   GET employee/.../minimal resources
 - t/: adapt test suite to App::Dochazka::Common rename
 
+0.470  2015-07-23 14:50 CEST
+- t/dispatch/employee.t: disable tests that broke when employees were allowed to modify their email address
+- t/201-LDAP.t: expanded tests
+- ResourceDefs.pm: add employee/nick/:nick/ldap resource
+- LDAP.pm: make ldap_search() look up a property; implement populate_employee()
+- Dispatch.pm: add handler_get_employee_ldap() for GET employee/nick/:nick/ldap
+- Auth.pm: populate certain employee attributes from LDAP upon successful LDAP autocreate
+- REST_Config.pm: default value for DOCHAZKA_LDAP_POPULATE_MATRIX
+- Build.PL: require App::Dochazka::Common 0.191 for "set()" method
+- Dispatch.pm: increase granularity of employee/.../minimal ACL check
+- No longer auto-generate Makefile.PL
+
