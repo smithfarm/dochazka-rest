@@ -267,8 +267,8 @@ sub _authenticate {
                         return $CELL->status_not_ok( 'DOCHAZKA_EMPLOYEE_AUTH' );
                     }
                     $log->notice( "Auto-created employee $nick, who was authenticated via LDAP" );
-                    if ( my $priv = $site->LDAP_LDAP_AUTOCREATE_AS ) {
-                        if ( $priv = 'passerby' ) {
+                    if ( my $priv = $site->DOCHAZKA_LDAP_AUTOCREATE_AS ) {
+                        if ( $priv eq 'passerby' ) {
                             # do nothing
                         } elsif ( $priv =~ m/^(inactive)|(active)$/ ) {
                             init_timepiece();
@@ -283,7 +283,7 @@ sub _authenticate {
                                 " employee ->$nick<- ; reason was " . $status->text )
                                 if $status->not_ok;
                         } else {
-                            $log->error( "Site configuration parameter LDAP_LDAP_AUTOCREATE_AS " .
+                            $log->error( "Site configuration parameter DOCHAZKA_LDAP_AUTOCREATE_AS " .
                                          "is invalid" );
                         }
                     }
