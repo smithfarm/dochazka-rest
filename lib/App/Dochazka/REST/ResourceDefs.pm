@@ -917,8 +917,12 @@ EOH
         parent => 'employee/nick/:nick',
         handler => {
             GET => 'handler_get_employee_ldap', 
+            PUT => 'handler_put_employee_ldap',
         },
-        acl_profile => 'passerby',
+        acl_profile => {
+            GET => 'passerby',
+            PUT => 'admin',
+        },
         cli => 'employee nick $nick ldap',
         validations => {
             nick => $term_validation,
