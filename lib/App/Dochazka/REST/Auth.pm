@@ -46,7 +46,7 @@ use App::Dochazka::Common qw( $today init_timepiece );
 use App::Dochazka::REST;
 use App::Dochazka::REST::ConnBank qw( $dbix_conn conn_status );
 use App::Dochazka::REST::ACL qw( check_acl );
-use App::Dochazka::REST::LDAP qw( ldap_exists ldap_auth );
+use App::Dochazka::REST::LDAP qw( ldap_exists ldap_search ldap_auth populate_employee );
 use App::Dochazka::REST::Model::Employee qw( nick_exists );
 use Authen::Passphrase::SaltedDigest;
 use Data::Dumper;
@@ -259,6 +259,7 @@ sub _authenticate {
                         nick => $nick,
                         remark => 'LDAP autocreate',
                     );
+                    populate_employee( $emp );
                     my $faux_context = { 'dbix_conn' => $dbix_conn, 'current' => { 'eid' => 1 } };
                     $status = $emp->insert( $faux_context );
                     if ( $status->not_ok ) {
