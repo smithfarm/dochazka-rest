@@ -1063,19 +1063,56 @@ Handler for 'GET employee/nick/:nick/ldap' resource.
 
 sub handler_get_employee_ldap {
     my ( $self, $pass ) = @_;
-    $log->debug( "Entering " . __PACKAGE__ . "::handler_get_employee_nick" ); 
+    $log->debug( "Entering " . __PACKAGE__ . "::handler_get_employee_ldap" ); 
 
     my $context = $self->context;
+    my $nick = $self->context->{'mapping'}->{'nick'};
 
     if ( $pass == 1 ) {
-        my $nick = $self->context->{'mapping'}->{'nick'};
-        my $emp = shared_first_pass_lookup( $self, 'nick', $nick );
-        return 0 unless $emp;
+        # 501 if LDAP is not enabled
+        if ( ! $site->DOCHAZKA_LDAP ) {
+            $self->mrest_declare_status( 'code' => 501, 'explanation' => 'LDAP not configured on this server' );
+            return 0;
+        }
+        my $emp = App::Dochazka::REST::Model::Employee->spawn( 'nick' => $nick );
+        my $status = populate_employee( $emp );
+        return 0 unless $status->ok;
+        $context->{'stashed_ldap_status'} = $status;
         $context->{'stashed_employee_object'} = $emp;
         return 1;
     }
 
-    return populate_employee( $context->{'stashed_employee_object'} );
+    return $CELL->status_ok( 'DOCHAZKA_LDAP_LOOKUP', payload => $context->{'stashed_employee_object'} );
+}
+
+
+=head3 handler_put_employee_ldap
+
+Handler for 'PUT employee/nick/:nick/ldap' resource.
+
+=cut
+
+sub handler_put_employee_ldap {
+    my ( $self, $pass ) = @_;
+    $log->debug( "Entering " . __PACKAGE__ . "::handler_put_employee_ldap" ); 
+
+    my $context = $self->context;
+
+    if ( $pass == 1 ) {
+        return $self->handler_get_employee_ldap( $pass );
+    }
+
+    my $emp = $context->{'stashed_employee_object'};
+    my $status = $emp->load_by_nick( $context->{'dbix_conn'}, $emp->nick );
+    if ( $status->ok ) {
+        # employee exists; update it
+        my $eid = $status->payload->eid;
+        $emp->eid( $eid );
+        return $emp->update( $context );
+    } elsif ( $status->level eq 'NOTICE' and $status->code eq 'DISPATCH_NO_RECORDS_FOUND' ) {
+        return $emp->insert( $context );
+    }
+    return $status;
 }
 
 
