@@ -911,6 +911,27 @@ in question.
 EOH
     },
 
+    # /employee/nick/:nick/ldap
+    'employee/nick/:nick/ldap' =>
+    {
+        parent => 'employee/nick/:nick',
+        handler => {
+            GET => 'handler_get_employee_ldap', 
+        },
+        acl_profile => 'passerby',
+        cli => 'employee nick $nick ldap',
+        validations => {
+            nick => $term_validation,
+        },
+        description => 'List LDAP info on an employee',
+        documentation => <<'EOH',
+=pod
+
+This resource enables any employee to perform an LDAP lookup on
+any other employee.
+EOH
+    },
+
     # /employee/nick/:nick/minimal
     'employee/nick/:nick/minimal' =>
     {
@@ -918,7 +939,7 @@ EOH
         handler => {
             GET => 'handler_get_employee_minimal', 
         },
-        acl_profile => 'passerby',
+        acl_profile => 'inactive',
         cli => 'employee nick $nick minimal',
         validations => {
             nick => $term_validation,
