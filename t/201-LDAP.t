@@ -45,13 +45,17 @@ use App::Dochazka::REST::ConnBank qw( $dbix_conn );
 use App::Dochazka::REST::LDAP qw( populate_employee );;
 use App::Dochazka::REST::Model::Employee qw( nick_exists );
 use App::Dochazka::REST::Test;
+use Plack::Test;
 use Test::More;
 
 
 my $status = initialize_unit();
-if ( $status->not_ok ) {
-    plan skip_all => "not configured or server not running";
-}
+plan skip_all => "not configured or server not running" unless $status->ok;
+my $app = $status->payload;
+
+# instantiate Plack::Test object
+my $test = Plack::Test->create( $app );
+isa_ok( $test, 'Plack::Test::MockHTTP' );
 
 SKIP: {
     skip "LDAP testing disabled", 2 unless $site->DOCHAZKA_LDAP;
@@ -76,6 +80,15 @@ SKIP: {
     $status = populate_employee( $emp );
     is( $status->level, 'OK' );
     diag( Dumper $emp );
+
+    note( "GET employee/nick/:nick/ldap 1" );
+    $uid = $site->DOCHAZKA_LDAP_TEST_UID_NON_EXISTENT;
+    req( $test, 404, 'root', 'GET', "employee/nick/$uid/ldap" );
+
+    note( "GET employee/nick/:nick/ldap 2" );
+    $uid = $site->DOCHAZKA_LDAP_TEST_UID_EXISTENT;
+    $status = req( $test, 200, 'root', 'GET', "employee/nick/$uid/ldap" );
+    is( $status->level, 'OK' );
 }
 
 done_testing;
