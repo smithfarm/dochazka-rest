@@ -235,8 +235,8 @@ foreach my $base ( "employee/current", "employee/self" ) {
         # should not, for example, be allowed to change 'nick'
         req( $test, 403, $user, 'POST', $base, '{ "nick": "wanger" }' );
         #
-        # - nor should they be able to change 'email'
-        req( $test, 403, $user, 'POST', $base, '{ "email": "5000thbat@cave.com" }' );
+        ## - nor should they be able to change 'email'
+        #req( $test, 403, $user, 'POST', $base, '{ "email": "5000thbat@cave.com" }' );
     }
     #
     # root can theoretically update any field, but certain fields of its own
@@ -330,12 +330,11 @@ $status = req( $test, 405, 'root', 'PUT', $base );
 my $mrfu = create_testing_employee( { nick => 'mrfu', password => 'mrfu' } );
 my $eid_of_mrfu = $mrfu->eid;
 #
-# - give Mr. Fu an email address
-#diag("--- POST employee/eid (update email)");
-req( $test, 403, 'demo', 'POST', $base, '{ "eid": ' . $mrfu->eid . ', "email" : "shake it" }' );
+## - give Mr. Fu an email address
+##req( $test, 403, 'demo', 'POST', $base, '{ "eid": ' . $mrfu->eid . ', "email" : "shake it" }' );
 # 
-is( $mrfu->nick, 'mrfu' );
-req( $test, 403, 'mrfu', 'POST', $base, '{ "eid": ' . $mrfu->eid . ', "email" : "shake it" }' );
+##is( $mrfu->nick, 'mrfu' );
+##req( $test, 403, 'mrfu', 'POST', $base, '{ "eid": ' . $mrfu->eid . ', "email" : "shake it" }' );
 # fails because mrfu is a passerby
 #
 # - make him an inactive 
@@ -347,8 +346,8 @@ is( $status->code, "DOCHAZKA_CUD_OK", 'POST employee/eid 3' );
 ok( exists $status->payload->{'phid'} );
 my $mrfu_phid = $status->payload->{'phid'};
 #
-# - try the operation again - it still fails because inactives can not change their email
-req( $test, 403, 'mrfu', 'POST', $base, '{ "eid": ' . $mrfu->eid . ', "email" : "shake it" }' );
+## - try the operation again - it still fails because inactives can not change their email
+##req( $test, 403, 'mrfu', 'POST', $base, '{ "eid": ' . $mrfu->eid . ', "email" : "shake it" }' );
 #
 # - but they can change their password
 $status = req( $test, 200, 'mrfu', 'POST', $base, '{ "eid": ' . $mrfu->eid . ', "password" : "shake it" }' );
