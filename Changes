@@ -2997,3 +2997,10 @@ SPLIT OFF App::MREST into separate distribution
 - Dispatch.pm: increase granularity of employee/.../minimal ACL check
 - No longer auto-generate Makefile.PL
 
+0.471  2015-07-23 16:55 CEST
+- t/201-LDAP.t: add simple test cases for GET employee/nick/:nick/ldap
+- ResourceDefs.pm: enable PUT on employee/nick/:nick/ldap
+- LDAP.pm: fix populate_employee() so it returns not_ok if nick is not in LDAP
+- Dispatch.pm: implement handler_get_employee_ldap and handler_put_employee_ldap
+- Auth.pm: fix DOCHAZKA_LDAP_AUTOCREATE_AS code path
+
