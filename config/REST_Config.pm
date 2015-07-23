@@ -200,6 +200,12 @@ set( 'DOCHAZKA_LDAP_TEST_UID_EXISTENT', 'I_exist_in_local_LDAP' );
 #     a non-existent UID for LDAP testing (t/201-LDAP.t)
 set( 'DOCHAZKA_LDAP_TEST_UID_NON_EXISTENT', 'I_do_NOT_exist_in_local_LDAP' );
 
+# DOCHAZKA_LDAP_POPULATE_MATRIX
+#     set of key => value pairs where key is Employee object property and value
+#     is the matching LDAP property; used to populate employee objects with
+#     values from LDAP
+set( 'DOCHAZKA_LDAP_POPULATE_MATRIX', {} );
+
 # DOCHAZKA_REST_SESSION_EXPIRATION_TIME
 #     number of seconds after which a session will be considered stale
 set( 'DOCHAZKA_REST_SESSION_EXPIRATION_TIME', 3600 );
