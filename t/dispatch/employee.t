@@ -308,14 +308,14 @@ foreach my $base ( "employee/current/priv", "employee/self/priv" ) {
 }
     
     
-#=============================
-# "employee/eid" resource
-#=============================
+note( '=============================' );
+note( '"employee/eid" resource' );
+note( '=============================' );
 $base = "employee/eid";
+note( "docu_check on $base" );
 docu_check($test, "employee/eid");
-#
-# GET, PUT
-#
+
+note( "GET, PUT" );
 $status = req( $test, 405, 'demo', 'GET', $base );
 $status = req( $test, 405, 'active', 'GET', $base );
 $status = req( $test, 405, 'root', 'GET', $base );
@@ -323,21 +323,21 @@ $status = req( $test, 405, 'demo', 'PUT', $base );
 $status = req( $test, 405, 'active', 'PUT', $base );
 $status = req( $test, 405, 'root', 'PUT', $base );
 
-#
-# POST
-#
-# - create a 'mrfu' employee
+note( "POST" );
+
+note( "create a 'mrfu' employee" );
 my $mrfu = create_testing_employee( { nick => 'mrfu', password => 'mrfu' } );
 my $eid_of_mrfu = $mrfu->eid;
-#
+
+# these tests break when 'email' is added to DOCHAZKA_PROFILE_EDITABLE_FIELDS
 ## - give Mr. Fu an email address
 ##req( $test, 403, 'demo', 'POST', $base, '{ "eid": ' . $mrfu->eid . ', "email" : "shake it" }' );
 # 
 ##is( $mrfu->nick, 'mrfu' );
 ##req( $test, 403, 'mrfu', 'POST', $base, '{ "eid": ' . $mrfu->eid . ', "email" : "shake it" }' );
 # fails because mrfu is a passerby
-#
-# - make him an inactive 
+
+note( "make mrfu an inactive" );
 $status = req( $test, 201, 'root', 'POST', "priv/history/eid/" . $mrfu->eid, <<"EOH" );
 { "priv" : "inactive", "effective" : "2004-01-01" }
 EOH
@@ -345,27 +345,28 @@ is( $status->level, "OK", 'POST employee/eid 3' );
 is( $status->code, "DOCHAZKA_CUD_OK", 'POST employee/eid 3' );
 ok( exists $status->payload->{'phid'} );
 my $mrfu_phid = $status->payload->{'phid'};
-#
+
+# these tests break when 'email' is added to DOCHAZKA_PROFILE_EDITABLE_FIELDS
 ## - try the operation again - it still fails because inactives can not change their email
 ##req( $test, 403, 'mrfu', 'POST', $base, '{ "eid": ' . $mrfu->eid . ', "email" : "shake it" }' );
-#
-# - but they can change their password
+
+note( "inactive mrfu can change his password" );
 $status = req( $test, 200, 'mrfu', 'POST', $base, '{ "eid": ' . $mrfu->eid . ', "password" : "shake it" }' );
 is( $status->level, "OK", 'POST employee/eid 3' );
 is( $status->code, 'DOCHAZKA_CUD_OK', 'POST employee/eid 4' );
-#
-# - but now mrfu cannot log in, because req assumes password is 'mrfu'
+
+note( "but now mrfu cannot log in, because req assumes password is 'mrfu'" );
 req( $test, 401, 'mrfu', 'GET', 'employee/nick/mrfu' );
-#
-# - so, use root powers to change the password back
+
+note( "so, use root powers to change the password back" );
 $eid_of_mrfu = $mrfu->eid;
 $status = req( $test, 200, 'root', 'POST', $base, <<"EOH" );
 { "eid" : $eid_of_mrfu, "password" : "mrfu" }
 EOH
 is( $status->level, "OK", 'POST employee/eid 3' );
 is( $status->code, "DOCHAZKA_CUD_OK", 'POST employee/eid 3' );
-#
-# - and now mrfu can log in
+
+note( "and now mrfu can log in" );
 $status = req( $test, 200, 'mrfu', 'GET', 'employee/nick/mrfu' );
 is( $status->level, "OK", 'POST employee/eid 3' );
 is( $status->payload->{'remark'}, undef );
@@ -373,11 +374,12 @@ is( $status->payload->{'sec_id'}, undef );
 is( $status->payload->{'nick'}, 'mrfu' );
 is( $status->payload->{'email'}, undef );
 is( $status->payload->{'fullname'}, undef );
-#
-# - update to a different nick
+
+note( "attempt by demo to update mrfu to a different nick" );
 #diag("--- POST employee/eid (update with different nick)");
 req( $test, 403, 'demo', 'POST', $base, '{ "eid": ' . $mrfu->eid . ', "nick" : "mrsfu" , "fullname":"Dragoness" }' );
-#
+
+note( "use root power to update mrfu to a different nick" ); 
 $status = req( $test, 200, 'root', 'POST', $base, '{ "eid": ' . $mrfu->eid . ', "nick" : "mrsfu" , "fullname":"Dragoness" }' );
 is( $status->level, 'OK', 'POST employee/eid 8' );
 is( $status->code, 'DOCHAZKA_CUD_OK', 'POST employee/eid 9' );
@@ -390,15 +392,14 @@ is( $mrsfu->fullname, $mrsfuprime->fullname, 'POST employee/eid 10' );
 is( $mrsfu->email, $mrsfuprime->email, 'POST employee/eid 10' );
 is( $mrsfu->remark, $mrsfuprime->remark, 'POST employee/eid 10' );
 
-#
-# - update a non-existent EID
+note( "attempt as demo and root to update Mr./Mrs. Fu to a non-existent EID" );
 #diag("--- POST employee/eid (non-existent EID)");
 req( $test, 403, 'demo', 'POST', $base, '{ "eid" : 5442' );
 req( $test, 400, 'root', 'POST', $base, '{ "eid" : 5442' );
 req( $test, 403, 'demo', 'POST', $base, '{ "eid" : 5442 }' );
 req( $test, 404, 'root', 'POST', $base, '{ "eid" : 5442 }' );
 req( $test, 404, 'root', 'POST', $base, '{ "eid": 534, "nick": "mrfu", "fullname":"Lizard Scale" }' );
-#
+
 # - missing EID
 req( $test, 400, 'root', 'POST', $base, '{ "long-john": "silber" }' );
 #
@@ -461,6 +462,7 @@ EOH
     is( $status->level, 'OK' );
     is( $status->code, 'DOCHAZKA_CUD_OK' );
 }
+
 
 
 # delete the testing user
@@ -803,9 +805,9 @@ req( $test, 405, 'root', 'DELETE', $base );
 
 
 
-#=============================
-# "employee/nick" resource
-#=============================
+note( "=============================" );
+note( '"employee/nick" resource' );
+note( "=============================" );
 $base = "employee/nick";
 docu_check($test, "employee/nick");
 #
@@ -840,7 +842,7 @@ req( $test, 403, 'demo', 'POST', $base, '{ "nick" : 5442' );
 req( $test, 400, 'root', 'POST', $base, '{ "nick" : 5442' );
 req( $test, 403, 'demo', 'POST', $base, '{ "nick" : 5442 }' );
 #
-# - attempt to insert new employee with bogus "eid" property
+# - attempt to insert new employee with bogus "eid" value
 $status = req( $test, 200, 'root', 'POST', $base,
     '{ "eid": 534, "nick": "mrfutra", "fullname":"Rovnou do futer" }' );
 is( $status->level, 'OK' );
@@ -849,6 +851,9 @@ is( $status->payload->{'nick'}, 'mrfutra' );
 is( $status->payload->{'fullname'}, 'Rovnou do futer' );
 isnt( $status->payload->{'eid'}, 534 );
 my $eid_of_mrfutra = $status->payload->{'eid'};
+#
+# - bogus property
+$status = req( $test, 400, 'root', 'POST', $base, '{ "Nick" : "foobar" }' );
 #
 # delete the testing user
 delete_testing_employee( $eid_of_mrfu );
