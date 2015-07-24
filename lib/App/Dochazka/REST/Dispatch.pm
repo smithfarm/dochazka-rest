@@ -1075,6 +1075,7 @@ sub handler_get_employee_ldap {
             return 0;
         }
         my $emp = App::Dochazka::REST::Model::Employee->spawn( 'nick' => $nick );
+        $context->{'stashed_nick'} = $nick;
         my $status = populate_employee( $emp );
         return 0 unless $status->ok;
         $context->{'stashed_ldap_status'} = $status;
@@ -1102,7 +1103,15 @@ sub handler_put_employee_ldap {
         return $self->handler_get_employee_ldap( $pass );
     }
 
+    my $nick = $context->{'stashed_nick'};
+
+    # Get the employee object corresponding to the nick provided by the user.
     my $emp = $context->{'stashed_employee_object'};
+    if ( ! $emp ) {
+        $self->mrest_declare_status( 'code' => 404, 'explanation' => "Nick ->$nick<- not found in LDAP" );
+        return $CELL->status_not_ok;
+    }
+
     my $status = $emp->load_by_nick( $context->{'dbix_conn'}, $emp->nick );
     if ( $status->ok ) {
         # employee exists; update it
