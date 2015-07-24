@@ -3004,3 +3004,11 @@ SPLIT OFF App::MREST into separate distribution
 - Dispatch.pm: implement handler_get_employee_ldap and handler_put_employee_ldap
 - Auth.pm: fix DOCHAZKA_LDAP_AUTOCREATE_AS code path
 
+0.472  2015-07-24 17:06 CEST
+- doc: config/REST_Config.pm: tell users to not add a nick property to
+  DOCHAZKA_LDAP_POPULATE_MATRIX
+- t/: test POST employee/nick without required nick property
+- Dispatch.pm: return 400 if POST employee/nick without nick property
+  (fixes github issue #2) 
+- Dispatch.pm: handler_put_employee_ldap() return 404 if nick not found in LDAP
+
