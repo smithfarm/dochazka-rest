@@ -51,6 +51,9 @@ if ( $status->not_ok ) {
     plan skip_all => "not configured or server not running";
 }
 
+my @acode_to_delete;
+my @scode_to_delete;
+
 #======================
 note( 'insert a row' );
 #======================
@@ -58,10 +61,13 @@ note( 'insert a row' );
 test_sql_success( $dbix_conn, 1, <<"SQL" );
 INSERT INTO activities (code) VALUES ('WADA_DADA')
 SQL
+push @acode_to_delete, 'WADA_DADA';
+
 
 test_sql_success( $dbix_conn, 1, <<"SQL" );
 INSERT INTO schedules (scode, schedule) VALUES (999, 'NORMALCY IS BAD, BE DIFFERENT')
 SQL
+push @scode_to_delete, '999';
 
 #=====================
 note( 'select it back, noting that disable is set to zero' );
@@ -104,8 +110,15 @@ is( $scode, 999 );
 is( $disabled, 0 );
 
 # cleanup
-test_sql_success( $dbix_conn, 1, <<"SQL" );
-DELETE FROM schedules WHERE scode='999';
+foreach my $acode ( @acode_to_delete ) {
+    test_sql_success( $dbix_conn, 1, <<"SQL" );
+DELETE FROM activities WHERE code='$acode';
 SQL
+}
+foreach my $scode ( @scode_to_delete ) {
+    test_sql_success( $dbix_conn, 1, <<"SQL" );
+DELETE FROM schedules WHERE scode='$scode';
+SQL
+}
 
 done_testing;
