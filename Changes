@@ -3012,3 +3012,7 @@ SPLIT OFF App::MREST into separate distribution
   (fixes github issue #2) 
 - Dispatch.pm: handler_put_employee_ldap() return 404 if nick not found in LDAP
 
+0.473  TBA
+- GET version now reports App::Dochazka::REST version instead of Web::MREST
+  version (Github issue #3)
+
