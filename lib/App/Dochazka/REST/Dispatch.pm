@@ -1074,10 +1074,14 @@ sub handler_get_employee_ldap {
     my $nick = $self->context->{'mapping'}->{'nick'};
 
     if ( $pass == 1 ) {
-        # 501 if LDAP is not enabled
         if ( ! $site->DOCHAZKA_LDAP ) {
-            $self->mrest_declare_status( 'code' => 501, 'explanation' => 'LDAP not configured on this server' );
+            $self->mrest_declare_status( 
+                'code' => 501, 
+                'explanation' => 'LDAP not configured on this server' 
+            );
             return 0;
+        } else {
+            $log->debug( "DOCHAZKA_LDAP site param is true: LDAP is enabled" );
         }
         my $emp = App::Dochazka::REST::Model::Employee->spawn( 'nick' => $nick );
         $context->{'stashed_nick'} = $nick;
