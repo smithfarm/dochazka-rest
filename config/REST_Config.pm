@@ -203,7 +203,8 @@ set( 'DOCHAZKA_LDAP_TEST_UID_NON_EXISTENT', 'I_do_NOT_exist_in_local_LDAP' );
 # DOCHAZKA_LDAP_POPULATE_MATRIX
 #     set of key => value pairs where key is Employee object property and value
 #     is the matching LDAP property; used to populate employee objects with
-#     values from LDAP
+#     values from LDAP (do *not* include nick mapping here - use
+#     DOCHAZKA_LDAP_NICK_MAPPING for that)
 set( 'DOCHAZKA_LDAP_POPULATE_MATRIX', {} );
 
 # DOCHAZKA_REST_SESSION_EXPIRATION_TIME
