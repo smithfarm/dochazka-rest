@@ -964,6 +964,11 @@ sub handler_post_employee_nick {
         $func = $emp ? 'update_employee' : 'insert_employee';
         return $fail unless shared_employee_acl_part1( $self, $emp );  # additional ACL checks
         $self->nullify_declared_status;
+    } else {
+        $self->mrest_declare_status( code => 400, 
+            explanation => 'DISPATCH_PROP_MISSING_IN_ENTITY', args => [ 'nick' ],
+        );
+        return $fail;
     }
     if ( $func eq 'update_employee' ) {
         delete $context->{'request_entity'}->{'nick'};
