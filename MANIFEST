@@ -9,6 +9,7 @@ config/README
 config/REST_Config.pm
 config/REST_Message_en.conf
 config/REST_MetaConfig.pm
+config/REST_SiteConfig.pm
 config/sql/activity_Config.pm
 config/sql/audit_Config.pm
 config/sql/dbinit_Config.pm
