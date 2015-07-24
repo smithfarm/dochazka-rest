@@ -1521,6 +1521,15 @@ sub get_eid_of {
 }
 
 
+=head2 version
+
+Accessor method (to be called like a constructor) providing access to C<$VERSION> variable
+
+=cut
+
+sub version { $VERSION; }
+
+
 
 =head1 GLOSSARY OF TERMS
 
