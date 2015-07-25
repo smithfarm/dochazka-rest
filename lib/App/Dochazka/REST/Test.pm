@@ -137,11 +137,15 @@ sub initialize_unit {
     $status = App::Dochazka::REST->init_no_db( sitedir => '/etc/dochazka-rest', verbose => 1, debug_mode => 1 );
     return $status unless $status->ok;
 
+    note( "Connect to PostgreSQL server" );
     App::Dochazka::REST::ConnBank::init_singleton(
         $site->DOCHAZKA_DBNAME,
         $site->DOCHAZKA_DBUSER,
         $site->DOCHAZKA_DBPASS,
     );
+
+    note( "Check status of database server connection" );
+    plan skip_all => "PostgreSQL server is unreachable" unless conn_status() eq 'UP';
 
     my $eids = App::Dochazka::REST::get_eid_of( $dbix_conn, "root", "demo" );
     $site->set( 'DOCHAZKA_EID_OF_ROOT', $eids->{'root'} );
@@ -153,10 +157,6 @@ sub initialize_unit {
 
     $faux_context = { 'dbix_conn' => $dbix_conn, 'current' => { 'eid' => 1 } };
     $meta->set( 'META_DOCHAZKA_UNIT_TESTING' => 1 );
-
-    # get database handle and ping the database just to be sure
-    my $rc = conn_status();
-    is( $rc, "UP", "PostgreSQL database is alive" );
 
     # add Web::Machine object to payload
     $status->payload( Web::Machine->new( resource => 'App::Dochazka::REST::Dispatch', )->to_app );
