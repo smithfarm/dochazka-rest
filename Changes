@@ -3045,3 +3045,8 @@ SPLIT OFF App::MREST into separate distribution
 - ConnBank.pm: make init_singleton() use values from site configuration
 - ConnBank.pm: make init_singleton() be idempotent
 
+0.477  2015-07-25 20:13 CEST
+- ResourceDefs.pm: change ACL profile to passerby in two places
+- config/dispatch_Message_en.conf: fix DISPATCH_KEEP_TO_YOURSELF message which
+  was no longer accurate
+
