@@ -35,4 +35,57 @@
 #
 # -------------------------------------------------------------------------
 
+# function definitions
+
+function display_help {
+    echo "dochazka-rest is a bash script whose job is to start";
+    echo "the App::Dochazka::REST server";
+    echo
+    echo "It takes the following command-line options:";
+    echo "  -h --help      Displays this text";
+    echo "  -v --version   Display App::Dochazka::REST version number";
+    echo
+    exit 0;
+}
+
+function display_version {
+    version=$(perl -e 'use App::Dochazka::REST; print $App::Dochazka::REST::VERSION;');
+    echo "App::Dochazka::REST $version";
+    exit 0;
+}
+
+function demo_echo {
+    # takes a parameter and echoes it back
+    echo $1;
+    exit 0;
+}
+
+# process command-line options
+
+# Note that we use `"$@"' to let each command-line parameter expand to a
+# separate word. The quotes around `$@' are essential!
+# We need TEMP as the `eval set --' would nuke the return value of getopt.
+TEMP=`getopt -o e:hv --long echo:,help,version \
+     -n 'dochakza-rest' -- "$@"`
+
+if [ $? != 0 ] ; then echo "Terminating..." >&2 ; exit 1 ; fi
+
+# Note the quotes around `$TEMP': they are essential!
+eval set -- "$TEMP"
+
+while true ; do
+	case "$1" in
+                -e|--echo) demo_echo $2 ; shift 2 ;;
+		-h|--help) display_help ; shift ;;
+		-v|--version) display_version ; shift ;;
+		--) shift ; break ;;
+		*) echo "Internal error!" ; exit 1 ;;
+	esac
+done
+
+if [ $@ ] ; then
+    echo "Ignoring arguments:"
+    for arg do echo '--> '"\`$arg'" ; done
+fi
+
 mrest App-Dochazka-REST App::Dochazka::REST::Dispatch /etc/dochazka-rest
