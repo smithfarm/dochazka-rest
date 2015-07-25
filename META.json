@@ -139,9 +139,15 @@
    },
    "release_status" : "stable",
    "resources" : {
+      "bugtracker" : {
+         "web" : "https://github.com/smithfarm/dochazka-rest/issues"
+      },
       "license" : [
          "http://opensource.org/licenses/bsd-license.php"
-      ]
+      ],
+      "repository" : {
+         "url" : "https://github.com/smithfarm/dochazka-rest"
+      }
    },
    "version" : "0.474"
 }

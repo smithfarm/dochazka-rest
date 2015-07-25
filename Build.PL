@@ -15,6 +15,10 @@ my $builder = Module::Build->new(
         dist => [ 'config' ],
     },
     meta_merge => {
+        resources => {
+            repository => 'https://github.com/smithfarm/dochazka-rest',
+            bugtracker => 'https://github.com/smithfarm/dochazka-rest/issues',
+        },
         no_index => {
             directory => [
                 "config"

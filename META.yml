@@ -97,5 +97,7 @@ requires:
   Web::Machine: '0.15'
   perl: '5.012'
 resources:
+  bugtracker: https://github.com/smithfarm/dochazka-rest/issues
   license: http://opensource.org/licenses/bsd-license.php
+  repository: https://github.com/smithfarm/dochazka-rest
 version: '0.474'
