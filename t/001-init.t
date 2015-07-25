@@ -74,11 +74,7 @@ if ( $status->not_ok ) {
 ok( $status->ok, "Database dropped and re-created" );
 
 note( 'initialize the $dbix_conn singleton' ); 
-App::Dochazka::REST::ConnBank::init_singleton(
-    $site->DOCHAZKA_DBNAME,
-    $site->DOCHAZKA_DBUSER,
-    $site->DOCHAZKA_DBPASS,
-);
+App::Dochazka::REST::ConnBank::init_singleton();
 
 # get EID of root user
 #diag( "get EID of initial roles" );

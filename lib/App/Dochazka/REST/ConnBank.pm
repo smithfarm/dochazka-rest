@@ -138,12 +138,17 @@ sub get_arbitrary_dbix_conn {
 
 =head2 init_singleton
 
-Initialize the C<$dbix_conn> singleton. Takes dbname, dbuser, dbpass.
+Initialize the C<$dbix_conn> singleton using dbname, dbuser, and dbpass values
+from site configuration.
 
 =cut
 
 sub init_singleton {
-    $dbix_conn = get_arbitrary_dbix_conn( @_ );
+    $dbix_conn = get_arbitrary_dbix_conn( 
+        $site->DOCHAZKA_DBNAME,
+        $site->DOCHAZKA_DBUSER,
+        $site->DOCHAZKA_DBPASS,
+    );
 }
 
 

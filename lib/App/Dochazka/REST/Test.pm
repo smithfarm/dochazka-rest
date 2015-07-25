@@ -138,11 +138,7 @@ sub initialize_unit {
     return $status unless $status->ok;
 
     note( "Connect to PostgreSQL server" );
-    App::Dochazka::REST::ConnBank::init_singleton(
-        $site->DOCHAZKA_DBNAME,
-        $site->DOCHAZKA_DBUSER,
-        $site->DOCHAZKA_DBPASS,
-    );
+    App::Dochazka::REST::ConnBank::init_singleton();
 
     note( "Check status of database server connection" );
     plan skip_all => "PostgreSQL server is unreachable" unless conn_status() eq 'UP';
