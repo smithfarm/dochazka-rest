@@ -42,6 +42,7 @@ use feature "state";
 
 use App::CELL qw( $log $site );
 use DBIx::Connector;
+use Try::Tiny;
 
 
 
@@ -103,7 +104,8 @@ our $dbix_conn;
 =head2 get_arbitrary_dbix_conn
 
 Wrapper for DBIx::Connector->new. Takes database name, database user and
-password.  Returns a DBIx::Connector object.
+password.  Returns a DBIx::Connector object (even if the database is
+unreachable).
 
 =cut
 
@@ -161,7 +163,11 @@ sub conn_status {
         ? $arg
         : $dbix_conn;
 
-    return $conn->dbh->ping ? "UP" : "DOWN";
+    my $bool = 0;
+    try {
+        $bool = $conn->dbh->ping;
+    };
+    return $bool ? "UP" : "DOWN";
 }
 
 
