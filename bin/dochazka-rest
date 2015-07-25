@@ -40,11 +40,19 @@
 function display_help {
     echo "dochazka-rest is a bash script whose job is to start";
     echo "the App::Dochazka::REST server";
-    echo
+    echo;
     echo "It takes the following command-line options:";
     echo "  -h --help      Displays this text";
     echo "  -v --version   Display App::Dochazka::REST version number";
-    echo
+    echo;
+    echo "dochazka-rest is a wrapper for the mrest script from the";
+    echo "Web::MREST distro. If you need to pass options to that";
+    echo "script, put them on the end preceded by '--'";
+    echo;
+    echo "In the following example, the -c option will be passed to mrest:";
+    echo;
+    echo "    $ dochazka-rest -- -c";
+    echo;
     exit 0;
 }
 
@@ -57,7 +65,6 @@ function display_version {
 function demo_echo {
     # takes a parameter and echoes it back
     echo $1;
-    exit 0;
 }
 
 # process command-line options
@@ -83,9 +90,9 @@ while true ; do
 	esac
 done
 
-if [ $@ ] ; then
-    echo "Ignoring arguments:"
+if [[ $@ ]] ; then
+    echo "Passing to mrest:"
     for arg do echo '--> '"\`$arg'" ; done
 fi
 
-mrest App-Dochazka-REST App::Dochazka::REST::Dispatch /etc/dochazka-rest
+mrest --distro App-Dochazka-REST --module App::Dochazka::REST::Dispatch --sitedir /etc/dochazka-rest "$@"
