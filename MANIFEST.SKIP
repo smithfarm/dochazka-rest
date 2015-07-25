@@ -73,3 +73,4 @@
 # Avoid archives of this distribution
 \bApp-Dochazka-REST-[\d\.\_]+
 \bCPAN_NAME$
+release.sh$
