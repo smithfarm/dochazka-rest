@@ -943,7 +943,7 @@ EOH
         handler => {
             GET => 'handler_get_employee_minimal', 
         },
-        acl_profile => 'inactive',
+        acl_profile => 'passerby',
         cli => 'employee nick $nick minimal',
         validations => {
             nick => $term_validation,
@@ -2170,7 +2170,7 @@ EOH
         handler => {
             GET => 'handler_priv_get_nick',
         },
-        acl_profile => 'admin', 
+        acl_profile => 'passerby', 
         cli => 'priv nick $NICK [$TIMESTAMP]',
         validations => {
             'nick' => $term_validation,
