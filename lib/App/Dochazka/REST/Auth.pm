@@ -100,6 +100,7 @@ object and push that onto the context, too.
 sub is_authorized {
     my ( $self, $auth_header ) = @_;
     
+    # get database connection for this HTTP request
     App::Dochazka::REST::ConnBank::init_singleton();
 
     if ( ! $meta->META_DOCHAZKA_UNIT_TESTING ) {

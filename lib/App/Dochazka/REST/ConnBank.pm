@@ -83,7 +83,7 @@ the application uses the C<$dbix_conn> singleton.
 =cut
 
 use Exporter qw( import );
-our @EXPORT_OK = qw( $dbix_conn conn_status );
+our @EXPORT_OK = qw( $dbix_conn conn_status conn_up );
 
 
 
@@ -141,14 +141,43 @@ sub get_arbitrary_dbix_conn {
 Initialize the C<$dbix_conn> singleton using dbname, dbuser, and dbpass values
 from site configuration.
 
+Idempotent.
+
 =cut
 
 sub init_singleton {
+    return if ref( $dbix_conn ) and $dbix_conn->can( 'dbh' );
     $dbix_conn = get_arbitrary_dbix_conn( 
         $site->DOCHAZKA_DBNAME,
         $site->DOCHAZKA_DBUSER,
         $site->DOCHAZKA_DBPASS,
     );
+}
+
+
+=head2 conn_up
+
+Given a L<DBIx::Connector> object, call L<ping> on the associated 
+database handle and return true or false based on the result.
+
+If no argument is given, returns the status of the C<$dbix_conn>
+singleton.
+
+=cut
+
+sub conn_up {
+    my $arg = shift;
+    my $conn = $arg || $dbix_conn;
+    my $bool = 0;
+    return $bool unless ref( $conn ) eq 'DBIx::Connector';
+    
+    # the ping command can and will throw and exception if the database server
+    # is unreachable
+    try {
+        $bool = $conn->dbh->ping;
+    };
+
+    return $bool;
 }
 
 
@@ -164,16 +193,7 @@ singleton.
 
 sub conn_status {
     my $arg = shift;
-    my $conn = ( ref( $arg ) eq 'DBIx::Connector' )
-        ? $arg
-        : $dbix_conn;
-
-    my $bool = 0;
-    try {
-        $bool = $conn->dbh->ping;
-    };
-    return $bool ? "UP" : "DOWN";
+    return conn_up( $arg ) ? "UP" : "DOWN";
 }
-
 
 1;
