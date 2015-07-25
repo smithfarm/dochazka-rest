@@ -3022,3 +3022,14 @@ SPLIT OFF App::MREST into separate distribution
 - Dispatch.pm: write a debug message if LDAP is enabled
 - MANIFEST: refrain from packaging release script
 
+0.474  2015-07-25 16:33 CEST
+- t/001-init.t: skip all tests if PostgreSQL server unreachable
+- REST/Test.pm: make initialize_unit() do skip_all if PostgreSQL server unreachable
+- ConnBank.pm: catch exceptions in conn_status()
+- REST.pm: init() routine is no longer used; move it to REST/Test.pm
+- bin/dochazka-rest: enable passing of command-line options to mrest script
+- Build.PL: require Web::MREST 0.274 for bin/mrest command-line options
+- bin/dochazka-rest: process command-line options using GNU getopt
+- REST.pm: update init_no_db() documentation to reflect current state
+- release scripting mods
+

@@ -59,7 +59,7 @@
             "Pod::Simple::HTML" : "0",
             "Test::Deep::NoTest" : "0",
             "Try::Tiny" : "0",
-            "Web::MREST" : "0.261",
+            "Web::MREST" : "0.274",
             "Web::Machine" : "0.15",
             "perl" : "5.012"
          }
@@ -68,7 +68,7 @@
    "provides" : {
       "App::Dochazka::REST" : {
          "file" : "lib/App/Dochazka/REST.pm",
-         "version" : "0.473"
+         "version" : "0.474"
       },
       "App::Dochazka::REST::ACL" : {
          "file" : "lib/App/Dochazka/REST/ACL.pm"
@@ -143,5 +143,5 @@
          "http://opensource.org/licenses/bsd-license.php"
       ]
    },
-   "version" : "0.473"
+   "version" : "0.474"
 }
