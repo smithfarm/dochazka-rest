@@ -1233,13 +1233,14 @@ sub init {
 
 =head2 init_no_db
 
-Load site configuration and set up logging. Intended for use from the C<init>
-method as well as from L<App::Dochazka::REST> unit tests that need to connect to
-the pristine database using C<connect_db_pristine>. 
+Load site configuration and set up logging.
 
-Takes an optional PARAMHASH which is passed to C<< $CELL->load >>. The
-L<App::Dochazka::REST> distro sharedir is loaded as the first sitedir, before any
-sitedir specified in the PARAMHASH is loaded. Call examples:
+Takes an optional PARAMHASH which is passed to C<< _load_config() >>. This
+PARAMHASH can be used to stipulate a C<<sitedir>> and toggle verbose and debug
+modes.
+
+The L<App::Dochazka::REST> distro sharedir is loaded as the first sitedir,
+before any sitedir specified in the PARAMHASH is loaded. Call examples:
 
     my $status = $REST->init_no_db;
     my $status = $REST->init_no_db( verbose => 1 );
