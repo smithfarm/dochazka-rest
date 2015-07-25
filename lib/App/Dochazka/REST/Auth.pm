@@ -100,8 +100,6 @@ object and push that onto the context, too.
 sub is_authorized {
     my ( $self, $auth_header ) = @_;
     
-    App::Dochazka::REST::init() unless ref( $dbix_conn ) and $dbix_conn->can( 'dbh' );
-
     if ( ! $meta->META_DOCHAZKA_UNIT_TESTING ) {
         return 1 if $self->_validate_session;
     }
