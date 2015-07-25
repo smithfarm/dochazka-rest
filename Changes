@@ -3012,7 +3012,13 @@ SPLIT OFF App::MREST into separate distribution
   (fixes github issue #2) 
 - Dispatch.pm: handler_put_employee_ldap() return 404 if nick not found in LDAP
 
-0.473  TBA
+0.473  2015-07-25 03:45 CEST
+- REST_SiteConfig.pm: add config file for overriding Web::MREST core params
+  since those are set first
+- REST.pm: add a version() package method
 - GET version now reports App::Dochazka::REST version instead of Web::MREST
   version (Github issue #3)
+- t/sql/disabled_to_zero.t: fix issue where test was not cleaning up after itself
+- Dispatch.pm: write a debug message if LDAP is enabled
+- MANIFEST: refrain from packaging release script
 

@@ -17,7 +17,7 @@ build_requires:
 configure_requires:
   Module::Build: '0'
 dynamic_config: 1
-generated_by: 'Module::Build version 0.4205, CPAN::Meta::Converter version 2.142060'
+generated_by: 'Module::Build version 0.4212, CPAN::Meta::Converter version 2.142060'
 license: bsd
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
@@ -29,7 +29,7 @@ no_index:
 provides:
   App::Dochazka::REST:
     file: lib/App/Dochazka/REST.pm
-    version: '0.472'
+    version: '0.473'
   App::Dochazka::REST::ACL:
     file: lib/App/Dochazka/REST/ACL.pm
   App::Dochazka::REST::Auth:
@@ -97,5 +97,5 @@ requires:
   Web::Machine: '0.15'
   perl: '5.012'
 resources:
-  license: http://opensource.org/licenses/BSD-3-Clause
-version: '0.472'
+  license: http://opensource.org/licenses/bsd-license.php
+version: '0.473'

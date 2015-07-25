@@ -4,7 +4,7 @@
       "Nathan Cutler <ncutler@suse.cz>"
    ],
    "dynamic_config" : 1,
-   "generated_by" : "Module::Build version 0.4205",
+   "generated_by" : "Module::Build version 0.4212",
    "license" : [
       "bsd"
    ],
@@ -68,7 +68,7 @@
    "provides" : {
       "App::Dochazka::REST" : {
          "file" : "lib/App/Dochazka/REST.pm",
-         "version" : "0.472"
+         "version" : "0.473"
       },
       "App::Dochazka::REST::ACL" : {
          "file" : "lib/App/Dochazka/REST/ACL.pm"
@@ -140,8 +140,8 @@
    "release_status" : "stable",
    "resources" : {
       "license" : [
-         "http://opensource.org/licenses/BSD-3-Clause"
+         "http://opensource.org/licenses/bsd-license.php"
       ]
    },
-   "version" : "0.472"
+   "version" : "0.473"
 }
