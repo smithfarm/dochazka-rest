@@ -61,7 +61,7 @@ my $builder = Module::Build->new(
         'Test::Deep::NoTest' => 0,
         'Try::Tiny'      => 0,
         'Web::Machine'   => 0.15,
-        'Web::MREST'     => 0.261,
+        'Web::MREST'     => 0.274,
     },
     add_to_cleanup     => [ 'App-Dochazka-REST-*' ],
 #    create_makefile_pl => 'traditional',
