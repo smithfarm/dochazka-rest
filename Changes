@@ -3036,4 +3036,12 @@ SPLIT OFF App::MREST into separate distribution
 
 0.475  2015-07-25 16:57 CEST
 - Build.PL: set repository and bugtracker URLs
+
+0.476  2015-07-25 17:49 CEST
+- REST/Test.pm: use conn_up() instead of conn_status()
+- ConnBank.pm: add conn_up() and rewrite conn_status() as a wrapper
+- Auth.pm: drop obsolete call to App::Dochazka::REST::init()
+- Auth.pm: call App::Dochazka::REST::ConnBank::init_singleton() instead of deprecated App::Dochazka::REST::init()
+- ConnBank.pm: make init_singleton() use values from site configuration
 - ConnBank.pm: make init_singleton() be idempotent
+
