@@ -1211,26 +1211,6 @@ debug messages will be logged.
 
 
 
-=head2 init
-
-Load site configuration and set up logging.
-
-=cut
-
-sub init {
-    # initialize the $dbix_conn singleton
-    App::Dochazka::REST::ConnBank::init_singleton(
-        $site->DOCHAZKA_DBNAME,
-        $site->DOCHAZKA_DBUSER,
-        $site->DOCHAZKA_DBPASS,
-    );
-
-    my $eids = get_eid_of( $dbix_conn, "root", "demo" );
-    $site->set( 'DOCHAZKA_EID_OF_ROOT', $eids->{'root'} );
-    $site->set( 'DOCHAZKA_EID_OF_DEMO', $eids->{'demo'} );
-}
-
-
 =head2 init_no_db
 
 Load site configuration and set up logging.

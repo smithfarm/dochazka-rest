@@ -41,6 +41,7 @@ use warnings;
 
 use App::CELL qw( $CELL $meta $site );
 use App::Dochazka::Common;
+use App::Dochazka::REST;
 use App::Dochazka::REST::ConnBank qw( $dbix_conn conn_status );
 use App::Dochazka::REST::Util qw( hash_the_password );
 use App::Dochazka::REST::Model::Privhistory qw( get_privhistory );
@@ -136,7 +137,15 @@ sub initialize_unit {
     $status = App::Dochazka::REST->init_no_db( sitedir => '/etc/dochazka-rest', verbose => 1, debug_mode => 1 );
     return $status unless $status->ok;
 
-    App::Dochazka::REST->init;
+    App::Dochazka::REST::ConnBank::init_singleton(
+        $site->DOCHAZKA_DBNAME,
+        $site->DOCHAZKA_DBUSER,
+        $site->DOCHAZKA_DBPASS,
+    );
+
+    my $eids = App::Dochazka::REST::get_eid_of( $dbix_conn, "root", "demo" );
+    $site->set( 'DOCHAZKA_EID_OF_ROOT', $eids->{'root'} );
+    $site->set( 'DOCHAZKA_EID_OF_DEMO', $eids->{'demo'} );
 
     is( $status->level, 'OK' );
     ok( $site->DOCHAZKA_EID_OF_ROOT );
