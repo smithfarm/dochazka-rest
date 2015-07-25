@@ -39,10 +39,11 @@ use warnings FATAL => 'all';
 use Test::More;
 
 #use App::CELL::Test::LogToFile;
-use App::CELL qw( $site );
+use App::CELL qw( $CELL $site );
 use App::Dochazka::REST;
 use App::Dochazka::REST::ConnBank qw( $dbix_conn conn_status );
 use App::Dochazka::REST::Test;
+use Try::Tiny;
 
 
 ###
@@ -53,26 +54,26 @@ use App::Dochazka::REST::Test;
 ###
 
 
-# initialize the server
+note( 'initialize the REST server' );
 my $status = App::Dochazka::REST->init_no_db( sitedir => '/etc/dochazka-rest' );
 if ( $status->not_ok ) {
     diag( $status->text );
     plan skip_all => "Not configured. Please run the test suite manually after initial site configuration";
 }
 
-# reset the database to "factory state" - WARNING: THIS WIPES THE DATABASE --
-# ALL DATA IN IT WILL BE LOST
+note( 'reset the database to "factory state"' ); 
+# * * * WARNING: THIS WIPES THE DATABASE * * *
+# * * * ALL DATA IN IT WILL BE LOST      * * *
 $status = App::Dochazka::REST::reset_db(
     $site->DBINIT_CONNECT_SUPERUSER,
     $site->DBINIT_CONNECT_SUPERAUTH,
 );
 if ( $status->not_ok ) {
-    diag( "Status: " . $status->code . ' ' . $status->text ) if $status->not_ok;
-    BAIL_OUT(0);
+    plan skip_all => "PostgreSQL server is unreachable";
 }
 ok( $status->ok, "Database dropped and re-created" );
 
-# initialize the $dbix_conn singleton
+note( 'initialize the $dbix_conn singleton' ); 
 App::Dochazka::REST::ConnBank::init_singleton(
     $site->DOCHAZKA_DBNAME,
     $site->DOCHAZKA_DBUSER,
