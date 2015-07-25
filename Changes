@@ -3028,8 +3028,12 @@ SPLIT OFF App::MREST into separate distribution
 - ConnBank.pm: catch exceptions in conn_status()
 - REST.pm: init() routine is no longer used; move it to REST/Test.pm
 - bin/dochazka-rest: enable passing of command-line options to mrest script
+  (resolves github issue #4)
 - Build.PL: require Web::MREST 0.274 for bin/mrest command-line options
 - bin/dochazka-rest: process command-line options using GNU getopt
 - REST.pm: update init_no_db() documentation to reflect current state
 - release scripting mods
+
+0.475  2015-07-25 16:57 CEST
+- Build.PL: set repository and bugtracker URLs
 
