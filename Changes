@@ -3036,4 +3036,4 @@ SPLIT OFF App::MREST into separate distribution
 
 0.475  2015-07-25 16:57 CEST
 - Build.PL: set repository and bugtracker URLs
-
+- ConnBank.pm: make init_singleton() be idempotent

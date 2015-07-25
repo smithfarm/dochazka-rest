@@ -42,7 +42,7 @@ use warnings;
 use App::CELL qw( $CELL $meta $site );
 use App::Dochazka::Common;
 use App::Dochazka::REST;
-use App::Dochazka::REST::ConnBank qw( $dbix_conn conn_status );
+use App::Dochazka::REST::ConnBank qw( $dbix_conn conn_up );
 use App::Dochazka::REST::Util qw( hash_the_password );
 use App::Dochazka::REST::Model::Privhistory qw( get_privhistory );
 use App::Dochazka::REST::Model::Schedhistory qw( get_schedhistory );
@@ -141,7 +141,7 @@ sub initialize_unit {
     App::Dochazka::REST::ConnBank::init_singleton();
 
     note( "Check status of database server connection" );
-    plan skip_all => "PostgreSQL server is unreachable" unless conn_status() eq 'UP';
+    plan skip_all => "PostgreSQL server is unreachable" unless conn_up();
 
     my $eids = App::Dochazka::REST::get_eid_of( $dbix_conn, "root", "demo" );
     $site->set( 'DOCHAZKA_EID_OF_ROOT', $eids->{'root'} );
