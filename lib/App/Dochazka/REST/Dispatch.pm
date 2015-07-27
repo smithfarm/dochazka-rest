@@ -789,7 +789,11 @@ sub handler_whoami {
     return 1 if $pass == 1;
 
     # second pass
-    my $current_emp = $self->context->{'current'}; # populated at authentication time
+    my $context = $self->context;
+    my $current_emp = $context->{'current'};
+    delete $current_emp->{'passhash'};
+    delete $current_emp->{'salt'};
+    delete $current_emp->{'remark'} unless $context->{'current_priv'} eq 'admin';
     $CELL->status_ok( 'DISPATCH_EMPLOYEE_CURRENT', args => 
         [ $current_emp->{'nick'} ], payload => $current_emp );
 }

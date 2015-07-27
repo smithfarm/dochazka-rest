@@ -177,10 +177,7 @@ foreach my $base ( "employee/current", "employee/self" ) {
         'nick' => 'demo',
         'fullname' => 'Demo Employee',
         'email' => 'demo@dochazka.site',
-        'passhash' => '4962cc89c646261a887219795083a02b899ea960cd84a234444b7342e2222eb22dc06f5db9c71681074859469fdc0abd53e3f1f47a381617b59f4b31608e24b1',
-        'salt' => '82702be8d9810d8fba774dcb7c9f68f39d0933e8',
         'supervisor' => undef,
-        'remark' => 'dbinit',
     }, "GET $base 5");
     #
     $status = req( $test, 200, 'root', 'GET', $base );
@@ -193,8 +190,6 @@ foreach my $base ( "employee/current", "employee/self" ) {
         'nick' => 'root',
         'fullname' => 'Root Immutable',
         'email' => 'root@site.org',
-        'passhash' => '82100e9bd4757883b4627b3bafc9389663e7be7f76a1273508a7a617c9dcd917428a7c44c6089477c8e1d13e924343051563d2d426617b695f3a3bff74e7c003',
-        'salt' => '341755e03e1f163f829785d1d19eab9dee5135c0',
         'supervisor' => undef,
         'remark' => 'dbinit',
     }, "GET $base 10" );
