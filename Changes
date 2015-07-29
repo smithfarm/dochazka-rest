@@ -3050,3 +3050,7 @@ SPLIT OFF App::MREST into separate distribution
 - config/dispatch_Message_en.conf: fix DISPATCH_KEEP_TO_YOURSELF message which
   was no longer accurate
 
+0.478  2015-07-29 09:47 CEST
+- Import normalize_filespec() from Web::MREST::CLI, where it now resides
+- Dispatch.pm: do not report passhash and salt back to users
+

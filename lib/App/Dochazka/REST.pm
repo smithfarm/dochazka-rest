@@ -44,7 +44,7 @@ use Log::Any::Adapter;
 use Params::Validate qw( :all );
 use Try::Tiny;
 use Web::Machine;
-use Web::MREST::Util qw( normalize_filespec );
+use Web::MREST::CLI qw( normalize_filespec );
 
 
 
@@ -58,11 +58,11 @@ App::Dochazka::REST - Dochazka REST server
 
 =head1 VERSION
 
-Version 0.477
+Version 0.478
 
 =cut
 
-our $VERSION = '0.477';
+our $VERSION = '0.478';
 
 
 =head2 Development status
