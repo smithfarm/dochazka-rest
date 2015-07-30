@@ -131,10 +131,11 @@ sub initialize_unit {
 
     require App::Dochazka::REST;
 
-    my $status = Web::MREST::init( distro => 'App-Dochazka-REST' );
-    die $status->text unless $status->ok;
-
-    $status = App::Dochazka::REST->init_no_db( sitedir => '/etc/dochazka-rest', verbose => 1, debug_mode => 1 );
+    my $status = Web::MREST::init( 
+        distro => 'App-Dochazka-REST', 
+        sitedir => '/etc/dochazka-rest', 
+        debug_mode => 1 
+    );
     return $status unless $status->ok;
 
     note( "Connect to PostgreSQL server" );

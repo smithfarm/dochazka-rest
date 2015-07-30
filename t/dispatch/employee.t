@@ -47,10 +47,19 @@ use Plack::Test;
 use Test::JSON;
 use Test::More;
 
-# initialize 
+#
+# To activate debugging, uncomment the following
+#
+#use App::CELL::Test::LogToFile;
+#$log->init( debug_mode => 1 );
+
+note( 'initialize' );
 my $status = initialize_unit();
 plan skip_all => "not configured or server not running" unless $status->ok;
 my $app = $status->payload;
+
+note( 'check a random site param' );
+is( $site->DOCHAZKA_HOST, 'localhost' );
 
 # instantiate Plack::Test object
 my $test = Plack::Test->create( $app );
@@ -746,6 +755,7 @@ note( 'demo attempt to get non-existent EID (minimal)' );
 req( $test, 403, 'demo', 'GET', "$base/53432/minimal" );
 
 note( 'demo attempt to get existent EID (minimal)' );
+note( 'DOCHAZKA_EMPLOYEE_MINIMAL_FIELDS is ' . Dumper( $site->DOCHAZKA_EMPLOYEE_MINIMAL_FIELDS ) );
 req( $test, 403, 'demo', 'GET', "$base/" . $site->DOCHAZKA_EID_OF_ROOT . "/minimal" );
 
 note( 'root get active (minimal)' );
