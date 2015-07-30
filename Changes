@@ -3063,3 +3063,7 @@ SPLIT OFF App::MREST into separate distribution
 - REST.pm: drop init_no_db() which is no longer used
 - Build.PL: require a more recent version of App::CELL
 
+0.480  2015-07-30 21:56 CEST
+- Test.pm: do not send deprecated debug_mode param to Web::MREST::init()
+  (fixes build failure in OBS)
+
