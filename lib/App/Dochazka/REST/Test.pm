@@ -134,7 +134,6 @@ sub initialize_unit {
     my $status = Web::MREST::init( 
         distro => 'App-Dochazka-REST', 
         sitedir => '/etc/dochazka-rest', 
-        debug_mode => 1 
     );
     return $status unless $status->ok;
 
