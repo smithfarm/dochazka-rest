@@ -21,7 +21,7 @@
    "prereqs" : {
       "build" : {
          "requires" : {
-            "App::CELL" : "0.209",
+            "App::CELL" : "0.215",
             "App::Dochazka::Common" : "0.191",
             "Authen::Passphrase::SaltedDigest" : "0.008",
             "DBIx::Connector" : "0.47",
@@ -30,7 +30,7 @@
             "Plack::Test" : "0",
             "Test::Fatal" : "0",
             "Test::JSON" : "0",
-            "Web::MREST" : "0.277",
+            "Web::MREST" : "0.279",
             "Web::MREST::CLI" : "0.276",
             "Web::Machine" : "0.15"
          }
@@ -42,7 +42,7 @@
       },
       "runtime" : {
          "requires" : {
-            "App::CELL" : "0.209",
+            "App::CELL" : "0.215",
             "App::Dochazka::Common" : "0.191",
             "Authen::Passphrase::SaltedDigest" : "0.008",
             "DBD::Pg" : "0",
@@ -60,7 +60,7 @@
             "Pod::Simple::HTML" : "0",
             "Test::Deep::NoTest" : "0",
             "Try::Tiny" : "0",
-            "Web::MREST" : "0.277",
+            "Web::MREST" : "0.279",
             "Web::MREST::CLI" : "0.276",
             "Web::Machine" : "0.15",
             "perl" : "5.012"
@@ -70,7 +70,7 @@
    "provides" : {
       "App::Dochazka::REST" : {
          "file" : "lib/App/Dochazka/REST.pm",
-         "version" : "0.478"
+         "version" : "0.479"
       },
       "App::Dochazka::REST::ACL" : {
          "file" : "lib/App/Dochazka/REST/ACL.pm"
@@ -151,5 +151,5 @@
          "url" : "https://github.com/smithfarm/dochazka-rest"
       }
    },
-   "version" : "0.478"
+   "version" : "0.479"
 }

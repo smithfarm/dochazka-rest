@@ -3054,3 +3054,12 @@ SPLIT OFF App::MREST into separate distribution
 - Import normalize_filespec() from Web::MREST::CLI, where it now resides
 - Dispatch.pm: do not report passhash and salt back to users
 
+0.479  2015-07-30 14:41 CEST
+- Build.PL: require Web::MREST 0.279 for early debugging feature
+  Fixes: https://github.com/smithfarm/dochazka-rest/issues/13
+- REST.pm: document the early debugging feature
+- Test.pm: drop call to init_no_db(); use Web::MREST::init() only
+- Dispatch.pm: be more careful with DOCHAZKA_EMPLOYEE_MINIMAL_FIELDS
+- REST.pm: drop init_no_db() which is no longer used
+- Build.PL: require a more recent version of App::CELL
+
