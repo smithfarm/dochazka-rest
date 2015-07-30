@@ -1180,6 +1180,10 @@ sub handler_get_employee_minimal {
         return 0 unless $emp;
 
         # populate stashed value
+        my $min_fields = $site->DOCHAZKA_EMPLOYEE_MINIMAL_FIELDS;
+        die "AGACHCH! Problem with DOCHAZKA_EMPLOYEE_MINIMAL_FIELDS site param, which is set to " .
+            Dumper( $min_fields ) . " with the following sitedirs loaded: " .
+            Dumper( $meta->CELL_META_SITEDIR_LIST ) unless ref( $min_fields) eq 'ARRAY';
         foreach my $prop ( @{ $site->DOCHAZKA_EMPLOYEE_MINIMAL_FIELDS } ) {
             $self->context->{'stashed_value'}->{ $prop } = $emp->get( $prop );
         }
