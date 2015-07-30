@@ -1194,6 +1194,15 @@ L<App::Dochazka::REST> offers the following debug facilities:
 
 =over
 
+=item * C<bin/dochazka-rest -- --early-debug=$TMPFILE>
+
+Calling the server startup script as shown will cause the C<--early-debug>
+parameter to be passed through to C<bin/mrest> (from the L<Web::MREST> distro).
+This has the interesting effect of capturing even the earliest debug messages
+to a temporary file, which the server must be able to C<touch>. Once the server
+has started, the filename can also be determined by sending a C<GET
+param/meta/MREST_EARLY_DEBUGGING> request.
+
 =item * DOCHAZKA_DEBUG environment variable
 
 If the C<DOCHAZKA_DEBUG> environment variable is set to a true value, the
