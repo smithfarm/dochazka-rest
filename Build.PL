@@ -32,7 +32,7 @@ my $builder = Module::Build->new(
         'Module::Build'  => 0,
     },
     build_requires => {
-        'App::CELL'      => 0.209,
+        'App::CELL'      => 0.215,
         'App::Dochazka::Common'  => 0.191,
         'Authen::Passphrase::SaltedDigest' => 0.008,
         'DBIx::Connector' => 0.47,
@@ -47,7 +47,7 @@ my $builder = Module::Build->new(
     },
     requires => {
         'perl'           => 5.012,
-        'App::CELL'      => 0.209,
+        'App::CELL'      => 0.215,
         'App::Dochazka::Common'  => 0.191,
         'Authen::Passphrase::SaltedDigest' => 0.008,
         'Date::Calc'     => 0,
