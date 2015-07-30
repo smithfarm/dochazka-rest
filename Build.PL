@@ -42,7 +42,7 @@ my $builder = Module::Build->new(
         'Test::Fatal'    => 0,
         'Test::JSON'     => 0,
         'Web::Machine'   => 0.15,
-        'Web::MREST'     => 0.277,
+        'Web::MREST'     => 0.279,
         'Web::MREST::CLI'     => 0.276,
     },
     requires => {
@@ -66,7 +66,7 @@ my $builder = Module::Build->new(
         'Test::Deep::NoTest' => 0,
         'Try::Tiny'      => 0,
         'Web::Machine'   => 0.15,
-        'Web::MREST'     => 0.277,
+        'Web::MREST'     => 0.279,
         'Web::MREST::CLI'     => 0.276,
     },
     add_to_cleanup     => [ 'App-Dochazka-REST-*' ],
