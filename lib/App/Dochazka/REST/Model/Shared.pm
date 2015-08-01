@@ -37,6 +37,7 @@ use strict;
 use warnings FATAL => 'all';
 use App::CELL qw( $CELL $log $meta $site );
 use Data::Dumper;
+use Date::Holidays::CZ qw( holidays );
 use JSON;
 use Params::Validate qw( :all );
 use Try::Tiny;
@@ -63,51 +64,7 @@ the data model
 
 =head1 EXPORTS
 
-This module provides the following exports:
-
-=over 
-
-=item * C<canonicalize_ts>
-
-Run timestamp by PostgreSQL
-
-=item * C<canonicalize_tsrange>
-
-Run tsrange by PostgreSQL
-
-=item * C<cud>
-
-Create, Update, Delete -- for single-record statements only
-
-=item * C<decode_schedule_json> 
-
-Given JSON string, return corresponding hashref
-
-=item * C<load> 
-
-Load/Fetch/Retrieve a single datamodel object
-
-=item * C<load_multiple> 
-
-Load/Fetch/Retrieve multiple datamodel objects
-
-=item * C<noof> 
-
-Get total number of records in a data model table
-
-=item * C<priv_by_eid> 
-
-=item * C<schedule_by_eid>
-
-=item * C<select_single> 
-
-Run an arbitrary SELECT that returns 0 or 1 records
-
-=item * C<select_set_of_single_scalar_rows> 
-
-=back
-
-=cut
+=cut 
 
 use Exporter qw( import );
 our @EXPORT_OK = qw( 
@@ -115,6 +72,8 @@ our @EXPORT_OK = qw(
     canonicalize_tsrange
     cud 
     decode_schedule_json 
+    get_history
+    holidays_in_tsrange
     load 
     load_multiple 
     noof 
@@ -122,6 +81,9 @@ our @EXPORT_OK = qw(
     schedule_by_eid 
     select_single 
     select_set_of_single_scalar_rows
+    split_tsrange
+    subtract_days
+    tsrange_equal
 );
 
 
@@ -157,6 +119,7 @@ sub _replace_payload_array_with_string {
     return $status;
 }
 
+
 =head2 canonicalize_tsrange
 
 Given a string that might be a tsrange, "canonicalize" it by running it
@@ -180,53 +143,6 @@ sub canonicalize_tsrange {
     );
     _replace_payload_array_with_string( $status ) if $status->ok;
     return $status;    
-}
-
-
-=head2 make_test_exists
-
-Returns coderef for a function, 'test_exists', that performs a simple
-true/false check for existence of a record matching a scalar search key.  The
-record must be an exact match (no wildcards).
-
-Takes one argument: a type string C<$t> which is concatenated with the string
-'load_by_' to arrive at the name of the function to be called to execute the
-search.
-
-The returned function takes a single argument: the search key (a scalar value).
-If a record matching the search key is found, the corresponding object
-(i.e. a true value) is returned. If such a record does not exist, 'undef' (a
-false value) is returned. If there is a DBI error, the error text is logged
-and undef is returned.
-
-=cut
-
-sub make_test_exists {
-
-    my ( $t ) = validate_pos( @_, { type => SCALAR } );
-    my $pkg = (caller)[0];
-
-    return sub {
-        my ( $conn, $s_key ) = @_;
-        require Try::Tiny;
-        my $routine = "load_by_$t";
-        my ( $status, $txt );
-        $log->debug( "Entered $t" . "_exists with search key $s_key" );
-        try {
-            no strict 'refs';
-            $status = $pkg->$routine( $conn, $s_key );
-        } catch {
-            $txt = "Function " . $pkg . "::test_exists was generated with argument $t, " .
-                "so it tried to call $routine, resulting in exception $_";
-            $status = $CELL->status_crit( $txt );
-        };
-        if ( ! defined( $status ) or $status->level eq 'CRIT' ) {
-            die $txt;
-        }
-        #$log->debug( "Status is " . Dumper( $status ) );
-        return $status->payload if $status->ok;
-        return;
-    }
 }
 
 
@@ -370,6 +286,118 @@ sub decode_schedule_json {
 }
 
 
+=head2 get_history
+
+This function takes a number of arguments. The first two are (1) a
+L<DBIx::Connector> object and (2) a SCALAR argument, which can be either 'priv'
+or 'schedule'. 
+
+Following these there is a PARAMHASH which can have one or more of the
+properties 'eid', 'nick', and 'tsrange'. At least one of { 'eid', 'nick' } must
+be specified. If both are specified, the employee is determined according to
+'eid'.
+
+The function returns the history of privilege level or schedule changes for
+that employee over the given tsrange, or the entire history if no tsrange is
+supplied. 
+
+The return value will always be an L<App::CELL::Status|status> object.
+
+Upon success, the payload will be a reference to an array of history
+objects. If nothing is found, the array will be empty. If there is a DBI error,
+the payload will be undefined.
+
+=cut
+
+sub get_history { 
+    my $t = shift;
+    my $conn = shift;
+    validate_pos( @_, 1, 1, 0, 0, 0, 0 );
+    my %ARGS = validate( @_, { 
+        eid => { type => SCALAR, optional => 1 },
+        nick => { type => SCALAR, optional => 1 },
+        tsrange => { type => SCALAR|UNDEF, optional => 1 },
+    } );
+
+    $log->debug("Entering get_history for $t - arguments: " . Dumper( \%ARGS ) );
+
+    my ( $sql, $sk, $status, $result, $tsr );
+    if ( exists $ARGS{'nick'} ) {
+        $sql = ($t eq 'priv') 
+            ? $site->SQL_PRIVHISTORY_SELECT_RANGE_BY_NICK
+            : $site->SQL_SCHEDHISTORY_SELECT_RANGE_BY_NICK;
+        $result->{'nick'} = $ARGS{'nick'};
+        $result->{'eid'} = $ARGS{'eid'} if exists $ARGS{'eid'};
+        $sk = $ARGS{'nick'};
+    }
+    if ( exists $ARGS{'eid'} ) {
+        $sql = ($t eq 'priv') 
+            ? $site->SQL_PRIVHISTORY_SELECT_RANGE_BY_EID
+            : $site->SQL_SCHEDHISTORY_SELECT_RANGE_BY_EID;
+        $result->{'eid'} = $ARGS{'eid'};
+        $result->{'nick'} = $ARGS{'nick'} if exists $ARGS{'nick'};
+        $sk = $ARGS{'eid'};
+    }
+    $log->debug("sql == $sql");
+    $tsr = ( $ARGS{'tsrange'} )
+        ? $ARGS{'tsrange'}
+        : '[,)';
+    $result->{'tsrange'} = $tsr;
+    $log->debug("tsrange == $tsr");
+
+    die "AAAAAAAAAAAHHHHH! Engulfed by the abyss" unless $sk and $sql and $tsr;
+
+    $result->{'history'} = [];
+    try {
+        $conn->run( fixup => sub {
+            my $sth = $_->prepare( $sql );
+            $sth->execute( $sk, $tsr );
+            while( defined( my $tmpres = $sth->fetchrow_hashref() ) ) {
+                push @{ $result->{'history'} }, $tmpres;
+            }
+        } );
+    } catch {
+        $status = $CELL->status_err( 'DOCHAZKA_DBI_ERR', args => [ $_ ] );
+    };
+    return $status if defined $status;
+
+    my $counter = scalar @{ $result->{'history'} };
+    return ( $counter ) 
+        ? $CELL->status_ok( 'DISPATCH_RECORDS_FOUND', 
+            args => [ $counter ], payload => $result, count => $counter ) 
+        : $CELL->status_notice( 'DISPATCH_NO_RECORDS_FOUND', 
+            payload => $result, count => $counter );
+}
+
+
+=head2 holidays_in_tsrange
+
+Given two canonicalized dates, extract the from and to dates
+and return a status object. Upon success, the payload will contain a list of
+holidays between those two dates (inclusive).
+
+If no tsrange is given, defaults to the current year.
+
+=cut
+
+sub holidays_in_daterange {
+    my ( $conn, $tsr ) = validate_pos( @_,
+        { isa => 'DBIx::Connector' },
+        { type => SCALAR, optional => 1 },
+    );
+
+    my $holidays;
+
+    if ( ! $tsr ) {
+        $holidays = holidays( FORMAT => '%Y-%m-%d' );
+    } else {
+
+        # split and validate $tsr at the same time
+
+    }
+}
+
+
 =head2 load
 
 Load a database record into an object based on an SQL statement and a set of
@@ -489,6 +517,53 @@ sub load_multiple {
             payload => $results, count => $counter );
     $log->debug( Dumper $status );
     return $status;
+}
+
+
+=head2 make_test_exists
+
+Returns coderef for a function, 'test_exists', that performs a simple
+true/false check for existence of a record matching a scalar search key.  The
+record must be an exact match (no wildcards).
+
+Takes one argument: a type string C<$t> which is concatenated with the string
+'load_by_' to arrive at the name of the function to be called to execute the
+search.
+
+The returned function takes a single argument: the search key (a scalar value).
+If a record matching the search key is found, the corresponding object
+(i.e. a true value) is returned. If such a record does not exist, 'undef' (a
+false value) is returned. If there is a DBI error, the error text is logged
+and undef is returned.
+
+=cut
+
+sub make_test_exists {
+
+    my ( $t ) = validate_pos( @_, { type => SCALAR } );
+    my $pkg = (caller)[0];
+
+    return sub {
+        my ( $conn, $s_key ) = @_;
+        require Try::Tiny;
+        my $routine = "load_by_$t";
+        my ( $status, $txt );
+        $log->debug( "Entered $t" . "_exists with search key $s_key" );
+        try {
+            no strict 'refs';
+            $status = $pkg->$routine( $conn, $s_key );
+        } catch {
+            $txt = "Function " . $pkg . "::test_exists was generated with argument $t, " .
+                "so it tried to call $routine, resulting in exception $_";
+            $status = $CELL->status_crit( $txt );
+        };
+        if ( ! defined( $status ) or $status->level eq 'CRIT' ) {
+            die $txt;
+        }
+        #$log->debug( "Status is " . Dumper( $status ) );
+        return $status->payload if $status->ok;
+        return;
+    }
 }
 
 
@@ -644,90 +719,6 @@ sub select_single {
 }
 
 
-=head2 get_history
-
-This function takes a number of arguments. The first two are (1) a
-L<DBIx::Connector> object and (2) a SCALAR argument, which can be either 'priv'
-or 'schedule'. 
-
-Following these there is a PARAMHASH which can have one or more of the
-properties 'eid', 'nick', and 'tsrange'. At least one of { 'eid', 'nick' } must
-be specified. If both are specified, the employee is determined according to
-'eid'.
-
-The function returns the history of privilege level or schedule changes for
-that employee over the given tsrange, or the entire history if no tsrange is
-supplied. 
-
-The return value will always be an L<App::CELL::Status|status> object.
-
-Upon success, the payload will be a reference to an array of history
-objects. If nothing is found, the array will be empty. If there is a DBI error,
-the payload will be undefined.
-
-=cut
-
-sub get_history { 
-    my $t = shift;
-    my $conn = shift;
-    validate_pos( @_, 1, 1, 0, 0, 0, 0 );
-    my %ARGS = validate( @_, { 
-        eid => { type => SCALAR, optional => 1 },
-        nick => { type => SCALAR, optional => 1 },
-        tsrange => { type => SCALAR|UNDEF, optional => 1 },
-    } );
-
-    $log->debug("Entering get_history for $t - arguments: " . Dumper( \%ARGS ) );
-
-    my ( $sql, $sk, $status, $result, $tsr );
-    if ( exists $ARGS{'nick'} ) {
-        $sql = ($t eq 'priv') 
-            ? $site->SQL_PRIVHISTORY_SELECT_RANGE_BY_NICK
-            : $site->SQL_SCHEDHISTORY_SELECT_RANGE_BY_NICK;
-        $result->{'nick'} = $ARGS{'nick'};
-        $result->{'eid'} = $ARGS{'eid'} if exists $ARGS{'eid'};
-        $sk = $ARGS{'nick'};
-    }
-    if ( exists $ARGS{'eid'} ) {
-        $sql = ($t eq 'priv') 
-            ? $site->SQL_PRIVHISTORY_SELECT_RANGE_BY_EID
-            : $site->SQL_SCHEDHISTORY_SELECT_RANGE_BY_EID;
-        $result->{'eid'} = $ARGS{'eid'};
-        $result->{'nick'} = $ARGS{'nick'} if exists $ARGS{'nick'};
-        $sk = $ARGS{'eid'};
-    }
-    $log->debug("sql == $sql");
-    $tsr = ( $ARGS{'tsrange'} )
-        ? $ARGS{'tsrange'}
-        : '[,)';
-    $result->{'tsrange'} = $tsr;
-    $log->debug("tsrange == $tsr");
-
-    die "AAAAAAAAAAAHHHHH! Engulfed by the abyss" unless $sk and $sql and $tsr;
-
-    $result->{'history'} = [];
-    try {
-        $conn->run( fixup => sub {
-            my $sth = $_->prepare( $sql );
-            $sth->execute( $sk, $tsr );
-            while( defined( my $tmpres = $sth->fetchrow_hashref() ) ) {
-                push @{ $result->{'history'} }, $tmpres;
-            }
-        } );
-    } catch {
-        $status = $CELL->status_err( 'DOCHAZKA_DBI_ERR', args => [ $_ ] );
-    };
-    return $status if defined $status;
-
-    my $counter = scalar @{ $result->{'history'} };
-    return ( $counter ) 
-        ? $CELL->status_ok( 'DISPATCH_RECORDS_FOUND', 
-            args => [ $counter ], payload => $result, count => $counter ) 
-        : $CELL->status_notice( 'DISPATCH_NO_RECORDS_FOUND', 
-            payload => $result, count => $counter );
-}
-
-
 =head2 select_set_of_single_scalar_rows
 
 Given DBIx::Connector object, an SQL statement, and a set of keys to bind
@@ -769,6 +760,71 @@ sub select_set_of_single_scalar_rows {
     return $status if $status;
     return $CELL->status_ok( 'RESULT_SET', payload => $result_set );
 }
+
+
+=head2 split_tsrange
+
+Given a string that might be a tsrange, run it through the database
+using the SQL statement:
+
+    SELECT lower(CAST( ? AS tstzrange )), upper(CAST( ? AS tstzrange ))
+
+If all goes well, the result will be an array ( from, to ) of two
+timestamps.
+
+Returns a status object.
+
+=cut
+
+sub split_tsrange {
+    my ( $conn, $tsr ) = @_;
+
+    my $status = select_single(
+        conn => $conn,
+        sql => 'SELECT lower(CAST( ? AS tstzrange )), upper(CAST( ? AS tstzrange ))',
+        keys => [ $tsr, $tsr ],
+    );
+    return $status;    
+}
+
+
+=head2 subtract_days
+
+Given a timestamp and an integer n, subtract n days.
+
+=cut
+
+sub subtract_days {
+    my ( $conn, $ts, $n ) = @_;
+    my $n_days = "$n days";
+    my $status = select_single(
+        conn => $conn,
+        sql => "SELECT TIMESTAMP ? - INTERVAL ?",
+        keys => [ $ts, $n_days ],
+    );
+    return $status;
+}
+
+
+=head2 tsrange_equal
+
+Given two strings that might be equal tsranges, consult the database and return
+the result (true or false).
+
+=cut
+
+sub tsrange_equal {
+    my ( $conn, $tr1, $tr2 ) = @_;
+
+    my $status = select_single(
+        conn => $conn,
+        sql => 'SELECT CAST( ? AS tsrange) = CAST( ? AS tsrange )',
+        keys => [ $tr1, $tr2 ],
+    );
+    die "$status->text" unless $status->ok;
+    return $status->payload;
+}
+
 
 
 =head1 AUTHOR

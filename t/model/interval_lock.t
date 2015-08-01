@@ -155,7 +155,7 @@ my $saved_iid = $int->iid;
 ok( $int->iid > 0 );
 is( $int->eid, $emp->eid );
 is( $int->aid, $work->aid );
-ok( tsrange_equal( $dbix_conn->dbh, $int->intvl, $intvl ) );
+ok( tsrange_equal( $dbix_conn, $int->intvl, $intvl ) );
 is( $int->long_desc, 'Pencil pushing' );
 is( $int->remark, 'TEST INTERVAL' );
 

@@ -42,7 +42,7 @@ use warnings FATAL => 'all';
 use App::CELL qw( $meta $site );
 use Data::Dumper;
 use App::Dochazka::REST::ConnBank qw( $dbix_conn );
-use App::Dochazka::REST::Model::Shared qw( canonicalize_ts canonicalize_tsrange );
+use App::Dochazka::REST::Model::Shared qw( canonicalize_ts canonicalize_tsrange split_tsrange );
 use App::Dochazka::REST::Test;
 use Test::More;
 
@@ -69,6 +69,14 @@ $status = canonicalize_tsrange( $dbix_conn, '[ 2015-01-1, 2015-02-1 )' );
 is( $status->level, 'OK' );
 like( $status->payload, qr/^\[.*2015-01-01 00:00:00.*2015-02-01 00:00:00.*\)/ );
 
+note( 'split a legal tsrange' );
+$status = split_tsrange( $dbix_conn, '[ 2015-01-1, 2015-02-1 )' );
+is( $status->level, 'OK' );
+is_deeply( $status->payload, [
+           '2015-01-01 00:00:00+01',
+           '2015-02-01 00:00:00+01'
+         ] );
+
 note( 'attempt to canonicalize an illegal timestamp' );
 $status = canonicalize_ts( $dbix_conn, '[2015-01-99, 2015-02-1)' );
 is( $status->level, 'ERR' );
@@ -76,9 +84,15 @@ is( $status->code, 'DOCHAZKA_DBI_ERR' );
 like( $status->text, qr/invalid input syntax for type timestamp with time zone/ );
 
 note( 'attempt to canonicalize an illegal timestamp' );
-$status = canonicalize_ts( $dbix_conn, '[2015-02-13, 2015-02-1)' );
+$status = canonicalize_tsrange( $dbix_conn, '[2015-02-13, 2015-02-1)' );
 is( $status->level, 'ERR' );
 is( $status->code, 'DOCHAZKA_DBI_ERR' );
-like( $status->text, qr/invalid input syntax for type timestamp with time zone/ );
+like( $status->text, qr/range lower bound must be less than or equal to range upper bound/ );
+
+note( 'attempt to split an illegal tsrange' );
+$status = split_tsrange( $dbix_conn, '[2015-01-99, 2015-02-1)' );
+is( $status->level, 'ERR' );
+is( $status->code, 'DOCHAZKA_DBI_ERR' );
+like( $status->text, qr#date/time field value out of range: "2015-01-99"# );
 
 done_testing;
