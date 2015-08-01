@@ -535,7 +535,7 @@ sub create_testing_schedule {
     # - request as root 
     my $status = req( $test, 201, 'root', 'POST', "schedule/new", $intvls_json );
     is( $status->level, 'OK', 'POST schedule/new returned OK status' );
-    is( $status->code, 'DISPATCH_SCHEDULE_INSERT_OK' );
+    is( $status->code, 'DISPATCH_SCHEDULE_INSERT_OK', "POST schedule/new code " . $status->code );
     ok( exists $status->{'payload'} );
     ok( exists $status->payload->{'sid'}, 'there is a SID' );
     ok( exists $status->payload->{'scode'}, 'there is an scode' );

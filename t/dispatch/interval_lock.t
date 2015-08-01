@@ -38,6 +38,7 @@ use 5.012;
 use strict;
 use warnings FATAL => 'all';
 
+use App::CELL::Test::LogToFile;
 use App::CELL qw( $log $meta $site );
 use App::Dochazka::REST::Test;
 use Data::Dumper;
@@ -58,19 +59,23 @@ my $app = $status->payload;
 my $test = Plack::Test->create( $app );
 
 my $res;
+my $note;
 
 my %idmap = (
     "interval" => "iid",
     "lock" => "lid"
 );
 
-note( 'create a testing schedule' );
+note( $note = 'create a testing schedule' );
+$log->info( "=== $note" );
 my $sid = create_testing_schedule( $test );
 
-note( 'create testing employee \'active\' with \'active\' privlevel' );
+note( $note = 'create testing employee \'active\' with \'active\' privlevel' );
+$log->info( "=== $note" );
 my $eid_active = create_active_employee( $test );
 
-note( 'give \'active\' and \'root\' a schedule as of 1957-01-01 00:00 so these two employees can enter some attendance intervals' );
+note( $note = 'give \'active\' and \'root\' a schedule as of 1957-01-01 00:00 so these two employees can enter some attendance intervals' );
+$log->info( "=== $note" );
 my @shid_for_deletion;
 foreach my $user ( 'active', 'root' ) {
     $status = req( $test, 201, 'root', 'POST', "schedule/history/nick/$user", <<"EOH" );
