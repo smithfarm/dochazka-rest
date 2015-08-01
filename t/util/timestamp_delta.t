@@ -63,4 +63,14 @@ $status = timestamp_delta_plus( $dbix_conn, '2015-01-3', '2 days' );
 is( $status->level, 'OK' );
 like( $status->payload, qr/^2015-01-05 00:00:00/ );
 
+note( 'add 1 week to 1957-1-3 19:57' );
+$status = timestamp_delta_plus( $dbix_conn, '1957-1-3 19:57', '1 week 5 hours 3 seconds' );
+is( $status->level, 'OK' );
+like( $status->payload, qr/^1957-01-11 00:57:03/ );
+
+note( 'add 1 month to 2964-02-01' );
+$status = timestamp_delta_plus( $dbix_conn, '2964-02-01', '1 month' );
+is( $status->level, 'OK' );
+like( $status->payload, qr/^2964-03-01 00:00:00/ );
+
 done_testing;
