@@ -25,6 +25,7 @@
             "App::Dochazka::Common" : "0.191",
             "Authen::Passphrase::SaltedDigest" : "0.008",
             "DBIx::Connector" : "0.47",
+            "Date::Holidays::CZ" : "0.08",
             "HTTP::Request" : "0",
             "Plack::Session" : "0",
             "Plack::Test" : "0",
@@ -49,6 +50,7 @@
             "DBI" : "0",
             "DBIx::Connector" : "0.47",
             "Date::Calc" : "0",
+            "Date::Holidays::CZ" : "0.08",
             "File::ShareDir" : "1.00",
             "JSON" : "0",
             "Params::Validate" : "1.06",
@@ -70,7 +72,7 @@
    "provides" : {
       "App::Dochazka::REST" : {
          "file" : "lib/App/Dochazka/REST.pm",
-         "version" : "0.480"
+         "version" : "0.481"
       },
       "App::Dochazka::REST::ACL" : {
          "file" : "lib/App/Dochazka/REST/ACL.pm"
@@ -134,9 +136,6 @@
       },
       "App::Dochazka::REST::Util::Schedule" : {
          "file" : "lib/App/Dochazka/REST/Util/Schedule.pm"
-      },
-      "App::Dochazka::REST::Util::Timestamp" : {
-         "file" : "lib/App/Dochazka/REST/Util/Timestamp.pm"
       }
    },
    "release_status" : "stable",
@@ -145,11 +144,11 @@
          "web" : "https://github.com/smithfarm/dochazka-rest/issues"
       },
       "license" : [
-         "http://opensource.org/licenses/bsd-license.php"
+         "http://opensource.org/licenses/BSD-3-Clause"
       ],
       "repository" : {
          "url" : "https://github.com/smithfarm/dochazka-rest"
       }
    },
-   "version" : "0.480"
+   "version" : "0.481"
 }

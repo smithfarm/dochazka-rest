@@ -3067,3 +3067,9 @@ SPLIT OFF App::MREST into separate distribution
 - Test.pm: do not send deprecated debug_mode param to Web::MREST::init()
   (fixes build failure in OBS)
 
+0.481  2015-08-01 18:43 CEST
+- Model/Shared.pm: add functions from deprecated Util/Timestamp.pm
+- Model/{Priv,Sched}history.pm: get_history() is now exported
+- Util/Timestamp.pm: drop deprecated module
+- Build.PL: require Date::Holidays::CZ version 0.08
+
