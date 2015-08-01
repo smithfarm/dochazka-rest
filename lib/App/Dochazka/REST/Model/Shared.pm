@@ -82,7 +82,8 @@ our @EXPORT_OK = qw(
     select_single 
     select_set_of_single_scalar_rows
     split_tsrange
-    subtract_days
+    timestamp_delta_minus
+    timestamp_delta_plus
     tsrange_equal
 );
 
@@ -788,20 +789,52 @@ sub split_tsrange {
 }
 
 
-=head2 subtract_days
+=head2 timestamp_delta_minus
 
-Given a timestamp and an integer n, subtract n days.
+Given a timestamp string and an interval string (e.g. "1 week 3 days" ), 
+subtract the interval from the timestamp.
+
+Returns a status object. If the database operation is successful, the payload
+will contain the resulting timestamp.
 
 =cut
 
-sub subtract_days {
-    my ( $conn, $ts, $n ) = @_;
-    my $n_days = "$n days";
+sub timestamp_delta_minus {
+    my ( $conn, $ts, $delta ) = @_;
     my $status = select_single(
         conn => $conn,
-        sql => "SELECT TIMESTAMP ? - INTERVAL ?",
-        keys => [ $ts, $n_days ],
+        sql => "SELECT CAST( ? AS timestamptz ) - CAST( ? AS interval )",
+        keys => [ $ts, $delta ],
     );
+    if ( $status->ok ) {
+        my ( $result ) = @{ $status->payload };
+        return $CELL->status_ok( 'SUCCESS', payload => $result );
+    }
+    return $status;
+}
+
+
+=head2 timestamp_delta_plus
+
+Given a timestamp string and an interval string (e.g. "1 week 3 days" ), 
+add the interval to the timestamp.
+
+Returns a status object. If the database operation is successful, the payload
+will contain the resulting timestamp.
+
+=cut
+
+sub timestamp_delta_plus {
+    my ( $conn, $ts, $delta ) = @_;
+    my $status = select_single(
+        conn => $conn,
+        sql => "SELECT CAST( ? AS timestamptz ) + CAST( ? AS interval )",
+        keys => [ $ts, $delta ],
+    );
+    if ( $status->ok ) {
+        my ( $result ) = @{ $status->payload };
+        return $CELL->status_ok( 'SUCCESS', payload => $result );
+    }
     return $status;
 }
 
