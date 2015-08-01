@@ -49,9 +49,8 @@ use App::Dochazka::REST::Model::Interval qw( iid_exists );
 use App::Dochazka::REST::Model::Lock qw( lid_exists );
 use App::Dochazka::REST::Model::Schedule;
 use App::Dochazka::REST::Model::Schedhistory;
-use App::Dochazka::REST::Model::Shared qw( noof );
+use App::Dochazka::REST::Model::Shared qw( noof tsrange_equal );
 use App::Dochazka::REST::Test;
-use App::Dochazka::REST::Util::Timestamp qw( tsrange_equal );
 use Plack::Test;
 use Test::More;
 
