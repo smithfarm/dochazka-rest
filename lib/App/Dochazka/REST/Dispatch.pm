@@ -1686,6 +1686,8 @@ sub _handler_get_intlock {
 
     # first pass
     if ( $pass == 1 ) {
+
+        # determine the employee
         my $value;
         if ( $key eq 'self' ) {
             $key = 'eid';
@@ -1703,11 +1705,18 @@ sub _handler_get_intlock {
         }
         my $emp = shared_first_pass_lookup( $self, $key, $value );
         return 0 unless $emp;
-        my $status;
+
+        # determine the tsrange
+        my $mapping = $context->{'mapping'};
+        my ( $status, $tsr );
+        $tsr = $mapping->{'tsrange'} if $mapping->{'tsrange'};
+        $tsr = timestamp_delta_add( $mapping->{'ts'}, $mapping->{'psqlint'} ) 
+            if $mapping->{'ts'} and $mapping->{'psqlint'};
+            
         my @ARGS = (
             $context->{'dbix_conn'},
             $emp->eid,
-            $context->{'mapping'}->{'tsrange'} 
+            $tsr,
         );
         if ( $intlock eq 'Interval' ) {
             $status = App::Dochazka::REST::Model::Interval::fetch_by_eid_and_tsrange( @ARGS );

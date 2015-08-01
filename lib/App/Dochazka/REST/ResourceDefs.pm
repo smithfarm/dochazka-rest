@@ -45,9 +45,11 @@ use Web::MREST::InitRouter;
 
 my $defs;
 my $tsrange_validation = qr/^[[(].*,.*[])]$/;
+my $ts_validation = qr/\d+-\d+-\d+/;
 my $term_validation = qr/^[[:alnum:]_][[:alnum:]_-]*$/;
 my $date_validation = qr/^\d{2,4}-\d{1,2}-\d{1,2}$/;
 my $priv_validation = qr/^(admin)|(active)|(inactive)|(passerby)$/i;
+my $psqlint_validation = qr/^[[:alnum:] ]+$/;
 
 
 
@@ -1639,6 +1641,29 @@ parameter (set to 'undef' for no limit).
 EOH
     },
 
+    # /interval/eid/:eid/:ts/:psqlint'
+    'interval/eid/:eid/:ts/:psqlint' => 
+    {
+        parent => 'interval',
+        handler => {
+            GET => 'handler_get_interval_eid',
+        },
+        acl_profile => 'active', 
+        cli => 'interval eid $EID $TS DELTA $PSQLINT',
+        validations => {
+            'eid' => 'Int',
+            'ts' => $ts_validation,
+            'psqlint' => $psqlint_validation,
+        },
+        description => 'Retrieve an arbitrary employee\'s intervals falling within a time period',
+        documentation => <<'EOH',
+=pod
+
+This is just like 'interval/eid/:eid/:tsrange' except that the time range is
+specified by giving a timestamp and a PostgreSQL time interval, e.g "1 week 3 days".
+EOH
+    },
+
     # /interval/fillup
     'interval/fillup' =>
     {
@@ -1864,6 +1889,29 @@ parameter (set to 'undef' for no limit).
 EOH
     },
 
+    # /interval/nick/:nick/:ts/:psqlint'
+    'interval/nick/:nick/:ts/:psqlint' => 
+    {
+        parent => 'interval',
+        handler => {
+            GET => 'handler_get_interval_nick',
+        },
+        acl_profile => 'active', 
+        cli => 'interval nick $NICK $TS DELTA $PSQLINT',
+        validations => {
+            'nick' => $term_validation,
+            'ts' => $ts_validation,
+            'psqlint' => $psqlint_validation,
+        },
+        description => 'Retrieve an arbitrary employee\'s intervals falling within a time period',
+        documentation => <<'EOH',
+=pod
+
+This is just like 'interval/nick/:nick/:tsrange' except that the time range is
+specified by giving a timestamp and a PostgreSQL time interval, e.g "1 week 3 days".
+EOH
+    },
+
     # /interval/self/:tsrange
     'interval/self/:tsrange' => 
     {
@@ -1890,6 +1938,28 @@ interval report-generators do not have to handle changes in employee status.
 By default, the number of intervals returned is limited to 500. This number
 can be changed via the DOCHAZKA_INTERVAL_SELECT_LIMIT site configuration
 parameter (set to 'undef' for no limit).
+EOH
+    },
+
+    # /interval/self/:ts/:psqlint'
+    'interval/:self/:ts/:psqlint' => 
+    {
+        parent => 'interval',
+        handler => {
+            GET => 'handler_get_interval_self',
+        },
+        acl_profile => 'active', 
+        cli => 'INTERVAL SELF $TS DELTA $PSQLINT',
+        validations => {
+            'ts' => $ts_validation,
+            'psqlint' => $psqlint_validation,
+        },
+        description => 'Retrieve one\'s own intervals falling within a time period',
+        documentation => <<'EOH',
+=pod
+
+This is just like 'interval/self/:tsrange' except that the time range is
+specified by giving a timestamp and a PostgreSQL time interval, e.g "1 week 3 days".
 EOH
     },
 
