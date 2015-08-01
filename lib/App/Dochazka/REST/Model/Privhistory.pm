@@ -36,7 +36,7 @@ use 5.012;
 use strict;
 use warnings FATAL => 'all';
 use App::CELL qw( $CELL $log $meta $site );
-use App::Dochazka::REST::Model::Shared qw( load cud );
+use App::Dochazka::REST::Model::Shared qw( cud get_history load );
 use Data::Dumper;
 use Params::Validate qw( :all );
 use Try::Tiny;
@@ -349,7 +349,7 @@ array will be empty. If there is a DBI error, the payload will be undefined.
 
 sub get_privhistory {
     my $context = shift;
-    return App::Dochazka::REST::Model::Shared::get_history( 'priv', $context->{'dbix_conn'}, @_ );
+    return get_history( 'priv', $context->{'dbix_conn'}, @_ );
 }
 
 
