@@ -65,6 +65,7 @@ use App::Dochazka::REST::Model::Shared qw(
     priv_by_eid 
     schedule_by_eid 
     select_set_of_single_scalar_rows
+    timestamp_delta_plus
 );
 use App::Dochazka::REST::ResourceDefs;
 use App::Dochazka::REST::Shared qw( :ALL );  # all the shared_* functions
@@ -1710,8 +1711,15 @@ sub _handler_get_intlock {
         my $mapping = $context->{'mapping'};
         my ( $status, $tsr );
         $tsr = $mapping->{'tsrange'} if $mapping->{'tsrange'};
-        $tsr = timestamp_delta_add( $mapping->{'ts'}, $mapping->{'psqlint'} ) 
-            if $mapping->{'ts'} and $mapping->{'psqlint'};
+        if ( $mapping->{'ts'} and $mapping->{'psqlint'} ) {
+            $status = timestamp_delta_plus( 
+                $context->{'dbix_conn'}, 
+                $mapping->{'ts'}, 
+                $mapping->{'psqlint'} 
+            ); 
+            return $status unless $status->ok;
+            $tsr = "[ " . $mapping->{ts} . ", " . $status->payload . " )";
+        }
             
         my @ARGS = (
             $context->{'dbix_conn'},

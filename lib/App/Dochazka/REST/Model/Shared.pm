@@ -703,11 +703,13 @@ sub select_single {
         keys => { type => ARRAYREF },
     } );
     my ( $status, @results );
+    $log->info( "select_single keys: " . Dumper( $ARGS{keys} ) );
     try {
         $ARGS{'conn'}->run( fixup => sub {
             @results = $_->selectrow_array( $ARGS{'sql'}, undef, @{ $ARGS{'keys'} } );
         } );
         my $count = scalar( @results ) ? 1 : 0;
+        $log->info( "count: $count" );
         $status = ( $count )
             ? $CELL->status_ok( 'DISPATCH_RECORDS_FOUND', 
                 args => [ $count ], count => $count, payload => \@results )
@@ -800,7 +802,12 @@ will contain the resulting timestamp.
 =cut
 
 sub timestamp_delta_minus {
-    my ( $conn, $ts, $delta ) = @_;
+    my ( $conn, $ts, $delta ) = validate_pos( @_,
+        { isa => 'DBIx::Connector' },
+        { type => SCALAR },
+        { type => SCALAR },
+    );
+    $log->info( "timestamp_delta_minus: timestamp $ts, delta $delta" );
     my $status = select_single(
         conn => $conn,
         sql => "SELECT CAST( ? AS timestamptz ) - CAST( ? AS interval )",
@@ -825,7 +832,12 @@ will contain the resulting timestamp.
 =cut
 
 sub timestamp_delta_plus {
-    my ( $conn, $ts, $delta ) = @_;
+    my ( $conn, $ts, $delta ) = validate_pos( @_, 
+        { isa => 'DBIx::Connector' },
+        { type => SCALAR },
+        { type => SCALAR },
+    );
+    $log->info( "timestamp_delta_plus: timestamp $ts, delta $delta" );
     my $status = select_single(
         conn => $conn,
         sql => "SELECT CAST( ? AS timestamptz ) + CAST( ? AS interval )",

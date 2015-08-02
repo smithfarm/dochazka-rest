@@ -218,6 +218,17 @@ foreach my $user ( qw( root active ) ) {
     is( ref( $status->payload->[0] ), 'HASH' );
     is( $status->payload->[0]->{'long_desc'}, $iae_interval_long_desc );
     is( $status->payload->[0]->{'iid'}, $iae_iid );
+
+    note( "let $user use GET interval/eid/:eid/:ts/:psqlint to list it" );
+    $status = req( $test, 200, $user, 'GET', "interval/eid/$eid_active/1958-01-01/1 year" );
+    is( $status->level, 'OK' );
+    is( $status->code, 'DISPATCH_RECORDS_FOUND' );
+    ok( defined( $status->payload ) );
+    is( ref( $status->payload ), 'ARRAY' );
+    is( scalar( @{ $status->payload } ), 1, "interval count is 1" );
+    is( ref( $status->payload->[0] ), 'HASH' );
+    is( $status->payload->[0]->{'long_desc'}, $iae_interval_long_desc );
+    is( $status->payload->[0]->{'iid'}, $iae_iid );
 }
 
 note( "let active try to GET interval/eid/:eid/:tsrange on another user\'s intervals" );

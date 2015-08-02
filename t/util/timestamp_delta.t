@@ -38,7 +38,7 @@ use 5.012;
 use strict;
 use warnings FATAL => 'all';
 
-use App::CELL::Test::LogToFile;
+#use App::CELL::Test::LogToFile;
 use App::CELL qw( $meta $site );
 use Data::Dumper;
 use App::Dochazka::REST::ConnBank qw( $dbix_conn );
