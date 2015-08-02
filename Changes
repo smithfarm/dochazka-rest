@@ -3073,3 +3073,11 @@ SPLIT OFF App::MREST into separate distribution
 - Util/Timestamp.pm: drop deprecated module
 - Build.PL: require Date::Holidays::CZ version 0.08
 
+0.482  2015-08-02 14:14 CEST
+- Implement timestamp_delta_plus() and timestamp_delta_minus()
+- t/util/timestamp_delta.t: add two tests with more complex psqlintervals
+- Implement interval/eid/:eid/:ts/:psqlint and related resources
+- t/dispatch/interval_lock.t: add easy-to-implement test cases for 
+  - GET interval/eid/:eid/:ts/:psqlint
+  - GET interval/nick/:nick/:ts/:psqlint
+
