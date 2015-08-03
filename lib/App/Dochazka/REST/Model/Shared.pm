@@ -34,10 +34,10 @@ package App::Dochazka::REST::Model::Shared;
 
 use 5.012;
 use strict;
-use warnings FATAL => 'all';
+use warnings;
+
 use App::CELL qw( $CELL $log $meta $site );
 use Data::Dumper;
-use Date::Holidays::CZ qw( holidays );
 use JSON;
 use Params::Validate qw( :all );
 use Try::Tiny;
@@ -73,7 +73,6 @@ our @EXPORT_OK = qw(
     cud 
     decode_schedule_json 
     get_history
-    holidays_in_tsrange
     load 
     load_multiple 
     noof 
@@ -368,34 +367,6 @@ sub get_history {
             args => [ $counter ], payload => $result, count => $counter ) 
         : $CELL->status_notice( 'DISPATCH_NO_RECORDS_FOUND', 
             payload => $result, count => $counter );
-}
-
-
-=head2 holidays_in_tsrange
-
-Given two canonicalized dates, extract the from and to dates
-and return a status object. Upon success, the payload will contain a list of
-holidays between those two dates (inclusive).
-
-If no tsrange is given, defaults to the current year.
-
-=cut
-
-sub holidays_in_daterange {
-    my ( $conn, $tsr ) = validate_pos( @_,
-        { isa => 'DBIx::Connector' },
-        { type => SCALAR, optional => 1 },
-    );
-
-    my $holidays;
-
-    if ( ! $tsr ) {
-        $holidays = holidays( FORMAT => '%Y-%m-%d' );
-    } else {
-
-        # split and validate $tsr at the same time
-
-    }
 }
 
 

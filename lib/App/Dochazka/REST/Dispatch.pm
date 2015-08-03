@@ -65,10 +65,12 @@ use App::Dochazka::REST::Model::Shared qw(
     priv_by_eid 
     schedule_by_eid 
     select_set_of_single_scalar_rows
+    split_tsrange
     timestamp_delta_plus
 );
 use App::Dochazka::REST::ResourceDefs;
 use App::Dochazka::REST::Shared qw( :ALL );  # all the shared_* functions
+use App::Dochazka::REST::Util::Holiday qw( holidays_in_daterange );
 use App::Dochazka::REST::Util::Schedule qw( intervals_in_schedule );
 use Data::Dumper;
 use Module::Runtime qw( use_module );
@@ -339,10 +341,39 @@ sub handler_holiday_tsrange {
     $log->debug( "Entering " . __PACKAGE__ . "::handler_holiday_tsrange, pass number $pass" );
     
     # first pass
-    return 1 if $pass == 1;
+    if ( $pass == 1 ) {
+        my $status = split_tsrange( 
+            $self->context->{'dbix_conn'},
+            $self->context->{'mapping'}->{'tsrange'},
+        );
+        if ( $status->not_ok or 
+             ( $status->ok and 
+               ( 
+                 ! defined( $status->payload->[0] ) or
+                 ! defined( $status->payload->[1] ) 
+               )
+             )
+           ) 
+        {
+            $status->{'http_code'} = 400;
+            $self->mrest_declare_status( $status );
+            return 0;
+        }
+        my $datereg = qr/(\d+-\d+-\d+)/;
+        my ( $begin ) = $status->payload->[0] =~ $datereg;
+        my ( $end ) = $status->payload->[1] =~ $datereg;
+        $self->context->{'stashed_value'} = { 
+            "date_range" => { 
+                "begin" => $begin, 
+                "end" => $end,
+            }
+        };
+    }
 
     # second pass
-    return $CELL->status_ok( "HOLIDAY_TSRANGE_WIP" );
+    return $CELL->status_ok( 'DOCHAZKA_HOLIDAYS_IN_TSRANGE', payload =>
+        holidays_in_daterange( %{ $self->context->{'stashed_value'}->{'date_range'} } )
+    );
 }
 
 
