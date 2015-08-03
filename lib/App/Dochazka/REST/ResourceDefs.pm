@@ -267,6 +267,27 @@ property with the value 'undef' or any unrecognized privilege level string (like
 EOH
     },
 
+    # /holiday/:tsrange
+    'holiday/:tsrange' =>
+    {
+        parent => '/',
+        handler => {
+            'GET' => 'handler_holiday_tsrange',
+        },
+        acl_profile => 'passerby',
+        cli => 'handler $TSRANGE',
+        validations => {
+            'tsrange' => $tsrange_validation,
+        },
+        description => 'Get a list of holidays that fall within the given tsrange',
+        documentation => <<'EOH',
+=pod
+
+This resource takes a tsrange and returns a list of holidays (dates) that 
+fall within that tsrange.
+EOH
+    },
+
     # noop
     'noop' =>
     { 

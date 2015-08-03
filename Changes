@@ -3077,6 +3077,7 @@ SPLIT OFF App::MREST into separate distribution
 - Implement timestamp_delta_plus() and timestamp_delta_minus()
 - t/util/timestamp_delta.t: add two tests with more complex psqlintervals
 - Implement interval/eid/:eid/:ts/:psqlint and related resources
+  Fixes: https://github.com/smithfarm/dochazka-rest/issues/15
 - t/dispatch/interval_lock.t: add easy-to-implement test cases for 
   - GET interval/eid/:eid/:ts/:psqlint
   - GET interval/nick/:nick/:ts/:psqlint

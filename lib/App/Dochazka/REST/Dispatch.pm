@@ -328,6 +328,24 @@ sub handler_forbidden {
 }
 
 
+=head3 handler_holiday_tsrange
+
+Handler for 'holiday/:tsrange' resource.
+
+=cut
+
+sub handler_holiday_tsrange {
+    my ( $self, $pass ) = @_;
+    $log->debug( "Entering " . __PACKAGE__ . "::handler_holiday_tsrange, pass number $pass" );
+    
+    # first pass
+    return 1 if $pass == 1;
+
+    # second pass
+    return $CELL->status_ok( "HOLIDAY_TSRANGE_WIP" );
+}
+
+
 =head3 handler_param
 
 Handler for 'param/:type/:param' resource.
