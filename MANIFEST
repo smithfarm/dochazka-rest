@@ -72,6 +72,7 @@ t/model/during_range.t
 t/model/employee.t
 t/model/general/id.t
 t/model/general/reset.t
+t/model/general/split_tsrange.t
 t/model/interval_lock.t
 t/model/privhistory.t
 t/model/schedintvls.t
