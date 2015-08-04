@@ -1759,19 +1759,10 @@ sub _handler_get_intlock {
         return 0 unless $emp;
 
         # determine the tsrange
-        my $mapping = $context->{'mapping'};
-        my ( $status, $tsr );
-        $tsr = $mapping->{'tsrange'} if $mapping->{'tsrange'};
-        if ( $mapping->{'ts'} and $mapping->{'psqlint'} ) {
-            $status = timestamp_delta_plus( 
-                $context->{'dbix_conn'}, 
-                $mapping->{'ts'}, 
-                $mapping->{'psqlint'} 
-            ); 
-            return $status unless $status->ok;
-            $tsr = "[ " . $mapping->{ts} . ", " . $status->payload . " )";
-        }
-            
+        my $status = _tsrange_from_context( $context );
+        return $status unless $status->ok;
+        my $tsr = $status->payload;
+
         my @ARGS = (
             $context->{'dbix_conn'},
             $emp->eid,
@@ -2684,6 +2675,34 @@ sub handler_delete_schedule_scode {
 
     # second pass
     return $context->{'stashed_schedule_object'}->delete( $context );
+}
+
+=head2 Helper functions
+
+=head3 _tsrange_from_mapping
+
+Given a mapping that contains C<ts> and C<psqlint> properties (i.e.
+a timestamp and a PostgreSQL interval), return a status object that,
+if the delta add operation is successful, will contain a proper 
+timestamp.
+
+=cut
+
+sub _tsrange_from_context { 
+    my $context = shift;
+    my $mapping = $context->{'mapping'};
+    my ( $status, $tsr );
+    $tsr = $mapping->{'tsrange'} if $mapping->{'tsrange'};
+    if ( $mapping->{'ts'} and $mapping->{'psqlint'} ) {
+        $status = timestamp_delta_plus( 
+            $context->{'dbix_conn'}, 
+            $mapping->{'ts'}, 
+            $mapping->{'psqlint'} 
+        ); 
+        return $status unless $status->ok;
+        $tsr = "[ " . $mapping->{ts} . ", " . $status->payload . " )";
+    }
+    return $CELL->status_ok( 'SUCCESS', payload => $tsr );
 }
 
 1;
