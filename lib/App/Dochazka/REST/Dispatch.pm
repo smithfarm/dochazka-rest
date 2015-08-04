@@ -346,17 +346,19 @@ sub handler_holiday_tsrange {
             $self->context->{'dbix_conn'},
             $self->context->{'mapping'}->{'tsrange'},
         );
-        if ( $status->not_ok or 
-             ( $status->ok and 
-               ( 
-                 ! defined( $status->payload->[0] ) or
-                 ! defined( $status->payload->[1] ) 
-               )
-             )
-           ) 
-        {
-            $status->{'http_code'} = 400;
+        if ( $status->not_ok ) {
+            $status->{'http_code'} = ( $status->code eq 'DOCHAZKA_DBI_ERR' )
+                ? 500 
+                : 400;
             $self->mrest_declare_status( $status );
+            return 0;
+        }
+        if ( $status->ok and ( ! defined( $status->payload->[0] ) or ! defined( $status->payload->[1] ) ) ) {
+            $self->mrest_declare_status( 
+                level => 'ERR', 
+                code => 400,
+                explanation => 'DISPATCH_UNBOUNDED_TSRANGE',
+            );
             return 0;
         }
         my $datereg = qr/(\d+-\d+-\d+)/;
