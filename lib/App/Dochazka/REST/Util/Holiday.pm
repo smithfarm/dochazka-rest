@@ -36,6 +36,7 @@ use 5.012;
 use strict;
 use warnings;
 
+use Date::Calc qw( Add_Delta_Days Day_of_Week );
 use Date::Holidays::CZ qw( holidays );
 use Params::Validate qw( :all );
 
@@ -75,7 +76,7 @@ are in YYYY-MM-DD format!
 =cut 
 
 use Exporter qw( import );
-our @EXPORT_OK = qw( holidays_in_daterange );
+our @EXPORT_OK = qw( get_tomorrow holidays_in_daterange is_weekend );
 
 
 
@@ -151,6 +152,44 @@ sub holidays_in_daterange {
         holidays => \%retval
     };
 }
+
+
+=head2 is_weekend
+
+Simple function that takes a canonicalized date string in 
+the format YYYY-MM-DD and returns a true or false value 
+indicating whether or not the date falls on a weekend.
+
+=cut
+
+sub is_weekend {
+    my $cdate = shift;  # cdate == Canonicalized Date String YYYY-MM-DD
+    my ( $year, $month, $day ) = $cdate =~ m/^(\d{4})-(\d{2})-(\d{2})$/;
+    my $dow = Day_of_Week( $year, $month, $day );
+    return ( $dow == 6 or $dow == 7 )
+        ? 1
+        : 0;
+}
+
+
+=head2 get_tomorrow
+
+Given a canonicalized date string in the format YYYY-MM-DD, return 
+the next date (i.e. "tomorrow" from the perspective of the given date).
+
+=cut
+
+sub get_tomorrow {
+    my $cdate = shift;  # cdate == Canonicalized Date String YYYY-MM-DD
+    my ( $year, $month, $day ) = $cdate =~ m/^(\d{4})-(\d{2})-(\d{2})$/;
+    my ( $tyear, $tmonth, $tday ) = Add_Delta_Days( $year, $month, $day, 1 );
+    return "$tyear-" . sprintf( "%02d", $tmonth ) . "-" . sprintf( "%02d", $tday );
+}
+
+
+=head2 Helper functions
+
+=cut
 
 # $inequality can be "before" or "after"
 sub _eliminate_dates {
