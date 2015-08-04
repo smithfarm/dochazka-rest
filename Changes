@@ -3082,3 +3082,13 @@ SPLIT OFF App::MREST into separate distribution
   - GET interval/eid/:eid/:ts/:psqlint
   - GET interval/nick/:nick/:ts/:psqlint
 
+0.483  2015-08-04 09:44 CEST
+- t/dispatch/holiday.t: add test cases
+- Dispatch.pm: handle explicit infinity in handler_holiday_tsrange()
+- Be careful with unbounded tsranges
+- t/model/general/split_tsrange.t: add unit to test split_tsrange() function
+- t/dispatch/holiday.t: lay groundwork for a unit to test GET holiday/:tsrange
+- Implement GET holiday/:tsrange
+- Add infrastructure for GET holiday/:tsrange
+- Dispatch.pm: abstract _tsrange_from_mapping() into a helper function
+
