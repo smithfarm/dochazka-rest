@@ -364,17 +364,15 @@ sub handler_holiday_tsrange {
             );
             return 0;
         }
-        $self->context->{'stashed_value'} = { 
-            "date_range" => { 
+        $self->context->{'stashed_daterange'} = { 
                 "begin" => $begin, 
                 "end" => $end,
-            }
         };
     }
 
     # second pass
     return $CELL->status_ok( 'DOCHAZKA_HOLIDAYS_IN_TSRANGE', payload =>
-        holidays_in_daterange( %{ $self->context->{'stashed_value'}->{'date_range'} } )
+        holidays_in_daterange( %{ $self->context->{'stashed_daterange'} } )
     );
 }
 
@@ -2679,12 +2677,12 @@ sub handler_delete_schedule_scode {
 
 =head2 Helper functions
 
-=head3 _tsrange_from_mapping
+=head3 _tsrange_from_context
 
-Given a mapping that contains C<ts> and C<psqlint> properties (i.e.
-a timestamp and a PostgreSQL interval), return a status object that,
-if the delta add operation is successful, will contain a proper 
-timestamp.
+Given a mapping containing either a C<tsrange> property or, alternatively, 
+a pair of properties C<ts> and C<psqlint> (i.e.  a timestamp and a PostgreSQL
+interval), return a status object that, if the delta add operation is
+successful, will contain a proper timestamp.
 
 =cut
 
