@@ -84,11 +84,20 @@ our @EXPORT_OK = qw( holidays_in_daterange );
 
 =head2 holidays_in_daterange
 
-Given two canonicalized dates, extract the from and to dates
-and return a status object. Upon success, the payload will contain a list of
-holidays between those two dates (inclusive).
+Given a PARAMHASH containing two properties, C<begin> and C<end>, the values of
+which are canonicalized dates (possibly produced by the C<split_tsrange()>
+function), determine the holidays that fall within this range. The function will
+always return a status object. Upon success, the payload will contain a hashref
+with the following structure:
 
-If no tsrange is given, defaults to the current year.
+{
+    'date_range' => { 'begin' => ..., 'end' => ... },
+    'holidays' => { ... },
+}
+
+where the C<holidays> hashref will have keys in the format C<YYYY-MM-DD>, one
+for each holiday. The idea is that this hash can be used to quickly look up
+if a given date is a holiday.
 
 =cut
 
@@ -117,29 +126,29 @@ sub holidays_in_daterange {
         end_date => $ARGS{end},
     );
     
-    my @retval;
+    my %retval;
 
     foreach my $year ( sort( keys %{ $daterange_by_year } ) ) {
         my $holidays = holidays( YEAR => $year, FORMAT => '%Y-%m-%d', WEEKENDS => 0 );
         if ( $year eq $begin_year and $year eq $end_year ) {
             my $tmp_holidays = _eliminate_dates( $holidays, $ARGS{begin}, "before" );
             $holidays = _eliminate_dates( $tmp_holidays, $ARGS{end}, "after" );
-            push @retval, @$holidays;
+            map { $retval{$_} = ''; } @$holidays;
         } elsif ( $year eq $begin_year ) {
-            push @retval, @{ _eliminate_dates( $holidays, $ARGS{begin}, "before" ) };
+            map { $retval{$_} = ''; } @{ _eliminate_dates( $holidays, $ARGS{begin}, "before" ) };
         } elsif ( $year eq $end_year ) {
-            push @retval, @{ _eliminate_dates( $holidays, $ARGS{end}, "after" ) };
+            map { $retval{$_} = ''; } @{ _eliminate_dates( $holidays, $ARGS{end}, "after" ) };
         } else {
-            push @retval, @$holidays;
+            map { $retval{$_} = ''; } @$holidays;
         }
     }
 
     return {
         date_range => {
-            begin_date => $ARGS{begin},
-            end_date => $ARGS{end},
+            begin => $ARGS{begin},
+            end => $ARGS{end},
         },
-        holidays => \@retval
+        holidays => \%retval
     };
 }
 

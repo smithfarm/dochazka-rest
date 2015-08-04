@@ -125,6 +125,6 @@ ok( $res->payload );
 ok( $res->payload->{'date_range'} );
 is( ref( $res->payload->{'date_range'} ), 'HASH' );
 ok( $res->payload->{'holidays'} );
-is( ref( $res->payload->{'holidays'} ), 'ARRAY' );
+is( ref( $res->payload->{'holidays'} ), 'HASH' );
 
 done_testing;
