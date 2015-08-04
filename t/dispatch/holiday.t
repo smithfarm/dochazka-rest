@@ -117,7 +117,7 @@ $res = req( $test, 500, 'demo', 'GET', 'holiday/[ , infinity )' );
 is( $res->level, 'ERR' );
 is( $res->code, 'DOCHAZKA_DBI_ERR' );
 
-note( "range" );
+note( "legal range 1" );
 $res = req( $test, 200, 'demo', 'GET', 'holiday/[ 2014-04-23,2015-01-01 )' );
 is( $res->level, 'OK' );
 is( $res->code, 'DOCHAZKA_HOLIDAYS_IN_TSRANGE' );
@@ -126,5 +126,37 @@ ok( $res->payload->{'date_range'} );
 is( ref( $res->payload->{'date_range'} ), 'HASH' );
 ok( $res->payload->{'holidays'} );
 is( ref( $res->payload->{'holidays'} ), 'HASH' );
+
+note( "legal range 2" );
+$res = req( $test, 200, 'demo', 'GET', 'holiday/["May 1, 2013", "February 4, 2015")' );
+is( $res->level, 'OK' );
+is( $res->code, 'DOCHAZKA_HOLIDAYS_IN_TSRANGE' );
+ok( $res->payload );
+is( ref( $res->payload ), 'HASH' );
+is_deeply( $res->payload, {
+      'holidays' => {
+         '2013-05-01' => '',
+         '2013-05-08' => '',
+         '2013-07-05' => '',
+         '2013-10-28' => '',
+         '2013-12-24' => '',
+         '2013-12-25' => '',
+         '2013-12-26' => '',
+         '2014-01-01' => '',
+         '2014-04-21' => '',
+         '2014-05-01' => '',
+         '2014-05-08' => '',
+         '2014-10-28' => '',
+         '2014-11-17' => '',
+         '2014-12-24' => '',
+         '2014-12-25' => '',
+         '2014-12-26' => '',
+         '2015-01-01' => '',
+      },
+      'date_range' => {
+         'end' => '2015-02-04',
+         'begin' => '2013-05-01'
+      }
+} );
 
 done_testing;
