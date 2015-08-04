@@ -353,7 +353,10 @@ sub handler_holiday_tsrange {
             $self->mrest_declare_status( $status );
             return 0;
         }
-        if ( $status->ok and ( ! defined( $status->payload->[0] ) or ! defined( $status->payload->[1] ) ) ) {
+        my $datereg = qr/(\d+-\d+-\d+)/;
+        my ( $begin ) = $status->payload->[0] =~ $datereg;
+        my ( $end ) = $status->payload->[1] =~ $datereg;
+        if ( ! defined( $begin ) or ! defined( $end ) ) {
             $self->mrest_declare_status( 
                 level => 'ERR', 
                 code => 400,
@@ -361,9 +364,6 @@ sub handler_holiday_tsrange {
             );
             return 0;
         }
-        my $datereg = qr/(\d+-\d+-\d+)/;
-        my ( $begin ) = $status->payload->[0] =~ $datereg;
-        my ( $end ) = $status->payload->[1] =~ $datereg;
         $self->context->{'stashed_value'} = { 
             "date_range" => { 
                 "begin" => $begin, 
