@@ -67,8 +67,64 @@ my $res;
 #=============================
 docu_check($test, "holiday/:tsrange");
 
-note( "provoke a DBI error" );
+note( "provoke a 400 error (1)" );
 $res = req( $test, 400, 'demo', 'GET', 'holiday/[,)' );
-diag( Dumper $res );
+is( $res->level, 'ERR' );
+is( $res->code, 'DISPATCH_UNBOUNDED_TSRANGE' );
+
+note( "provoke a 400 error (2)" );
+$res = req( $test, 400, 'demo', 'GET', 'holiday/[2015-01-01,)' );
+is( $res->level, 'ERR' );
+is( $res->code, 'DISPATCH_UNBOUNDED_TSRANGE' );
+
+note( "provoke a 400 error (3)" );
+$res = req( $test, 400, 'demo', 'GET', 'holiday/[,2015-01-01)' );
+is( $res->level, 'ERR' );
+is( $res->code, 'DISPATCH_UNBOUNDED_TSRANGE' );
+
+note( "range with explicit infinity (1)" );
+$res = req( $test, 400, 'demo', 'GET', 'holiday/[ "1-nov-2014",infinity )' );
+is( $res->level, 'ERR' );
+is( $res->code, 'DISPATCH_UNBOUNDED_TSRANGE' );
+
+note( "range with explicit infinity (2)" );
+$res = req( $test, 400, 'demo', 'GET', 'holiday/[,infinity )' );
+is( $res->level, 'ERR' );
+is( $res->code, 'DISPATCH_UNBOUNDED_TSRANGE' );
+
+note( "range with explicit infinity (3)" );
+$res = req( $test, 400, 'demo', 'GET', 'holiday/[ infinity, infinity )' );
+is( $res->level, 'ERR' );
+is( $res->code, 'DISPATCH_UNBOUNDED_TSRANGE' );
+
+note( "provoke a 500 error (1)" );
+$res = req( $test, 500, 'demo', 'GET', 'holiday/[ , )' );
+is( $res->level, 'ERR' );
+is( $res->code, 'DOCHAZKA_DBI_ERR' );
+
+note( "provoke a 500 error (2)" );
+$res = req( $test, 500, 'demo', 'GET', 'holiday/[ 2015-01-01, )' );
+is( $res->level, 'ERR' );
+is( $res->code, 'DOCHAZKA_DBI_ERR' );
+
+note( "provoke a 500 error (3)" );
+$res = req( $test, 500, 'demo', 'GET', 'holiday/[ ,2015-01-01 )' );
+is( $res->level, 'ERR' );
+is( $res->code, 'DOCHAZKA_DBI_ERR' );
+
+note( "provoke a 500 error (4)" );
+$res = req( $test, 500, 'demo', 'GET', 'holiday/[ , infinity )' );
+is( $res->level, 'ERR' );
+is( $res->code, 'DOCHAZKA_DBI_ERR' );
+
+note( "range" );
+$res = req( $test, 200, 'demo', 'GET', 'holiday/[ 2014-04-23,2015-01-01 )' );
+is( $res->level, 'OK' );
+is( $res->code, 'DOCHAZKA_HOLIDAYS_IN_TSRANGE' );
+ok( $res->payload );
+ok( $res->payload->{'date_range'} );
+is( ref( $res->payload->{'date_range'} ), 'HASH' );
+ok( $res->payload->{'holidays'} );
+is( ref( $res->payload->{'holidays'} ), 'ARRAY' );
 
 done_testing;
