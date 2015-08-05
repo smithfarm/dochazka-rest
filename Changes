@@ -3092,3 +3092,12 @@ SPLIT OFF App::MREST into separate distribution
 - Add infrastructure for GET holiday/:tsrange
 - Dispatch.pm: abstract _tsrange_from_mapping() into a helper function
 
+0.484  2015-08-05 16:32 CEST
+- Util/Holiday.pm: implement holidays_and_weekends() function
+- t/util/holiday.t: add unit to test Util/Holiday.pm
+- Util/Holiday.pm: add is_weekend() and get_tomorrow()
+- t/dispatch/holiday.t: add another test case
+- Util/Holiday.pm: make holidays_in_daterange() put holidays in a hash
+  instead of an array
+- Dispatch.pm: cleanup code and improve documentation
+
