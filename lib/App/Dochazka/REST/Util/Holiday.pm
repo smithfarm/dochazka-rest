@@ -76,7 +76,12 @@ are in YYYY-MM-DD format!
 =cut 
 
 use Exporter qw( import );
-our @EXPORT_OK = qw( get_tomorrow holidays_in_daterange is_weekend );
+our @EXPORT_OK = qw( 
+    get_tomorrow 
+    holidays_and_weekends
+    holidays_in_daterange 
+    is_weekend 
+);
 
 
 
@@ -184,6 +189,45 @@ sub get_tomorrow {
     my ( $year, $month, $day ) = $cdate =~ m/^(\d{4})-(\d{2})-(\d{2})$/;
     my ( $tyear, $tmonth, $tday ) = Add_Delta_Days( $year, $month, $day, 1 );
     return "$tyear-" . sprintf( "%02d", $tmonth ) . "-" . sprintf( "%02d", $tday );
+}
+
+
+=head2 holidays_and_weekends
+
+Given a date range (same as in C<holidays_in_daterange>, above), return
+a reference to a hash of hashes that looks like this (for sample dates):
+
+    {
+        '2015-01-01' => { holiday => 1 },
+        '2015-01-02' => {},
+        '2015-01-03' => { weekend => 1 },
+        '2015-01-04' => { weekend => 1 },
+        '2015-01-05' => {},
+        '2015-01-06' => {},
+    }
+
+=cut
+
+sub holidays_and_weekends {
+    my ( %ARGS ) = validate( @_, {
+        begin => { type => SCALAR },
+        end => { type => SCALAR },
+    } );
+    my $res = holidays_in_daterange( %ARGS );
+    my $holidays = $res->{'holidays'};
+    $res = {};
+    my $d = $ARGS{begin};
+    while ( $d ne get_tomorrow( $ARGS{end} ) ) {
+        $res->{ $d } = {};
+        if ( is_weekend( $d ) ) {
+            $res->{ $d }->{ 'weekend' } = 1;
+        }
+        if ( exists( $holidays->{ $d } ) ) {
+            $res->{ $d }->{ 'holiday' } = 1;
+        }
+        $d = get_tomorrow( $d );
+    }
+    return $res;
 }
 
 
