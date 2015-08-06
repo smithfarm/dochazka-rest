@@ -36,6 +36,7 @@ use 5.012;
 use strict;
 use warnings FATAL => 'all';
 use App::CELL qw( $CELL $log );
+use App::Dochazka::REST::Util::Holiday qw( holidays_in_daterange );
 use Data::Dumper;
 use Date::Calc qw(
     Add_Delta_Days
@@ -45,6 +46,7 @@ use Date::Calc qw(
 );
 use Exporter qw( import );
 use JSON;
+use Params::Validate qw( :all );
 
 
 
@@ -132,9 +134,16 @@ is some kind of error.
 =cut
 
 sub intervals_in_schedule {
-    my ( $rest_sched_json, $tsrange ) = @_;
+    my ( %ARGS ) = validate( @_, {
+        schedule_json => { type => SCALAR },
+        tsrange => { type => SCALAR },
+        include_holidays => { type => SCALAR },
+    } ) ;
     $log->debug( "Entering " . __PACKAGE__ . "::intervals_in_schedule" );
-    $log->debug( "Schedule (JSON): $rest_sched_json" );
+    $log->debug( "Schedule (JSON): $ARGS{'schedule_json'}" );
+    my $rest_sched_json = $ARGS{'schedule_json'};
+    my $tsrange = $ARGS{'tsrange'};
+    my $include_holidays = $ARGS{'include_holidays'};
 
     my $rest_sched_hash_lower = _init_lower_sched_hash( $rest_sched_json );
     #$log->debug( "Schedule re-keyed: " . Dumper( $rest_sched_hash_lower ) );
@@ -151,6 +160,12 @@ sub intervals_in_schedule {
             ( check_date( $ly, $lm, $ld ) ) and 
             ( check_date( $uy, $um, $ud ) ) 
         );
+
+    # get holidays
+    my $holidays = holidays_in_daterange(
+        'begin' => sprintf( "%04d-%02d-%02d", $ly, $lm, $ld ),
+        'end' => sprintf( "%04d-%02d-%02d", $uy, $um, $ud ),
+    );
 
     # get canonical representations
     my ( $canon_lower, $canon_upper ) = (
@@ -170,6 +185,11 @@ sub intervals_in_schedule {
     my $payload = [];
     while ( $canon_lower <= $canon_upper ) {
         my ( $y, $m, $d ) = Days_to_Date( $canon_lower );
+        my $date = sprintf( "%04d-%02d-%02d", $y, $m, $d );
+        if ( exists( $holidays->{ $date } ) ) {
+            $canon_lower += 1;
+            next;
+        }
         my $ndow = Day_of_Week( $y, $m, $d );
 
         # get schedule entries starting on that DOW, 
