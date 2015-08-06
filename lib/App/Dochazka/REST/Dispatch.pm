@@ -53,7 +53,9 @@ use App::Dochazka::REST::Model::Employee qw(
     list_employees_by_priv 
     noof_employees_by_priv 
 );
-use App::Dochazka::REST::Model::Interval;
+use App::Dochazka::REST::Model::Interval qw(
+    fetch_intervals_by_eid_and_tsrange
+);
 use App::Dochazka::REST::Model::Lock qw(
     fetch_locks_by_eid_and_tsrange
 );
@@ -1770,7 +1772,7 @@ sub _handler_get_intlock {
             $tsr,
         );
         if ( $intlock eq 'Interval' ) {
-            $status = App::Dochazka::REST::Model::Interval::fetch_by_eid_and_tsrange( @ARGS );
+            $status = fetch_intervals_by_eid_and_tsrange( @ARGS );
         } elsif ( $intlock eq 'Lock' ) {
             $status = fetch_locks_by_eid_and_tsrange( @ARGS );
         } else {

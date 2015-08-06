@@ -37,6 +37,7 @@ use strict;
 use warnings FATAL => 'all';
 use App::CELL qw( $CELL $log $meta $site );
 use Data::Dumper;
+use App::Dochazka::REST::Model::Lock qw( locks_in_tsrange );
 use App::Dochazka::REST::Model::Shared qw( canonicalize_tsrange cud load load_multiple );
 use Params::Validate qw( :all );
 
@@ -120,16 +121,14 @@ For basic activity interval workflow, see C<t/010-interval.t>.
 
 This module provides the following exports:
 
-=over 
-
-=item * L<iid_exists> (boolean function)
-
-=back
-
 =cut
 
 use Exporter qw( import );
-our @EXPORT_OK = qw( iid_exists );
+our @EXPORT_OK = qw( 
+    delete_intervals_by_eid_and_tsrange
+    fetch_intervals_by_eid_and_tsrange
+    iid_exists 
+);
 
 
 
@@ -246,7 +245,7 @@ BEGIN {
 }
 
 
-=head2 fetch_by_eid_and_tsrange
+=head2 fetch_intervals_by_eid_and_tsrange
 
 Given an EID and a tsrange, return all that employee's intervals that 
 fall within that tsrange.
@@ -258,7 +257,7 @@ changes in employee status.
 
 =cut
 
-sub fetch_by_eid_and_tsrange {
+sub fetch_intervals_by_eid_and_tsrange {
     my ( $conn, $eid, $tsrange ) = validate_pos( @_,
         { isa => 'DBIx::Connector' },
         { type => SCALAR },
@@ -275,12 +274,12 @@ sub fetch_by_eid_and_tsrange {
 
     # check for priv change during tsrange
     my $priv_change = $emp->priv_change_during_range( $conn, $tsrange );
-    $log->debug( "fetch_by_eid_and_tsrange: priv_change_during_range returned " . Dumper( $priv_change ) );
+    $log->debug( "fetch_intervals_by_eid_and_tsrange: priv_change_during_range returned " . Dumper( $priv_change ) );
     if ( $priv_change ) {
         return $CELL->status_err( 'DOCHAZKA_EMPLOYEE_PRIV_CHANGED' );
     }
     my $schedule_change = $emp->schedule_change_during_range( $conn, $tsrange );
-    $log->debug( "fetch_by_eid_and_tsrange: schedule_change_during_range returned " . Dumper($schedule_change ) );
+    $log->debug( "fetch_intervals_by_eid_and_tsrange: schedule_change_during_range returned " . Dumper($schedule_change ) );
     if ( $schedule_change ) {
         return $CELL->status_err( 'DOCHAZKA_EMPLOYEE_SCHEDULE_CHANGED' );
     }
@@ -294,7 +293,7 @@ sub fetch_by_eid_and_tsrange {
 }
 
 
-=head2 delete_by_eid_and_tsrange
+=head2 delete_intervals_by_eid_and_tsrange
 
 Given an EID and a tsrange, delete all that employee's intervals that 
 fall within that tsrange.
@@ -303,7 +302,7 @@ Returns a status object.
 
 =cut
 
-sub delete_by_eid_and_tsrange {
+sub delete_intervals_by_eid_and_tsrange {
     my ( $conn, $eid, $tsrange ) = validate_pos( @_,
         { isa => 'DBIx::Connector' },
         { type => SCALAR },
@@ -311,9 +310,14 @@ sub delete_by_eid_and_tsrange {
     );
 
     # check for locks
-
-    my $status = fetch_by_eid_and_tsrange( $conn, $eid, $tsrange );
+    my $status = locks_in_tsrange( $conn, $eid, $tsrange );
     return $status unless $status->ok;
+    if ( $status->payload > 0 ) {
+        return $CELL->status_err( 'DOCHAZKA_TSRANGE_LOCKED', args => [ $tsrange, $status->payload ] );
+    }
+
+    #$status = fetch_intervals_by_eid_and_tsrange( $conn, $eid, $tsrange );
+    #return $status unless $status->ok;
 
     
 }
