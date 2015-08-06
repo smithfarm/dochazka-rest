@@ -3101,3 +3101,13 @@ SPLIT OFF App::MREST into separate distribution
   instead of an array
 - Dispatch.pm: cleanup code and improve documentation
 
+0.485  2015-08-06 21:56 CEST
+- t/dispatch/interval_lock.t: lay groundwork for DELETE on interval/... resources
+- ResourceDefs.pm: lay groundwork for DELETE interval/... resources
+- Dispatch.pm: vet fillup date range using canonicalize_date()
+- Model/Shared.pm: add a canonicalize_date() function
+- Util/Holidays.pm: change structure of holidays_in_daterange() return value
+- Util/Schedule.pm: make intervals_in_schedule() avoid holidays
+  Fixes: https://github.com/smithfarm/dochazka-rest/issues/10
+- Dispatch.pm: intervals_in_schedule() takes a PARAMHASH now
+
