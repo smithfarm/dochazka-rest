@@ -2375,7 +2375,11 @@ sub _handler_get_interval_fillup {
         die "AGAH!" unless ref( $sched_obj) eq 'App::Dochazka::REST::Model::Schedule'
             and $sched_obj->schedule =~ m/high_dow/;
 
-        $status = intervals_in_schedule( $sched_obj->schedule, $tsr );
+        $status = intervals_in_schedule( 
+            schedule_json => $sched_obj->schedule, 
+            tsrange => $tsr,
+            include_holidays => 0,
+        );
         if ( $status->not_ok ) {
             $status->{'http_code'} = 400;
             $self->mrest_declare_status( $status );
