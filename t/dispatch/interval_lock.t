@@ -181,13 +181,18 @@ foreach my $il ( qw( interval lock ) ) {
         }
     }
     
-    note( 'PUT, POST, DELETE' );
-    foreach my $method ( qw( PUT POST DELETE ) ) {
+    note( 'PUT, POST' );
+    foreach my $method ( qw( PUT POST ) ) {
         note( 'Testing method: $method' );
         foreach my $user ( 'demo', 'root', 'WAMBLE owdkmdf 5**' ) {
             req( $test, 405, $user, $method, "$base/2/[,)" );
         }
     }
+
+    #note( 'DELETE' );
+    #foreach my $user ( 'demo', 'root', 'WAMBLE owdkmdf 5**' ) {
+    #    req( $test, 403, $user, 'DELETE', "$base/2/[,)" );
+    #}
 }
 
 note( 'create an interval as active employee' );
@@ -811,9 +816,7 @@ foreach my $il ( qw( interval lock ) ) {
     $base = "$il/nick";
     docu_check($test, "$base/:nick/:tsrange");
 
-    #
-    # GET
-    #
+    note( 'GET' );
     # - these users have no intervals but these users can't find that out
     foreach my $user ( qw( demo inactive active ) ) {
         foreach my $nick ( qw( root whanger foobar tsw57 ) ) {
@@ -836,14 +839,18 @@ foreach my $il ( qw( interval lock ) ) {
     }
 }
 
-#
-# PUT, POST, DELETE
-#
+note( 'PUT, POST' );
 foreach my $method ( qw( PUT POST DELETE ) ) {
+    note( "Testing the $method method" );
     foreach my $user ( 'demo', 'root', 'WAMBLE owdkmdf 5**' ) {
         req( $test, 405, $user, $method, "$base/demo/[,)" );
     }
 }
+
+#note( 'DELETE' );
+#foreach my $user ( 'demo', 'root', 'WAMBLE owdkmdf 5**' ) {
+#    req( $test, 403, $user, 'DELETE', "$base/demo/[,)" );
+#}
 
 note( 'create an interval as active employee' );
 my $ian_interval_long_desc = 'ian interval';
@@ -908,10 +915,8 @@ foreach my $il ( qw( interval lock ) ) {
     $base = "$il/self";
     docu_check($test, "$base/:tsrange");
     
-    #
-    # GET
-    #
-    # - demo is not allowed to see any intervals (even his own)
+    note( 'GET' );
+    note( 'demo is not allowed to see any intervals (even his own)' );
     req( $test, 403, 'demo', 'GET', "$base/[,)" );
     # - active has one interval in 2014 and one lock in 2013
     $status = req( $test, 200, 'active', 'GET',
@@ -919,25 +924,30 @@ foreach my $il ( qw( interval lock ) ) {
     is( $status->level, 'OK' );
     is( $status->code, 'DISPATCH_RECORDS_FOUND' );
     is( $status->{'count'}, 1 );
-    #
-    # - tsranges that fail validations clause
+    
+    note( 'tsranges that fail validations clause' );
     foreach my $tsr ( @failing_tsranges ) {
         foreach my $user ( qw( demo inactive active root ) ) {
             req( $test, 400, $user, 'GET', "$base/$tsr" );
         }
     }
     
-    #
-    # PUT, POST, DELETE
-    #
-    foreach my $method ( qw( PUT POST DELETE ) ) {
+    note( 'PUT, POST' );
+    foreach my $method ( qw( PUT POST ) ) {
+        note( 'Testing method: $method' );
         foreach my $user ( 'demo', 'root', 'WAMBLE owdkmdf 5**' ) {
             req( $test, 405, $user, $method, "$base/[,)" );
         }
     }
+
+    #note( 'DELETE' );
+    #foreach my $user ( 'demo', 'root', 'WAMBLE owdkmdf 5**' ) {
+    #    req( $test, 403, $user, 'DELETE', "$base/2/[,)" );
+    #}
 }
     
 # delete the testing interval
+
 $status = req( $test, 200, 'root', 'DELETE', "/interval/iid/$test_iid" );
 is( $status->level, 'OK' );
 is( $status->code, 'DOCHAZKA_CUD_OK' );
