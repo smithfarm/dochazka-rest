@@ -96,7 +96,7 @@ use Exporter qw( import );
 our @EXPORT_OK = qw( 
     fetch_locks_by_eid_and_tsrange
     lid_exists 
-    tsrange_free_of_locks
+    locks_in_tsrange
 );
 
 
@@ -241,15 +241,16 @@ sub fetch_locks_by_eid_and_tsrange {
 }
 
 
-=head2 tsrange_free_of_locks
+=head2 locks_in_tsrange
 
 Given a L<DBIx::Connector> object, an EID, and a tsrange, returns a status 
-object. If the level is OK, the payload can be expected to contain a boolean
-value stating whether that range is free of locks.
+object. If the level is OK, the payload can be expected to contain an integer
+representing the number of locks that overlap (contain points in common) with
+this tsrange.
 
 =cut
 
-sub tsrange_free_of_locks {
+sub locks_in_tsrange {
     my ( $conn, $eid, $tsrange ) = validate_pos( @_,
         { isa => 'DBIx::Connector' },
         { type => SCALAR },
@@ -257,10 +258,14 @@ sub tsrange_free_of_locks {
     );
 
     my $status = fetch_locks_by_eid_and_tsrange( $conn, $eid, $tsrange );
-    return $status unless $status->ok;
-
-    my $count = @{ $status->payload };
-    return $CELL->status_ok( "SUCCESS", payload => $count );
+    if ( $status->ok ) {
+        my $count = @{ $status->payload };
+        return $CELL->status_ok( "DOCHAZKA_NUMBER_OF_LOCKS", payload => $count );
+    }
+    if ( $status->level eq 'NOTICE' and $status->code eq 'DISPATCH_NO_RECORDS_FOUND' ) {
+        return $CELL->status_ok( "DOCHAZKA_NUMBER_OF_LOCKS", payload => 0 );
+    }
+    return $status;
 }
 
 
