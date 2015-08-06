@@ -90,16 +90,14 @@ that period is fully locked for the given employee.
 
 This module provides the following exports:
 
-=over 
-
-=item * C<lid_exists> (boolean) 
-
-=back
-
 =cut
 
 use Exporter qw( import );
-our @EXPORT_OK = qw( lid_exists );
+our @EXPORT_OK = qw( 
+    fetch_locks_by_eid_and_tsrange
+    lid_exists 
+    tsrange_free_of_locks
+);
 
 
 
@@ -219,7 +217,15 @@ BEGIN {
 }
 
 
-sub fetch_by_eid_and_tsrange {
+=head2 fetch_locks_by_eid_and_tsrange
+
+Given a L<DBIx::Connector> object, an EID, and a tsrange, returns a status
+object. Upon successfully finding one or more locks, the payload will 
+be an ARRAYREF of lock records.
+
+=cut
+
+sub fetch_locks_by_eid_and_tsrange {
     my ( $conn, $eid, $tsrange ) = validate_pos( @_,
         { isa => 'DBIx::Connector' },
         { type => SCALAR },
@@ -232,6 +238,29 @@ sub fetch_by_eid_and_tsrange {
         sql => $site->SQL_LOCK_SELECT_BY_EID_AND_TSRANGE,
         keys => [ $eid, $tsrange ],
     );
+}
+
+
+=head2 tsrange_free_of_locks
+
+Given a L<DBIx::Connector> object, an EID, and a tsrange, returns a status 
+object. If the level is OK, the payload can be expected to contain a boolean
+value stating whether that range is free of locks.
+
+=cut
+
+sub tsrange_free_of_locks {
+    my ( $conn, $eid, $tsrange ) = validate_pos( @_,
+        { isa => 'DBIx::Connector' },
+        { type => SCALAR },
+        { type => SCALAR, optional => 1 },
+    );
+
+    my $status = fetch_locks_by_eid_and_tsrange( $conn, $eid, $tsrange );
+    return $status unless $status->ok;
+
+    my $count = @{ $status->payload };
+    return $CELL->status_ok( "SUCCESS", payload => $count );
 }
 
 

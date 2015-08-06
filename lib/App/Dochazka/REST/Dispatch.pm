@@ -54,7 +54,9 @@ use App::Dochazka::REST::Model::Employee qw(
     noof_employees_by_priv 
 );
 use App::Dochazka::REST::Model::Interval;
-use App::Dochazka::REST::Model::Lock;
+use App::Dochazka::REST::Model::Lock qw(
+    fetch_locks_by_eid_and_tsrange
+);
 use App::Dochazka::REST::Model::Privhistory qw( get_privhistory );
 use App::Dochazka::REST::Model::Schedhistory qw( get_schedhistory );
 use App::Dochazka::REST::Model::Schedintvls;
@@ -1770,7 +1772,7 @@ sub _handler_get_intlock {
         if ( $intlock eq 'Interval' ) {
             $status = App::Dochazka::REST::Model::Interval::fetch_by_eid_and_tsrange( @ARGS );
         } elsif ( $intlock eq 'Lock' ) {
-            $status = App::Dochazka::REST::Model::Lock::fetch_by_eid_and_tsrange( @ARGS );
+            $status = fetch_locks_by_eid_and_tsrange( @ARGS );
         } else {
             die "AGACHCH!! Horrible, horrible: " . ( $intlock || "undef" );
         }
