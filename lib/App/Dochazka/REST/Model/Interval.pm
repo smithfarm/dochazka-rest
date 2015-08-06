@@ -259,7 +259,11 @@ changes in employee status.
 =cut
 
 sub fetch_by_eid_and_tsrange {
-    my ( $conn, $eid, $tsrange ) = @_;
+    my ( $conn, $eid, $tsrange ) = validate_pos( @_,
+        { isa => 'DBIx::Connector' },
+        { type => SCALAR },
+        { type => SCALAR, optional => 1 },
+    );
 
     my $status = canonicalize_tsrange( $conn, $tsrange );
     return $status unless $status->ok;
@@ -289,6 +293,30 @@ sub fetch_by_eid_and_tsrange {
     );
 }
 
+
+=head2 delete_by_eid_and_tsrange
+
+Given an EID and a tsrange, delete all that employee's intervals that 
+fall within that tsrange.
+
+Returns a status object.
+
+=cut
+
+sub delete_by_eid_and_tsrange {
+    my ( $conn, $eid, $tsrange ) = validate_pos( @_,
+        { isa => 'DBIx::Connector' },
+        { type => SCALAR },
+        { type => SCALAR, optional => 1 },
+    );
+
+    # check for locks
+
+    my $status = fetch_by_eid_and_tsrange( $conn, $eid, $tsrange );
+    return $status unless $status->ok;
+
+    
+}
 
 =head1 AUTHOR
 
