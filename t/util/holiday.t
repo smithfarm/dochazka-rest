@@ -91,7 +91,7 @@ is_deeply( $res, [
 
 note( 'get holidays in that date range' );
 $res = holidays_in_daterange( %dr );
-my $holidays = $res->{'holidays'};
+my $holidays = $res;
 is_deeply( $holidays, { '2015-01-01' => '' } );
 
 note( 'walk the date range again, adding W for weekend and H for holiday' );
@@ -119,7 +119,7 @@ note( 'get holidays in a bigger date range' );
     "end" => '2015-05-30'
 );
 $res = holidays_in_daterange( %dr );
-$holidays = $res->{'holidays'};
+$holidays = $res;
 is_deeply( $holidays, { 
     '2015-01-01' => '',
     '2015-04-06' => '',

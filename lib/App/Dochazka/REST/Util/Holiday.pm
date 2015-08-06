@@ -97,13 +97,12 @@ always return a status object. Upon success, the payload will contain a hashref
 with the following structure:
 
 {
-    'date_range' => { 'begin' => ..., 'end' => ... },
-    'holidays' => { ... },
+    '2015-01-01' => '',
+    '2015-05-01' => '',
 }
 
-where the C<holidays> hashref will have keys in the format C<YYYY-MM-DD>, one
-for each holiday. The idea is that this hash can be used to quickly look up
-if a given date is a holiday.
+The idea is that this hash can be used to quickly look up if a given date is a
+holiday.
 
 =cut
 
@@ -149,13 +148,7 @@ sub holidays_in_daterange {
         }
     }
 
-    return {
-        date_range => {
-            begin => $ARGS{begin},
-            end => $ARGS{end},
-        },
-        holidays => \%retval
-    };
+    return \%retval;
 }
 
 
@@ -206,6 +199,9 @@ a reference to a hash of hashes that looks like this (for sample dates):
         '2015-01-06' => {},
     }
 
+Note that the range is always considered inclusive -- i.e. the bounding
+dates of the range will be included in the hash.
+
 =cut
 
 sub holidays_and_weekends {
@@ -213,9 +209,8 @@ sub holidays_and_weekends {
         begin => { type => SCALAR },
         end => { type => SCALAR },
     } );
-    my $res = holidays_in_daterange( %ARGS );
-    my $holidays = $res->{'holidays'};
-    $res = {};
+    my $holidays = holidays_in_daterange( %ARGS );
+    my $res = {};
     my $d = $ARGS{begin};
     while ( $d ne get_tomorrow( $ARGS{end} ) ) {
         $res->{ $d } = {};
