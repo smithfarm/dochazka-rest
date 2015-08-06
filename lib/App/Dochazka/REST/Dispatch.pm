@@ -60,6 +60,7 @@ use App::Dochazka::REST::Model::Schedhistory qw( get_schedhistory );
 use App::Dochazka::REST::Model::Schedintvls;
 use App::Dochazka::REST::Model::Schedule qw( get_all_schedules );
 use App::Dochazka::REST::Model::Shared qw( 
+    canonicalize_date
     canonicalize_tsrange 
     load_multiple 
     priv_by_eid 
@@ -2334,16 +2335,25 @@ sub _handler_get_interval_fillup {
         return 0 unless $emp;
 
         # get and validate tsrange entered by the user
-        my $lower = $context->{'mapping'}->{'lower'};
-        my $upper = $context->{'mapping'}->{'upper'};
+        my $status;
         my $dbix_conn = $context->{'dbix_conn'};
-        my $status = canonicalize_tsrange( $dbix_conn, "( $lower 00:00, $upper 23:59 )" );
-        if( $status->not_ok ) {
+        my $lower = $context->{'mapping'}->{'lower'};
+        $status = canonicalize_date( $dbix_conn, $lower );
+        if ( $status->not_ok ) {
             $status->{'http_code'} = 400;
             $self->mrest_declare_status( $status );
             return 0;
         }
-        my $tsr = $status->payload;
+        $lower = $status->payload;
+        my $upper = $context->{'mapping'}->{'upper'};
+        $status = canonicalize_date( $dbix_conn, $upper );
+        if ( $status->not_ok ) {
+            $status->{'http_code'} = 400;
+            $self->mrest_declare_status( $status );
+            return 0;
+        }
+        $upper = $status->payload;
+        my $tsr = "( $lower 00:00, $upper 23:59 )";
 
         # check for priv and schedule changes during the tsrange
         if ( $emp->priv_change_during_range( $dbix_conn, $tsr ) ) {
