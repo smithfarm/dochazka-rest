@@ -42,7 +42,12 @@ use warnings FATAL => 'all';
 use App::CELL qw( $meta $site );
 use Data::Dumper;
 use App::Dochazka::REST::ConnBank qw( $dbix_conn );
-use App::Dochazka::REST::Model::Shared qw( canonicalize_ts canonicalize_tsrange split_tsrange );
+use App::Dochazka::REST::Model::Shared qw( 
+    canonicalize_date
+    canonicalize_ts 
+    canonicalize_tsrange 
+    split_tsrange 
+);
 use App::Dochazka::REST::Test;
 use Test::More;
 
@@ -94,5 +99,17 @@ $status = split_tsrange( $dbix_conn, '[2015-01-99, 2015-02-1)' );
 is( $status->level, 'ERR' );
 is( $status->code, 'DOCHAZKA_DBI_ERR' );
 like( $status->text, qr#date/time field value out of range: "2015-01-99"# );
+
+note( 'attempt to canonicalize an innocent-looking date' );
+$status = canonicalize_date( $dbix_conn, 'May 1, 2015' );
+is( $status->level, 'OK' );
+is( $status->code, 'DISPATCH_RECORDS_FOUND' );
+is( $status->payload, '2015-05-01' );
+
+note( 'attempt to canonicalize an out-of-range date' );
+$status = canonicalize_date( $dbix_conn, 'Jan 99, 2015' );
+is( $status->level, 'ERR' );
+is( $status->code, 'DOCHAZKA_DBI_ERR' );
+like( $status->text, qr#date/time field value out of range: "Jan 99, 2015"# );
 
 done_testing;

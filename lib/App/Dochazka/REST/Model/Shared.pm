@@ -68,6 +68,7 @@ the data model
 
 use Exporter qw( import );
 our @EXPORT_OK = qw( 
+    canonicalize_date
     canonicalize_ts
     canonicalize_tsrange
     cud 
@@ -90,6 +91,30 @@ our @EXPORT_OK = qw(
 
 
 =head1 FUNCTIONS
+
+
+=head2 canonicalize_date
+
+Given a string that PostgreSQL might recognize as a date, pass it to
+the database via the SQL statement:
+
+    SELECT CAST( ? AS date )
+
+and return the resulting status object.
+
+=cut
+
+sub canonicalize_date {
+    my ( $conn, $ts ) = @_;
+
+    my $status = select_single(
+        conn => $conn,
+        sql => 'SELECT CAST( ? AS date )',
+        keys => [ $ts ],
+    );
+    _replace_payload_array_with_string( $status ) if $status->ok;
+    return $status;    
+}
 
 
 =head2 canonicalize_ts
