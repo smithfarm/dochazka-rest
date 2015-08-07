@@ -45,10 +45,13 @@ use App::Dochazka::Common qw( $yesterday $today $tomorrow );
 use App::Dochazka::REST::ConnBank qw( $dbix_conn );
 use App::Dochazka::REST::Model::Activity;
 use App::Dochazka::REST::Model::Employee;
-use App::Dochazka::REST::Model::Interval qw( iid_exists );
+use App::Dochazka::REST::Model::Interval qw( 
+    delete_intervals_by_eid_and_tsrange
+    iid_exists 
+);
 use App::Dochazka::REST::Model::Lock qw( 
-    lid_exists 
     count_locks_in_tsrange
+    lid_exists 
 );
 use App::Dochazka::REST::Model::Schedule;
 use App::Dochazka::REST::Model::Schedhistory;
@@ -243,7 +246,7 @@ is( $status->code, 'DOCHAZKA_NUMBER_OF_LOCKS' );
 is( ref( $status->payload ), '' );
 is( $status->payload, 0 );
 
-note( 'try an interval just for the heck of it' );
+note( 'try a tsrange just for the heck of it' );
 $status = count_locks_in_tsrange( $dbix_conn, $emp->eid, "[$today 23:00, $tomorrow 1:00)" );
 is( $status->level, 'OK' );
 is( $status->code, 'DOCHAZKA_NUMBER_OF_LOCKS' );
@@ -274,8 +277,17 @@ is( $status->code, 'DOCHAZKA_NUMBER_OF_LOCKS' );
 is( ref( $status->payload ), '' );
 is( $status->payload, 2 );
 
-# CLEANUP:
-# 1. delete the locks
+note( 'attempt to delete all intervals in the tsrange [$today 08:00, $today 12:00)' );
+$status = delete_intervals_by_eid_and_tsrange( 
+    $dbix_conn, 
+    $emp->eid, 
+    "[$today 00:00, $tomorrow 24:00)",
+);
+is( $status->level, 'ERR' );
+is( $status->code, 'DOCHAZKA_TSRANGE_LOCKED' );
+like( $status->text, qr/The tsrange .+ intersects with 2 locks/ );
+
+note( 'delete the locks' );
 foreach my $lock ( @locks_to_delete ) {
     ok( lid_exists( $dbix_conn, $lock->lid ) );
     $status = $lock->delete( $faux_context );
@@ -284,13 +296,16 @@ foreach my $lock ( @locks_to_delete ) {
 }
 is( noof( $dbix_conn, 'locks' ), 0 );
 
-# 2. delete the interval
-ok( iid_exists( $dbix_conn, $t_iid ) );
-is( noof( $dbix_conn, 'intervals' ), 1 );
-$status = $int->delete( $faux_context );
-ok( $status->ok );
-ok( ! iid_exists( $dbix_conn, $t_iid ) );
-is( noof( $dbix_conn, 'intervals' ), 0 );
+note( 'second attempt to delete all intervals in the tsrange' );
+$status = delete_intervals_by_eid_and_tsrange( 
+    $dbix_conn, 
+    $emp->eid, 
+    "[$today 00:00, $tomorrow 24:00)",
+);
+is( $status->level, 'OK' );
+is( $status->code, 'DOCHAZKA_CUD_OK' );
+# payload contains number of records deleted
+is( $status->payload, 1 );
 
 # 3. delete the privhistory record
 $status = $mrsched_ph->delete( $faux_context );

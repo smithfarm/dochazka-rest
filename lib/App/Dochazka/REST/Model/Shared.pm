@@ -154,7 +154,7 @@ through the database in the SQL statement:
     SELECT CAST( ? AS tstzrange )
 
 Returns an L<App::CELL::Status> object. If the status code is OK, then the
-tsrange is OK and its canonicalized form is in the paylmad. Otherwise, some
+tsrange is OK and its canonicalized form is in the payload. Otherwise, some
 kind of error occurred, as described in the status object.
 
 =cut

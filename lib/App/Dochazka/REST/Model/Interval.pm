@@ -38,7 +38,14 @@ use warnings FATAL => 'all';
 use App::CELL qw( $CELL $log $meta $site );
 use Data::Dumper;
 use App::Dochazka::REST::Model::Lock qw( count_locks_in_tsrange );
-use App::Dochazka::REST::Model::Shared qw( canonicalize_tsrange cud load load_multiple );
+use App::Dochazka::REST::Model::Shared qw( 
+    canonicalize_tsrange 
+    cud 
+    cud_generic
+    load 
+    load_multiple 
+    select_single
+);
 use Params::Validate qw( :all );
 
 # we get 'spawn', 'reset', and accessors from parent
@@ -266,6 +273,7 @@ sub fetch_intervals_by_eid_and_tsrange {
 
     my $status = canonicalize_tsrange( $conn, $tsrange );
     return $status unless $status->ok;
+    $tsrange = $status->payload;
 
     $status = App::Dochazka::REST::Model::Employee->load_by_eid( $conn, $eid );
     return $status unless $status->ok;
@@ -278,6 +286,8 @@ sub fetch_intervals_by_eid_and_tsrange {
     if ( $priv_change ) {
         return $CELL->status_err( 'DOCHAZKA_EMPLOYEE_PRIV_CHANGED' );
     }
+
+    # check for sched change during tsrange
     my $schedule_change = $emp->schedule_change_during_range( $conn, $tsrange );
     $log->debug( "fetch_intervals_by_eid_and_tsrange: schedule_change_during_range returned " . Dumper($schedule_change ) );
     if ( $schedule_change ) {
@@ -309,17 +319,60 @@ sub delete_intervals_by_eid_and_tsrange {
         { type => SCALAR, optional => 1 },
     );
 
-    # check for locks
-    my $status = count_locks_in_tsrange( $conn, $eid, $tsrange );
+    my $status = canonicalize_tsrange( $conn, $tsrange );
     return $status unless $status->ok;
+    $tsrange = $status->payload;
+
+    # check for locks
+    $status = count_locks_in_tsrange( $conn, $eid, $tsrange );
+    return $status unless $status->ok;
+    # number of locks is in $status->payload
     if ( $status->payload > 0 ) {
         return $CELL->status_err( 'DOCHAZKA_TSRANGE_LOCKED', args => [ $tsrange, $status->payload ] );
     }
 
-    #$status = fetch_intervals_by_eid_and_tsrange( $conn, $eid, $tsrange );
-    #return $status unless $status->ok;
+    $status = App::Dochazka::REST::Model::Employee->load_by_eid( $conn, $eid );
+    return $status unless $status->ok;
+    my $emp = $status->payload;
+    die "AAGHA!" unless $emp->eid == $eid;
 
+    # check for priv change during tsrange
+    my $search_tsrange = $tsrange;
+    $search_tsrange =~ s/^[^\[]*\[/\(/;
+    my $priv_change = $emp->priv_change_during_range( $conn, $search_tsrange );
+    $log->debug( "delete_intervals_by_eid_and_tsrange: priv_change_during_range returned " . Dumper( $priv_change ) );
+    if ( $priv_change ) {
+        return $CELL->status_err( 'DOCHAZKA_EMPLOYEE_PRIV_CHANGED' );
+    }
+
+    # check for sched change during tsrange
+    my $schedule_change = $emp->schedule_change_during_range( $conn, $search_tsrange );
+    $log->debug( "delete_intervals_by_eid_and_tsrange: schedule_change_during_range returned " . Dumper($schedule_change ) );
+    if ( $schedule_change ) {
+        return $CELL->status_err( 'DOCHAZKA_EMPLOYEE_SCHEDULE_CHANGED' );
+    }
+
+    # check how many intervals we are talking about here
+    $status = select_single(
+        conn => $conn,
+        sql => $site->SQL_INTERVAL_SELECT_COUNT_BY_EID_AND_TSRANGE,
+        keys => [ $eid, $tsrange, $site->DOCHAZKA_INTERVAL_SELECT_LIMIT ],
+    );
+    return $status unless $status->ok;
+    # $status->payload contains [ $count ]
+    my $count = $status->payload->[0];
+
+    # if it's more than the limit, no go
+    return $CELL->status_err( 'DOCHAZKA_INTERVAL_DELETE_LIMIT_EXCEEDED', args => [ $count ] )
+        unless $count <= $site->DOCHAZKA_INTERVAL_DELETE_LIMIT;
     
+    # hmm, can we use select_single with a DELETE statement?
+    return cud_generic(
+        conn => $conn,
+        eid => $eid,
+        sql => $site->SQL_INTERVAL_DELETE_BY_EID_AND_TSRANGE,
+        bind_params => [ $eid, $tsrange ],
+    );
 }
 
 =head1 AUTHOR
