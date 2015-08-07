@@ -94,9 +94,9 @@ This module provides the following exports:
 
 use Exporter qw( import );
 our @EXPORT_OK = qw( 
+    count_locks_in_tsrange
     fetch_locks_by_eid_and_tsrange
     lid_exists 
-    locks_in_tsrange
 );
 
 
@@ -241,7 +241,7 @@ sub fetch_locks_by_eid_and_tsrange {
 }
 
 
-=head2 locks_in_tsrange
+=head2 count_locks_in_tsrange
 
 Given a L<DBIx::Connector> object, an EID, and a tsrange, returns a status 
 object. If the level is OK, the payload can be expected to contain an integer
@@ -250,7 +250,7 @@ this tsrange.
 
 =cut
 
-sub locks_in_tsrange {
+sub count_locks_in_tsrange {
     my ( $conn, $eid, $tsrange ) = validate_pos( @_,
         { isa => 'DBIx::Connector' },
         { type => SCALAR },

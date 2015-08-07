@@ -48,7 +48,7 @@ use App::Dochazka::REST::Model::Employee;
 use App::Dochazka::REST::Model::Interval qw( iid_exists );
 use App::Dochazka::REST::Model::Lock qw( 
     lid_exists 
-    locks_in_tsrange
+    count_locks_in_tsrange
 );
 use App::Dochazka::REST::Model::Schedule;
 use App::Dochazka::REST::Model::Schedhistory;
@@ -220,31 +220,31 @@ is( $status->level, 'ERR' );
 is( $status->code, 'DOCHAZKA_DBI_ERR' );
 like( $status->text, qr/effective timestamp conflicts with existing attendance interval/ );
 
-note( 'test locks_in_tsrange()' );
+note( 'test count_locks_in_tsrange()' );
 note( 'the lock interval is [$today 00:00, $today 24:00)' );
 note( 'so the answer should be resoundingly 1' );
-$status = locks_in_tsrange( $dbix_conn, $emp->eid, "[$today 00:00, $today 24:00)" );
+$status = count_locks_in_tsrange( $dbix_conn, $emp->eid, "[$today 00:00, $today 24:00)" );
 is( $status->level, 'OK' );
 is( $status->code, 'DOCHAZKA_NUMBER_OF_LOCKS' );
 is( ref( $status->payload ), '' );
 is( $status->payload, 1 );
 
 note( 'yesterday should contain 0 locks' );
-$status = locks_in_tsrange( $dbix_conn, $emp->eid, "[$yesterday 00:00, $yesterday 24:00)" );
+$status = count_locks_in_tsrange( $dbix_conn, $emp->eid, "[$yesterday 00:00, $yesterday 24:00)" );
 is( $status->level, 'OK' );
 is( $status->code, 'DOCHAZKA_NUMBER_OF_LOCKS' );
 is( ref( $status->payload ), '' );
 is( $status->payload, 0 );
 
 note( 'same for tomorrow' );
-$status = locks_in_tsrange( $dbix_conn, $emp->eid, "[$tomorrow 00:00, $tomorrow 24:00)" );
+$status = count_locks_in_tsrange( $dbix_conn, $emp->eid, "[$tomorrow 00:00, $tomorrow 24:00)" );
 is( $status->level, 'OK' );
 is( $status->code, 'DOCHAZKA_NUMBER_OF_LOCKS' );
 is( ref( $status->payload ), '' );
 is( $status->payload, 0 );
 
 note( 'try an interval just for the heck of it' );
-$status = locks_in_tsrange( $dbix_conn, $emp->eid, "[$today 23:00, $tomorrow 1:00)" );
+$status = count_locks_in_tsrange( $dbix_conn, $emp->eid, "[$today 23:00, $tomorrow 1:00)" );
 is( $status->level, 'OK' );
 is( $status->code, 'DOCHAZKA_NUMBER_OF_LOCKS' );
 is( ref( $status->payload ), '' );
@@ -268,7 +268,7 @@ is( noof( $dbix_conn, 'locks' ), 2 );
 push @locks_to_delete, $lock;
 
 note( 'number of locks from today to tomorrow should be two' );
-$status = locks_in_tsrange( $dbix_conn, $emp->eid, "[$today 00:00, $tomorrow 24:00)" );
+$status = count_locks_in_tsrange( $dbix_conn, $emp->eid, "[$today 00:00, $tomorrow 24:00)" );
 is( $status->level, 'OK' );
 is( $status->code, 'DOCHAZKA_NUMBER_OF_LOCKS' );
 is( ref( $status->payload ), '' );

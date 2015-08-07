@@ -37,7 +37,7 @@ use strict;
 use warnings FATAL => 'all';
 use App::CELL qw( $CELL $log $meta $site );
 use Data::Dumper;
-use App::Dochazka::REST::Model::Lock qw( locks_in_tsrange );
+use App::Dochazka::REST::Model::Lock qw( count_locks_in_tsrange );
 use App::Dochazka::REST::Model::Shared qw( canonicalize_tsrange cud load load_multiple );
 use Params::Validate qw( :all );
 
@@ -310,7 +310,7 @@ sub delete_intervals_by_eid_and_tsrange {
     );
 
     # check for locks
-    my $status = locks_in_tsrange( $conn, $eid, $tsrange );
+    my $status = count_locks_in_tsrange( $conn, $eid, $tsrange );
     return $status unless $status->ok;
     if ( $status->payload > 0 ) {
         return $CELL->status_err( 'DOCHAZKA_TSRANGE_LOCKED', args => [ $tsrange, $status->payload ] );
