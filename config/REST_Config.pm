@@ -231,6 +231,10 @@ set( 'DOCHAZKA_PROFILE_EDITABLE_FIELDS', {
 #     overly huge result sets)
 set( 'DOCHAZKA_INTERVAL_SELECT_LIMIT', undef );
 
+# DOCHAZKA_INTERVAL_DELETE_LIMIT
+#     highest possible number of intervals that can be deleted at one time
+set( 'DOCHAZKA_INTERVAL_DELETE_LIMIT', 250 );
+
 # DOCHAZKA_EMPLOYEE_MINIMAL_FIELDS
 #     list of fields to include in "GET employee/eid/:eid/minimal" and
 #     "GET employee/nick/:nick/minimal" and "GET employee/sec_id/:sec_id/minimal"
