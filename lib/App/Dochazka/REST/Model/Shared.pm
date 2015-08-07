@@ -72,6 +72,7 @@ our @EXPORT_OK = qw(
     canonicalize_ts
     canonicalize_tsrange
     cud 
+    cud_generic
     decode_schedule_json 
     get_history
     load 
@@ -292,6 +293,116 @@ sub cud {
     };
 
     $status = $CELL->status_ok( 'DOCHAZKA_CUD_OK', DBI_return_value => $rv, payload => $ARGS{'object'} ) 
+        unless $status;
+    return $status;
+}
+
+
+=head2 cud_generic
+
+Attempts to execute a generic Create, Update, or Delete database operation.
+Takes the following PARAMHASH:
+
+=over
+
+=item * conn
+
+The L<DBIx::Connector> object with which to gain access to the database.
+
+=item * eid
+
+The EID of the employee originating the request (needed for the audit triggers).
+
+=item * sql
+
+The SQL statement to execute (should be INSERT, UPDATE, or DELETE).
+
+=item * bind_params
+
+An array reference containing the bind values to be plugged into the SQL
+statement.
+
+=back
+
+Returns a status object.
+
+Important note: it is up to the programmer to not pass any SQL statement that
+might affect more than one record.
+
+=cut
+
+sub cud_generic {
+    my %ARGS = validate( @_, {
+        conn => { isa => 'DBIx::Connector' },
+        eid => { type => SCALAR },
+        sql => { type => SCALAR }, 
+        bind_params => { type => ARRAYREF }, # order must match SQL statement
+    } );
+
+    my ( $status, $rv );
+
+    try {
+        local $SIG{__WARN__} = sub {
+                die @_;
+            };
+
+        # start transaction
+        $ARGS{'conn'}->txn( fixup => sub {
+
+            # get DBI db handle
+            my $dbh = shift;
+
+            # set the dochazka.eid GUC session parameter
+            $dbh->do( $site->SQL_SET_DOCHAZKA_EID_GUC, undef, ( $ARGS{'eid'}+0 ) );
+
+            # prepare the SQL statement and bind parameters
+            my $sth = $dbh->prepare( $ARGS{'sql'} );
+            my $counter = 0;
+            map {
+                $counter += 1;
+                $sth->bind_param( $counter, $_ || undef );
+            } @{ $ARGS{'bind_params'} }; 
+
+            # execute the SQL statement
+            $rv = $sth->execute;
+            $log->debug( "cud_generic: DBI execute returned " . Dumper( $rv ) );
+            if ( $rv >= 1 ) {
+
+                # a record was returned; get the values
+                #my $rh = $sth->fetchrow_hashref;
+
+            } elsif ( $rv eq '0E0' ) {
+
+                ## no error, but no record returned either
+                #$status = $CELL->status_notice( 
+                #    'DOCHAZKA_CUD_NO_RECORDS_AFFECTED', 
+                #    args => [ $sth->{'Statement'} ] 
+                #); 
+            } elsif ( $rv == -1 ) {
+                $status = $CELL->status_err( 
+                    'DOCHAZKA_CUD_UNKNOWN_NUMBER_OF_RECORDS_AFFECTED', 
+                    args => [ $sth->{'Statement'} ] 
+                ); 
+                die 'jump to catch';
+            } else {
+                $status = $CELL->status_crit( 
+                    "AAAAAAAAAaaaaahhaAAAAAAAA! I\'m at a loss. I might be having a personal crisis!" 
+                );
+                die 'jump to catch';
+            }
+        } );
+    } catch {
+        my $errmsg = $_;
+        if ( not defined( $errmsg ) ) {
+            $log->err( '$_ undefined in catch' );
+            $errmsg = '<NONE>';
+        }
+        if ( not defined( $status ) ) {
+            $status = $CELL->status_err( 'DOCHAZKA_DBI_ERR', args => [ $errmsg ] );
+        }
+    };
+
+    $status = $CELL->status_ok( 'DOCHAZKA_CUD_OK', payload => $rv ) 
         unless $status;
     return $status;
 }
