@@ -47,9 +47,20 @@ set( 'SQL_INTERVAL_SELECT_BY_IID', q/
 #
 set( 'SQL_INTERVAL_SELECT_BY_EID_AND_TSRANGE', q/
       SELECT i.iid, i.eid, i.aid, a.code, i.intvl, i.long_desc, i.remark
-      FROM intervals i, activities a WHERE i.eid = ? AND i.intvl && ? AND i.aid = a.aid
+      FROM intervals i, activities a WHERE i.eid = ? AND i.intvl <@ ? AND i.aid = a.aid
       ORDER BY intvl
       LIMIT ?
+      / );
+
+#
+set( 'SQL_INTERVAL_SELECT_COUNT_BY_EID_AND_TSRANGE', q/
+      SELECT count(*) FROM intervals WHERE eid = ? AND intvl <@ ? 
+      LIMIT ?
+      / );
+
+#
+set( 'SQL_INTERVAL_DELETE_BY_EID_AND_TSRANGE', q/
+      DELETE FROM intervals WHERE eid = ? AND intvl <@ ? 
       / );
 
 #
