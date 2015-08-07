@@ -3111,3 +3111,15 @@ SPLIT OFF App::MREST into separate distribution
   Fixes: https://github.com/smithfarm/dochazka-rest/issues/10
 - Dispatch.pm: intervals_in_schedule() takes a PARAMHASH now
 
+0.486  2015-08-07 20:35 CEST
+- Model/Lock.pm: implement count_locks_in_tsrange() routine including test
+  cases
+- Add parameters to put upper limit of number of intervals that can be
+  deleted at once
+- sql/interval_Config.pm: make interval selects more conservative and add
+  SQL for deleting multiple intervals
+- Model/Shared.pm: add a cud_generic() function for CUD operations on
+  non-objects
+- Model/Interval.pm: working implementation of
+  delete_intervals_by_eid_and_tsrange() with rudimentary test case
+
