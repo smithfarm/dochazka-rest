@@ -41,6 +41,7 @@ use warnings FATAL => 'all';
 #use App::CELL::Test::LogToFile;
 use App::CELL qw( $meta $site );
 use Data::Dumper;
+use Date::Calc qw( Add_Delta_Days );
 use App::Dochazka::Common qw( $yesterday $today $tomorrow );
 use App::Dochazka::REST::ConnBank qw( $dbix_conn );
 use App::Dochazka::REST::Model::Activity;
@@ -57,6 +58,7 @@ use App::Dochazka::REST::Model::Schedule;
 use App::Dochazka::REST::Model::Schedhistory;
 use App::Dochazka::REST::Model::Shared qw( noof tsrange_equal );
 use App::Dochazka::REST::Test;
+use App::Dochazka::REST::Util::Holiday qw( get_tomorrow );
 use Plack::Test;
 use Test::More;
 
@@ -306,6 +308,100 @@ is( $status->level, 'OK' );
 is( $status->code, 'DOCHAZKA_CUD_OK' );
 # payload contains number of records deleted
 is( $status->payload, 1 );
+
+note( 'create a 80 intervals' );
+my $d = $today;
+my ( $by, $bm, $bd ) = $d =~ m/(\d+)-(\d+)-(\d+)/;
+my ( $ey, $em, $ed ) = Add_Delta_Days( $by, $bm, $bd, 40 );
+my $end_date = sprintf( "%04d-%02d-%02d", $ey, $em, $ed );
+my $count = 0;
+while ( $d ne $end_date ) {
+    foreach my $intvl ( "[ $d 08:00, $d 12:00 )", "[ $d 12:30, $d 16:30 )" ) {
+        $count += 1;
+        $int->iid( undef );
+        $int->intvl( $intvl );
+        $status = $int->insert( $faux_context );
+        is( $status->level, 'OK' );
+        is( $status->code, 'DOCHAZKA_CUD_OK' );
+        ok( $int->iid > 0 );
+    }
+    $d = get_tomorrow( $d );
+}
+is( $count, 80 );
+
+note( 'and promptly delete them all' );
+$status = delete_intervals_by_eid_and_tsrange( 
+    $dbix_conn, 
+    $emp->eid, 
+    "[$today 00:00, $d 24:00)",
+);
+is( $status->level, 'OK' );
+is( $status->code, 'DOCHAZKA_CUD_OK' );
+# payload contains number of records deleted
+is( $status->payload, 80 );
+
+note( 'create a 260 intervals' );
+$d = $today;
+( $by, $bm, $bd ) = $d =~ m/(\d+)-(\d+)-(\d+)/;
+( $ey, $em, $ed ) = Add_Delta_Days( $by, $bm, $bd, 65 );
+$end_date = sprintf( "%04d-%02d-%02d", $ey, $em, $ed );
+$count = 0;
+while ( $d ne $end_date ) {
+    foreach my $intvl ( "[ $d 08:00, $d 10:00 )", "[ $d 10:00, $d 12:00 )", "[ $d 12:30, $d 14:30 )", "[ $d 14:30, $d 16:30 )" ) {
+        $count += 1;
+        $int->iid( undef );
+        $int->intvl( $intvl );
+        $status = $int->insert( $faux_context );
+        if( $status->not_ok ) {
+            diag( "Count: $count" );
+            diag( Dumper $status );
+            BAIL_OUT(0);
+        }
+        is( $status->level, 'OK' );
+        is( $status->code, 'DOCHAZKA_CUD_OK' );
+        ok( $int->iid > 0 );
+    }
+    $d = get_tomorrow( $d );
+}
+is( $count, 260 );
+
+note( 'and try to delete them all, but fail because limit is 250 intervals deleted at one time' );
+$status = delete_intervals_by_eid_and_tsrange( 
+    $dbix_conn, 
+    $emp->eid, 
+    "[$today 00:00, $d 24:00)",
+);
+is( $status->level, 'ERR' );
+is( $status->code, 'DOCHAZKA_INTERVAL_DELETE_LIMIT_EXCEEDED' );
+
+note( 'delete them in two batches' );
+my ( $my, $mm, $md ) = $d =~ m/(\d+)-(\d+)-(\d+)/;
+( $my, $mm, $md ) = Add_Delta_Days( $my, $mm, $md, -30 );
+my $mid_d = sprintf( "%04d-%02d-%02d", $my, $mm, $md );
+
+note( 'first batch' );
+$status = delete_intervals_by_eid_and_tsrange( 
+    $dbix_conn, 
+    $emp->eid, 
+    "[$today 00:00, $mid_d 24:00)",
+);
+is( $status->level, 'OK' );
+is( $status->code, 'DOCHAZKA_CUD_OK' );
+## payload contains number of records deleted
+#diag( "Batch 1: " . $status->payload . " deleted" );
+is( $status->payload, 144 );
+
+note( 'second batch' );
+$status = delete_intervals_by_eid_and_tsrange( 
+    $dbix_conn, 
+    $emp->eid, 
+    "[$mid_d 00:00, $d 24:00)",
+);
+is( $status->level, 'OK' );
+is( $status->code, 'DOCHAZKA_CUD_OK' );
+## payload contains number of records deleted
+#diag( "Batch 2: " . $status->payload . " deleted" );
+is( $status->payload, 116 );
 
 # 3. delete the privhistory record
 $status = $mrsched_ph->delete( $faux_context );
