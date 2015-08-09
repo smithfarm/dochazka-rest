@@ -112,4 +112,27 @@ is( $status->level, 'ERR' );
 is( $status->code, 'DOCHAZKA_DBI_ERR' );
 like( $status->text, qr#date/time field value out of range: "Jan 99, 2015"# );
 
+# attempt to split_tsrange bogus tsranges individually
+my $bogus = [
+        "[)",
+        "[,)",
+        "[ ,)",
+        "(2014-07-34 09:00, 2014-07-14 17:05)",
+        "[2014-07-14 09:00, 2014-07-14 25:05]",
+        "( 2014-07-34 09:00, 2014-07-14 17:05)",
+        "[2014-07-14 09:00, 2014-07-14 25:05 ]",
+	"[,2014-07-14 17:00)",
+	"[ ,2014-07-14 17:00)",
+        "[2014-07-14 17:15,)",
+        "[2014-07-14 17:15, )",
+        "[ infinity, infinity)",
+	"[ infinity,2014-07-14 17:00)",
+        "[2014-07-14 17:15,infinity)",
+    ];
+map {
+        $status = split_tsrange( $dbix_conn, $_ );
+        #diag( $status->level . ' ' . $status->text );
+        is( $status->level, 'ERR' ); 
+    } @$bogus;
+
 done_testing;

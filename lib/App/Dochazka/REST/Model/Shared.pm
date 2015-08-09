@@ -894,7 +894,11 @@ sub split_tsrange {
         sql => 'SELECT lower(CAST( ? AS tstzrange )), upper(CAST( ? AS tstzrange ))',
         keys => [ $tsr, $tsr ],
     );
-    return $status;    
+    return $status unless $status->ok;
+    my ( $lower, $upper ) = @{ $status->payload };
+    return $CELL->status_err( 'UNBOUNDED_TSRANGE' ) unless defined( $lower ) and 
+        defined( $upper ) and $lower ne 'infinity' and $upper ne 'infinity';
+    return $status;
 }
 
 
