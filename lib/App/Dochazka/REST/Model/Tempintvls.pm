@@ -36,6 +36,7 @@ use 5.012;
 use strict;
 use warnings FATAL => 'all';
 use App::CELL qw( $CELL $log $meta $site );
+use App::Dochazka::REST::ConnBank qw( $dbix_conn );
 use App::Dochazka::REST::Model::Shared qw(
     split_tsrange
 );
@@ -44,12 +45,13 @@ use App::Dochazka::REST::Util::Date qw(
     canon_to_ymd
     ymd_to_canon
 );
-use App::Dochazka::REST::Util::Date qw(
+use App::Dochazka::REST::Util::Holiday qw(
     get_tomorrow
     holidays_in_daterange
 );
 use Data::Dumper;
 use Date::Calc qw(
+    Add_Delta_Days
     Day_of_Week
 );
 use JSON;
@@ -93,7 +95,7 @@ sub populate {
 
     my $ss = _next_tiid();
     $log->debug( "Got next TIID: $ss" );
-    $self->{'ttid'} = $ss;
+    $self->{'tiid'} = $ss;
     return;
 }
 
@@ -113,15 +115,19 @@ bounds - it does not know about timestamps or tsranges
 sub _vet_tsrange {
     my $self = shift;
     my ( %ARGS ) = validate( @_, {
-        conn => { isa => 'DBIx::Connector' },
+        dbix_conn => { isa => 'DBIx::Connector' },
         tsrange => { type => SCALAR },
     } );
+    $log->debug( "Entering " . __PACKAGE__ . "::_vet_tsrange to vet the tsrange $ARGS{tsrange}" );
 
     # split the tsrange
+    my @parens = $ARGS{tsrange} =~ m/[^\[(]*([\[(])[^\])]*([\])])/;
     my $status = split_tsrange( $ARGS{dbix_conn}, $ARGS{tsrange} );
+    $log->info( "split_tsrange() returned: " . Dumper( $status ) );
     return $status unless $status->ok;
     my $low = $status->payload->[0];
     my $upp = $status->payload->[1];
+    $self->{'tsrange'} = "$parens[0] $low, $upp $parens[1]";
     my @low = canon_to_ymd( $low );
     my @upp = canon_to_ymd( $upp );
 
@@ -134,11 +140,12 @@ sub _vet_tsrange {
     $upp = ymd_to_canon( @upp );
 
     # check DOCHAZKA_INTERVAL_FILLUP_LIMIT
-    if ( $site->DOCHAZKA_INTERVAL_FILLUP_LIMIT < canon_date_diff( $lowr, $upp ) ) {
+    # - add two days to the limit to account for how we just stretched $low and $upp
+    my $fillup_limit = $site->DOCHAZKA_INTERVAL_FILLUP_LIMIT + 2;
+    if ( $fillup_limit < canon_date_diff( $low, $upp ) ) {
         return $CELL->status_err( 'DOCHAZKA_TSRANGE_TOO_BIG', args => [ $ARGS{tsrange} ] )
     }
 
-    $self->{'tsrange'} = $ARGS{tsrange};
     $self->{'lower_canon'} = \@low;
     $self->{'upper_canon'} = \@upp;
     $self->{'lower_ymd'} = $low;
@@ -169,16 +176,15 @@ sub fillup {
     my $holidays;
     if ( ! $ARGS{'include_holidays'} ) {
         $holidays = holidays_in_daterange( 
-            begin => $date_lower,
-            end => $date_upper,
+            begin => $self->{low},
+            end => $self->{upp},
         );
     }
 
     # the insert operation needs to take place within a transaction
     # so we don't leave a mess behind if there is a problem
-    my $status;
     try {
-        $conn->txn( fixup => sub {
+        $ARGS{conn}->txn( fixup => sub {
             my $sth = $_->prepare( $site->SQL_TEMPINTVLS_INSERT );
             my $intvls;
 
@@ -267,7 +273,10 @@ sub _next_tiid {
     } catch {
         $status = $CELL->status_err( 'DOCHAZKA_DBI_ERR', args => [ $_ ] );
     };
-    return if $status;
+    if ( $status ) {
+        $log->crit( $status->text );
+        return;
+    }
     return $val;
 }
 

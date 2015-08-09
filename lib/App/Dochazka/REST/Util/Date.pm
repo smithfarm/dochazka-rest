@@ -87,7 +87,7 @@ sub canon_date_diff {
     my ( $date, $date1 ) = @_;
     my ( $date_days, $date1_days ) = (
         Date_to_Days( canon_to_ymd( $date ) ),
-        Date_to_Days( canon_to_ymd( $dat1 ) ),
+        Date_to_Days( canon_to_ymd( $date1 ) ),
     );
     return abs( $date_days - $date1_days );
 }
@@ -101,8 +101,9 @@ Takes canonical date YYYY-MM-DD and returns $y, $m, $d
 
 sub canon_to_ymd {
     my ( $date ) = @_;
+    return unless $date;
 
-    return $date =~ m/(\d+)-(\d+)-(\d+)/;
+    return ( $date =~ m/(\d+)-(\d+)-(\d+)/ );
 }
 
 
