@@ -3128,4 +3128,6 @@ SPLIT OFF App::MREST into separate distribution
 - Some interval handlers will be used for GET and DELETE; rename them accordingly
 - Dispatch.pm: implement DELETE interval/{eid,nick,self} over tsrange
   Fixes: https://github.com/smithfarm/dochazka-rest/issues/17
+- Make DISPATCH_NOTHING_IN_TSRANGE message more descriptive by including the
+  tsrange
 
