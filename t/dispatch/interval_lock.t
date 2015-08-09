@@ -439,16 +439,16 @@ foreach my $method ( 'GET', 'PUT' ) {
     }
 }
 
+note( 'POST' );
 #
-# POST
-#
-# - instigate a "403 Forbidden"
+note( '- instigate a "403 Forbidden"' );
 foreach my $user ( qw( demo inactive ) ) {
     req( $test, 403, $user, 'POST', $base, <<"EOH" );
 { "aid" : $aid_of_work, "intvl" : "[1957-01-02 08:00, 1957-01-03 08:00)" }
 EOH
 }
-# - let active and root create themselves an interval
+#
+note( '- let active and root create themselves an interval and promptly delete it' );
 foreach my $user ( qw( active root ) ) {
     $status = req( $test, 201, $user, 'POST', $base, <<"EOH" );
 { "aid" : $aid_of_work, "intvl" : "[1957-01-02 08:00, 1957-01-03 08:00)" }
@@ -469,8 +469,8 @@ EOH
     is( $status->code, 'DOCHAZKA_CUD_OK' );
 }
 #
-# - as long as all required properties are present, JSON with bogus properties
-#   will be accepted for insert operation (bogus properties will be silently ignored)
+note( '- as long as all required properties are present, JSON with bogus properties' );
+note( '  will be accepted for insert operation (bogus properties will be silently ignored)' );
 foreach my $rb ( 
     "{ \"aid\" : $aid_of_work, \"intvl\" : \"[1957-01-02 08:00, 1957-01-02 08:05)\", \"whinger\" : \"me\" }",
     "{ \"aid\" : $aid_of_work, \"intvl\" : \"[1957-01-03 08:00, 1957-01-03 08:05)\", \"horse\" : \"E-Or\" }",
@@ -493,19 +493,17 @@ foreach my $rb (
     is( $status->code, 'DOCHAZKA_CUD_OK' );
 }
 #
-# - required property missing
+note( '- required property missing' );
 req( $test, 400, 'root', 'POST', $base, <<"EOH" );
 { "intvl" : "[1957-01-02 08:00, 1957-01-02 08:00)", "whinger" : "me" }
 EOH
 #
-# - nonsensical JSON
+note( '- nonsensical JSON' );
 req( $test, 400, 'root', 'POST', $base, 0 );
 #
 req( $test, 400, 'root', 'POST', $base, '[ 1, 2, [1, 2], { "wombat":"five" } ]' );
 
-#
-# DELETE
-#
+note( 'DELETE' );
 req( $test, 405, 'demo', 'DELETE', $base );
 req( $test, 405, 'root', 'DELETE', $base );
 req( $test, 405, 'WOMBAT5', 'DELETE', $base );
@@ -606,43 +604,45 @@ $status = req( $test, 400, 'root', 'POST', $base, 0 );
 #
 $status = req( $test, 400, 'root', 'POST', $base, '[ 1, 2, [1, 2], { "wombat":"five" } ]' );
 
+note( 'create an interval, lock it, and then try to update it and delete it' );
 #
-#
-# create an interval, lock it, and then try to update it and delete it
-# 
-# - create interval
+note( '- create interval' );
 $status = req( $test, 201, 'root', 'POST', 'interval/new', <<"EOH" );
 { "aid" : $aid_of_work, "intvl" : "[1957-01-02 08:00, 1957-01-03 08:00)" }
 EOH
 is( $status->level, 'OK' );
 is( $status->code, 'DOCHAZKA_CUD_OK' );
 my $ti = $status->payload->{'iid'};
-# - lock it
+#
+note( '- lock it' );
 $status = req( $test, 201, 'root', 'POST', 'lock/new', <<"EOH" );
 { "intvl" : "[1957-01-01 00:00, 1957-02-01 00:00)" }
 EOH
 is( $status->level, 'OK' );
 is( $status->code, 'DOCHAZKA_CUD_OK' );
 my $tl = $status->payload->{'lid'};
-# - try to update it
+#
+note( '- try to update it' );
 dbi_err( $test, 500, 'root', 'PUT', "interval/iid/$ti", 
     '{ "long_desc" : "I\'m changing this interval even though it\'s locked!" }',
     qr/interval is locked/ );
-# - try to delete it
+#
+note( '- try to delete it' );
 dbi_err( $test, 500, 'root', 'DELETE', "interval/iid/$ti", undef,
     qr/interval is locked/ );
-# - remove the lock
+#
+note( '- remove the lock' );
 $status = req( $test, 200, 'root', 'DELETE', "lock/lid/$tl" );
 is( $status->level, 'OK' );
 is( $status->code, 'DOCHAZKA_CUD_OK' );
-# - now we can delete it
+#
+note( '- now we can delete it' );
 $status = req( $test, 200, 'root', 'DELETE', "interval/iid/$ti" );
 is( $status->level, 'OK' );
 is( $status->code, 'DOCHAZKA_CUD_OK' );
-#
-#
-# create a lock over the entire month of August 2014 and try to create
-# intervals that might be considered "edge cases"
+
+note( 'create a lock over the entire month of August 2014 and try to create' );
+note( 'intervals that might be considered "edge cases"' );
 #
 $status = req( $test, 201, 'root', 'POST', 'lock/new', <<"EOH" );
 { "eid" : $eid_active, "intvl" : "[2014-08-01 00:00, 2014-09-01 00:00)" }
@@ -653,7 +653,7 @@ my $tlid = $status->payload->{'lid'};
 $status = req( $test, 200, 'root', 'GET', "lock/lid/$tlid" );
 ok( $status->ok );
 #
-# - this one will be OK
+note( '- this one will be OK' );
 $status = req( $test, 201, 'active', 'POST', 'interval/new', <<"EOH" );
 { "aid" : $aid_of_work, "eid" : $eid_active, "intvl" : "[2014-07-31 20:00, 2014-08-01 00:00)" }
 EOH
@@ -665,30 +665,28 @@ is( $status->level, 'OK' );
 is( $status->code, 'DOCHAZKA_CUD_OK' );
 req( $test, 404, 'active', 'GET', "interval/iid/$tiid" );
 #
-# - illegal interval
+note( '- illegal interval' );
 dbi_err( $test, 500, 'active', 'POST', 'interval/new', 
     '{ "aid" : ' . $aid_of_work . ', "eid" : ' . $eid_active . 
         ', "intvl" : "[2014-07-31 20:00, 2014-08-01 00:00]" }',
     qr/illegal interval/ );
 #
-# - upper bound not evenly divisible by 5 minutes 
+note( '- upper bound not evenly divisible by 5 minutes' );
 dbi_err( $test, 500, 'active', 'POST', 'interval/new',
     '{ "aid" : '. $aid_of_work . ', "eid" : ' . $eid_active .
         ', "intvl" : "[2014-07-31 20:00, 2014-08-01 00:01)" }',
     qr/upper and lower bounds of interval must be evenly divisible by 5 minutes/ );
-
 #
-# - interval is locked
+note( '- interval is locked' );
 dbi_err( $test, 500, 'active', 'POST', 'interval/new',
     '{ "aid" : '. $aid_of_work . ', "eid" : ' . $eid_active .
         ', "intvl" : "[2014-07-31 20:00, 2014-08-01 00:05)" }',
     qr/interval is locked/ );
 #
-# now let's try to attack upper bound of lock
-#
-# - this one looks like it might conflict with the lock's upper bound
-# (2014-09-01), but since the upper bound is non-inclusive, the interval will
-# be OK
+note( 'now let's try to attack upper bound of lock' );
+note( '- this one looks like it might conflict with the lock's upper bound');
+note( '(2014-09-01), but since the upper bound is non-inclusive, the interval will');
+note( 'be OK');
 #
 $status = req( $test, 201, 'active', 'POST', 'interval/new', <<"EOH" );
 { "aid" : $aid_of_work, "eid" : $eid_active, "intvl" : "[2014-09-01 00:00, 2014-09-01 04:00)" }
