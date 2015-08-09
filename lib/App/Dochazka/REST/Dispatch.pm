@@ -54,6 +54,7 @@ use App::Dochazka::REST::Model::Employee qw(
     noof_employees_by_priv 
 );
 use App::Dochazka::REST::Model::Interval qw(
+    delete_intervals_by_eid_and_tsrange
     fetch_intervals_by_eid_and_tsrange
 );
 use App::Dochazka::REST::Model::Lock qw(
@@ -1653,7 +1654,7 @@ sub handler_interval_eid {
     my ( $self, $pass ) = @_;
     $log->debug( "Entering " . __PACKAGE__ . "::handler_interval_eid " ); 
 
-    return $self->_handler_get_intlock( 'Interval', 'eid', $pass );
+    return $self->_handler_intlock( 'Interval', 'eid', $pass );
 }
 
 
@@ -1669,7 +1670,7 @@ sub handler_get_lock_eid {
     my ( $self, $pass ) = @_;
     $log->debug( "Entering " . __PACKAGE__ . "::handler_get_lock_eid " ); 
 
-    return $self->_handler_get_intlock( 'Lock', 'eid', $pass );
+    return $self->_handler_intlock( 'Lock', 'eid', $pass );
 }
 
 
@@ -1688,7 +1689,7 @@ sub handler_interval_nick {
     my ( $self, $pass ) = @_;
     $log->debug( "Entering " . __PACKAGE__ . "::handler_interval_nick " ); 
 
-    return $self->_handler_get_intlock( 'Interval', 'nick', $pass );
+    return $self->_handler_intlock( 'Interval', 'nick', $pass );
 }
 
 
@@ -1704,7 +1705,7 @@ sub handler_get_lock_nick {
     my ( $self, $pass ) = @_;
     $log->debug( "Entering " . __PACKAGE__ . "::handler_get_lock_nick " ); 
 
-    return $self->_handler_get_intlock( 'Lock', 'nick', $pass );
+    return $self->_handler_intlock( 'Lock', 'nick', $pass );
 }
 
 
@@ -1723,7 +1724,7 @@ sub handler_interval_self {
     my ( $self, $pass ) = @_;
     $log->debug( "Entering " . __PACKAGE__ . "::handler_interval_self " ); 
 
-    return $self->_handler_get_intlock( 'Interval', 'self', $pass );
+    return $self->_handler_intlock( 'Interval', 'self', $pass );
 }
 
 
@@ -1739,11 +1740,11 @@ sub handler_get_lock_self {
     my ( $self, $pass ) = @_;
     $log->debug( "Entering " . __PACKAGE__ . "::handler_get_lock_self " ); 
 
-    return $self->_handler_get_intlock( 'Lock', 'self', $pass );
+    return $self->_handler_intlock( 'Lock', 'self', $pass );
 }
 
 
-sub _handler_get_intlock {
+sub _handler_intlock {
     my ( $self, $intlock, $key, $pass ) = @_;
 
     my $context = $self->context;
@@ -1780,10 +1781,13 @@ sub _handler_get_intlock {
             $emp->eid,
             $tsr,
         );
-        if ( $intlock eq 'Interval' ) {
+        my $method = $self->context->{'method'};
+        if ( $method eq 'GET' and $intlock eq 'Interval' ) {
             $status = fetch_intervals_by_eid_and_tsrange( @ARGS );
-        } elsif ( $intlock eq 'Lock' ) {
+        } elsif ( $method eq 'GET' and $intlock eq 'Lock' ) {
             $status = fetch_locks_by_eid_and_tsrange( @ARGS );
+        } elsif ( $method eq 'DELETE' and $intlock eq 'Interval' ) {
+            $status = delete_intervals_by_eid_and_tsrange( @ARGS );
         } else {
             die "AGACHCH!! Horrible, horrible: " . ( $intlock || "undef" );
         }
