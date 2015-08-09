@@ -3139,6 +3139,8 @@ SPLIT OFF App::MREST into separate distribution
 - Build.PL: require latest version of App::Dochazka::Common for Tempintvls class
 - Util/Date.pm: add module canon_to_ymd(), ymd_to_canon(), and canon_date_diff() routines
 - REST_Config.pm: add DOCHAZKA_INTERVAL_FILLUP_LIMIT defaulting to 365 days
+  Fixes: https://github.com/smithfarm/dochazka-rest/issues/8
 - Model/Shared.pm: make split_tsrange() complain when given an unbounded tsrange
-- Model/Tempintvls.pm, t/model/tempintvls.t: start implementing the Tempintvls class
+- Model/Tempintvls.pm, t/model/tempintvls.t: start implementing the Tempintvls
+  class (populate, _vet_tsrange methods)
 

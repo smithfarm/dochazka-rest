@@ -59,6 +59,8 @@ if ( $status->not_ok ) {
 note( "spawn a tempintvls object" );
 my $tio = App::Dochazka::REST::Model::Tempintvls->spawn;
 isa_ok( $tio, 'App::Dochazka::REST::Model::Tempintvls' );
+
+note( 'test that populate() was called and that it did its job' );
 ok( $tio->tiid > 0 );
 
 note( 'quickly test canon_to_ymd' );
