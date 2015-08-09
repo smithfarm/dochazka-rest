@@ -685,8 +685,8 @@ dbi_err( $test, 500, 'active', 'POST', 'interval/new',
 #
 note( 'now let\'s try to attack upper bound of lock' );
 note( '- this one looks like it might conflict with the lock\'s upper bound');
-note( '(2014-09-01), but since the upper bound is non-inclusive, the interval will');
-note( 'be OK');
+note( '  (2014-09-01), but since the upper bound is non-inclusive, the interval will');
+note( '  be OK');
 #
 $status = req( $test, 201, 'active', 'POST', 'interval/new', <<"EOH" );
 { "aid" : $aid_of_work, "eid" : $eid_active, "intvl" : "[2014-09-01 00:00, 2014-09-01 04:00)" }
