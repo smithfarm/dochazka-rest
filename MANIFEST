@@ -39,6 +39,7 @@ lib/App/Dochazka/REST/ResourceDefs.pm
 lib/App/Dochazka/REST/Shared.pm
 lib/App/Dochazka/REST/Test.pm
 lib/App/Dochazka/REST/Util.pm
+lib/App/Dochazka/REST/Util/Date.pm
 lib/App/Dochazka/REST/Util/Holiday.pm
 lib/App/Dochazka/REST/Util/Schedule.pm
 LICENSE

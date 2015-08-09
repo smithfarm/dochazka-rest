@@ -36,6 +36,9 @@ use 5.012;
 use strict;
 use warnings;
 
+use Date::Calc qw(
+    Date_to_Days
+);
 use Params::Validate qw( :all );
 
 
@@ -63,6 +66,7 @@ App::Dochazka::REST::Util::Date - module containing miscellaneous date routines
 
 use Exporter qw( import );
 our @EXPORT_OK = qw( 
+    canon_date_diff
     canon_to_ymd
     ymd_to_canon
 );
@@ -71,6 +75,22 @@ our @EXPORT_OK = qw(
 
 
 =head1 FUNCTIONS
+
+
+=head2 canon_date_diff
+
+Compute difference (in days) between two canonical dates
+
+=cut
+
+sub canon_date_diff {
+    my ( $date, $date1 ) = @_;
+    my ( $date_days, $date1_days ) = (
+        Date_to_Days( canon_to_ymd( $date ) ),
+        Date_to_Days( canon_to_ymd( $dat1 ) ),
+    );
+    return abs( $date_days - $date1_days );
+}
 
 
 =head2 canon_to_ymd
