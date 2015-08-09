@@ -1638,17 +1638,20 @@ sub handler_history_delete_shid {
 =head2 Interval handlers
 
 
-=head3 handler_get_interval_eid
+=head3 handler_interval_eid
 
-Handler for 'GET interval/eid/:eid/:tsrange'
+Handler for 
+
+    GET interval/eid/:eid/:tsrange
+    DELETE interval/eid/:eid/:tsrange
 
 #FIXME: implement a configurable limit on the tsrange
 
 =cut
 
-sub handler_get_interval_eid {
+sub handler_interval_eid {
     my ( $self, $pass ) = @_;
-    $log->debug( "Entering " . __PACKAGE__ . "::handler_get_interval_eid " ); 
+    $log->debug( "Entering " . __PACKAGE__ . "::handler_interval_eid " ); 
 
     return $self->_handler_get_intlock( 'Interval', 'eid', $pass );
 }
@@ -1670,17 +1673,20 @@ sub handler_get_lock_eid {
 }
 
 
-=head3 handler_get_interval_nick
+=head3 handler_interval_nick
 
-Handler for 'GET interval/nick/:nick/:tsrange'
+Handler for 
+
+    GET interval/nick/:nick/:tsrange
+    DELETE interval/nick/:nick/:tsrange
 
 #FIXME: implement a configurable limit on the tsrange
 
 =cut
 
-sub handler_get_interval_nick {
+sub handler_interval_nick {
     my ( $self, $pass ) = @_;
-    $log->debug( "Entering " . __PACKAGE__ . "::handler_get_interval_nick " ); 
+    $log->debug( "Entering " . __PACKAGE__ . "::handler_interval_nick " ); 
 
     return $self->_handler_get_intlock( 'Interval', 'nick', $pass );
 }
@@ -1702,17 +1708,20 @@ sub handler_get_lock_nick {
 }
 
 
-=head3 handler_get_interval_self
+=head3 handler_interval_self
 
-Handler for 'GET interval/self/:tsrange'
+Handler for 
+
+    GET interval/self/:tsrange
+    DELETE interval/self/:tsrange
 
 #FIXME: implement a configurable limit on the tsrange
 
 =cut
 
-sub handler_get_interval_self {
+sub handler_interval_self {
     my ( $self, $pass ) = @_;
-    $log->debug( "Entering " . __PACKAGE__ . "::handler_get_interval_self " ); 
+    $log->debug( "Entering " . __PACKAGE__ . "::handler_interval_self " ); 
 
     return $self->_handler_get_intlock( 'Interval', 'self', $pass );
 }

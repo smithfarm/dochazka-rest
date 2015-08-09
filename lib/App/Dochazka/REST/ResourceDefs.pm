@@ -1637,8 +1637,8 @@ EOH
     {
         parent => 'interval',
         handler => {
-            GET => 'handler_get_interval_eid',
-            DELETE => 'handler_delete_interval_eid',
+            GET => 'handler_interval_eid',
+            DELETE => 'handler_interval_eid',
         },
         acl_profile => 'active', 
         cli => 'interval eid $EID $TSRANGE',
@@ -1668,8 +1668,8 @@ EOH
     {
         parent => 'interval',
         handler => {
-            GET => 'handler_get_interval_eid',
-            DELETE => 'handler_delete_interval_eid',
+            GET => 'handler_interval_eid',
+            DELETE => 'handler_interval_eid',
         },
         acl_profile => 'active', 
         cli => 'interval eid $EID $TS DELTA $PSQLINT',
@@ -1887,8 +1887,8 @@ EOH
     {
         parent => 'interval',
         handler => {
-            GET => 'handler_get_interval_nick',
-            DELETE => 'handler_delete_interval_nick',
+            GET => 'handler_interval_nick',
+            DELETE => 'handler_interval_nick',
         },
         acl_profile => 'active', 
         cli => 'interval nick $NICK $TSRANGE',
@@ -1918,8 +1918,8 @@ EOH
     {
         parent => 'interval',
         handler => {
-            GET => 'handler_get_interval_nick',
-            DELETE => 'handler_delete_interval_nick',
+            GET => 'handler_interval_nick',
+            DELETE => 'handler_interval_nick',
         },
         acl_profile => 'active', 
         cli => 'interval nick $NICK $TS DELTA $PSQLINT',
@@ -1942,8 +1942,8 @@ EOH
     {
         parent => 'interval',
         handler => {
-            GET => 'handler_get_interval_self',
-            DELETE => 'handler_delete_interval_self',
+            GET => 'handler_interval_self',
+            DELETE => 'handler_interval_self',
         },
         acl_profile => 'inactive', 
         cli => 'interval self $TSRANGE',
@@ -1972,8 +1972,8 @@ EOH
     {
         parent => 'interval',
         handler => {
-            GET => 'handler_get_interval_self',
-            DELETE => 'handler_delete_interval_self',
+            GET => 'handler_interval_self',
+            DELETE => 'handler_interval_self',
         },
         acl_profile => 'active', 
         cli => 'INTERVAL SELF $TS DELTA $PSQLINT',
