@@ -683,8 +683,8 @@ dbi_err( $test, 500, 'active', 'POST', 'interval/new',
         ', "intvl" : "[2014-07-31 20:00, 2014-08-01 00:05)" }',
     qr/interval is locked/ );
 #
-note( 'now let's try to attack upper bound of lock' );
-note( '- this one looks like it might conflict with the lock's upper bound');
+note( 'now let\'s try to attack upper bound of lock' );
+note( '- this one looks like it might conflict with the lock\'s upper bound');
 note( '(2014-09-01), but since the upper bound is non-inclusive, the interval will');
 note( 'be OK');
 #
