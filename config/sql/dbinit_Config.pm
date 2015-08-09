@@ -528,7 +528,7 @@ $body$#,
         FOR EACH ROW EXECUTE PROCEDURE disabled_to_zero()/,
 
     q/-- intervals
-      CREATE TABLE intervals (
+      CREATE TABLE IF NOT EXISTS intervals (
           iid        serial PRIMARY KEY,
           eid        integer REFERENCES employees (eid) NOT NULL,
           aid        integer REFERENCES activities (aid) NOT NULL,
@@ -539,10 +539,15 @@ $body$#,
           EXCLUDE USING gist (eid WITH =, intvl WITH &&)
       )/,
 
+    q/CREATE SEQUENCE temp_intvl_seq/,
+
+    q/COMMENT ON SEQUENCE tempintvl_tiid_seq IS 'sequence guaranteeing that each set of temporary intervals will have a unique identifier'/,
+
     q/-- tempintvls
       -- for staging fillup intervals 
-      CREATE TABLE tempintvls (
-          code       integer,
+      CREATE TABLE IF NOT EXISTS tempintvls (
+          int_id     serial PRIMARY KEY,
+          tiid       integer NOT NULL,
           eid        integer REFERENCES employees (eid) NOT NULL,
           aid        integer REFERENCES activities (aid) NOT NULL,
           intvl      tstzrange NOT NULL,
