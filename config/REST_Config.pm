@@ -242,6 +242,10 @@ set( 'DOCHAZKA_EMPLOYEE_MINIMAL_FIELDS', [
     qw( sec_id nick fullname email eid supervisor )
 ] );
 
+# DOCHAZKA_INTERVAL_FILLUP_LIMIT
+#     upper limit (in days) on the fillup tsrange
+set( 'DOCHAZKA_INTERVAL_FILLUP_LIMIT', 365 ); 
+
 # -----------------------------------
 # DO NOT EDIT ANYTHING BELOW THIS LINE
 # -----------------------------------

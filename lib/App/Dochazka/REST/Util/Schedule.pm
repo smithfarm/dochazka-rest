@@ -193,7 +193,6 @@ sub intervals_in_schedule {
         my $ndow = Day_of_Week( $y, $m, $d );
 
         # get schedule entries starting on that DOW, 
-        # FIXME: provided the entry does not extend past the end of the date range!
         foreach my $entry ( @{ $rest_sched_hash_lower->{ $ndow } } ) {
             my ( $canon_high_dow, $hy, $hm, $hd );
             # get canonical representation of "high_dow"
