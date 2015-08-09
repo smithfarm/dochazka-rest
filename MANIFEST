@@ -80,6 +80,7 @@ t/model/interval_lock.t
 t/model/privhistory.t
 t/model/schedintvls.t
 t/model/schedule.t
+t/model/tempintvls.t
 t/sql/current_priv.t
 t/sql/disabled_to_zero.t
 t/sql/immutable_id.t
