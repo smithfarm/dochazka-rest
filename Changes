@@ -3131,3 +3131,14 @@ SPLIT OFF App::MREST into separate distribution
 - Make DISPATCH_NOTHING_IN_TSRANGE message more descriptive by including the
   tsrange
 
+0.488  2015-08-09 20:59 CEST
+- t/dispatch/interval_fillup.t: add unit for fillup tests (WIP)
+- t/dispatch/interval_lock.t: fix syntax errors
+- ResourceDefs.pm: make fillup resources take tsrange instead of dates
+- dbinit_Config.pm: add tempintvls table (with temp_intvl_seq to prevent race conditions)
+- Build.PL: require latest version of App::Dochazka::Common for Tempintvls class
+- Util/Date.pm: add module canon_to_ymd(), ymd_to_canon(), and canon_date_diff() routines
+- REST_Config.pm: add DOCHAZKA_INTERVAL_FILLUP_LIMIT defaulting to 365 days
+- Model/Shared.pm: make split_tsrange() complain when given an unbounded tsrange
+- Model/Tempintvls.pm, t/model/tempintvls.t: start implementing the Tempintvls class
+

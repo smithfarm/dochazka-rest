@@ -4,7 +4,7 @@ author:
   - 'Nathan Cutler <ncutler@suse.cz>'
 build_requires:
   App::CELL: '0.215'
-  App::Dochazka::Common: '0.191'
+  App::Dochazka::Common: '0.192'
   Authen::Passphrase::SaltedDigest: '0.008'
   DBIx::Connector: '0.47'
   Date::Holidays::CZ: '0.08'
@@ -31,7 +31,7 @@ no_index:
 provides:
   App::Dochazka::REST:
     file: lib/App/Dochazka/REST.pm
-    version: '0.487'
+    version: '0.488'
   App::Dochazka::REST::ACL:
     file: lib/App/Dochazka/REST/ACL.pm
   App::Dochazka::REST::Auth:
@@ -64,6 +64,8 @@ provides:
     file: lib/App/Dochazka/REST/Model/Schedule.pm
   App::Dochazka::REST::Model::Shared:
     file: lib/App/Dochazka/REST/Model/Shared.pm
+  App::Dochazka::REST::Model::Tempintvls:
+    file: lib/App/Dochazka/REST/Model/Tempintvls.pm
   App::Dochazka::REST::ResourceDefs:
     file: lib/App/Dochazka/REST/ResourceDefs.pm
   App::Dochazka::REST::Shared:
@@ -72,13 +74,15 @@ provides:
     file: lib/App/Dochazka/REST/Test.pm
   App::Dochazka::REST::Util:
     file: lib/App/Dochazka/REST/Util.pm
+  App::Dochazka::REST::Util::Date:
+    file: lib/App/Dochazka/REST/Util/Date.pm
   App::Dochazka::REST::Util::Holiday:
     file: lib/App/Dochazka/REST/Util/Holiday.pm
   App::Dochazka::REST::Util::Schedule:
     file: lib/App/Dochazka/REST/Util/Schedule.pm
 requires:
   App::CELL: '0.215'
-  App::Dochazka::Common: '0.191'
+  App::Dochazka::Common: '0.192'
   Authen::Passphrase::SaltedDigest: '0.008'
   DBD::Pg: '0'
   DBI: '0'
@@ -104,4 +108,4 @@ resources:
   bugtracker: https://github.com/smithfarm/dochazka-rest/issues
   license: http://opensource.org/licenses/BSD-3-Clause
   repository: https://github.com/smithfarm/dochazka-rest
-version: '0.487'
+version: '0.488'
