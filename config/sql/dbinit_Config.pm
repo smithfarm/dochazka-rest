@@ -658,13 +658,7 @@ $body$#,
     q/CREATE TRIGGER one_and_only_one_schedule BEFORE INSERT OR UPDATE ON intervals
       FOR EACH ROW EXECUTE PROCEDURE schedule_policy()/,
 
-    q/CREATE TRIGGER one_and_only_one_schedule BEFORE INSERT OR UPDATE ON tempintvls
-      FOR EACH ROW EXECUTE PROCEDURE schedule_policy()/,
-
     q/CREATE TRIGGER enforce_priv_policy BEFORE INSERT OR UPDATE ON intervals
-      FOR EACH ROW EXECUTE PROCEDURE priv_policy()/,
-
-    q/CREATE TRIGGER enforce_priv_policy BEFORE INSERT OR UPDATE ON tempintvls
       FOR EACH ROW EXECUTE PROCEDURE priv_policy()/,
 
     q/CREATE TRIGGER a1_interval_valid_intvl BEFORE INSERT OR UPDATE ON intervals
