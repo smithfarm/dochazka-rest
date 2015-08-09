@@ -38,6 +38,13 @@
 # configuration parameters related to activity intervals
 # -----------------------------------
 
+# SQL_NEXT_TIID
+#     SQL to get next value from temp_intvl_seq
+#
+set( 'SQL_NEXT_TIID', q/
+      SELECT nextval('temp_intvl_seq');
+      / );
+
 # 
 set( 'SQL_INTERVAL_SELECT_BY_IID', q/
       SELECT iid, eid, aid, intvl, long_desc, remark
