@@ -541,7 +541,7 @@ $body$#,
 
     q/CREATE SEQUENCE temp_intvl_seq/,
 
-    q/COMMENT ON SEQUENCE tempintvl_tiid_seq IS 'sequence guaranteeing that each set of temporary intervals will have a unique identifier'/,
+    q/COMMENT ON SEQUENCE temp_intvl_seq IS 'sequence guaranteeing that each set of temporary intervals will have a unique identifier'/,
 
     q/-- tempintvls
       -- for staging fillup intervals 
@@ -553,7 +553,7 @@ $body$#,
           intvl      tstzrange NOT NULL,
           long_desc  text,
           remark     text,
-          EXCLUDE USING gist (code WITH =, intvl WITH &&)
+          EXCLUDE USING gist (tiid WITH =, intvl WITH &&)
       )/,
 
     q#-- trigger function to ensure that a privhistory/schedhistory record
