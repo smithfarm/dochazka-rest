@@ -35,6 +35,7 @@ lib/App/Dochazka/REST/Model/Schedhistory.pm
 lib/App/Dochazka/REST/Model/Schedintvls.pm
 lib/App/Dochazka/REST/Model/Schedule.pm
 lib/App/Dochazka/REST/Model/Shared.pm
+lib/App/Dochazka/REST/Model/Tempintvls.pm
 lib/App/Dochazka/REST/ResourceDefs.pm
 lib/App/Dochazka/REST/Shared.pm
 lib/App/Dochazka/REST/Test.pm
