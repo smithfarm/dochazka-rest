@@ -3123,3 +3123,9 @@ SPLIT OFF App::MREST into separate distribution
 - Model/Interval.pm: working implementation of
   delete_intervals_by_eid_and_tsrange() with rudimentary test case
 
+0.487  2015-08-09 10:58 CEST
+- t/model/interval_lock.t: add more delete_intervals_by_eid_and_tsrange() test cases
+- Some interval handlers will be used for GET and DELETE; rename them accordingly
+- Dispatch.pm: implement DELETE interval/{eid,nick,self} over tsrange
+  Fixes: https://github.com/smithfarm/dochazka-rest/issues/17
+

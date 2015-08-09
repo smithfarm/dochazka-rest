@@ -1793,7 +1793,7 @@ sub _handler_intlock {
         }
         if ( $status->level eq 'NOTICE' and $status->code eq 'DISPATCH_NO_RECORDS_FOUND' ) {
             $self->mrest_declare_status( explanation => 'DISPATCH_NOTHING_IN_TSRANGE',
-                args => [ 'attendance intervals' ] 
+                args => [ 'attendance intervals', $tsr ] 
             );
             return 0;
         }
