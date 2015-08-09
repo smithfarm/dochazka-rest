@@ -539,6 +539,18 @@ $body$#,
           EXCLUDE USING gist (eid WITH =, intvl WITH &&)
       )/,
 
+    q/-- tempintvls
+      -- for staging fillup intervals 
+      CREATE TABLE tempintvls (
+          code       integer,
+          eid        integer REFERENCES employees (eid) NOT NULL,
+          aid        integer REFERENCES activities (aid) NOT NULL,
+          intvl      tstzrange NOT NULL,
+          long_desc  text,
+          remark     text,
+          EXCLUDE USING gist (code WITH =, intvl WITH &&)
+      )/,
+
     q#-- trigger function to ensure that a privhistory/schedhistory record
       -- does not fall within an existing attendance interval
     CREATE OR REPLACE FUNCTION history_policy() RETURNS trigger AS $$
@@ -641,13 +653,25 @@ $body$#,
     q/CREATE TRIGGER one_and_only_one_schedule BEFORE INSERT OR UPDATE ON intervals
       FOR EACH ROW EXECUTE PROCEDURE schedule_policy()/,
 
+    q/CREATE TRIGGER one_and_only_one_schedule BEFORE INSERT OR UPDATE ON tempintvls
+      FOR EACH ROW EXECUTE PROCEDURE schedule_policy()/,
+
     q/CREATE TRIGGER enforce_priv_policy BEFORE INSERT OR UPDATE ON intervals
+      FOR EACH ROW EXECUTE PROCEDURE priv_policy()/,
+
+    q/CREATE TRIGGER enforce_priv_policy BEFORE INSERT OR UPDATE ON tempintvls
       FOR EACH ROW EXECUTE PROCEDURE priv_policy()/,
 
     q/CREATE TRIGGER a1_interval_valid_intvl BEFORE INSERT OR UPDATE ON intervals
       FOR EACH ROW EXECUTE PROCEDURE valid_intvl()/,
 
+    q/CREATE TRIGGER a1_interval_valid_intvl BEFORE INSERT OR UPDATE ON tempintvls
+      FOR EACH ROW EXECUTE PROCEDURE valid_intvl()/,
+
     q/CREATE TRIGGER a2_interval_not_too_future BEFORE INSERT OR UPDATE ON intervals
+      FOR EACH ROW EXECUTE PROCEDURE not_too_future()/,
+
+    q/CREATE TRIGGER a2_interval_not_too_future BEFORE INSERT OR UPDATE ON tempintvls
       FOR EACH ROW EXECUTE PROCEDURE not_too_future()/,
 
     q/CREATE TRIGGER a3_no_iid_update BEFORE UPDATE ON intervals
