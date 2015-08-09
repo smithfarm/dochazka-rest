@@ -1702,8 +1702,8 @@ Parent for interval fillup resources
 EOH
     },
 
-    # /interval/fillup/eid/:eid/:lower/:upper
-    'interval/fillup/eid/:eid/:lower/:upper' => 
+    # /interval/fillup/eid/:eid/:tsrange
+    'interval/fillup/eid/:eid/:tsrange' => 
     {
         parent => 'interval/fillup',
         handler => {
@@ -1713,8 +1713,7 @@ EOH
         cli => 'interval fillup eid $EID $TIMESTAMP',
         validations => {
             'eid' => 'Int',
-            'lower' => $date_validation,
-            'upper' => $date_validation,
+            'tsrange' => $tsrange_validation,
         },
         description => 'Return set of scheduled attendance intervals (tsranges) for the given employee over the given tsrange',
         documentation => <<'EOH',
@@ -1732,8 +1731,8 @@ that fall _fully_ within the given tsrange.
 EOH
     },
 
-    # /interval/fillup/nick/:nick/:lower/:upper
-    'interval/fillup/nick/:nick/:lower/:upper' => 
+    # /interval/fillup/nick/:nick/:tsrange
+    'interval/fillup/nick/:nick/:tsrange' => 
     {
         parent => 'interval/fillup',
         handler => {
@@ -1743,8 +1742,7 @@ EOH
         cli => 'schedule intervals nick $NICK $TIMESTAMP',
         validations => {
             'nick' => $term_validation,
-            'lower' => $date_validation,
-            'upper' => $date_validation,
+            'tsrange' => $tsrange_validation,
         },
         description => 'Return set of scheduled attendance intervals (tsranges) for the given employee over the given tsrange',
         documentation => <<'EOH',
@@ -1762,8 +1760,8 @@ that fall _fully_ within the given tsrange.
 EOH
     },
 
-    # /interval/fillup/self/:lower/:upper
-    'interval/fillup/self/:lower/:upper' => 
+    # /interval/fillup/self/:tsrange
+    'interval/fillup/self/:tsrange' => 
     {
         parent => 'schedule',
         handler => {
@@ -1773,8 +1771,7 @@ EOH
         cli => 'schedule intervals self $TIMESTAMP',
         description => 'Return set of scheduled attendance intervals (tsranges) for the given employee over the given tsrange',
         validations => {
-            'lower' => $date_validation,
-            'upper' => $date_validation,
+            'tsrange' => $tsrange_validation,
         },
         documentation => <<'EOH',
 =pod
