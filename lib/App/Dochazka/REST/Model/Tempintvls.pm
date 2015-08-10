@@ -395,6 +395,31 @@ sub fillup {
 }
 
 
+=head2 commit
+
+Takes a PARAMHASH containing a C<DBIx::Connector> object and, optionally, a
+C<dry_run> boolean value that defaults to 0.
+
+If C<dry_run> is true, merely SELECTs intervals from the tempintvls table
+corresponding to the tsrange (already vetted and stored in the object by
+calling C<_vet_tsrange>). This SELECT includes partial intervals (if any) at
+the beginning and end of the tsrange (using PostgreSQL intersection operator).
+
+If C<dry_run> is false, all the intervals from the SELECT are INSERTed into the
+intervals table.
+
+=cut
+
+sub commit {
+    my $self = shift;
+    my ( %ARGS ) = validate( @_, {
+        dbix_conn => { isa => 'DBIx::Connector' },
+        dry_run => { type => SCALAR, default => 0 },
+    } );
+    my $status;
+
+}
+
 
 =head2 update
 
