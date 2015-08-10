@@ -69,7 +69,14 @@ $status = $emp->insert( $faux_context );
 ok( $status->ok, "Schedule testing object inserted" );
 ok( $emp->eid > 0, "Schedule testing object has an EID" );
 
-my $schedule = test_schedule_model();
+my $schedule = test_schedule_model( [
+    "[$tomorrow 12:30, $tomorrow 16:30)",
+    "[$tomorrow 08:00, $tomorrow 12:00)",
+    "[$today 12:30, $today 16:30)",
+    "[$today 08:00, $today 12:00)",
+    "[$yesterday 12:30, $yesterday 16:30)",
+    "[$yesterday 08:00, $yesterday 12:00)",
+] );
 
 note('Attempt to change the "schedule" field to a bogus string');
 my $saved_sched_obj = $schedule->clone;

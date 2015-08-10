@@ -40,7 +40,7 @@ use strict;
 use warnings;
 
 use App::CELL qw( $CELL $meta $site );
-use App::Dochazka::Common qw( $today $yesterday $tomorrow );
+use App::Dochazka::Common;
 use App::Dochazka::REST;
 use App::Dochazka::REST::ConnBank qw( $dbix_conn conn_up );
 use App::Dochazka::REST::Util qw( hash_the_password );
@@ -517,7 +517,7 @@ Creates and returns a testing schedule without needing a L<Plack::Test> object.
 =cut
 
 sub test_schedule_model {
-    # no arguments
+    my $intvls = shift;
 
     note('create an arbitrary schedule' );
     note('at the beginning, count of schedintvls should be 0');
@@ -531,14 +531,7 @@ sub test_schedule_model {
     ok( $schedintvls->{ssid} > 0, "Scratch SID is > 0" ); 
 
     note('insert a schedule (i.e. a list of schedintvls)');
-    $schedintvls->{intvls} = [
-        "[$tomorrow 12:30, $tomorrow 16:30)",
-        "[$tomorrow 08:00, $tomorrow 12:00)",
-        "[$today 12:30, $today 16:30)",
-        "[$today 08:00, $today 12:00)",
-        "[$yesterday 12:30, $yesterday 16:30)",
-        "[$yesterday 08:00, $yesterday 12:00)",
-    ];
+    $schedintvls->{intvls} = $intvls; 
 
     note('insert all the schedintvls in one go');
     my $status = $schedintvls->insert( $dbix_conn );
