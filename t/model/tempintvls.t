@@ -243,7 +243,9 @@ is( $status->code, 'SUCCESS' );
 
 note( 'proceed with fillup' );
 $status = $tio->fillup( dbix_conn => $dbix_conn );
-diag( Dumper $status );
+is( $status->level, 'OK' );
+is( $status->code, 'DOCHAZKA_TEMPINTVLS_INSERT_OK' );
+is( scalar( @{ $status->payload->{'intervals'} } ), 24 );
 
 # CLEANUP
 

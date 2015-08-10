@@ -538,18 +538,19 @@ sub test_schedule_model {
     diag( $status->text ) unless $status->ok;
     ok( $status->ok, "OK scratch intervals inserted OK" );
     ok( $schedintvls->ssid, "OK there is a scratch SID" );
-    is( scalar @{ $schedintvls->{intvls} }, 6, "Object now has 6 intervals" );
+    my $count = scalar @{ $schedintvls->{intvls} };
+    ok( $count );
 
-    note('after insert, count of schedintvls should be 6');
-    is( noof( $dbix_conn, 'schedintvls' ), 6 );
+    note("after insert, count of schedintvls should be $count");
+    is( noof( $dbix_conn, 'schedintvls' ), $count );
 
     note('load the schedintvls, translating them as we go');
     $status = $schedintvls->load( $dbix_conn );
     ok( $status->ok, "OK scratch intervals translated OK" );
-    is( scalar @{ $schedintvls->{intvls} }, 6, "Still have 6 intervals" );
-    is( scalar @{ $schedintvls->{schedule} }, 6, "And now have 6 translated intervals as well" );
-    like( $status->code, qr/6 rows/, "status code says 6 rows" );
-    like( $status->text, qr/6 rows/, "status code says 6 rows" );
+    is( scalar @{ $schedintvls->{intvls} }, $count, "Still have $count intervals" );
+    is( scalar @{ $schedintvls->{schedule} }, $count, "And now have $count translated intervals as well" );
+    like( $status->code, qr/$count rows/, "status code says $count rows" );
+    like( $status->text, qr/$count rows/, "status code says $count rows" );
     ok( exists $schedintvls->{schedule}->[0]->{high_time}, "Conversion to hash OK" );
     is_valid_json( $schedintvls->json );
 
@@ -569,7 +570,7 @@ sub test_schedule_model {
     note( 'delete the schedintvls' );
     $status = $schedintvls->delete( $dbix_conn );
     ok( $status->ok, "scratch intervals deleted" );
-    like( $status->text, qr/6 record/, "Six records deleted" );
+    like( $status->text, qr/$count record/, "$count records deleted" );
     is( noof( $dbix_conn, 'schedintvls' ), 0 );
 
     return $schedule;
