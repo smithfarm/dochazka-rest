@@ -72,7 +72,7 @@
    "provides" : {
       "App::Dochazka::REST" : {
          "file" : "lib/App/Dochazka/REST.pm",
-         "version" : "0.488"
+         "version" : "0.489"
       },
       "App::Dochazka::REST::ACL" : {
          "file" : "lib/App/Dochazka/REST/ACL.pm"
@@ -142,9 +142,6 @@
       },
       "App::Dochazka::REST::Util::Holiday" : {
          "file" : "lib/App/Dochazka/REST/Util/Holiday.pm"
-      },
-      "App::Dochazka::REST::Util::Schedule" : {
-         "file" : "lib/App/Dochazka/REST/Util/Schedule.pm"
       }
    },
    "release_status" : "stable",
@@ -159,5 +156,5 @@
          "url" : "https://github.com/smithfarm/dochazka-rest"
       }
    },
-   "version" : "0.488"
+   "version" : "0.489"
 }

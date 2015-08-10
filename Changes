@@ -3144,3 +3144,16 @@ SPLIT OFF App::MREST into separate distribution
 - Model/Tempintvls.pm, t/model/tempintvls.t: start implementing the Tempintvls
   class (populate, _vet_tsrange methods)
 
+0.489  2015-08-10 15:55 CEST
+- t/model/privhistory.t: fix a lurking bug
+- Move create schedule testing logic to REST/Test.pm so it can be called from
+  other units
+- Util/Schedule.pm: cleanup (remove deprecated function)
+- Model/Tempintvls.pm: implement _vet_employee() with basic test cases
+- Model/Tempintvls.pm: implement _vet_activity() with test cases
+- sql/tempintvl_Config.pm: add configuration file for tempintvls-related SQL
+  statements
+- Util/Schedule.pm: drop deprecated module (replaced by Model/Tempintvls.pm)
+- Test.pm: make test_schedule_model() take schedintvls as an argument
+- Model/Tempintvls.pm: implement fillup()
+
