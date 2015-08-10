@@ -61,7 +61,7 @@ my $app = $status->payload;
 note( 'check a random site param' );
 is( $site->DOCHAZKA_HOST, 'localhost' );
 
-# instantiate Plack::Test object
+note( 'instantiate Plack::Test object' );
 my $test = Plack::Test->create( $app );
 isa_ok( $test, 'Plack::Test::MockHTTP' );
 
@@ -73,21 +73,18 @@ my $res;
 #=============================
 my $base = 'employee/count';
 docu_check($test, "$base/?:priv");
-#
-# GET employee/count
-#
-# - fail 403 as demo
+
+note( 'GET employee/count' );
+note( '- fail 403 as demo' );
 $status = req( $test, 403, 'demo', 'GET', $base );
 #
-# - succeed as root
+note( '- succeed as root' );
 $status = req( $test, 200, 'root', 'GET', $base );
 is( $status->level, 'OK', "GET $base 2" );
 is( $status->code, 'DISPATCH_COUNT_EMPLOYEES', "GET $base 3" );
 
-#
-# PUT, POST, DELETE
-#
-# - fail 405 in all cases
+note( 'PUT, POST, DELETE' );
+note( '- fail 405 in all cases' );
 $status = req( $test, 405, 'demo', 'PUT', $base );
 $status = req( $test, 405, 'active', 'PUT', $base );
 $status = req( $test, 405, 'WOMBAT', 'PUT', $base );
@@ -99,11 +96,8 @@ $status = req( $test, 405, 'demo', 'DELETE', $base );
 $status = req( $test, 405, 'active', 'DELETE', $base );
 $status = req( $test, 405, 'root', 'DELETE', $base );
 
-
-#
-# GET
-#
-# - valid priv strings
+note( 'GET' );
+note( '- valid priv strings' );
 foreach my $priv ( qw( 
     passerby
     PASSERBY
@@ -133,8 +127,8 @@ foreach my $priv ( qw(
     #
     req( $test, 403, 'demo', 'GET', "$base/$priv" );
 }
-#
-# - invalid priv strings
+
+note( '- invalid priv strings' );
 foreach my $priv (
     'nanaan',
     '%^%#$#',
@@ -147,10 +141,8 @@ foreach my $priv (
     req( $test, 400, 'demo', 'GET', "$base/$priv" );
 }
 
-#
-# PUT, POST, DELETE
-#
-# - fail 405 in all cases
+note( 'PUT, POST, DELETE' );
+note( '- fail 405 in all cases' );
 $base .= '/admin';
 $status = req( $test, 405, 'demo', 'PUT', $base );
 $status = req( $test, 405, 'active', 'PUT', $base );
@@ -173,9 +165,8 @@ my $ts_eid_active = create_active_employee( $test );
 
 foreach my $base ( "employee/current", "employee/self" ) {
     docu_check($test, $base);
-    #
-    # GET employee/current
-    #
+    
+    note( "GET employee/current" );
     $status = req( $test, 200, 'demo', 'GET', $base );
     is( $status->level, 'OK' );
     is( $status->code, 'DISPATCH_EMPLOYEE_CURRENT', "GET $base 3" );
@@ -203,18 +194,16 @@ foreach my $base ( "employee/current", "employee/self" ) {
         'remark' => 'dbinit',
     }, "GET $base 10" );
     
-    #
-    # PUT
-    #
+    note( "PUT" );
     $status = req( $test, 405, 'demo', 'PUT', $base );
     $status = req( $test, 405, 'active', 'PUT', $base );
     $status = req( $test, 405, 'root', 'PUT', $base );
     
-    #
-    # POST
-    #
-    # - default configuration is that 'active' and 'inactive' can modify their own passhash and salt fields
-    # - demo should *not* be authorized to do this
+    note( "POST" );
+    note( "- default configuration is that 'active' and 'inactive' can modify" );
+    note( '  their own passhash and salt fields; demo should *not* be ' );
+    note( ' authorized to do this' );
+
     req( $test, 403, 'demo', 'POST', $base, '{ "password":"saltine" }' );
     foreach my $user ( "active", "inactive" ) {
         #
@@ -226,26 +215,26 @@ foreach my $base ( "employee/current", "employee/self" ) {
         }
         is( $status->level, 'OK' );
         is( $status->code, 'DOCHAZKA_CUD_OK' ); 
-        #
-        # - use root to change it back, otherwise the user won't be able to log in and next tests will fail
+        
+        note( '- use root to change it back, otherwise the user won\'t be able' );
+        note( '  to log in and next tests will fail' );
         $status = req( $test, 200, 'root', 'PUT', "employee/nick/$user", "{ \"password\" : \"$user\" }" );
         is( $status->level, 'OK' );
         is( $status->code, 'DOCHAZKA_CUD_OK' ); 
-        #
-        # - negative test
+        
+        note( '- negative test' );
         req( $test, 400, $user, 'POST', $base, 0 );
-        #
-        # - 'salt' is a permitted field, but 'inactive'/$user employees
+        
+        note( "- 'salt' is a permitted field, but 'inactive'/$user employees" );
         # should not, for example, be allowed to change 'nick'
         req( $test, 403, $user, 'POST', $base, '{ "nick": "wanger" }' );
         #
         ## - nor should they be able to change 'email'
         #req( $test, 403, $user, 'POST', $base, '{ "email": "5000thbat@cave.com" }' );
     }
-    #
-    # root can theoretically update any field, but certain fields of its own
-    # profile are immutable
-    #
+    
+    note( 'root can theoretically update any field, but certain fields of its own' );
+    note( 'profile are immutable' );
     $status = req( $test, 200, 'root', 'POST', $base, '{ "email": "root@rotoroot.com" }' );
     is( $status->level, 'OK' );
     is( $status->code, 'DOCHAZKA_CUD_OK' );
@@ -257,9 +246,7 @@ foreach my $base ( "employee/current", "employee/self" ) {
     dbi_err( $test, 500, 'root', 'POST', $base, '{ "nick": "aaaaazz" }', qr/root employee is immutable/ );
     #
 
-    #
-    # DELETE
-    #
+    note( 'DELETE' );
     $status = req( $test, 405, 'demo', 'DELETE', $base );
     $status = req( $test, 405, 'active', 'DELETE', $base );
     $status = req( $test, 405, 'root', 'DELETE', $base );
@@ -272,9 +259,8 @@ foreach my $base ( "employee/current", "employee/self" ) {
 #=============================
 foreach my $base ( "employee/current/priv", "employee/self/priv" ) {
     docu_check($test, "employee/current/priv");
-    #
-    # GET employee/current/priv
-    #
+
+    note( 'GET employee/current/priv' );
     $status = req( $test, 200, 'demo', 'GET', $base );
     is( $status->level, 'OK' );
     is( $status->code, 'DISPATCH_EMPLOYEE_CURRENT_PRIV' );
@@ -297,9 +283,7 @@ foreach my $base ( "employee/current/priv", "employee/self/priv" ) {
     is( $status->payload->{'priv'}, 'admin' );
     is( $status->payload->{'schedule'}, undef );
     
-    #
-    # PUT, POST, DELETE
-    #
+    note( 'PUT, POST, DELETE' );
     $status = req( $test, 405, 'demo', 'PUT', $base );
     $status = req( $test, 405, 'active', 'PUT', $base );
     $status = req( $test, 405, 'root', 'PUT', $base );
