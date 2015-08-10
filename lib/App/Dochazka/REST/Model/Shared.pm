@@ -681,7 +681,7 @@ Given a L<DBIx::Connector> object and the name of a data model table, returns
 the total number of records in the table.
 
     activities employees intervals locks privhistory schedhistory
-    schedintvls schedules
+    schedintvls schedules tempintvls
 
 On failure, returns undef.
 
@@ -694,7 +694,7 @@ sub noof {
     );
 
     return unless grep { $table eq $_; } qw( activities employees intervals locks
-            privhistory schedhistory schedintvls schedules );
+            privhistory schedhistory schedintvls schedules tempintvls );
 
     my $count;
     try {
