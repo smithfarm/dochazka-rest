@@ -101,8 +101,16 @@ is( $status->code, 'DOCHAZKA_TSRANGE_TOO_BIG' );
 
 note( 'vet a non-bogus tsrange' );
 $status = $tio->_vet_tsrange( dbix_conn => $dbix_conn, tsrange => '[ "Jan 1, 2015", 2015-12-31 )' );
-ok( $status->ok );
+is( $status->level, 'OK' );
+is( $status->code, 'SUCCESS' );
 is( $tio->{'tsrange'}, '[ 2015-01-01 00:00:00+01, 2015-12-31 00:00:00+01 )' );
+is( $tio->{'lower_canon'}, '2014-12-31' );
+is( $tio->{'upper_canon'}, '2016-01-01' );
+is_deeply( $tio->{'lower_ymd'}, [ 2014, 12, 31 ] );
+is_deeply( $tio->{'upper_ymd'}, [ 2016, 1, 1 ] );
+
+note( 'but not fully vetted yet' );
+ok( ! $tio->vetted );
 
 note( 'vet a non-bogus employee (no schedule)' );
 $status = $tio->_vet_employee( dbix_conn => $dbix_conn, eid => 1 );
@@ -146,7 +154,18 @@ is( $status->level, 'ERR' );
 is( $status->code, 'DISPATCH_EMPLOYEE_NO_SCHEDULE' );
 
 note( 'create a testing schedule' );
-my $schedule = test_schedule_model();
+my $schedule = test_schedule_model( [ 
+    '[ 1998-05-04 08:00, 1998-05-04 12:00 )',
+    '[ 1998-05-04 12:30, 1998-05-04 16:30 )',
+    '[ 1998-05-05 08:00, 1998-05-05 12:00 )',
+    '[ 1998-05-05 12:30, 1998-05-05 16:30 )',
+    '[ 1998-05-06 08:00, 1998-05-06 12:00 )',
+    '[ 1998-05-06 12:30, 1998-05-06 16:30 )',
+    '[ 1998-05-07 08:00, 1998-05-07 12:00 )',
+    '[ 1998-05-07 12:30, 1998-05-07 16:30 )',
+    '[ 1998-05-08 08:00, 1998-05-08 12:00 )',
+    '[ 1998-05-08 12:30, 1998-05-08 16:30 )',
+] );
 
 note( 'give active a schedhistory' );
 my $schedhistory = App::Dochazka::REST::Model::Schedhistory->spawn(
@@ -168,6 +187,9 @@ isa_ok( $tio->{'emp_obj'}, 'App::Dochazka::REST::Model::Employee' );
 is( $tio->{'emp_obj'}->eid, $active->eid );
 is( $tio->{'emp_obj'}->nick, 'active' );
 
+note( 'but not fully vetted yet' );
+ok( ! $tio->vetted );
+
 note( 'get AID of WORK' );
 $status = App::Dochazka::REST::Model::Activity->load_by_code( $dbix_conn, 'WORK' );
 is( $status->level, 'OK' );
@@ -178,15 +200,6 @@ diag( "AID of WORK: " . $activity->aid );
 
 note( 'vet activity (default)' );
 $status = $tio->_vet_activity( dbix_conn => $dbix_conn, );
-is( $status->level, 'OK' );
-is( $status->code, 'SUCCESS' );
-isa_ok( $tio->{'act_obj'}, 'App::Dochazka::REST::Model::Activity' ); 
-is( $tio->{'act_obj'}->code, 'WORK' );
-is( $tio->{'act_obj'}->aid, $activity->aid );
-is( $tio->aid, $activity->aid );
-
-note( 'vet activity WORK by explicit AID' );
-$status = $tio->_vet_activity( dbix_conn => $dbix_conn, aid => $activity->aid );
 is( $status->level, 'OK' );
 is( $status->code, 'SUCCESS' );
 isa_ok( $tio->{'act_obj'}, 'App::Dochazka::REST::Model::Activity' ); 
@@ -211,6 +224,27 @@ is( $status->level, 'ERR' );
 is( $status->code, 'DOCHAZKA_GENERIC_NOT_EXIST' );
 is( $status->text, 'There is no activity with AID ->0<-' );
 
-# CLEANUP: none as this unit test doesn't change the database
+note( 'vet activity WORK by explicit AID' );
+$status = $tio->_vet_activity( dbix_conn => $dbix_conn, aid => $activity->aid );
+is( $status->level, 'OK' );
+is( $status->code, 'SUCCESS' );
+isa_ok( $tio->{'act_obj'}, 'App::Dochazka::REST::Model::Activity' ); 
+is( $tio->{'act_obj'}->code, 'WORK' );
+is( $tio->{'act_obj'}->aid, $activity->aid );
+is( $tio->aid, $activity->aid );
+
+note( 'vetted now true' );
+ok( $tio->vetted );
+
+note( 'change the tsrange' );
+$status = $tio->_vet_tsrange( dbix_conn => $dbix_conn, tsrange => '[ "May 13, 1988", 1988-05-26 )' );
+is( $status->level, 'OK' );
+is( $status->code, 'SUCCESS' );
+
+note( 'proceed with fillup' );
+$status = $tio->fillup( dbix_conn => $dbix_conn );
+diag( Dumper $status );
+
+# CLEANUP
 
 done_testing;

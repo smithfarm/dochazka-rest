@@ -77,7 +77,6 @@ use App::Dochazka::REST::Model::Shared qw(
 use App::Dochazka::REST::ResourceDefs;
 use App::Dochazka::REST::Shared qw( :ALL );  # all the shared_* functions
 use App::Dochazka::REST::Util::Holiday qw( holidays_in_daterange );
-use App::Dochazka::REST::Util::Schedule qw( intervals_in_schedule );
 use Data::Dumper;
 use Module::Runtime qw( use_module );
 use Params::Validate qw( :all );
@@ -2351,68 +2350,6 @@ sub _handler_get_interval_fillup {
         my $emp = shared_first_pass_lookup( $self, $key, $value );
         return 0 unless $emp;
 
-        # get and validate tsrange entered by the user
-        my $status;
-        my $dbix_conn = $context->{'dbix_conn'};
-        my $lower = $context->{'mapping'}->{'lower'};
-        $status = canonicalize_date( $dbix_conn, $lower );
-        if ( $status->not_ok ) {
-            $status->{'http_code'} = 400;
-            $self->mrest_declare_status( $status );
-            return 0;
-        }
-        $lower = $status->payload;
-        my $upper = $context->{'mapping'}->{'upper'};
-        $status = canonicalize_date( $dbix_conn, $upper );
-        if ( $status->not_ok ) {
-            $status->{'http_code'} = 400;
-            $self->mrest_declare_status( $status );
-            return 0;
-        }
-        $upper = $status->payload;
-        my $tsr = "( $lower 00:00, $upper 23:59 )";
-
-        # check for priv and schedule changes during the tsrange
-        if ( $emp->priv_change_during_range( $dbix_conn, $tsr ) ) {
-            $status = $CELL->status_err( 'DOCHAZKA_EMPLOYEE_PRIV_CHANGED'); 
-            $status->{'http_code'} = 500;
-            $self->mrest_declare_status( $status );
-            return 0;
-        }
-        if ( $emp->schedule_change_during_range( $dbix_conn, $tsr ) ) {
-            $status = $CELL->status_err( 'DOCHAZKA_EMPLOYEE_SCHEDULE_CHANGED'); 
-            $status->{'http_code'} = 500;
-            $self->mrest_declare_status( $status );
-            return 0;
-        }
-
-        # We have the employee in $emp and tsrange in $tsr, now get the 
-        # prevailing schedule for that employee in that range
-        my $shobj = $emp->schedhistory_at_timestamp( $dbix_conn, $tsr );
-        unless ( $shobj->sid ) {
-            $status = $CELL->status_err( 'DISPATCH_EMPLOYEE_NO_SCHEDULE' );
-            $status->{'http_code'} = 500;
-            $self->mrest_declare_status( $status );
-            return 0;
-        }
-        my $sched_obj = App::Dochazka::REST::Model::Schedule->load_by_sid(
-            $dbix_conn,
-            $shobj->sid
-        )->payload;
-        die "AGAH!" unless ref( $sched_obj) eq 'App::Dochazka::REST::Model::Schedule'
-            and $sched_obj->schedule =~ m/high_dow/;
-
-        $status = intervals_in_schedule( 
-            schedule_json => $sched_obj->schedule, 
-            tsrange => $tsr,
-            include_holidays => 0,
-        );
-        if ( $status->not_ok ) {
-            $status->{'http_code'} = 400;
-            $self->mrest_declare_status( $status );
-            return 0;
-        }
-        $self->context->{'stashed_schedule_intervals'} = $status->payload;
         return 1;
     }
     

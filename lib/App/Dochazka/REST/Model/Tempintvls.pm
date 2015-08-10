@@ -48,11 +48,12 @@ use App::Dochazka::REST::Util::Date qw(
 );
 use App::Dochazka::REST::Util::Holiday qw(
     get_tomorrow
-    holidays_in_daterange
+    holidays_and_weekends
 );
 use Data::Dumper;
 use Date::Calc qw(
     Add_Delta_Days
+    Date_to_Days
     Day_of_Week
 );
 use JSON;
@@ -62,6 +63,16 @@ use Try::Tiny;
 # we get 'spawn', 'reset', and accessors from parent
 use parent 'App::Dochazka::Common::Model::Tempintvls';
 
+my %dow_to_num = (
+    'MON' => 1,
+    'TUE' => 2,
+    'WED' => 3,
+    'THU' => 4,
+    'FRI' => 5,
+    'SAT' => 6,
+    'SUN' => 7,
+);
+my %num_to_dow = reverse %dow_to_num;
 
 
 
@@ -146,11 +157,12 @@ sub _vet_tsrange {
         return $CELL->status_err( 'DOCHAZKA_TSRANGE_TOO_BIG', args => [ $ARGS{tsrange} ] )
     }
 
-    $self->{'lower_canon'} = \@low;
-    $self->{'upper_canon'} = \@upp;
-    $self->{'lower_ymd'} = $low;
-    $self->{'upper_ymd'} = $upp;
+    $self->{'lower_ymd'} = \@low;
+    $self->{'upper_ymd'} = \@upp;
+    $self->{'lower_canon'} = $low;
+    $self->{'upper_canon'} = $upp;
 
+    $self->{'vetted'}->{'tsrange'} = 1;
     return $CELL->status_ok( 'SUCCESS' );
 }
 
@@ -220,6 +232,7 @@ sub _vet_employee {
         and $sched_obj->schedule =~ m/high_dow/;
     $self->{'sched_obj'} = $sched_obj;
 
+    $self->{'vetted'}->{'employee'} = 1;
     return $CELL->status_ok( 'SUCCESS' );
 }
 
@@ -266,60 +279,110 @@ sub _vet_activity {
         }
     }
 
+    $self->{'vetted'}->{'activity'} = 1;
     return $CELL->status_ok( 'SUCCESS' );
 }
 
 
-=head2 _fillup
+=head2 vetted
 
-Takes a C<DBIx::Connector> object. In
-addition, it optionally takes an C<include_holidays> boolean flag, which
-defaults to 0. This method expects to be called after C<_vet_tsrange>. 
+Returns boolean true if object has been completely vetted. Otherwise false.
+
+=cut
+
+sub vetted {
+    my $self = shift;
+    ( 
+        $self->{'vetted'}->{'tsrange'} and 
+        $self->{'tsrange'} and
+        $self->{'vetted'}->{'employee'} and 
+        $self->eid and
+        $self->{'vetted'}->{'activity'} and
+        $self->aid
+    ) ? 1 : 0;
+}
+
+
+=head2 fillup
+
+Takes a C<DBIx::Connector> object. In addition, it optionally takes an
+C<include_holidays> boolean flag, which defaults to 0. This method expects to
+be called on a fully vetted object (see C<vetted>, above).
 
 This method attempts to INSERT records into the tempintvls table according to
 the tsrange and the employee's schedule.  Returns a status object.
 
+Note that this method does not create any attendance intervals. If the fillup
+operation is successful, the payload will contain a list of attendance
+intervals that will be created if the C<commit> method is called.
+
 =cut
 
-sub _fillup {
+sub fillup {
     my $self = shift;
     my ( %ARGS ) = validate( @_, {
-        conn => { isa => 'DBIx::Connector' },
-        eid => { type => SCALAR },
-        aid => { type => SCALAR },
-        tsrange => { type => SCALAR },
+        dbix_conn => { isa => 'DBIx::Connector' },
         include_holidays => { type => SCALAR, default => 0 },
     } );
     my $status;
-    my $holidays;
-    if ( ! $ARGS{'include_holidays'} ) {
-        $holidays = holidays_in_daterange( 
-            begin => $self->{low},
-            end => $self->{upp},
-        );
-    }
+
+    my $rest_sched_hash_lower = _init_lower_sched_hash( $self->{sched_obj}->schedule );
+
+    my $holidays_and_weekends = holidays_and_weekends(
+        'begin' => $self->{lower_canon},
+        'end' => $self->{upper_canon},
+    );
 
     # the insert operation needs to take place within a transaction
     # so we don't leave a mess behind if there is a problem
     try {
-        $ARGS{conn}->txn( fixup => sub {
+        $ARGS{dbix_conn}->txn( fixup => sub {
             my $sth = $_->prepare( $site->SQL_TEMPINTVLS_INSERT );
             my $intvls;
 
-            # the next sequence value is already in $self->{ssid}
-            $sth->bind_param( 1, $self->{ssid} );
+            # the next sequence value is already in $self->tiid
+            $sth->bind_param( 1, $self->tiid );
+            $sth->bind_param( 2, $self->eid );
+            $sth->bind_param( 3, $self->aid );
 
-            # execute SQL_TEMPINTVLS_INSERT for each element of $self->{intvls}
-            map {
-                $sth->bind_param( 2, $_ );
-                $sth->execute;
-                push @$intvls, $_;
-            } @{ $self->{intvls} };
+            # execute SQL_TEMPINTVLS_INSERT for each fillup interval
+            my $d = $self->{'lower_canon'};
+            my $canon_upper = Date_to_Days( @{ $self->{upper_ymd} } );
+            WHILE_LOOP: while ( $d ne get_tomorrow( $self->{'upper_canon'} ) ) {
+                if ( $holidays_and_weekends->{ $d }->{'weekend'} or
+                     ( $holidays_and_weekends->{ $d }->{'holiday'} and 
+                       ! $ARGS{'include_holidays'} ) 
+                    ) {
+                    $d = get_tomorrow( $d );
+                    next WHILE_LOOP;
+                }
+                my ( $ly, $lm, $ld ) = canon_to_ymd( $d );
+                my $canon_lower = Date_to_Days( $ly, $lm, $ld );
+                my $ndow = Day_of_Week( $ly, $lm, $ld );
+
+                # get schedule entries starting on that DOW, 
+                foreach my $entry ( @{ $rest_sched_hash_lower->{ $ndow } } ) {
+                    my ( $canon_high_dow, $hy, $hm, $hd );
+                    # get canonical representation of "high_dow"
+                    $canon_high_dow = $canon_lower + 
+                        ( $dow_to_num{ $entry->{'high_dow'} } - $dow_to_num{ $entry->{'low_dow'} } );
+                    if ( $canon_high_dow <= $canon_upper ) {
+                        ( $hy, $hm, $hd ) = Days_to_Date( $canon_high_dow );
+                        my $payl = "[ " . ymd_to_canon( $ly,$lm,$ld ) . " " . $entry->{'low_time'} . 
+                                   ", " . ymd_to_canon( $hy,$hm,$hd ) . " ". $entry->{'high_time'} . " )";
+                        $sth->bind_param( 4, $payl );
+                        $sth->execute;
+                        push @$intvls, $payl;
+                    }
+                }
+                $d = get_tomorrow( $d );
+            }
+
             $status = $CELL->status_ok( 
                 'DOCHAZKA_TEMPINTVLS_INSERT_OK', 
                 payload => {
                     intervals => $intvls,
-                    ssid => $self->{ssid},
+                    tiid => $self->{tiid},
                 }
             );
         } );
@@ -328,6 +391,49 @@ sub _fillup {
     };
     return $status;
 }
+
+
+=head2 Days_to_Date
+
+Missing function in L<Date::Calc>
+
+=cut
+
+sub Days_to_Date {
+    my $canonical = shift;
+    my ( $year, $month, $day ) = Add_Delta_Days(1,1,1, $canonical - 1);
+    return ( $year, $month, $day );
+}
+
+
+=head2 _init_lower_sched_hash 
+
+Given schedule hash (JSON string from database), return schedule
+hash keyed on the "low_dow" property. In other words, convert the
+schedule to hash format keyed on numeric form of "low_dow" i.e. 1 for
+MON, 2 for TUE, etc. The values are references to arrays containing
+the entries beginning on the given DOW.
+
+=cut
+
+sub _init_lower_sched_hash {
+    my $rest_sched_json = shift;
+
+    # initialize
+    my $rest_sched_hash_lower = {};
+    foreach my $ndow ( 1 .. 7 ) {
+        $rest_sched_hash_lower->{ $ndow } = [];
+    }
+
+    # fill up
+    foreach my $entry ( @{ decode_json $rest_sched_json } ) {
+        my $ndow = $dow_to_num{ $entry->{'low_dow'} };
+        push @{ $rest_sched_hash_lower->{ $ndow } }, $entry;
+    }
+
+    return $rest_sched_hash_lower;
+}
+
 
 
 =head2 update
