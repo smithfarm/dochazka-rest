@@ -75,7 +75,7 @@ my $priv = App::Dochazka::REST::Model::Privhistory->spawn(
               remark => $ins_remark,
           );
 is( $priv->phid, undef, "phid undefined before INSERT" );
-$priv->insert( $faux_context );
+$status = $priv->insert( $faux_context );
 diag( $status->text ) if $status->not_ok;
 ok( $status->ok, "Post-insert status ok" );
 ok( $priv->phid > 0, "INSERT assigned an phid" );
