@@ -69,60 +69,7 @@ $status = $emp->insert( $faux_context );
 ok( $status->ok, "Schedule testing object inserted" );
 ok( $emp->eid > 0, "Schedule testing object has an EID" );
 
-note('insert some intervals into the scratch table');
-
-note('at the beginning, count of schedintvls should be 0');
-is( noof( $dbix_conn, 'schedintvls' ), 0 );
-
-note('spawn a schedintvls ("scratch schedule") object');
-my $schedintvls = App::Dochazka::REST::Model::Schedintvls->spawn;
-ok( ref($schedintvls), "object is a reference" );
-isa_ok( $schedintvls, 'App::Dochazka::REST::Model::Schedintvls' );
-ok( defined( $schedintvls->{ssid} ), "Scratch SID is defined" ); 
-ok( $schedintvls->{ssid} > 0, "Scratch SID is > 0" ); 
-
-note('insert a schedule (i.e. a list of schedintvls)');
-$schedintvls->{intvls} = [
-    "[$tomorrow 12:30, $tomorrow 16:30)",
-    "[$tomorrow 08:00, $tomorrow 12:00)",
-    "[$today 12:30, $today 16:30)",
-    "[$today 08:00, $today 12:00)",
-    "[$yesterday 12:30, $yesterday 16:30)",
-    "[$yesterday 08:00, $yesterday 12:00)",
-];
-
-note('insert all the schedintvls in one go');
-$status = $schedintvls->insert( $dbix_conn );
-diag( $status->text ) unless $status->ok;
-ok( $status->ok, "OK scratch intervals inserted OK" );
-ok( $schedintvls->ssid, "OK there is a scratch SID" );
-is( scalar @{ $schedintvls->{intvls} }, 6, "Object now has 6 intervals" );
-
-note('after insert, count of schedintvls should be 6');
-is( noof( $dbix_conn, 'schedintvls' ), 6 );
-
-note('load the schedintvls, translating them as we go');
-$status = $schedintvls->load( $dbix_conn );
-ok( $status->ok, "OK scratch intervals translated OK" );
-is( scalar @{ $schedintvls->{intvls} }, 6, "Still have 6 intervals" );
-is( scalar @{ $schedintvls->{schedule} }, 6, "And now have 6 translated intervals as well" );
-like( $status->code, qr/6 rows/, "status code says 6 rows" );
-like( $status->text, qr/6 rows/, "status code says 6 rows" );
-ok( exists $schedintvls->{schedule}->[0]->{high_time}, "Conversion to hash OK" );
-is_valid_json( $schedintvls->json );
-
-note('Now we can insert the JSON into the schedules table');
-my $schedule = App::Dochazka::REST::Model::Schedule->spawn(
-    schedule => $schedintvls->json,
-    scode => 'test1',
-    remark => 'TESTING',
-);
-$status = $schedule->insert( $faux_context );
-ok( $status->ok, "Schedule insert OK" );
-ok( $schedule->sid > 0, "There is an SID" );
-is( $schedule->scode, 'test1', "scode accessor returns correct value" );
-is_valid_json( $schedule->schedule );
-is( $schedule->remark, 'TESTING' );
+my $schedule = test_schedule_model();
 
 note('Attempt to change the "schedule" field to a bogus string');
 my $saved_sched_obj = $schedule->clone;
@@ -148,18 +95,10 @@ $status = App::Dochazka::REST::Model::Schedule->load_by_sid( $dbix_conn, $saved_
 is( $status->level, 'OK' );
 is( $status->payload->{sid}, $saved_sched_obj->sid ); # no real change
 $schedule = $status->payload;
-
-note('in other words, nothing changed');
-
-note('And now we can delete the schedintvls object and its associated database rows');
-$status = $schedintvls->delete( $dbix_conn );
-ok( $status->ok, "scratch intervals deleted" );
-like( $status->text, qr/6 record/, "Six records deleted" );
-is( noof( $dbix_conn, 'schedintvls' ), 0 );
+note('(in other words, nothing changed)');
 
 note('Make a bogus schedintvls object and attempt to delete it');
-my $bogus_intvls = App::Dochazka::REST::Model::Schedintvls->spawn(
-);
+my $bogus_intvls = App::Dochazka::REST::Model::Schedintvls->spawn;
 $status = $bogus_intvls->delete( $dbix_conn );
 is( $status->level, 'WARN', "Could not delete bogus intervals" );
 

@@ -40,13 +40,13 @@ use strict;
 use warnings;
 
 use App::CELL qw( $CELL $meta $site );
-use App::Dochazka::Common;
+use App::Dochazka::Common qw( $today $yesterday $tomorrow );
 use App::Dochazka::REST;
 use App::Dochazka::REST::ConnBank qw( $dbix_conn conn_up );
 use App::Dochazka::REST::Util qw( hash_the_password );
 use App::Dochazka::REST::Model::Privhistory qw( get_privhistory );
 use App::Dochazka::REST::Model::Schedhistory qw( get_schedhistory );
-use App::Dochazka::REST::Model::Shared qw( select_single );
+use App::Dochazka::REST::Model::Shared qw( noof select_single );
 use Authen::Passphrase::SaltedDigest;
 use Data::Dumper;
 use HTTP::Request::Common qw( GET PUT POST DELETE );
@@ -91,7 +91,7 @@ our @EXPORT = qw(
     gen_activity gen_employee gen_interval gen_lock
     gen_privhistory gen_schedhistory gen_schedule
     test_sql_success test_sql_failure do_select_single
-    test_employee_list get_aid_by_code
+    test_employee_list get_aid_by_code test_schedule_model
 );
 
 
@@ -507,6 +507,79 @@ sub delete_testing_activity {
     $status = $act->delete( $faux_context );
     is( $status->level, 'OK', 'delete_testing_activity 2' );
     return;
+}
+
+
+=head2 test_schedule_model
+
+Creates and returns a testing schedule without needing a L<Plack::Test> object.
+
+=cut
+
+sub test_schedule_model {
+    # no arguments
+
+    note('create an arbitrary schedule' );
+    note('at the beginning, count of schedintvls should be 0');
+    is( noof( $dbix_conn, 'schedintvls' ), 0 );
+
+    note('spawn a schedintvls ("scratch schedule") object');
+    my $schedintvls = App::Dochazka::REST::Model::Schedintvls->spawn;
+    ok( ref($schedintvls), "object is a reference" );
+    isa_ok( $schedintvls, 'App::Dochazka::REST::Model::Schedintvls' );
+    ok( defined( $schedintvls->{ssid} ), "Scratch SID is defined" ); 
+    ok( $schedintvls->{ssid} > 0, "Scratch SID is > 0" ); 
+
+    note('insert a schedule (i.e. a list of schedintvls)');
+    $schedintvls->{intvls} = [
+        "[$tomorrow 12:30, $tomorrow 16:30)",
+        "[$tomorrow 08:00, $tomorrow 12:00)",
+        "[$today 12:30, $today 16:30)",
+        "[$today 08:00, $today 12:00)",
+        "[$yesterday 12:30, $yesterday 16:30)",
+        "[$yesterday 08:00, $yesterday 12:00)",
+    ];
+
+    note('insert all the schedintvls in one go');
+    my $status = $schedintvls->insert( $dbix_conn );
+    diag( $status->text ) unless $status->ok;
+    ok( $status->ok, "OK scratch intervals inserted OK" );
+    ok( $schedintvls->ssid, "OK there is a scratch SID" );
+    is( scalar @{ $schedintvls->{intvls} }, 6, "Object now has 6 intervals" );
+
+    note('after insert, count of schedintvls should be 6');
+    is( noof( $dbix_conn, 'schedintvls' ), 6 );
+
+    note('load the schedintvls, translating them as we go');
+    $status = $schedintvls->load( $dbix_conn );
+    ok( $status->ok, "OK scratch intervals translated OK" );
+    is( scalar @{ $schedintvls->{intvls} }, 6, "Still have 6 intervals" );
+    is( scalar @{ $schedintvls->{schedule} }, 6, "And now have 6 translated intervals as well" );
+    like( $status->code, qr/6 rows/, "status code says 6 rows" );
+    like( $status->text, qr/6 rows/, "status code says 6 rows" );
+    ok( exists $schedintvls->{schedule}->[0]->{high_time}, "Conversion to hash OK" );
+    is_valid_json( $schedintvls->json );
+
+    note('insert the JSON into the schedules table');
+    my $schedule = App::Dochazka::REST::Model::Schedule->spawn(
+        schedule => $schedintvls->json,
+        scode => 'test1',
+        remark => 'TESTING',
+    );
+    $status = $schedule->insert( $faux_context );
+    ok( $status->ok, "Schedule insert OK" );
+    ok( $schedule->sid > 0, "There is an SID" );
+    is( $schedule->scode, 'test1', "scode accessor returns correct value" );
+    is_valid_json( $schedule->schedule );
+    is( $schedule->remark, 'TESTING' );
+
+    note( 'delete the schedintvls' );
+    $status = $schedintvls->delete( $dbix_conn );
+    ok( $status->ok, "scratch intervals deleted" );
+    like( $status->text, qr/6 record/, "Six records deleted" );
+    is( noof( $dbix_conn, 'schedintvls' ), 0 );
+
+    return $schedule;
 }
 
 
