@@ -42,7 +42,6 @@ lib/App/Dochazka/REST/Test.pm
 lib/App/Dochazka/REST/Util.pm
 lib/App/Dochazka/REST/Util/Date.pm
 lib/App/Dochazka/REST/Util/Holiday.pm
-lib/App/Dochazka/REST/Util/Schedule.pm
 LICENSE
 Makefile.PL
 MANIFEST			This list of files
