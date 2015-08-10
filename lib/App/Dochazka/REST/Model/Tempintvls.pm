@@ -175,7 +175,7 @@ sub _vet_employee {
     } );
     my $status;
 
-    # load employee object from database into $emp
+    # load employee object from database into $self->{emp_obj}
     $status = App::Dochazka::REST::Model::Employee->load_by_eid( $ARGS{dbix_conn}, $ARGS{eid} );
     if ( $status->ok and $status->code eq 'DISPATCH_RECORDS_FOUND' ) {
         # all green
@@ -219,6 +219,52 @@ sub _vet_employee {
     die "AGAHO-NO!" unless ref( $sched_obj) eq 'App::Dochazka::REST::Model::Schedule'
         and $sched_obj->schedule =~ m/high_dow/;
     $self->{'sched_obj'} = $sched_obj;
+
+    return $CELL->status_ok( 'SUCCESS' );
+}
+
+
+=head2 _vet_activity
+
+Takes a C<DBIx::Connector> object and an AID. Verifies that the AID exists
+and populates the C<activity_obj> attribute.
+
+=cut
+
+sub _vet_activity {
+    my $self = shift;
+    my ( %ARGS ) = validate( @_, {
+        dbix_conn => { isa => 'DBIx::Connector' },
+        aid => { type => SCALAR, optional => 1 },
+    } );
+    my $status;
+
+    if ( exists( $ARGS{aid} ) ) {
+        # load activity object from database into $self->{act_obj}
+        $status = App::Dochazka::REST::Model::Activity->load_by_aid( $ARGS{dbix_conn}, $ARGS{aid} );
+        if ( $status->ok and $status->code eq 'DISPATCH_RECORDS_FOUND' ) {
+            # all green; fall thru to success
+            $self->{'act_obj'} = $status->payload;
+            $self->aid( $status->payload->aid );
+        } elsif ( $status->level eq 'NOTICE' and $status->code eq 'DISPATCH_NO_RECORDS_FOUND' ) {
+            # non-existent activity
+            return $CELL->status_err( 'DOCHAZKA_GENERIC_NOT_EXIST', args => [ 'activity', 'AID', $ARGS{aid} ] );
+        } else {
+            return $status;
+        }
+    } else {
+        # if no aid given, try to look up "WORK"
+        $status = App::Dochazka::REST::Model::Activity->load_by_code( $ARGS{dbix_conn}, 'WORK' );
+        if ( $status->ok and $status->code eq 'DISPATCH_RECORDS_FOUND' ) {
+            # all green; fall thru to success
+            $self->{'act_obj'} = $status->payload;
+            $self->aid( $status->payload->aid );
+        } elsif ( $status->level eq 'NOTICE' and $status->code eq 'DISPATCH_NO_RECORDS_FOUND' ) {
+            return $CELL->status_err( 'DOCHAZKA_GENERIC_NOT_EXIST', args => [ 'activity', 'code', 'WORK' ] );
+        } else {
+            return $status;
+        }
+    }
 
     return $CELL->status_ok( 'SUCCESS' );
 }

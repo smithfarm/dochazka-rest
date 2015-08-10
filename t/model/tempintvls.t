@@ -43,6 +43,7 @@ use App::CELL qw( $meta $site );
 use Data::Dumper;
 #use App::Dochazka::Common qw( $today $yesterday $tomorrow );
 use App::Dochazka::REST::ConnBank qw( $dbix_conn );
+use App::Dochazka::REST::Model::Activity;
 use App::Dochazka::REST::Model::Tempintvls;
 use App::Dochazka::REST::Model::Shared qw( noof );
 use App::Dochazka::REST::Test;
@@ -116,26 +117,6 @@ is( $status->code, 'DOCHAZKA_EMPLOYEE_EID_NOT_EXIST' );
 note( 'create a testing employee with nick "active"' );
 my $active = create_testing_employee( { nick => 'active', password => 'active' } );
 
-note( 'vet active - no schedule' );
-$status = $tio->_vet_employee( dbix_conn => $dbix_conn, eid => $active->eid );
-is( $status->level, 'ERR' );
-is( $status->code, 'DISPATCH_EMPLOYEE_NO_SCHEDULE' );
-
-note( 'create a testing schedule' );
-my $schedule = test_schedule_model();
-
-note( 'give active a schedhistory' );
-my $schedhistory = App::Dochazka::REST::Model::Schedhistory->spawn(
-    eid => $active->eid,
-    sid => $schedule->sid,
-    effective => "1892-01-01",
-    remark => 'TESTING',
-);
-isa_ok( $schedhistory, 'App::Dochazka::REST::Model::Schedhistory', "schedhistory object is an object" );
-$status = $schedhistory->insert( $faux_context );
-is( $status->level, 'OK' );
-is( $status->code, 'DOCHAZKA_CUD_OK' );
-
 note( 'vet active - no privhistory' );
 $status = $tio->_vet_employee( dbix_conn => $dbix_conn, eid => $active->eid );
 is( $status->level, 'ERR' );
@@ -159,12 +140,77 @@ ok( $status->ok, "Post-insert status ok" );
 ok( $priv->phid > 0, "INSERT assigned an phid" );
 is( $priv->remark, $ins_remark, "remark survived INSERT" );
 
+note( 'vet active - no schedule' );
+$status = $tio->_vet_employee( dbix_conn => $dbix_conn, eid => $active->eid );
+is( $status->level, 'ERR' );
+is( $status->code, 'DISPATCH_EMPLOYEE_NO_SCHEDULE' );
+
+note( 'create a testing schedule' );
+my $schedule = test_schedule_model();
+
+note( 'give active a schedhistory' );
+my $schedhistory = App::Dochazka::REST::Model::Schedhistory->spawn(
+    eid => $active->eid,
+    sid => $schedule->sid,
+    effective => "1892-01-01",
+    remark => 'TESTING',
+);
+isa_ok( $schedhistory, 'App::Dochazka::REST::Model::Schedhistory', "schedhistory object is an object" );
+$status = $schedhistory->insert( $faux_context );
+is( $status->level, 'OK' );
+is( $status->code, 'DOCHAZKA_CUD_OK' );
+
 note( 'vet active - all green' );
 $status = $tio->_vet_employee( dbix_conn => $dbix_conn, eid => $active->eid );
-diag( Dumper $tio );
-BAIL_OUT(0);
+is( $status->level, "OK" );
+is( $status->code, "SUCCESS" );
+isa_ok( $tio->{'emp_obj'}, 'App::Dochazka::REST::Model::Employee' );
+is( $tio->{'emp_obj'}->eid, $active->eid );
+is( $tio->{'emp_obj'}->nick, 'active' );
+
+note( 'get AID of WORK' );
+$status = App::Dochazka::REST::Model::Activity->load_by_code( $dbix_conn, 'WORK' );
+is( $status->level, 'OK' );
+is( $status->code, 'DISPATCH_RECORDS_FOUND' );
+isa_ok( $status->payload, 'App::Dochazka::REST::Model::Activity' );
+my $activity = $status->payload;
+diag( "AID of WORK: " . $activity->aid );
+
+note( 'vet activity (default)' );
+$status = $tio->_vet_activity( dbix_conn => $dbix_conn, );
+is( $status->level, 'OK' );
+is( $status->code, 'SUCCESS' );
+isa_ok( $tio->{'act_obj'}, 'App::Dochazka::REST::Model::Activity' ); 
+is( $tio->{'act_obj'}->code, 'WORK' );
+is( $tio->{'act_obj'}->aid, $activity->aid );
+is( $tio->aid, $activity->aid );
+
+note( 'vet activity WORK by explicit AID' );
+$status = $tio->_vet_activity( dbix_conn => $dbix_conn, aid => $activity->aid );
+is( $status->level, 'OK' );
+is( $status->code, 'SUCCESS' );
+isa_ok( $tio->{'act_obj'}, 'App::Dochazka::REST::Model::Activity' ); 
+is( $tio->{'act_obj'}->code, 'WORK' );
+is( $tio->{'act_obj'}->aid, $activity->aid );
+is( $tio->aid, $activity->aid );
+
+note( 'vet non-existent activity 1' );
+$status = $tio->_vet_activity( dbix_conn => $dbix_conn, aid => 'WORBLE' );
+is( $status->level, 'ERR' );
+is( $status->code, 'DOCHAZKA_DBI_ERR' );
+
+note( 'vet non-existent activity 2' );
+$status = $tio->_vet_activity( dbix_conn => $dbix_conn, aid => '-1' );
+is( $status->level, 'ERR' );
+is( $status->code, 'DOCHAZKA_GENERIC_NOT_EXIST' );
+is( $status->text, 'There is no activity with AID ->-1<-' );
+
+note( 'vet non-existent activity 3' );
+$status = $tio->_vet_activity( dbix_conn => $dbix_conn, aid => '0' );
+is( $status->level, 'ERR' );
+is( $status->code, 'DOCHAZKA_GENERIC_NOT_EXIST' );
+is( $status->text, 'There is no activity with AID ->0<-' );
 
 # CLEANUP: none as this unit test doesn't change the database
 
 done_testing;
-
