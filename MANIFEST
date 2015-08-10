@@ -18,6 +18,7 @@ config/sql/interval_Config.pm
 config/sql/lock_Config.pm
 config/sql/privhistory_Config.pm
 config/sql/schedule_Config.pm
+config/sql/tempintvls_Config.pm
 lib/App/Dochazka/REST.pm
 lib/App/Dochazka/REST/ACL.pm
 lib/App/Dochazka/REST/Auth.pm
