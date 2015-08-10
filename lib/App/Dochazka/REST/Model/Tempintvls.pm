@@ -37,6 +37,7 @@ use strict;
 use warnings FATAL => 'all';
 use App::CELL qw( $CELL $log $meta $site );
 use App::Dochazka::REST::ConnBank qw( $dbix_conn );
+use App::Dochazka::REST::Model::Employee;
 use App::Dochazka::REST::Model::Shared qw(
     split_tsrange
 );
@@ -102,10 +103,9 @@ sub populate {
 
 =head2 _vet_tsrange
 
-Instance method. Takes a C<DBIx::Connector> object and a tsrange. 
-Checks the tsrange for sanity and populates the C<tsrange>, C<lower_canon>,
-C<lower_ymd>, C<upper_canon>, C<upper_ymd> attributes. Returns a status
-object.
+Takes a C<DBIx::Connector> object and a tsrange.  Checks the tsrange for sanity
+and populates the C<tsrange>, C<lower_canon>, C<lower_ymd>, C<upper_canon>,
+C<upper_ymd> attributes. Returns a status object.
 
 The algorithm for generating fillup intervals takes lower and upper date 
 bounds - it does not know about timestamps or tsranges
@@ -155,15 +155,87 @@ sub _vet_tsrange {
 }
 
 
-=head2 fillup
+=head2 _vet_employee
 
-Instance method. Takes a C<DBIx::Connector> object, an EID, an AID and a
-tsrange. Attempts to INSERT records into the tempintvls table according to the
-tsrange and the employee's schedule.  Returns a status object.
+Expects to be called *after* C<_vet_tsrange>.
+
+Takes a C<DBIx::Connector> object and an EID. First, retrieves from the
+database the employee object corresponding to that EID. Second, checks that
+the employee's privlevel did not change during the tsrange. Third, retrieves
+the prevailing schedule and checks that the schedule does not change at all
+during the tsrange. Returns a status object.
 
 =cut
 
-sub fillup {
+sub _vet_employee {
+    my $self = shift;
+    my ( %ARGS ) = validate( @_, {
+        dbix_conn => { isa => 'DBIx::Connector' },
+        eid => { type => SCALAR },
+    } );
+    my $status;
+
+    # load employee object from database into $emp
+    $status = App::Dochazka::REST::Model::Employee->load_by_eid( $ARGS{dbix_conn}, $ARGS{eid} );
+    if ( $status->ok and $status->code eq 'DISPATCH_RECORDS_FOUND' ) {
+        # all green
+        $self->{'emp_obj'} = $status->payload;
+        $self->eid( $status->payload->eid );
+    } elsif ( $status->level eq 'NOTICE' and $status->code eq 'DISPATCH_NO_RECORDS_FOUND' ) {
+        # non-existent employee
+        return $CELL->status_err( 'DOCHAZKA_EMPLOYEE_EID_NOT_EXIST', args => [ $ARGS{eid} ] );
+    } else {
+        return $status;
+    }
+
+    # check for priv and schedule changes during the tsrange
+    if ( $self->{'emp_obj'}->priv_change_during_range( $ARGS{dbix_conn}, $self->{tsrange} ) ) {
+        return $CELL->status_err( 'DOCHAZKA_EMPLOYEE_PRIV_CHANGED' ); 
+    }
+    if ( $self->{'emp_obj'}->schedule_change_during_range( $ARGS{dbix_conn}, $self->{tsrange} ) ) {
+        return $CELL->status_err( 'DOCHAZKA_EMPLOYEE_SCHEDULE_CHANGED' ); 
+    }
+
+    # get privhistory record prevailing at beginning of tsrange
+    my $probj = $self->{emp_obj}->privhistory_at_timestamp( $ARGS{dbix_conn}, $self->{tsrange} );
+    if ( ! $probj->priv ) {
+        return $CELL->status_err( 'DISPATCH_EMPLOYEE_NO_PRIVHISTORY' );
+    }
+    if ( $probj->priv eq 'active' or $probj->priv eq 'admin' ) {
+        # all green
+    } else {
+        return $CELL->status_err( 'DOCHAZKA_INSUFFICIENT_PRIVILEGE', args => [ $probj->priv ] );
+    }
+
+    # get schedhistory record prevailing at beginning of tsrange
+    my $shobj = $self->{emp_obj}->schedhistory_at_timestamp( $ARGS{dbix_conn}, $self->{tsrange} );
+    if ( ! $shobj->sid ) {
+        return $CELL->status_err( 'DISPATCH_EMPLOYEE_NO_SCHEDULE' );
+    }
+    my $sched_obj = App::Dochazka::REST::Model::Schedule->load_by_sid(
+        $ARGS{dbix_conn},
+        $shobj->sid
+    )->payload;
+    die "AGAHO-NO!" unless ref( $sched_obj) eq 'App::Dochazka::REST::Model::Schedule'
+        and $sched_obj->schedule =~ m/high_dow/;
+    $self->{'sched_obj'} = $sched_obj;
+
+    return $CELL->status_ok( 'SUCCESS' );
+}
+
+
+=head2 _fillup
+
+Takes a C<DBIx::Connector> object. In
+addition, it optionally takes an C<include_holidays> boolean flag, which
+defaults to 0. This method expects to be called after C<_vet_tsrange>. 
+
+This method attempts to INSERT records into the tempintvls table according to
+the tsrange and the employee's schedule.  Returns a status object.
+
+=cut
+
+sub _fillup {
     my $self = shift;
     my ( %ARGS ) = validate( @_, {
         conn => { isa => 'DBIx::Connector' },

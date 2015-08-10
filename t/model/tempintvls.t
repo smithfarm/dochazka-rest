@@ -103,6 +103,68 @@ $status = $tio->_vet_tsrange( dbix_conn => $dbix_conn, tsrange => '[ "Jan 1, 201
 ok( $status->ok );
 is( $tio->{'tsrange'}, '[ 2015-01-01 00:00:00+01, 2015-12-31 00:00:00+01 )' );
 
+note( 'vet a non-bogus employee (no schedule)' );
+$status = $tio->_vet_employee( dbix_conn => $dbix_conn, eid => 1 );
+is( $status->level, 'ERR' );
+is( $status->code, 'DISPATCH_EMPLOYEE_NO_SCHEDULE' );
+
+note( 'vet a non-existent employee' );
+$status = $tio->_vet_employee( dbix_conn => $dbix_conn, eid => 0 );
+is( $status->level, 'ERR' );
+is( $status->code, 'DOCHAZKA_EMPLOYEE_EID_NOT_EXIST' );
+
+note( 'create a testing employee with nick "active"' );
+my $active = create_testing_employee( { nick => 'active', password => 'active' } );
+
+note( 'vet active - no schedule' );
+$status = $tio->_vet_employee( dbix_conn => $dbix_conn, eid => $active->eid );
+is( $status->level, 'ERR' );
+is( $status->code, 'DISPATCH_EMPLOYEE_NO_SCHEDULE' );
+
+note( 'create a testing schedule' );
+my $schedule = test_schedule_model();
+
+note( 'give active a schedhistory' );
+my $schedhistory = App::Dochazka::REST::Model::Schedhistory->spawn(
+    eid => $active->eid,
+    sid => $schedule->sid,
+    effective => "1892-01-01",
+    remark => 'TESTING',
+);
+isa_ok( $schedhistory, 'App::Dochazka::REST::Model::Schedhistory', "schedhistory object is an object" );
+$status = $schedhistory->insert( $faux_context );
+is( $status->level, 'OK' );
+is( $status->code, 'DOCHAZKA_CUD_OK' );
+
+note( 'vet active - no privhistory' );
+$status = $tio->_vet_employee( dbix_conn => $dbix_conn, eid => $active->eid );
+is( $status->level, 'ERR' );
+is( $status->code, 'DISPATCH_EMPLOYEE_NO_PRIVHISTORY' );
+
+note( 'give active a privhistory' );
+my $ins_eid = $active->eid;
+my $ins_priv = 'active';
+my $ins_effective = "1892-01-01";
+my $ins_remark = 'TESTING';
+my $priv = App::Dochazka::REST::Model::Privhistory->spawn(
+              eid => $ins_eid,
+              priv => $ins_priv,
+              effective => $ins_effective,
+              remark => $ins_remark,
+          );
+is( $priv->phid, undef, "phid undefined before INSERT" );
+$status = $priv->insert( $faux_context );
+diag( Dumper $status->text ) if $status->not_ok;
+ok( $status->ok, "Post-insert status ok" );
+ok( $priv->phid > 0, "INSERT assigned an phid" );
+is( $priv->remark, $ins_remark, "remark survived INSERT" );
+
+note( 'vet active - all green' );
+$status = $tio->_vet_employee( dbix_conn => $dbix_conn, eid => $active->eid );
+diag( Dumper $tio );
+BAIL_OUT(0);
+
 # CLEANUP: none as this unit test doesn't change the database
 
 done_testing;
+
