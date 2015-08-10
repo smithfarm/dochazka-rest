@@ -33,58 +33,32 @@
 # -----------------------------------
 # Dochazka-REST
 # -----------------------------------
-# interval_Config.pm
+# tempintvls_Config.pm
 #
-# configuration parameters related to activity intervals
+# SQL code related to tempintvls
 # -----------------------------------
 
-# 
-set( 'SQL_INTERVAL_SELECT_BY_IID', q/
-      SELECT iid, eid, aid, intvl, long_desc, remark
-      FROM intervals WHERE iid = ?
+# SQL_NEXT_TIID
+#     SQL to get next value from temp_intvl_seq
+#
+set( 'SQL_NEXT_TIID', q/
+      SELECT nextval('temp_intvl_seq');
       / );
 
+# SQL_TEMPINTVLS_INSERT
+#     SQL to insert a single record in the 'tempintvls' table
 #
-set( 'SQL_INTERVAL_SELECT_BY_EID_AND_TSRANGE', q/
-      SELECT i.iid, i.eid, i.aid, a.code, i.intvl, i.long_desc, i.remark
-      FROM intervals i, activities a WHERE i.eid = ? AND i.intvl <@ ? AND i.aid = a.aid
-      ORDER BY intvl
-      LIMIT ?
+set( 'SQL_TEMPINTVLS_INSERT', q/
+      INSERT INTO tempintvls (tiid, eid, aid, intvl)
+      VALUES (?, ?, ?, ?)
       / );
 
-#
-set( 'SQL_INTERVAL_SELECT_COUNT_BY_EID_AND_TSRANGE', q/
-      SELECT count(*) FROM intervals WHERE eid = ? AND intvl <@ ? 
-      LIMIT ?
+# SQL_TEMPINTVLS_DELETE
+#     SQL to delete scratch intervals once they are no longer needed
+set( 'SQL_TEMPINTVLS_DELETE', q/
+      DELETE FROM tempintvls WHERE tiid = ?
       / );
 
-#
-set( 'SQL_INTERVAL_DELETE_BY_EID_AND_TSRANGE', q/
-      DELETE FROM intervals WHERE eid = ? AND intvl <@ ? 
-      / );
-
-#
-set( 'SQL_INTERVAL_INSERT', q/
-      INSERT INTO intervals
-                (eid, aid, intvl, long_desc, remark)
-      VALUES    (?,   ?,   ?,     ?,         ?) 
-      RETURNING  iid, eid, aid, intvl, long_desc, remark
-      / );
-
-#
-set( 'SQL_INTERVAL_UPDATE', q/
-      UPDATE intervals SET eid = ?, aid = ?, intvl = ?, long_desc = ?, remark = ?
-      WHERE iid = ?
-      RETURNING  iid, eid, aid, intvl, long_desc, remark
-      / );
-
-#
-set( 'SQL_INTERVAL_DELETE', q/
-      DELETE FROM intervals
-      WHERE iid = ?
-      RETURNING  iid, eid, aid, intvl, long_desc, remark
-      / );
-      
 
 # -----------------------------------
 # DO NOT EDIT ANYTHING BELOW THIS LINE
