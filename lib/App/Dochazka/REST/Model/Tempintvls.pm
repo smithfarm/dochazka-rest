@@ -382,7 +382,9 @@ sub fillup {
                 'DOCHAZKA_TEMPINTVLS_INSERT_OK', 
                 payload => {
                     intervals => $intvls,
-                    tiid => $self->{tiid},
+                    aid => $self->aid,
+                    eid => $self->eid,
+                    tiid => $self->tiid,
                 }
             );
         } );
@@ -390,6 +392,74 @@ sub fillup {
         $status = $CELL->status_err( 'DOCHAZKA_DBI_ERR', args => [ $_ ] );
     };
     return $status;
+}
+
+
+
+=head2 update
+
+There is no update method for tempintvls. Instead, delete and re-create.
+
+
+=head2 delete
+
+Instance method. Once we are done with the scratch intervals, they can be deleted.
+Returns a status object.
+
+=cut
+
+sub delete {
+    my $self = shift;
+    my ( $conn ) = validate_pos( @_,
+        { isa => 'DBIx::Connector' }
+    );
+
+    my $status;
+    try {
+        $conn->run( fixup => sub {
+            my $sth = $_->prepare( $site->SQL_TEMPINTVLS_DELETE );
+            $sth->bind_param( 1, $self->tiid );
+            $sth->execute;
+            my $rows = $sth->rows;
+            if ( $rows > 0 ) {
+                $status = $CELL->status_ok( 'DOCHAZKA_RECORDS_DELETED', args => [ $rows ] );
+            } elsif ( $rows == 0 ) {
+                $status = $CELL->status_warn( 'DOCHAZKA_RECORDS_DELETED', args => [ $rows ] );
+            } else {
+                die( "\$sth->rows returned a weird value $rows" );
+            }
+        } );
+    } catch {
+        $status = $CELL->status_err( 'DOCHAZKA_DBI_ERR', args => [ $_ ] );
+    };
+    return $status;
+}
+
+
+
+=head1 FUNCTIONS
+
+=head2 _next_tiid
+
+Get next value from the temp_intvl_seq sequence
+
+=cut
+
+sub _next_tiid {
+    my $val;
+    my $status;
+    try {
+        $dbix_conn->run( fixup => sub {
+            ( $val ) = $_->selectrow_array( $site->SQL_NEXT_TIID );
+        } );    
+    } catch {
+        $status = $CELL->status_err( 'DOCHAZKA_DBI_ERR', args => [ $_ ] );
+    };
+    if ( $status ) {
+        $log->crit( $status->text );
+        return;
+    }
+    return $val;
 }
 
 
@@ -432,76 +502,6 @@ sub _init_lower_sched_hash {
     }
 
     return $rest_sched_hash_lower;
-}
-
-
-
-=head2 update
-
-There is no update method for tempintvls. Instead, delete and re-create.
-
-
-=head2 delete
-
-Instance method. Once we are done with the scratch intervals, they can be deleted.
-Returns a status object.
-
-=cut
-
-sub delete {
-    my $self = shift;
-    my ( $conn ) = validate_pos( @_,
-        { isa => 'DBIx::Connector' }
-    );
-
-    my $status;
-    try {
-        $conn->run( fixup => sub {
-            my $sth = $_->prepare( $site->SQL_TEMPINTVLS_DELETE );
-            $sth->bind_param( 1, $self->ssid );
-            $sth->execute;
-            my $rows = $sth->rows;
-            if ( $rows > 0 ) {
-                $status = $CELL->status_ok( 'DOCHAZKA_RECORDS_DELETED', args => [ $rows ] );
-            } elsif ( $rows == 0 ) {
-                $status = $CELL->status_warn( 'DOCHAZKA_RECORDS_DELETED', args => [ $rows ] );
-            } else {
-                die( "\$sth->rows returned a weird value $rows" );
-            }
-        } );
-    } catch {
-        $status = $CELL->status_err( 'DOCHAZKA_DBI_ERR', args => [ $_ ] );
-    };
-    return $status;
-}
-
-
-
-
-
-=head1 FUNCTIONS
-
-=head2 _next_tiid
-
-Get next value from the temp_intvl_seq sequence
-
-=cut
-
-sub _next_tiid {
-    my $val;
-    my $status;
-    try {
-        $dbix_conn->run( fixup => sub {
-            ( $val ) = $_->selectrow_array( $site->SQL_NEXT_TIID );
-        } );    
-    } catch {
-        $status = $CELL->status_err( 'DOCHAZKA_DBI_ERR', args => [ $_ ] );
-    };
-    if ( $status ) {
-        $log->crit( $status->text );
-        return;
-    }
-    return $val;
 }
 
 
