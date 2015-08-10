@@ -92,25 +92,6 @@ my %num_to_dow = reverse %dow_to_num;
 =head1 FUNCTIONS
 
 
-=head2 sched_entry_to_tsrange
-
-Given a canonical date and a schedule entry (hash with keys "dow_low", etc.)
-return a tsrange string for that entry
-
-=cut
-
-sub sched_entry_to_tsrange {
-    my ( $canon_lower, $entry ) = @_;
-    my ( $ly, $lm, $ld ) = Days_to_Date( $canon_lower );
-    # get canonical representation of upper DOW
-    my $canon_upper = $canon_lower + 
-        ( $dow_to_num{ $entry->{'high_dow'} } - $dow_to_num{ $entry->{'low_dow'} } );
-    my ( $uy, $um, $ud ) = Days_to_Date( $canon_upper );
-    return "[ $ly-$lm-$ld " . $entry->{'low_time'} . 
-           ", $uy-$um-$ud " . $entry->{'high_time'} . " )";
-}
-
-
 =head2 Days_to_Date
 
 Missing function in L<Date::Calc>
