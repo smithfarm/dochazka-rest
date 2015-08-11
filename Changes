@@ -3165,3 +3165,11 @@ SPLIT OFF App::MREST into separate distribution
 - config/sql/tempintvls_Config.pm: fix filename
 - Model/Tempintvls.pm: implement commit() dry run
 
+0.491  2015-08-12 01:02 CEST
+- Drop Test::CheckManifest dependency
+- t/: update to current state
+- Dispatch.pm: re-implement interval/fillup handler
+- Model/Tempintvls.pm: implement vet(), new(), and DESTROY() methods
+- ResourceDefs.pm: clean up 'interval/fillup/...' resource definitions
+  References: https://github.com/smithfarm/dochazka-rest/issues/9
+
