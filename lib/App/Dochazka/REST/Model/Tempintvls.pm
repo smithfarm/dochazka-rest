@@ -39,6 +39,7 @@ use App::CELL qw( $CELL $log $meta $site );
 use App::Dochazka::REST::ConnBank qw( $dbix_conn );
 use App::Dochazka::REST::Model::Employee;
 use App::Dochazka::REST::Model::Shared qw(
+    load_multiple
     split_tsrange
 );
 use App::Dochazka::REST::Util::Date qw(
@@ -418,6 +419,16 @@ sub commit {
     } );
     my $status;
 
+    my $sql = $ARGS{dry_run}
+        ? $site->SQL_TEMPINTVLS_SELECT_EXCLUSIVE
+        : $site->SQL_TEMPINTVLS_SELECT_EXCLUSIVE; # FIXME
+
+    return load_multiple(
+        conn => $ARGS{dbix_conn},
+        class => 'App::Dochazka::REST::Model::Interval',
+        sql => $sql,
+        keys => [ $self->{tsrange} ],
+    );
 }
 
 
@@ -435,21 +446,21 @@ Returns a status object.
 
 sub delete {
     my $self = shift;
-    my ( $conn ) = validate_pos( @_,
-        { isa => 'DBIx::Connector' }
-    );
+    my ( %ARGS ) = validate( @_, {
+        dbix_conn => { isa => 'DBIx::Connector' },
+    } );
 
     my $status;
     try {
-        $conn->run( fixup => sub {
+        $ARGS{dbix_conn}->run( fixup => sub {
             my $sth = $_->prepare( $site->SQL_TEMPINTVLS_DELETE );
             $sth->bind_param( 1, $self->tiid );
             $sth->execute;
             my $rows = $sth->rows;
             if ( $rows > 0 ) {
-                $status = $CELL->status_ok( 'DOCHAZKA_RECORDS_DELETED', args => [ $rows ] );
+                $status = $CELL->status_ok( 'DOCHAZKA_RECORDS_DELETED', args => [ $rows ], count => $rows );
             } elsif ( $rows == 0 ) {
-                $status = $CELL->status_warn( 'DOCHAZKA_RECORDS_DELETED', args => [ $rows ] );
+                $status = $CELL->status_warn( 'DOCHAZKA_RECORDS_DELETED', args => [ $rows ], count => $rows );
             } else {
                 die( "\$sth->rows returned a weird value $rows" );
             }

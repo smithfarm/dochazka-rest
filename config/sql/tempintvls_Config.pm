@@ -59,6 +59,14 @@ set( 'SQL_TEMPINTVLS_DELETE', q/
       DELETE FROM tempintvls WHERE tiid = ?
       / );
 
+# SQL_TEMPINTVLS_SELECT_EXCLUSIVE
+#     SQL to select scratch intervals matching a range - NOT INCLUDING partial
+#     intervals (if any) at beginning and end of range
+set( 'SQL_TEMPINTVLS_SELECT_EXCLUSIVE', q/
+      SELECT eid, aid, intvl, long_desc, remark FROM tempintvls
+      WHERE intvl <@ CAST( ? AS tstzrange )
+      ORDER BY intvl
+      / );
 
 # -----------------------------------
 # DO NOT EDIT ANYTHING BELOW THIS LINE

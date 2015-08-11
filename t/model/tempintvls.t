@@ -124,6 +124,7 @@ is( $status->code, 'DOCHAZKA_EMPLOYEE_EID_NOT_EXIST' );
 
 note( 'create a testing employee with nick "active"' );
 my $active = create_testing_employee( { nick => 'active', password => 'active' } );
+push my @eids_to_delete, $active->eid;
 
 note( 'vet active - no privhistory' );
 $status = $tio->_vet_employee( dbix_conn => $dbix_conn, eid => $active->eid );
@@ -147,6 +148,7 @@ diag( Dumper $status->text ) if $status->not_ok;
 ok( $status->ok, "Post-insert status ok" );
 ok( $priv->phid > 0, "INSERT assigned an phid" );
 is( $priv->remark, $ins_remark, "remark survived INSERT" );
+push my @phids_to_delete, $priv->phid;
 
 note( 'vet active - no schedule' );
 $status = $tio->_vet_employee( dbix_conn => $dbix_conn, eid => $active->eid );
@@ -166,6 +168,7 @@ my $schedule = test_schedule_model( [
     '[ 1998-05-08 08:00, 1998-05-08 12:00 )',
     '[ 1998-05-08 12:30, 1998-05-08 16:30 )',
 ] );
+push my @sids_to_delete, $schedule->sid;
 
 note( 'give active a schedhistory' );
 my $schedhistory = App::Dochazka::REST::Model::Schedhistory->spawn(
@@ -178,6 +181,7 @@ isa_ok( $schedhistory, 'App::Dochazka::REST::Model::Schedhistory', "schedhistory
 $status = $schedhistory->insert( $faux_context );
 is( $status->level, 'OK' );
 is( $status->code, 'DOCHAZKA_CUD_OK' );
+push my @shids_to_delete, $schedhistory->shid;
 
 note( 'vet active - all green' );
 $status = $tio->_vet_employee( dbix_conn => $dbix_conn, eid => $active->eid );
@@ -246,6 +250,19 @@ $status = $tio->fillup( dbix_conn => $dbix_conn );
 is( $status->level, 'OK' );
 is( $status->code, 'DOCHAZKA_TEMPINTVLS_INSERT_OK' );
 is( scalar( @{ $status->payload->{'intervals'} } ), 24 );
+
+note( 'commit (dry run)' );
+$status = $tio->commit( dbix_conn => $dbix_conn, dry_run => 1 );
+is( $status->level, 'OK' );
+is( $status->code, 'DISPATCH_RECORDS_FOUND' );
+is( $status->{count}, 18 );
+
+note( 'delete the tempintvls' );
+$status = $tio->delete( dbix_conn => $dbix_conn, );
+diag( Dumper $status );
+is( $status->level, 'OK' );
+is( $status->code, 'DOCHAZKA_RECORDS_DELETED' );
+is( $status->{count}, 24 );
 
 # CLEANUP
 
