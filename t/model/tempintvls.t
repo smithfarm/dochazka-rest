@@ -259,7 +259,6 @@ is( $status->{count}, 18 );
 
 note( 'delete the tempintvls' );
 $status = $tio->delete( dbix_conn => $dbix_conn, );
-diag( Dumper $status );
 is( $status->level, 'OK' );
 is( $status->code, 'DOCHAZKA_RECORDS_DELETED' );
 is( $status->{count}, 24 );

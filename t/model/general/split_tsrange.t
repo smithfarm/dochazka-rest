@@ -86,10 +86,8 @@ is( $status->code, 'DOCHAZKA_DBI_ERR' );
 
 note( 'split a half-undefined tsrange (2)' );
 $status = split_tsrange( $dbix_conn, '(1979-4-02,)' );
-test_is_ok( $status, [
-    '1979-04-02 00:00:00+02',
-    undef
-] );
+is( $status->level, 'ERR' );
+is( $status->code, 'UNBOUNDED_TSRANGE' );
 
 note( 'split a half-undefined tsrange (3)' );
 $status = split_tsrange( $dbix_conn, '( , 1979-4-02 )' );
@@ -98,10 +96,8 @@ is( $status->code, 'DOCHAZKA_DBI_ERR' );
 
 note( 'split a half-undefined tsrange (4)' );
 $status = split_tsrange( $dbix_conn, '(,1979-4-02)' );
-test_is_ok( $status, [
-    undef,
-    '1979-04-02 00:00:00+02',
-] );
+is( $status->level, 'ERR' );
+is( $status->code, 'UNBOUNDED_TSRANGE' );
 
 note( 'split a half-undefined tsrange (5)' );
 $status = split_tsrange( $dbix_conn, '[ 1979-4-02,  ]' );
@@ -110,10 +106,8 @@ is( $status->code, 'DOCHAZKA_DBI_ERR' );
 
 note( 'split a half-undefined tsrange (6)' );
 $status = split_tsrange( $dbix_conn, '[ 1979-4-02,]' );
-test_is_ok( $status, [
-    '1979-04-02 00:00:00+02',
-    undef,
-] );
+is( $status->level, 'ERR' );
+is( $status->code, 'UNBOUNDED_TSRANGE' );
 
 note( 'split a half-undefined tsrange (7)' );
 $status = split_tsrange( $dbix_conn, '[ , 1979-4-02 ]' );
@@ -122,10 +116,8 @@ is( $status->code, 'DOCHAZKA_DBI_ERR' );
 
 note( 'split a half-undefined tsrange (8)' );
 $status = split_tsrange( $dbix_conn, '[,1979-4-02]' );
-test_is_ok( $status, [
-    undef,
-    '1979-04-02 00:00:00+02',
-] );
+is( $status->level, 'ERR' );
+is( $status->code, 'UNBOUNDED_TSRANGE' );
 
 note( 'split several completely undefined tsranges' );
 my @non_ranges = ( 
@@ -137,13 +129,19 @@ my @non_ranges = (
     '( ,]',
     '(,)',
     '( , )',
+    '[infinity,]',
+    '[ ,infinity ]',
+    '[,infinity)',
+    '[infinity, )',
+    '(,infinity]',
+    '( infinity ,infinity]',
+    '(infinity,)',
+    '( ,infinity )',
 );
 foreach my $non_range ( @non_ranges ) {
     $status = split_tsrange( $dbix_conn, '[,]' );
-    test_is_ok( $status, [
-        undef,
-        undef,
-    ] );
+    is( $status->level, 'ERR' );
+    is( $status->code, 'UNBOUNDED_TSRANGE' );
 }
 
 done_testing;

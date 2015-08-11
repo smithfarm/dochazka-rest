@@ -46,6 +46,7 @@ use Plack::Test;
 use Test::JSON;
 use Test::More;
 
+plan skip_all => "WIP";
 
 # initialize, connect to database, and set up a testing plan
 my $status = initialize_unit();
