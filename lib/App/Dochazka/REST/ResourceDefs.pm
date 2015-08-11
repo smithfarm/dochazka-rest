@@ -1707,10 +1707,11 @@ EOH
     {
         parent => 'interval/fillup',
         handler => {
-            GET => 'handler_get_interval_fillup_eid',
+            GET => 'handler_interval_fillup_eid',
+            POST => 'handler_interval_fillup_eid',
         },
         acl_profile => 'active', 
-        cli => 'interval fillup eid $EID $TIMESTAMP',
+        cli => 'interval fillup eid $EID $TSRANGE',
         validations => {
             'eid' => 'Int',
             'tsrange' => $tsrange_validation,
@@ -1724,8 +1725,12 @@ EOH
 =item * GET
 
 Return set of scheduled attendance intervals (tsranges) for the given employee
-over the given tsrange.  The result set includes only those scheduled intervals
-that fall _fully_ within the given tsrange.
+over the given tsrange. Does not add any attendance data to the database.
+
+=item * POST
+
+Post scheduled attendance intervals (tsranges) for the given employee
+over the given tsrange.
 
 =back
 EOH
@@ -1736,10 +1741,11 @@ EOH
     {
         parent => 'interval/fillup',
         handler => {
-            GET => 'handler_get_interval_fillup_nick',
+            GET => 'handler_interval_fillup_nick',
+            POST => 'handler_interval_fillup_nick',
         },
         acl_profile => 'active', 
-        cli => 'schedule intervals nick $NICK $TIMESTAMP',
+        cli => 'interval fillup nick $NICK $TSRANGE',
         validations => {
             'nick' => $term_validation,
             'tsrange' => $tsrange_validation,
@@ -1753,8 +1759,12 @@ EOH
 =item * GET
 
 Return set of scheduled attendance intervals (tsranges) for the given employee
-over the given tsrange.  The result set includes only those scheduled intervals
-that fall _fully_ within the given tsrange.
+over the given tsrange. Does not add any attendance data to the database.
+
+=item * POST
+
+Post scheduled attendance intervals (tsranges) for the given employee
+over the given tsrange.
 
 =back
 EOH
@@ -1765,10 +1775,11 @@ EOH
     {
         parent => 'schedule',
         handler => {
-            GET => 'handler_get_interval_fillup_self',
+            GET => 'handler_interval_fillup_self',
+            POST => 'handler_interval_fillup_self',
         },
         acl_profile => 'active', 
-        cli => 'schedule intervals self $TIMESTAMP',
+        cli => 'interval fillup self $TSRANGE',
         description => 'Return set of scheduled attendance intervals (tsranges) for the given employee over the given tsrange',
         validations => {
             'tsrange' => $tsrange_validation,
@@ -1781,8 +1792,12 @@ EOH
 =item * GET
 
 Return set of scheduled attendance intervals (tsranges) for the given employee
-over the given tsrange.  The result set includes only those scheduled intervals
-that fall _fully_ within the given tsrange.
+over the given tsrange. Does not add any attendance data to the database.
+
+=item * POST
+
+Post scheduled attendance intervals (tsranges) for the given employee
+over the given tsrange.
 
 =back
 EOH
