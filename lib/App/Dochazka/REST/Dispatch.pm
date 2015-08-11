@@ -74,6 +74,7 @@ use App::Dochazka::REST::Model::Shared qw(
     split_tsrange
     timestamp_delta_plus
 );
+use App::Dochazka::REST::Model::Tempintvls;
 use App::Dochazka::REST::ResourceDefs;
 use App::Dochazka::REST::Shared qw( :ALL );  # all the shared_* functions
 use App::Dochazka::REST::Util::Holiday qw( holidays_in_daterange );
@@ -2301,38 +2302,39 @@ sub handler_get_schedule_eid {
 
 =cut
 
-sub handler_get_interval_fillup_eid {
+sub handler_interval_fillup_eid {
     my ( $self, $pass ) = @_;
     $log->debug( "Entering " . __PACKAGE__ .  "::handler_get_interval_fillup_eid" ); 
 
-    return _handler_get_interval_fillup( $self, 'eid', $pass );
+    return _handler_interval_fillup( $self, 'eid', $pass );
 }
 
 =head3 handler_get_interval_fillup_nick
 
 =cut
 
-sub handler_get_interval_fillup_nick {
+sub handler_interval_fillup_nick {
     my ( $self, $pass ) = @_;
     $log->debug( "Entering " . __PACKAGE__ .  "::handler_get_interval_fillup_nick" ); 
 
-    return _handler_get_interval_fillup( $self, 'nick', $pass );
+    return _handler_interval_fillup( $self, 'nick', $pass );
 }
 
 =head3 handler_get_interval_fillup_self
 
 =cut
 
-sub handler_get_interval_fillup_self {
+sub handler_interval_fillup_self {
     my ( $self, $pass ) = @_;
     $log->debug( "Entering " . __PACKAGE__ .  "::handler_get_interval_fillup_self" ); 
-    return _handler_get_interval_fillup( $self, 'self', $pass );
+    return _handler_interval_fillup( $self, 'self', $pass );
 }
 
-sub _handler_get_interval_fillup {
+sub _handler_interval_fillup {
     my ( $self, $key, $pass ) = @_;
 
     my $context = $self->context;
+    my $method = $self->context->{'method'};
 
     # first pass
     if ( $pass == 1 ) {
@@ -2350,13 +2352,40 @@ sub _handler_get_interval_fillup {
         my $emp = shared_first_pass_lookup( $self, $key, $value );
         return 0 unless $emp;
 
+        # get tsrange, eid
+        my $tsr = $context->{'mapping'}->{'tsrange'};
+        my $eid = $emp->eid;
+
+        # create Tempintvls object
+        my $status = App::Dochazka::REST::Model::Tempintvls->new( 
+            dbix_conn => $context->{'dbix_conn'},
+            tsrange => $tsr,
+            eid => $eid,
+        );
+        if ( $status->not_ok ) {
+            $status->{'http_code'} = ( $status->code eq 'DOCHAZKA_DBI_ERR' )
+                ? 500 
+                : 400;
+            $self->mrest_declare_status( $status );
+            return 0;
+        }
+        $context->{'stashed_tempintvls_object'} = $status->payload;
+
         return 1;
     }
     
     # second pass
+    my $tio = $context->{'stashed_tempintvls_object'};
+    my $status = $tio->commit( dbix_conn => $context->{'dbix_conn'}, dry_run => 1 );
+    if ( $status->not_ok ) {
+        $self->mrest_declare_status( code => 500, explanation => $status->text );
+        return $fail;
+    }
+    my $payload = $status->payload;
+    $tio->DESTROY;
     return $CELL->status_ok( 
         'DISPATCH_SCHEDULE_INTERVALS_FOUND',
-        payload => $self->context->{'stashed_schedule_intervals'},
+        payload => $payload
     );
 }
 
