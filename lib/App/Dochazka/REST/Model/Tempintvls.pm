@@ -249,11 +249,11 @@ sub _vet_activity {
     my $self = shift;
     my ( %ARGS ) = validate( @_, {
         dbix_conn => { isa => 'DBIx::Connector' },
-        aid => { type => SCALAR, optional => 1 },
+        aid => { type => SCALAR|UNDEF, optional => 1 },
     } );
     my $status;
 
-    if ( exists( $ARGS{aid} ) ) {
+    if ( $ARGS{aid} ) {
         # load activity object from database into $self->{act_obj}
         $status = App::Dochazka::REST::Model::Activity->load_by_aid( $ARGS{dbix_conn}, $ARGS{aid} );
         if ( $status->ok and $status->code eq 'DISPATCH_RECORDS_FOUND' ) {
@@ -281,6 +281,35 @@ sub _vet_activity {
     }
 
     $self->{'vetted'}->{'activity'} = 1;
+    return $CELL->status_ok( 'SUCCESS' );
+}
+
+
+=head2 vet
+
+Calls the C<_vet_tsrange>, C<_vet_employee>, and C<_vet_activity> methods.
+
+=cut
+
+sub vet {
+    my $self = shift;
+    my ( %ARGS ) = validate( @_, {
+        dbix_conn => { isa => 'DBIx::Connector' },
+        tsrange => { type => SCALAR },
+        eid => { type => SCALAR },
+        aid => { type => SCALAR|UNDEF, optional => 1 },
+    } );
+    my $status;
+
+    $status = $self->_vet_tsrange( dbix_conn => $ARGS{dbix_conn}, tsrange => $ARGS{tsrange} );
+    return $status unless $status->ok;
+    $status = $self->_vet_employee( dbix_conn => $ARGS{dbix_conn}, eid => $ARGS{eid} );
+    return $status unless $status->ok;
+    $status = $self->_vet_activity( dbix_conn => $ARGS{dbix_conn}, aid => $ARGS{aid} );
+    return $status unless $status->ok;
+
+    die "AGHGCHKFSCK! should be vetted by now!" unless $self->vetted;
+
     return $CELL->status_ok( 'SUCCESS' );
 }
 
@@ -396,6 +425,38 @@ sub fillup {
 }
 
 
+=head2 new
+
+Constructor using all of the above. Returns a status object. If successful,
+level will be 'OK' and tempintvls object will be in the payload.
+
+=cut
+
+sub new {
+    my $class = shift;  # throwaway value
+    my ( %ARGS ) = validate( @_, {
+        dbix_conn => { isa => 'DBIx::Connector' },
+        tsrange => { type => SCALAR },
+        eid => { type => SCALAR },
+        aid => { type => SCALAR|UNDEF, optional => 1 },
+    } );
+    my $status;
+
+    my $obj = __PACKAGE__->spawn;
+    die "AGHOOPOWDD@! No tiid in Tempintvls object!" unless $obj->tiid;
+
+    $status = $obj->vet( %ARGS );
+    return $status unless $status->ok;
+
+    die "AGHOOPOWDC@! not vetted?!?" unless $obj->vetted;
+
+    $status = $obj->fillup( dbix_conn => $ARGS{dbix_conn} );
+    return $status unless $status->ok;
+
+    return $CELL->status_ok( 'SUCCESS', payload => $obj );
+}
+
+
 =head2 commit
 
 Takes a PARAMHASH containing a C<DBIx::Connector> object and, optionally, a
@@ -437,22 +498,19 @@ sub commit {
 There is no update method for tempintvls. Instead, delete and re-create.
 
 
-=head2 delete
+=head2 DESTROY
 
-Instance method. Once we are done with the scratch intervals, they can be deleted.
+Instance destructor. Once we are done with the scratch intervals, they can be deleted.
 Returns a status object.
 
 =cut
 
-sub delete {
+sub DESTROY {
     my $self = shift;
-    my ( %ARGS ) = validate( @_, {
-        dbix_conn => { isa => 'DBIx::Connector' },
-    } );
 
     my $status;
     try {
-        $ARGS{dbix_conn}->run( fixup => sub {
+        $dbix_conn->run( fixup => sub {
             my $sth = $_->prepare( $site->SQL_TEMPINTVLS_DELETE );
             $sth->bind_param( 1, $self->tiid );
             $sth->execute;
@@ -468,7 +526,8 @@ sub delete {
     } catch {
         $status = $CELL->status_err( 'DOCHAZKA_DBI_ERR', args => [ $_ ] );
     };
-    return $status;
+    $log->notice( "Tempintvls destructor says " . $status->level . ": " . $status->text );
+    return;
 }
 
 
