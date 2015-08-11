@@ -3157,3 +3157,11 @@ SPLIT OFF App::MREST into separate distribution
 - Test.pm: make test_schedule_model() take schedintvls as an argument
 - Model/Tempintvls.pm: implement fillup()
 
+0.490  2015-08-11 08:25 CEST
+- MANIFEST: add config/sql/tempintvls_Config.pm
+- Test.pm: do not hardcode count in test_schedule_model()
+- Model/Shared.pm: enable noop() on tempintvls table
+- Model/Tempintvls.pm: cleanup, implement delete() method
+- config/sql/tempintvls_Config.pm: fix filename
+- Model/Tempintvls.pm: implement commit() dry run
+
