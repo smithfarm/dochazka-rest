@@ -69,7 +69,38 @@ set( 'DBINIT_CREATE', [
       $$ LANGUAGE sql IMMUTABLE
     #,
 
-    q#COMMENT ON FUNCTION round_time(timestamptz) IS 'Round a single timestamp value to the nearest 5 minutes'#,
+    q#COMMENT ON FUNCTION round_time(timestamptz) IS 
+      'Round a single timestamp value to the nearest 5 minutes'#,
+
+    q#CREATE OR REPLACE FUNCTION partial_interval_lower(tstzrange, timestamptz)
+      RETURNS tstzrange AS $$
+        BEGIN
+            IF $1 @> $2 THEN
+                RETURN concat( '[', lower($1), ',', $2, ')' )::tstzrange;
+            ELSE
+                RETURN null::tstzrange;
+            END IF;
+        END;
+      $$ LANGUAGE plpgsql#,
+
+    q#COMMENT ON FUNCTION partial_interval_lower(tstzrange, timestamptz) IS 
+      'Given a tsrange and a timestamp, return tsrange [ lower(tsrange), timestamp )
+       if it exists, otherwise null'#,
+
+    q#CREATE OR REPLACE FUNCTION partial_interval_upper(tstzrange, timestamptz)
+      RETURNS tstzrange AS $$
+        BEGIN
+            IF $1 @> $2 THEN
+                RETURN concat( '[', $2, ',', upper($1), ')' )::tstzrange;
+            ELSE
+                RETURN null::tstzrange;
+            END IF;
+        END;
+      $$ LANGUAGE plpgsql#,
+
+    q#COMMENT ON FUNCTION partial_interval_upper(tstzrange, timestamptz) IS 
+      'Given a tsrange and a timestamp, return tsrange [ timestamp, upper(tsrange) )
+       if it exists, otherwise null'#,
 
     q/CREATE OR REPLACE FUNCTION not_before_1892(timestamptz) 
       RETURNS TIMESTAMPTZ AS $IMM$
@@ -548,11 +579,7 @@ $body$#,
       CREATE TABLE IF NOT EXISTS tempintvls (
           int_id     serial PRIMARY KEY,
           tiid       integer NOT NULL,
-          eid        integer REFERENCES employees (eid) NOT NULL,
-          aid        integer REFERENCES activities (aid) NOT NULL,
           intvl      tstzrange NOT NULL,
-          long_desc  text,
-          remark     text,
           EXCLUDE USING gist (tiid WITH =, intvl WITH &&)
       )/,
 
