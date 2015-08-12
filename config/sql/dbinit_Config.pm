@@ -72,35 +72,35 @@ set( 'DBINIT_CREATE', [
     q#COMMENT ON FUNCTION round_time(timestamptz) IS 
       'Round a single timestamp value to the nearest 5 minutes'#,
 
-    q#CREATE OR REPLACE FUNCTION partial_interval_lower(tstzrange, timestamptz)
-      RETURNS tstzrange AS $$
+    q#CREATE OR REPLACE FUNCTION partial_tempintvls(integer, tstzrange)
+      RETURNS RECORD AS $$
+        DECLARE
+            overlap_lower  tstzrange;
+            overlap_upper  tstzrange;
+            temp_lower     tstzrange;
+            temp_upper     tstzrange;
         BEGIN
-            IF $1 @> $2 THEN
-                RETURN concat( '[', lower($1), ',', $2, ')' )::tstzrange;
+            SELECT intvl FROM tempintvls INTO overlap_lower
+            WHERE tiid = $1 AND intvl @> lower($2);
+            SELECT intvl FROM tempintvls INTO overlap_upper
+            WHERE tiid = $1 AND intvl @> upper($2);
+            IF overlap_lower IS NOT NULL THEN
+                temp_lower := concat( '[', lower($2), ',', upper(overlap_lower), ')' )::tstzrange;
             ELSE
-                RETURN null::tstzrange;
+                temp_lower := null::tstzrange;
             END IF;
+            IF overlap_upper IS NOT NULL THEN
+                temp_upper := concat( '[', lower(overlap_upper), ',', upper($2), ')' )::tstzrange;
+            ELSE
+                temp_upper := null::tstzrange;
+            END IF;
+            RETURN ( temp_lower, temp_upper );
         END;
       $$ LANGUAGE plpgsql#,
 
-    q#COMMENT ON FUNCTION partial_interval_lower(tstzrange, timestamptz) IS 
-      'Given a tsrange and a timestamp, return tsrange [ lower(tsrange), timestamp )
-       if it exists, otherwise null'#,
-
-    q#CREATE OR REPLACE FUNCTION partial_interval_upper(tstzrange, timestamptz)
-      RETURNS tstzrange AS $$
-        BEGIN
-            IF $1 @> $2 THEN
-                RETURN concat( '[', $2, ',', upper($1), ')' )::tstzrange;
-            ELSE
-                RETURN null::tstzrange;
-            END IF;
-        END;
-      $$ LANGUAGE plpgsql#,
-
-    q#COMMENT ON FUNCTION partial_interval_upper(tstzrange, timestamptz) IS 
-      'Given a tsrange and a timestamp, return tsrange [ timestamp, upper(tsrange) )
-       if it exists, otherwise null'#,
+    q#COMMENT ON FUNCTION partial_tempintvls(integer, tstzrange) IS 
+      'Given a tiid and a tstzrange, returns partial intersecting tsranges (if any) at 
+      beginning and ending of the tszrange'#,
 
     q/CREATE OR REPLACE FUNCTION not_before_1892(timestamptz) 
       RETURNS TIMESTAMPTZ AS $IMM$

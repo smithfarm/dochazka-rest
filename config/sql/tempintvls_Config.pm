@@ -68,16 +68,12 @@ set( 'SQL_TEMPINTVLS_SELECT_EXCLUSIVE', q/
       ORDER BY intvl
       / );
 
-# SQL_TEMPINTVLS_SELECT_PARTIAL_INTERVAL_LOWER
-#     SQL to get lower partial interval
-set( 'SQL_TEMPINTVLS_SELECT_PARTIAL_INTERVAL_LOWER', q/
-      SELECT partial_interval_lower( CAST( ? AS tstzrange ), CAST( ? AS timestampttz ));
-      / );
-
-# SQL_TEMPINTVLS_SELECT_PARTIAL_INTERVAL_UPPER
-#     SQL to get upper partial interval
-set( 'SQL_TEMPINTVLS_SELECT_PARTIAL_INTERVAL_UPPER', q/
-      SELECT partial_interval_upper( CAST( ? AS tstzrange ), CAST( ? AS timestampttz ));
+# SQL_TEMPINTVLS_SELECT_PARTIAL_INTERVALS
+#     SQL to get lower and upper partial intervals (might be NULL, and
+#     might also duplicate records returned by SQL_TEMPINTVLS_SELECT_EXCLUSIVE)
+set( 'SQL_TEMPINTVLS_SELECT_PARTIAL_INTERVALS', q/
+      SELECT lower, upper FROM partial_tempintvls(1, CAST( ? AS tstzrange)) 
+      AS ( lower tstzrange, upper tstzrange)
       / );
 
 # -----------------------------------
