@@ -184,21 +184,36 @@ sub _vet_employee {
     my $self = shift;
     my ( %ARGS ) = validate( @_, {
         dbix_conn => { isa => 'DBIx::Connector' },
-        eid => { type => SCALAR },
+        eid => { type => SCALAR|UNDEF, optional => 1 },
+        emp_obj => { 
+            type => HASHREF|UNDEF, 
+            isa => 'App::Dochazka::REST::Model::Employee', 
+            optional => 1 
+        },
     } );
     my $status;
 
-    # load employee object from database into $self->{emp_obj}
-    $status = App::Dochazka::REST::Model::Employee->load_by_eid( $ARGS{dbix_conn}, $ARGS{eid} );
-    if ( $status->ok and $status->code eq 'DISPATCH_RECORDS_FOUND' ) {
-        # all green
-        $self->{'emp_obj'} = $status->payload;
-        $self->{'eid'} = $ARGS{eid};
-    } elsif ( $status->level eq 'NOTICE' and $status->code eq 'DISPATCH_NO_RECORDS_FOUND' ) {
-        # non-existent employee
-        return $CELL->status_err( 'DOCHAZKA_EMPLOYEE_EID_NOT_EXIST', args => [ $ARGS{eid} ] );
+    if ( exists( $ARGS{emp_obj} ) and defined( $ARGS{emp_obj} ) ) {
+        # emp_obj is provided
+        die 'AKLDWW###$$%AAAAAH!' unless $ARGS{emp_obj}->eid;
+        $self->{'emp_obj'} = $ARGS{emp_obj};
+        $self->{'eid'} = $ARGS{emp_obj}->eid;
     } else {
-        return $status;
+        # load employee object from database into $self->{emp_obj}
+        $status = App::Dochazka::REST::Model::Employee->load_by_eid( 
+            $ARGS{dbix_conn}, 
+            $ARGS{eid} 
+        );
+        if ( $status->ok and $status->code eq 'DISPATCH_RECORDS_FOUND' ) {
+            # all green
+            $self->{'emp_obj'} = $status->payload;
+            $self->{'eid'} = $ARGS{eid};
+        } elsif ( $status->level eq 'NOTICE' and $status->code eq 'DISPATCH_NO_RECORDS_FOUND' ) {
+            # non-existent employee
+            return $CELL->status_err( 'DOCHAZKA_EMPLOYEE_EID_NOT_EXIST', args => [ $ARGS{eid} ] );
+        } else {
+            return $status;
+        }
     }
 
     # check for priv and schedule changes during the tsrange
