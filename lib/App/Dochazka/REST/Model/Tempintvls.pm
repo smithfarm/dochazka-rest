@@ -311,8 +311,13 @@ sub vet {
     my ( %ARGS ) = validate( @_, {
         dbix_conn => { isa => 'DBIx::Connector' },
         tsrange => { type => SCALAR },
-        eid => { type => SCALAR },
         aid => { type => SCALAR|UNDEF, optional => 1 },
+        eid => { type => SCALAR|UNDEF, optional => 1 },
+        emp_obj => { 
+            type => HASHREF|UNDEF, 
+            isa => 'App::Dochazka::REST::Model::Employee', 
+            optional => 1 
+        },
     } );
     my $status;
 
@@ -448,8 +453,13 @@ sub new {
     my ( %ARGS ) = validate( @_, {
         dbix_conn => { isa => 'DBIx::Connector' },
         tsrange => { type => SCALAR },
-        eid => { type => SCALAR },
         aid => { type => SCALAR|UNDEF, optional => 1 },
+        eid => { type => SCALAR|UNDEF, optional => 1 },
+        emp_obj => { 
+            type => HASHREF|UNDEF, 
+            isa => 'App::Dochazka::REST::Model::Employee', 
+            optional => 1 
+        },
     } );
     my $status;
 

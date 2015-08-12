@@ -191,6 +191,12 @@ is( $status->code, "SUCCESS" );
 isa_ok( $tio->{'emp_obj'}, 'App::Dochazka::REST::Model::Employee' );
 is( $tio->{'emp_obj'}->eid, $active->eid );
 is( $tio->{'emp_obj'}->nick, 'active' );
+my $active_obj = $tio->{'emp_obj'};
+
+note( 'vet active using employee object' );
+$status = $tio->_vet_employee( dbix_conn => $dbix_conn, emp_obj => $active_obj );
+is( $status->level, "OK" );
+is( $status->code, "SUCCESS" );
 
 note( 'but not fully vetted yet' );
 ok( ! $tio->vetted );

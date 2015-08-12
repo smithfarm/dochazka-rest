@@ -2352,15 +2352,11 @@ sub _handler_interval_fillup {
         my $emp = shared_first_pass_lookup( $self, $key, $value );
         return 0 unless $emp;
 
-        # get tsrange, eid
-        my $tsr = $context->{'mapping'}->{'tsrange'};
-        my $eid = $emp->eid;
-
         # create Tempintvls object
         my $status = App::Dochazka::REST::Model::Tempintvls->new( 
             dbix_conn => $context->{'dbix_conn'},
-            tsrange => $tsr,
-            eid => $eid,
+            tsrange => $context->{'mapping'}->{'tsrange'},
+            emp_obj => $emp,
         );
         if ( $status->not_ok ) {
             $status->{'http_code'} = ( $status->code eq 'DOCHAZKA_DBI_ERR' )
