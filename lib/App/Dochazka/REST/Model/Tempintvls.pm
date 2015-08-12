@@ -193,7 +193,7 @@ sub _vet_employee {
     if ( $status->ok and $status->code eq 'DISPATCH_RECORDS_FOUND' ) {
         # all green
         $self->{'emp_obj'} = $status->payload;
-        $self->eid( $status->payload->eid );
+        $self->{'eid'} = $ARGS{eid};
     } elsif ( $status->level eq 'NOTICE' and $status->code eq 'DISPATCH_NO_RECORDS_FOUND' ) {
         # non-existent employee
         return $CELL->status_err( 'DOCHAZKA_EMPLOYEE_EID_NOT_EXIST', args => [ $ARGS{eid} ] );
@@ -253,13 +253,13 @@ sub _vet_activity {
     } );
     my $status;
 
-    if ( $ARGS{aid} ) {
+    if ( exists( $ARGS{aid} ) and defined( $ARGS{aid} ) ) {
         # load activity object from database into $self->{act_obj}
         $status = App::Dochazka::REST::Model::Activity->load_by_aid( $ARGS{dbix_conn}, $ARGS{aid} );
         if ( $status->ok and $status->code eq 'DISPATCH_RECORDS_FOUND' ) {
             # all green; fall thru to success
             $self->{'act_obj'} = $status->payload;
-            $self->aid( $status->payload->aid );
+            $self->{'aid'} = $status->payload->aid;
         } elsif ( $status->level eq 'NOTICE' and $status->code eq 'DISPATCH_NO_RECORDS_FOUND' ) {
             # non-existent activity
             return $CELL->status_err( 'DOCHAZKA_GENERIC_NOT_EXIST', args => [ 'activity', 'AID', $ARGS{aid} ] );
@@ -272,7 +272,7 @@ sub _vet_activity {
         if ( $status->ok and $status->code eq 'DISPATCH_RECORDS_FOUND' ) {
             # all green; fall thru to success
             $self->{'act_obj'} = $status->payload;
-            $self->aid( $status->payload->aid );
+            $self->{'aid'} = $status->payload->aid;
         } elsif ( $status->level eq 'NOTICE' and $status->code eq 'DISPATCH_NO_RECORDS_FOUND' ) {
             return $CELL->status_err( 'DOCHAZKA_GENERIC_NOT_EXIST', args => [ 'activity', 'code', 'WORK' ] );
         } else {
@@ -326,9 +326,9 @@ sub vetted {
         $self->{'vetted'}->{'tsrange'} and 
         $self->{'tsrange'} and
         $self->{'vetted'}->{'employee'} and 
-        $self->eid and
+        $self->{'eid'} and
         $self->{'vetted'}->{'activity'} and
-        $self->aid
+        $self->{'aid'}
     ) ? 1 : 0;
 }
 
@@ -372,8 +372,6 @@ sub fillup {
 
             # the next sequence value is already in $self->tiid
             $sth->bind_param( 1, $self->tiid );
-            $sth->bind_param( 2, $self->eid );
-            $sth->bind_param( 3, $self->aid );
 
             # execute SQL_TEMPINTVLS_INSERT for each fillup interval
             my $d = $self->{'lower_canon'};
@@ -400,7 +398,7 @@ sub fillup {
                         ( $hy, $hm, $hd ) = Days_to_Date( $canon_high_dow );
                         my $payl = "[ " . ymd_to_canon( $ly,$lm,$ld ) . " " . $entry->{'low_time'} . 
                                    ", " . ymd_to_canon( $hy,$hm,$hd ) . " ". $entry->{'high_time'} . " )";
-                        $sth->bind_param( 4, $payl );
+                        $sth->bind_param( 2, $payl );
                         $sth->execute;
                         push @$intvls, $payl;
                     }
@@ -412,8 +410,6 @@ sub fillup {
                 'DOCHAZKA_TEMPINTVLS_INSERT_OK', 
                 payload => {
                     intervals => $intvls,
-                    aid => $self->aid,
-                    eid => $self->eid,
                     tiid => $self->tiid,
                 }
             );

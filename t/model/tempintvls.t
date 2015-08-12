@@ -39,7 +39,7 @@ use strict;
 use warnings;
 
 use App::CELL::Test::LogToFile;
-use App::CELL qw( $meta $site );
+use App::CELL qw( $log $meta $site );
 use Data::Dumper;
 #use App::Dochazka::Common qw( $today $yesterday $tomorrow );
 use App::Dochazka::REST::ConnBank qw( $dbix_conn );
@@ -209,7 +209,7 @@ is( $status->code, 'SUCCESS' );
 isa_ok( $tio->{'act_obj'}, 'App::Dochazka::REST::Model::Activity' ); 
 is( $tio->{'act_obj'}->code, 'WORK' );
 is( $tio->{'act_obj'}->aid, $activity->aid );
-is( $tio->aid, $activity->aid );
+is( $tio->{'aid'}, $activity->aid );
 
 note( 'vet non-existent activity 1' );
 $status = $tio->_vet_activity( dbix_conn => $dbix_conn, aid => 'WORBLE' );
@@ -222,7 +222,9 @@ is( $status->level, 'ERR' );
 is( $status->code, 'DOCHAZKA_GENERIC_NOT_EXIST' );
 is( $status->text, 'There is no activity with AID ->-1<-' );
 
-note( 'vet non-existent activity 3' );
+my $note = 'vet non-existent activity 3';
+note( $note );
+$log->info( "*** $note" );
 $status = $tio->_vet_activity( dbix_conn => $dbix_conn, aid => '0' );
 is( $status->level, 'ERR' );
 is( $status->code, 'DOCHAZKA_GENERIC_NOT_EXIST' );
@@ -235,7 +237,7 @@ is( $status->code, 'SUCCESS' );
 isa_ok( $tio->{'act_obj'}, 'App::Dochazka::REST::Model::Activity' ); 
 is( $tio->{'act_obj'}->code, 'WORK' );
 is( $tio->{'act_obj'}->aid, $activity->aid );
-is( $tio->aid, $activity->aid );
+is( $tio->{'aid'}, $activity->aid );
 
 note( 'vetted now true' );
 ok( $tio->vetted );
@@ -257,11 +259,11 @@ is( $status->level, 'OK' );
 is( $status->code, 'DISPATCH_RECORDS_FOUND' );
 is( $status->{count}, 18 );
 
-note( 'delete the tempintvls' );
-$status = $tio->delete( dbix_conn => $dbix_conn, );
-is( $status->level, 'OK' );
-is( $status->code, 'DOCHAZKA_RECORDS_DELETED' );
-is( $status->{count}, 24 );
+#note( 'delete the tempintvls' ); # not necessary; DESTROY() is called automatically
+#$status = $tio->DESTROY;
+#is( $status->level, 'OK' );
+#is( $status->code, 'DOCHAZKA_RECORDS_DELETED' );
+#is( $status->{count}, 24 );
 
 # CLEANUP
 

@@ -49,8 +49,8 @@ set( 'SQL_NEXT_TIID', q/
 #     SQL to insert a single record in the 'tempintvls' table
 #
 set( 'SQL_TEMPINTVLS_INSERT', q/
-      INSERT INTO tempintvls (tiid, eid, aid, intvl)
-      VALUES (?, ?, ?, ?)
+      INSERT INTO tempintvls (tiid, intvl)
+      VALUES (?, ?)
       / );
 
 # SQL_TEMPINTVLS_DELETE
@@ -60,12 +60,24 @@ set( 'SQL_TEMPINTVLS_DELETE', q/
       / );
 
 # SQL_TEMPINTVLS_SELECT_EXCLUSIVE
-#     SQL to select scratch intervals matching a range - NOT INCLUDING partial
+#     SQL to select scratch intervals matching a range - NOT including partial
 #     intervals (if any) at beginning and end of range
 set( 'SQL_TEMPINTVLS_SELECT_EXCLUSIVE', q/
-      SELECT eid, aid, intvl, long_desc, remark FROM tempintvls
+      SELECT intvl FROM tempintvls
       WHERE intvl <@ CAST( ? AS tstzrange )
       ORDER BY intvl
+      / );
+
+# SQL_TEMPINTVLS_SELECT_PARTIAL_INTERVAL_LOWER
+#     SQL to get lower partial interval
+set( 'SQL_TEMPINTVLS_SELECT_PARTIAL_INTERVAL_LOWER', q/
+      SELECT partial_interval_lower( CAST( ? AS tstzrange ), CAST( ? AS timestampttz ));
+      / );
+
+# SQL_TEMPINTVLS_SELECT_PARTIAL_INTERVAL_UPPER
+#     SQL to get upper partial interval
+set( 'SQL_TEMPINTVLS_SELECT_PARTIAL_INTERVAL_UPPER', q/
+      SELECT partial_interval_upper( CAST( ? AS tstzrange ), CAST( ? AS timestampttz ));
       / );
 
 # -----------------------------------
