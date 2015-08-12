@@ -250,7 +250,7 @@ note( 'vetted now true' );
 ok( $tio->vetted );
 
 note( 'change the tsrange' );
-$status = $tio->_vet_tsrange( dbix_conn => $dbix_conn, tsrange => '[ "May 13, 1988", 1988-05-26 )' );
+$status = $tio->_vet_tsrange( dbix_conn => $dbix_conn, tsrange => '( "May 5, 1998" 10:00, 1998-05-13 10:00 )' );
 is( $status->level, 'OK' );
 is( $status->code, 'SUCCESS' );
 
@@ -262,6 +262,8 @@ is( scalar( @{ $status->payload->{'intervals'} } ), 24 );
 
 note( 'commit (dry run)' );
 $status = $tio->commit( dbix_conn => $dbix_conn, dry_run => 1 );
+diag( Dumper $status );
+BAIL_OUT(0);
 is( $status->level, 'OK' );
 is( $status->code, 'DISPATCH_RECORDS_FOUND' );
 is( $status->{count}, 18 );

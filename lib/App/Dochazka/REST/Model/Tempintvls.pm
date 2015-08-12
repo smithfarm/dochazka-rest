@@ -40,6 +40,7 @@ use App::Dochazka::REST::ConnBank qw( $dbix_conn );
 use App::Dochazka::REST::Model::Employee;
 use App::Dochazka::REST::Model::Shared qw(
     load_multiple
+    select_single
     split_tsrange
 );
 use App::Dochazka::REST::Util::Date qw(
@@ -505,12 +506,27 @@ sub commit {
         ? $site->SQL_TEMPINTVLS_SELECT_EXCLUSIVE
         : $site->SQL_TEMPINTVLS_SELECT_EXCLUSIVE; # FIXME
 
-    return load_multiple(
+    $status = load_multiple(
         conn => $ARGS{dbix_conn},
-        class => 'App::Dochazka::REST::Model::Interval',
+        class => 'App::Dochazka::REST::Model::Tempintvls',
         sql => $sql,
         keys => [ $self->{tsrange} ],
     );
+    return $status unless $status->ok;
+    my $intervals = $status->payload;
+
+    # now add the partial intervals
+    $status = select_single(
+        conn => $ARGS{dbix_conn},
+        sql => $site->SQL_TEMPINTVLS_SELECT_PARTIAL_INTERVALS,
+        keys => [ $self->tiid, $self->{tsrange} ],
+    );
+    return $status unless $status->ok;
+
+    return $CELL->status_ok( 'SUCCESS', payload => {
+        'full_intervals' => $intervals,
+        'partial_intervals' => $status->payload,
+    } );
 }
 
 

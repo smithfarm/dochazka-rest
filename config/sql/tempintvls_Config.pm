@@ -72,7 +72,7 @@ set( 'SQL_TEMPINTVLS_SELECT_EXCLUSIVE', q/
 #     SQL to get lower and upper partial intervals (might be NULL, and
 #     might also duplicate records returned by SQL_TEMPINTVLS_SELECT_EXCLUSIVE)
 set( 'SQL_TEMPINTVLS_SELECT_PARTIAL_INTERVALS', q/
-      SELECT lower, upper FROM partial_tempintvls(1, CAST( ? AS tstzrange)) 
+      SELECT lower, upper FROM partial_tempintvls(CAST( ? AS integer), CAST( ? AS tstzrange)) 
       AS ( lower tstzrange, upper tstzrange)
       / );
 
