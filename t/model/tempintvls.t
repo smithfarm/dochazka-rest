@@ -38,7 +38,7 @@ use 5.012;
 use strict;
 use warnings;
 
-use App::CELL::Test::LogToFile;
+#use App::CELL::Test::LogToFile;
 use App::CELL qw( $log $meta $site );
 use Data::Dumper;
 #use App::Dochazka::Common qw( $today $yesterday $tomorrow );
@@ -46,6 +46,7 @@ use App::Dochazka::REST::ConnBank qw( $dbix_conn );
 use App::Dochazka::REST::Model::Activity;
 use App::Dochazka::REST::Model::Tempintvls;
 use App::Dochazka::REST::Model::Shared qw( noof );
+use App::Dochazka::REST::Model::Schedhistory;
 use App::Dochazka::REST::Test;
 use App::Dochazka::REST::Util::Date qw( canon_to_ymd );
 use Test::More;
@@ -200,7 +201,7 @@ is( $status->level, 'OK' );
 is( $status->code, 'DISPATCH_RECORDS_FOUND' );
 isa_ok( $status->payload, 'App::Dochazka::REST::Model::Activity' );
 my $activity = $status->payload;
-diag( "AID of WORK: " . $activity->aid );
+#diag( "AID of WORK: " . $activity->aid );
 
 note( 'vet activity (default)' );
 $status = $tio->_vet_activity( dbix_conn => $dbix_conn, );
@@ -265,6 +266,29 @@ is( $status->{count}, 18 );
 #is( $status->code, 'DOCHAZKA_RECORDS_DELETED' );
 #is( $status->{count}, 24 );
 
+sub _vet_cleanup {
+    my $status = shift;
+    is( $status->level, 'OK' );
+    is( $status->code, 'DISPATCH_RECORDS_FOUND' ); 
+    my $obj = $status->payload;
+    $status = $obj->delete( $faux_context );
+    is( $status->level, 'OK' );
+    is( $status->code, 'DOCHAZKA_CUD_OK' ); 
+}
+
 # CLEANUP
+isa_ok( $dbix_conn, 'DBIx::Connector' );
+map {
+    _vet_cleanup( App::Dochazka::REST::Model::Schedhistory->load_by_shid( $dbix_conn, $_ ) );
+} @shids_to_delete;
+map {
+    _vet_cleanup( App::Dochazka::REST::Model::Schedule->load_by_sid( $dbix_conn, $_ ) );
+} @sids_to_delete;
+map {
+    _vet_cleanup( App::Dochazka::REST::Model::Privhistory->load_by_phid( $dbix_conn, $_ ) );
+} @phids_to_delete;
+map {
+    _vet_cleanup( App::Dochazka::REST::Model::Employee->load_by_eid( $dbix_conn, $_ ) );
+} @eids_to_delete;
 
 done_testing;
