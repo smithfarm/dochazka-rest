@@ -34,7 +34,7 @@ package App::Dochazka::REST;
 
 use 5.012;
 use strict;
-use warnings FATAL => 'all';
+use warnings;
 
 use App::CELL qw( $CELL $log $meta $core $site );
 use App::Dochazka::REST::ConnBank qw( $dbix_conn );

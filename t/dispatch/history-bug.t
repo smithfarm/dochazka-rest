@@ -36,7 +36,7 @@
 #!perl
 use 5.012;
 use strict;
-use warnings FATAL => 'all';
+use warnings;
 
 use App::CELL qw( $meta $site );
 use App::Dochazka::Common qw( $today );

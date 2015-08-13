@@ -36,7 +36,7 @@
 #!perl
 use 5.012;
 use strict;
-use warnings FATAL => 'all';
+use warnings;
 
 #use App::CELL::Test::LogToFile;
 use App::Dochazka::REST::Shared qw( shared_process_quals );

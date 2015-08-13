@@ -34,7 +34,7 @@ package App::Dochazka::REST::Docs::Resources;
 
 use 5.012;
 use strict;
-use warnings FATAL => 'all';
+use warnings;
 
 
 1;

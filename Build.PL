@@ -1,6 +1,6 @@
 use 5.012000;
 use strict;
-use warnings FATAL => 'all';
+use warnings;
 use Module::Build;
 
 my $builder = Module::Build->new(

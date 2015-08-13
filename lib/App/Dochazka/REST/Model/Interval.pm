@@ -34,7 +34,7 @@ package App::Dochazka::REST::Model::Interval;
 
 use 5.012;
 use strict;
-use warnings FATAL => 'all';
+use warnings;
 use App::CELL qw( $CELL $log $meta $site );
 use Data::Dumper;
 use App::Dochazka::REST::Model::Lock qw( count_locks_in_tsrange );

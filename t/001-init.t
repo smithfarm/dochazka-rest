@@ -35,7 +35,7 @@
 #!perl
 use 5.012;
 use strict;
-use warnings FATAL => 'all';
+use warnings;
 use Test::More;
 
 #use App::CELL::Test::LogToFile;

@@ -34,7 +34,7 @@ package App::Dochazka::REST::Model::Activity;
 
 use 5.012;
 use strict;
-use warnings FATAL => 'all';
+use warnings;
 use App::CELL qw( $CELL $log $meta $site );
 use App::Dochazka::REST::Model::Shared qw( cud load load_multiple priv_by_eid );
 use DBI;

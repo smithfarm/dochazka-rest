@@ -34,7 +34,7 @@ package App::Dochazka::REST::Model::Employee;
 
 use 5.012;
 use strict;
-use warnings FATAL => 'all';
+use warnings;
 use App::CELL qw( $CELL $log $meta $site );
 use App::Dochazka::REST::LDAP;
 use App::Dochazka::REST::Model::Shared qw( 

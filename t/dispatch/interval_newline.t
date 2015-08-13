@@ -36,7 +36,7 @@
 #!perl
 use 5.012;
 use strict;
-use warnings FATAL => 'all';
+use warnings;
 
 use App::CELL qw( $log $meta $site );
 use App::Dochazka::REST::Test;
