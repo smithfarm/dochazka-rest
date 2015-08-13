@@ -250,7 +250,7 @@ note( 'vetted now true' );
 ok( $tio->vetted );
 
 note( 'change the tsrange' );
-$status = $tio->_vet_tsrange( dbix_conn => $dbix_conn, tsrange => '( "May 5, 1998" 10:00, 1998-05-13 10:00 )' );
+$status = $tio->_vet_tsrange( dbix_conn => $dbix_conn, tsrange => '[ "May 5, 1998" 10:00, 1998-05-13 10:00 )' );
 is( $status->level, 'OK' );
 is( $status->code, 'SUCCESS' );
 
@@ -258,21 +258,18 @@ note( 'proceed with fillup' );
 $status = $tio->fillup( dbix_conn => $dbix_conn );
 is( $status->level, 'OK' );
 is( $status->code, 'DOCHAZKA_TEMPINTVLS_INSERT_OK' );
-is( scalar( @{ $status->payload->{'intervals'} } ), 24 );
+#$status = $tio->dump( dbix_conn => $dbix_conn, tiid => $tio->tiid );
+#diag( Dumper $status );
+#BAIL_OUT(0);
 
 note( 'commit (dry run)' );
 $status = $tio->commit( dbix_conn => $dbix_conn, dry_run => 1 );
 diag( Dumper $status );
 BAIL_OUT(0);
 is( $status->level, 'OK' );
-is( $status->code, 'DISPATCH_RECORDS_FOUND' );
-is( $status->{count}, 18 );
+is( $status->code, 'RESULT_SET' );
 
-#note( 'delete the tempintvls' ); # not necessary; DESTROY() is called automatically
-#$status = $tio->DESTROY;
-#is( $status->level, 'OK' );
-#is( $status->code, 'DOCHAZKA_RECORDS_DELETED' );
-#is( $status->{count}, 24 );
+note( 'delete the tempintvls not necessary; DESTROY() is called automatically' );
 
 sub _vet_cleanup {
     my $status = shift;

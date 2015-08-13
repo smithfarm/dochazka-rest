@@ -59,21 +59,29 @@ set( 'SQL_TEMPINTVLS_DELETE', q/
       DELETE FROM tempintvls WHERE tiid = ?
       / );
 
-# SQL_TEMPINTVLS_SELECT_EXCLUSIVE
-#     SQL to select scratch intervals matching a range - NOT including partial
-#     intervals (if any) at beginning and end of range
-set( 'SQL_TEMPINTVLS_SELECT_EXCLUSIVE', q/
-      SELECT intvl FROM tempintvls
-      WHERE intvl <@ CAST( ? AS tstzrange )
-      ORDER BY intvl
+# SQL_TEMPINTVLS_COMMIT
+#     SQL to select scratch intervals matching a range
+set( 'SQL_TEMPINTVLS_COMMIT', q/
+      INSERT INTO tempintvls (tiid, intvl)
+      SELECT CAST( ? AS integer ) AS tiid, intvl FROM tempintvls 
+      WHERE tiid = ? AND intvl <@ CAST( ? AS tstzrange )
+      UNION
+      SELECT CAST( ? AS integer ) AS tiid, partial_tempintvls_lower(?, ?)
+      UNION
+      SELECT CAST( ? AS integer ) AS tiid, partial_tempintvls_upper(?, ?);
       / );
 
-# SQL_TEMPINTVLS_SELECT_PARTIAL_INTERVALS
-#     SQL to get lower and upper partial intervals (might be NULL, and
-#     might also duplicate records returned by SQL_TEMPINTVLS_SELECT_EXCLUSIVE)
-set( 'SQL_TEMPINTVLS_SELECT_PARTIAL_INTERVALS', q/
-      SELECT lower, upper FROM partial_tempintvls(CAST( ? AS integer), CAST( ? AS tstzrange)) 
-      AS ( lower tstzrange, upper tstzrange)
+# SQL_TEMPINTVLS_SELECT
+#     SELECT all intervals associated with a tiid
+set( 'SQL_TEMPINTVLS_SELECT', q/
+      SELECT intvl FROM tempintvls WHERE tiid = ? ORDER BY intvl
+      / );
+
+# SQL_TEMPINTVLS_SELECT_COMMITTED
+#     SQL to select committed scratch intervals
+set( 'SQL_TEMPINTVLS_SELECT_COMMITTED', q/
+      SELECT intvl FROM tempintvls WHERE tiid = ? AND intvl IS NOT NULL 
+      ORDER BY intvl
       / );
 
 # -----------------------------------

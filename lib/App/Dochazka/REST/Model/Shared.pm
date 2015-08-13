@@ -338,6 +338,9 @@ sub cud_generic {
         sql => { type => SCALAR }, 
         bind_params => { type => ARRAYREF }, # order must match SQL statement
     } );
+    $log->info( "Entering " . __PACKAGE__ . "::cud_generic with" );
+    $log->info( "sql: $ARGS{sql}" );
+    $log->info( "bind_param: " . Dumper( $ARGS{bind_params} ) );
 
     my ( $status, $rv );
 
@@ -609,7 +612,7 @@ sub load_multiple {
             $sth->execute();
             # assuming they are objects, spawn them and push them onto @results
             while( defined( my $tmpres = $sth->fetchrow_hashref() ) ) {
-                push @$results, $ARGS{'class'}->spawn( $tmpres );
+                push @$results, $ARGS{'class'}->spawn( %$tmpres );
             }
         } );
     } catch {

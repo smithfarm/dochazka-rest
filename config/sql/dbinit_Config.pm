@@ -72,35 +72,25 @@ set( 'DBINIT_CREATE', [
     q#COMMENT ON FUNCTION round_time(timestamptz) IS 
       'Round a single timestamp value to the nearest 5 minutes'#,
 
-    q#CREATE OR REPLACE FUNCTION partial_tempintvls(integer, tstzrange)
+    q#CREATE OR REPLACE FUNCTION parens(tstzrange)
       RETURNS RECORD AS $$
         DECLARE
-            overlap_lower  tstzrange;
-            overlap_upper  tstzrange;
-            temp_lower     tstzrange;
-            temp_upper     tstzrange;
+            left_paren     text;
+            right_paren    text;
         BEGIN
-            SELECT intvl FROM tempintvls INTO overlap_lower
-            WHERE tiid = $1 AND intvl @> lower($2);
-            SELECT intvl FROM tempintvls INTO overlap_upper
-            WHERE tiid = $1 AND intvl @> upper($2);
-            IF overlap_lower IS NOT NULL THEN
-                temp_lower := concat( '[', lower($2), ',', upper(overlap_lower), ')' )::tstzrange;
+            IF lower_inc($1) THEN
+                left_paren := '['::text;
             ELSE
-                temp_lower := null::tstzrange;
+                left_paren := '('::text;
             END IF;
-            IF overlap_upper IS NOT NULL THEN
-                temp_upper := concat( '[', lower(overlap_upper), ',', upper($2), ')' )::tstzrange;
+            IF upper_inc($1) THEN
+                right_paren := ']'::text;
             ELSE
-                temp_upper := null::tstzrange;
+                right_paren := ')'::text;
             END IF;
-            RETURN ( temp_lower, temp_upper );
+        RETURN (left_paren, right_paren);
         END;
       $$ LANGUAGE plpgsql#,
-
-    q#COMMENT ON FUNCTION partial_tempintvls(integer, tstzrange) IS 
-      'Given a tiid and a tstzrange, returns partial intersecting tsranges (if any) at 
-      beginning and ending of the tszrange'#,
 
     q/CREATE OR REPLACE FUNCTION not_before_1892(timestamptz) 
       RETURNS TIMESTAMPTZ AS $IMM$
@@ -126,7 +116,7 @@ set( 'DBINIT_CREATE', [
                ( upper_inc(NEW.intvl) ) OR
                ( lower_inf(NEW.intvl) ) OR
                ( upper_inf(NEW.intvl) ) THEN
-                RAISE EXCEPTION 'illegal interval';
+                RAISE EXCEPTION 'illegal attendance interval %s', NEW.intvl;
             END IF;
             PERFORM not_before_1892(upper(NEW.intvl));
             PERFORM not_before_1892(lower(NEW.intvl));
@@ -579,9 +569,48 @@ $body$#,
       CREATE TABLE IF NOT EXISTS tempintvls (
           int_id     serial PRIMARY KEY,
           tiid       integer NOT NULL,
-          intvl      tstzrange NOT NULL,
-          EXCLUDE USING gist (tiid WITH =, intvl WITH &&)
+          intvl      tstzrange
       )/,
+
+    q#CREATE OR REPLACE FUNCTION partial_tempintvls_lower(integer, tstzrange)
+      RETURNS tstzrange AS $$
+        DECLARE
+            overlap_lower  tstzrange;
+            temp_lower     tstzrange;
+            lparen         text;
+            rparen         text;
+        BEGIN
+            SELECT a, b FROM parens($2) INTO lparen, rparen AS ( a text, b text );
+            SELECT intvl FROM tempintvls INTO overlap_lower
+            WHERE tiid = $1 AND intvl @> lower($2);
+            IF overlap_lower IS NOT NULL THEN
+                temp_lower := concat( lparen, lower($2), ',', upper(overlap_lower), rparen )::tstzrange;
+            ELSE
+                temp_lower := null::tstzrange;
+            END IF;
+            RETURN temp_lower;
+        END;
+      $$ LANGUAGE plpgsql#,
+
+    q#CREATE OR REPLACE FUNCTION partial_tempintvls_upper(integer, tstzrange)
+      RETURNS tstzrange AS $$
+        DECLARE
+            overlap_upper  tstzrange;
+            temp_upper     tstzrange;
+            lparen         text;
+            rparen         text;
+        BEGIN
+            SELECT a, b FROM parens($2) INTO lparen, rparen AS ( a text, b text );
+            SELECT intvl FROM tempintvls INTO overlap_upper
+            WHERE tiid = $1 AND intvl @> upper($2);
+            IF overlap_upper IS NOT NULL THEN
+                temp_upper := concat( lparen, lower(overlap_upper), ',', upper($2), rparen )::tstzrange;
+            ELSE
+                temp_upper := null::tstzrange;
+            END IF;
+            RETURN temp_upper;
+        END;
+      $$ LANGUAGE plpgsql#,
 
     q#-- trigger function to ensure that a privhistory/schedhistory record
       -- does not fall within an existing attendance interval
@@ -689,9 +718,6 @@ $body$#,
       FOR EACH ROW EXECUTE PROCEDURE priv_policy()/,
 
     q/CREATE TRIGGER a1_interval_valid_intvl BEFORE INSERT OR UPDATE ON intervals
-      FOR EACH ROW EXECUTE PROCEDURE valid_intvl()/,
-
-    q/CREATE TRIGGER a1_interval_valid_intvl BEFORE INSERT OR UPDATE ON tempintvls
       FOR EACH ROW EXECUTE PROCEDURE valid_intvl()/,
 
     q/CREATE TRIGGER a2_interval_not_too_future BEFORE INSERT OR UPDATE ON intervals

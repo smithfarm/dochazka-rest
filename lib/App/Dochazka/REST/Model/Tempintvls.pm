@@ -39,7 +39,8 @@ use App::CELL qw( $CELL $log $meta $site );
 use App::Dochazka::REST::ConnBank qw( $dbix_conn );
 use App::Dochazka::REST::Model::Employee;
 use App::Dochazka::REST::Model::Shared qw(
-    load_multiple
+    cud_generic
+    select_set_of_single_scalar_rows
     select_single
     split_tsrange
 );
@@ -50,7 +51,7 @@ use App::Dochazka::REST::Util::Date qw(
 );
 use App::Dochazka::REST::Util::Holiday qw(
     get_tomorrow
-    holidays_and_weekends
+    holidays_in_daterange
 );
 use Data::Dumper;
 use Date::Calc qw(
@@ -97,20 +98,32 @@ App::Dochazka::REST::Model::Tempintvls - object class for "scratch schedules"
 =head1 METHODS
 
 
-=head2 populate
+=head2 tiid
 
-Populate the tempintvls object (called automatically by 'reset' method
-which is, in turn, called automatically by 'spawn')
+If tiid attribute has been populated, return it. If it hasn't been,
+populate it and return it.
 
 =cut
 
-sub populate {
+sub tiid {
     my $self = shift;
 
-    my $ss = _next_tiid();
-    $log->debug( "Got next TIID: $ss" );
-    $self->{'tiid'} = $ss;
-    return;
+    if ( ! exists( $self->{'tiid'} ) or ! defined( $self->{'tiid'} ) or $self->{'tiid'} == 0 ) {
+        my $ss = _next_tiid();
+        $log->info( "Got next TIID: $ss" );
+        $self->{'tiid'} = $ss;
+    }
+    return $self->{'tiid'};
+}
+
+
+=head2 tiid_next
+
+=cut
+
+sub tiid_next {
+
+    return _next_tiid();
 }
 
 
@@ -373,13 +386,12 @@ sub fillup {
     my $self = shift;
     my ( %ARGS ) = validate( @_, {
         dbix_conn => { isa => 'DBIx::Connector' },
-        include_holidays => { type => SCALAR, default => 0 },
     } );
     my $status;
 
     my $rest_sched_hash_lower = _init_lower_sched_hash( $self->{sched_obj}->schedule );
 
-    my $holidays_and_weekends = holidays_and_weekends(
+    my $holidays = holidays_in_daterange(
         'begin' => $self->{lower_canon},
         'end' => $self->{upper_canon},
     );
@@ -398,10 +410,7 @@ sub fillup {
             my $d = $self->{'lower_canon'};
             my $canon_upper = Date_to_Days( @{ $self->{upper_ymd} } );
             WHILE_LOOP: while ( $d ne get_tomorrow( $self->{'upper_canon'} ) ) {
-                if ( $holidays_and_weekends->{ $d }->{'weekend'} or
-                     ( $holidays_and_weekends->{ $d }->{'holiday'} and 
-                       ! $ARGS{'include_holidays'} ) 
-                    ) {
+                if ( exists $holidays->{ $d } ) {
                     $d = get_tomorrow( $d );
                     next WHILE_LOOP;
                 }
@@ -479,6 +488,30 @@ sub new {
 }
 
 
+=head2 dump
+
+Takes a PARAMHASH containing a C<DBIx::Connector> object and a C<tiid> 
+property. Returns all intervals matching that C<tiid>.
+
+=cut
+
+sub dump {
+    my $self = shift;
+    my ( %ARGS ) = validate( @_, {
+        dbix_conn => { isa => 'DBIx::Connector' },
+        tiid => { type => SCALAR },
+    } );
+    my $status;
+
+    $status = select_set_of_single_scalar_rows(
+        conn => $ARGS{dbix_conn},
+        sql => $site->SQL_TEMPINTVLS_SELECT,
+        keys => [ $ARGS{tiid} ],
+    );
+    return $status;
+}
+
+
 =head2 commit
 
 Takes a PARAMHASH containing a C<DBIx::Connector> object and, optionally, a
@@ -501,32 +534,37 @@ sub commit {
         dry_run => { type => SCALAR, default => 0 },
     } );
     my $status;
+    my $tiid_next = $self->tiid_next;
 
     my $sql = $ARGS{dry_run}
         ? $site->SQL_TEMPINTVLS_SELECT_EXCLUSIVE
         : $site->SQL_TEMPINTVLS_SELECT_EXCLUSIVE; # FIXME
 
-    $status = load_multiple(
+    $log->info( "commit tiid=" . $self->tiid . " tiid_next=$tiid_next" );
+    $status = cud_generic(
         conn => $ARGS{dbix_conn},
-        class => 'App::Dochazka::REST::Model::Tempintvls',
-        sql => $sql,
-        keys => [ $self->{tsrange} ],
+        eid => $self->{eid},
+        sql => $site->SQL_TEMPINTVLS_COMMIT,
+        bind_params => [ 
+            "$tiid_next", $self->tiid, $self->{tsrange},
+            "$tiid_next", $self->tiid, $self->{tsrange},
+            "$tiid_next", $self->tiid, $self->{tsrange},
+        ],
     );
     return $status unless $status->ok;
-    my $intervals = $status->payload;
+    my $count = $status->payload;
 
-    # now add the partial intervals
-    $status = select_single(
-        conn => $ARGS{dbix_conn},
-        sql => $site->SQL_TEMPINTVLS_SELECT_PARTIAL_INTERVALS,
-        keys => [ $self->tiid, $self->{tsrange} ],
-    );
-    return $status unless $status->ok;
+    if ( $ARGS{dry_run} ) {
+        $status = select_set_of_single_scalar_rows(
+            conn => $ARGS{dbix_conn},
+            sql => $site->SQL_TEMPINTVLS_SELECT_COMMITTED,
+            keys => [ $tiid_next ],
+        );
+        return $status;
+    }
 
-    return $CELL->status_ok( 'SUCCESS', payload => {
-        'full_intervals' => $intervals,
-        'partial_intervals' => $status->payload,
-    } );
+    # write attendance intervals to database
+    return $CELL->status_ok( 'SUCCESS', count => $count );
 }
 
 
