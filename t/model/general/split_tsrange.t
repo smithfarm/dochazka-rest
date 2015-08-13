@@ -87,7 +87,7 @@ is( $status->code, 'DOCHAZKA_DBI_ERR' );
 note( 'split a half-undefined tsrange (2)' );
 $status = split_tsrange( $dbix_conn, '(1979-4-02,)' );
 is( $status->level, 'ERR' );
-is( $status->code, 'UNBOUNDED_TSRANGE' );
+is( $status->code, 'DOCHAZKA_UNBOUNDED_TSRANGE' );
 
 note( 'split a half-undefined tsrange (3)' );
 $status = split_tsrange( $dbix_conn, '( , 1979-4-02 )' );
@@ -97,7 +97,7 @@ is( $status->code, 'DOCHAZKA_DBI_ERR' );
 note( 'split a half-undefined tsrange (4)' );
 $status = split_tsrange( $dbix_conn, '(,1979-4-02)' );
 is( $status->level, 'ERR' );
-is( $status->code, 'UNBOUNDED_TSRANGE' );
+is( $status->code, 'DOCHAZKA_UNBOUNDED_TSRANGE' );
 
 note( 'split a half-undefined tsrange (5)' );
 $status = split_tsrange( $dbix_conn, '[ 1979-4-02,  ]' );
@@ -107,7 +107,7 @@ is( $status->code, 'DOCHAZKA_DBI_ERR' );
 note( 'split a half-undefined tsrange (6)' );
 $status = split_tsrange( $dbix_conn, '[ 1979-4-02,]' );
 is( $status->level, 'ERR' );
-is( $status->code, 'UNBOUNDED_TSRANGE' );
+is( $status->code, 'DOCHAZKA_UNBOUNDED_TSRANGE' );
 
 note( 'split a half-undefined tsrange (7)' );
 $status = split_tsrange( $dbix_conn, '[ , 1979-4-02 ]' );
@@ -117,7 +117,7 @@ is( $status->code, 'DOCHAZKA_DBI_ERR' );
 note( 'split a half-undefined tsrange (8)' );
 $status = split_tsrange( $dbix_conn, '[,1979-4-02]' );
 is( $status->level, 'ERR' );
-is( $status->code, 'UNBOUNDED_TSRANGE' );
+is( $status->code, 'DOCHAZKA_UNBOUNDED_TSRANGE' );
 
 note( 'split several completely undefined tsranges' );
 my @non_ranges = ( 
@@ -141,7 +141,7 @@ my @non_ranges = (
 foreach my $non_range ( @non_ranges ) {
     $status = split_tsrange( $dbix_conn, '[,]' );
     is( $status->level, 'ERR' );
-    is( $status->code, 'UNBOUNDED_TSRANGE' );
+    is( $status->code, 'DOCHAZKA_UNBOUNDED_TSRANGE' );
 }
 
 done_testing;

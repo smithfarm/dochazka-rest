@@ -46,7 +46,7 @@ use Plack::Test;
 use Test::JSON;
 use Test::More;
 
-plan skip_all => "WIP";
+#plan skip_all => "WIP";
 
 # initialize, connect to database, and set up a testing plan
 my $status = initialize_unit();
@@ -71,32 +71,32 @@ docu_check($test, "holiday/:tsrange");
 note( "provoke a 400 error (1)" );
 $res = req( $test, 400, 'demo', 'GET', 'holiday/[,)' );
 is( $res->level, 'ERR' );
-is( $res->code, 'DISPATCH_UNBOUNDED_TSRANGE' );
+is( $res->code, 'DOCHAZKA_UNBOUNDED_TSRANGE' );
 
 note( "provoke a 400 error (2)" );
 $res = req( $test, 400, 'demo', 'GET', 'holiday/[2015-01-01,)' );
 is( $res->level, 'ERR' );
-is( $res->code, 'DISPATCH_UNBOUNDED_TSRANGE' );
+is( $res->code, 'DOCHAZKA_UNBOUNDED_TSRANGE' );
 
 note( "provoke a 400 error (3)" );
 $res = req( $test, 400, 'demo', 'GET', 'holiday/[,2015-01-01)' );
 is( $res->level, 'ERR' );
-is( $res->code, 'DISPATCH_UNBOUNDED_TSRANGE' );
+is( $res->code, 'DOCHAZKA_UNBOUNDED_TSRANGE' );
 
 note( "range with explicit infinity (1)" );
 $res = req( $test, 400, 'demo', 'GET', 'holiday/[ "1-nov-2014",infinity )' );
 is( $res->level, 'ERR' );
-is( $res->code, 'DISPATCH_UNBOUNDED_TSRANGE' );
+is( $res->code, 'DOCHAZKA_UNBOUNDED_TSRANGE' );
 
 note( "range with explicit infinity (2)" );
 $res = req( $test, 400, 'demo', 'GET', 'holiday/[,infinity )' );
 is( $res->level, 'ERR' );
-is( $res->code, 'DISPATCH_UNBOUNDED_TSRANGE' );
+is( $res->code, 'DOCHAZKA_UNBOUNDED_TSRANGE' );
 
 note( "range with explicit infinity (3)" );
 $res = req( $test, 400, 'demo', 'GET', 'holiday/[ infinity, infinity )' );
 is( $res->level, 'ERR' );
-is( $res->code, 'DISPATCH_UNBOUNDED_TSRANGE' );
+is( $res->code, 'DOCHAZKA_UNBOUNDED_TSRANGE' );
 
 note( "provoke a 500 error (1)" );
 $res = req( $test, 500, 'demo', 'GET', 'holiday/[ , )' );

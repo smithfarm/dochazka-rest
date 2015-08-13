@@ -899,7 +899,7 @@ sub split_tsrange {
     );
     return $status unless $status->ok;
     my ( $lower, $upper ) = @{ $status->payload };
-    return $CELL->status_err( 'UNBOUNDED_TSRANGE' ) unless defined( $lower ) and 
+    return $CELL->status_err( 'DOCHAZKA_UNBOUNDED_TSRANGE' ) unless defined( $lower ) and 
         defined( $upper ) and $lower ne 'infinity' and $upper ne 'infinity';
     return $status;
 }
