@@ -46,6 +46,8 @@ use App::Dochazka::REST::Test;
 use Data::Dumper;
 use Test::More;
 
+my $illegal = qr/illegal attendance interval/;
+
 
 # initialize, connect to database, and set up a testing plan
 my $status = initialize_unit();
@@ -59,7 +61,7 @@ my ( $ssid ) = do_select_single( $dbix_conn, "SELECT nextval('scratch_sid_seq')"
 ok( $ssid ); # this doesn't tell us much, of course
 
 #---- test NULL tsrange separately because it requires different SQL syntax
-test_sql_failure( $dbix_conn, qr/illegal interval/, <<"SQL" );
+test_sql_failure( $dbix_conn, $illegal, <<"SQL" );
 INSERT into schedintvls (ssid, intvl) VALUES ( $ssid, NULL::tstzrange )
 SQL
 
@@ -80,7 +82,7 @@ my %int_map = (
 );
 foreach my $intvl ( keys( %int_map ) ) {
     $intvl = "'" . $intvl . "'" . "::tstzrange";
-    test_sql_failure( $dbix_conn, qr/illegal interval/, <<"SQL" );
+    test_sql_failure( $dbix_conn, $illegal, <<"SQL" );
 INSERT into schedintvls (ssid, intvl) VALUES ( $ssid, $intvl )
 SQL
 

@@ -114,21 +114,23 @@ note( 'but not fully vetted yet' );
 ok( ! $tio->vetted );
 
 note( 'vet a non-bogus employee (no schedule)' );
-$status = $tio->_vet_employee( dbix_conn => $dbix_conn, eid => 1 );
+$status = App::Dochazka::REST::Model::Employee->load_by_eid( $dbix_conn, 1 );
+$status = $tio->_vet_employee( dbix_conn => $dbix_conn, emp_obj => $status->payload );
 is( $status->level, 'ERR' );
 is( $status->code, 'DISPATCH_EMPLOYEE_NO_SCHEDULE' );
 
-note( 'vet a non-existent employee' );
-$status = $tio->_vet_employee( dbix_conn => $dbix_conn, eid => 0 );
-is( $status->level, 'ERR' );
-is( $status->code, 'DOCHAZKA_EMPLOYEE_EID_NOT_EXIST' );
+#note( 'vet a non-existent employee' );
+#my $throwaway_obj = App::Dochazka::REST::Model::Employee->spawn( eid => 0);
+#$status = $tio->_vet_employee( dbix_conn => $dbix_conn, emp_obj => $throwaway_obj );
+#is( $status->level, 'ERR' );
+#is( $status->code, 'DOCHAZKA_EMPLOYEE_EID_NOT_EXIST' );
 
 note( 'create a testing employee with nick "active"' );
 my $active = create_testing_employee( { nick => 'active', password => 'active' } );
 push my @eids_to_delete, $active->eid;
 
 note( 'vet active - no privhistory' );
-$status = $tio->_vet_employee( dbix_conn => $dbix_conn, eid => $active->eid );
+$status = $tio->_vet_employee( dbix_conn => $dbix_conn, emp_obj => $active );
 is( $status->level, 'ERR' );
 is( $status->code, 'DISPATCH_EMPLOYEE_NO_PRIVHISTORY' );
 
@@ -152,7 +154,7 @@ is( $priv->remark, $ins_remark, "remark survived INSERT" );
 push my @phids_to_delete, $priv->phid;
 
 note( 'vet active - no schedule' );
-$status = $tio->_vet_employee( dbix_conn => $dbix_conn, eid => $active->eid );
+$status = $tio->_vet_employee( dbix_conn => $dbix_conn, emp_obj => $active );
 is( $status->level, 'ERR' );
 is( $status->code, 'DISPATCH_EMPLOYEE_NO_SCHEDULE' );
 
@@ -185,7 +187,7 @@ is( $status->code, 'DOCHAZKA_CUD_OK' );
 push my @shids_to_delete, $schedhistory->shid;
 
 note( 'vet active - all green' );
-$status = $tio->_vet_employee( dbix_conn => $dbix_conn, eid => $active->eid );
+$status = $tio->_vet_employee( dbix_conn => $dbix_conn, emp_obj => $active );
 is( $status->level, "OK" );
 is( $status->code, "SUCCESS" );
 isa_ok( $tio->{'emp_obj'}, 'App::Dochazka::REST::Model::Employee' );

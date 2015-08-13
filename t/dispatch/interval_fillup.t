@@ -47,8 +47,6 @@ use Plack::Test;
 use Test::JSON;
 use Test::More;
 
-plan skip_all => "WIP";
-
 # initialize, connect to database, and set up a testing plan
 my $status = initialize_unit();
 if ( $status->not_ok ) {
@@ -169,55 +167,57 @@ $status = req( $test, 200, 'active', 'DELETE',
 is( $status->code, 'DOCHAZKA_CUD_OK' );
 is( $status->payload, 1 );
 
-note( 'PUT, POST' );
-foreach my $method ( qw( PUT POST ) ) {
-    note( 'Testing method: $method' );
+note( 'PUT, DELETE' );
+foreach my $method ( qw( PUT DELETE  ) ) {
+    note( "Testing method: $method" );
     foreach my $user ( 'demo', 'root', 'WAMBLE owdkmdf 5**' ) {
         req( $test, 405, $user, $method, "$base/2/[,)" );
     }
 }
 
-#note( 'DELETE' );
+#note( 'POST' );
 #foreach my $user ( 'demo', 'root', 'WAMBLE owdkmdf 5**' ) {
 #    req( $test, 403, $user, 'DELETE', "$base/2/[,)" );
 #}
 
-note( 'use fillup to create intervals as active employee' );
+note( 'list fillup intervals as active employee' );
 my $aid_of_work = get_aid_by_code( $test, 'WORK' );
 my $iae_interval_long_desc = 'iae interval';
-$status = req( $test, 201, 'active', 'GET', 'interval/fillup/self/[1958-01-03 23:59, 1958-02-03 08:00)' );
-diag( Dumper $status );
-BAIL_OUT(0);
-
-note( "let 'active' use GET interval/eid/:eid/:tsrange to list it" );
-$status = req( $test, 200, 'active', 'GET', "interval/eid/$eid_active/[ 1958-01-01, 1958-12-31 )" );
+$status = req( $test, 200, 'active', 'GET', 'interval/fillup/self/[1958-01-03 23:59, 1958-02-03 08:00)' );
 is( $status->level, 'OK' );
 is( $status->code, 'DISPATCH_RECORDS_FOUND' );
-ok( defined( $status->payload ) );
-is( ref( $status->payload ), 'ARRAY' );
-is( scalar( @{ $status->payload } ), 1, "interval count is 1" );
-is( ref( $status->payload->[0] ), 'HASH' );
-is( $status->payload->[0]->{'long_desc'}, $iae_interval_long_desc );
 
-note( "let 'active' use GET interval/eid/:eid/:ts/:psqlint to list it" );
-$status = req( $test, 200, 'active', 'GET', "interval/eid/$eid_active/1958-01-01/1 year" );
-is( $status->level, 'OK' );
-is( $status->code, 'DISPATCH_RECORDS_FOUND' );
-ok( defined( $status->payload ) );
-is( ref( $status->payload ), 'ARRAY' );
-is( scalar( @{ $status->payload } ), 1, "interval count is 1" );
-is( ref( $status->payload->[0] ), 'HASH' );
-is( $status->payload->[0]->{'long_desc'}, $iae_interval_long_desc );
+note( 'This is as far as we\'ve got - next is enable POST' );
 
-note( "let active try to GET interval/eid/:eid/:tsrange on another user\'s intervals" );
-$status = req( $test, 403, 'active', 'GET', "interval/eid/$eid_inactive/[ 1958-01-01, 1958-12-31 )" );
-is( $status->level, 'ERR' );
-is( $status->code, 'DISPATCH_KEEP_TO_YOURSELF' );
-
-foreach my $user ( qw( inactive demo ) ) {
-    note( "let $user try GET interval/eid/:eid/:tsrange and get 403" );
-    req( $test, 403, $user, 'GET', "interval/eid/$eid_active/[ 1958-01-01, 1958-12-31 )" );
-}
+#note( "let 'active' use GET interval/eid/:eid/:tsrange to list it" );
+#$status = req( $test, 200, 'active', 'GET', "interval/eid/$eid_active/[ 1958-01-01, 1958-12-31 )" );
+#is( $status->level, 'OK' );
+#is( $status->code, 'DISPATCH_RECORDS_FOUND' );
+#ok( defined( $status->payload ) );
+#is( ref( $status->payload ), 'ARRAY' );
+#is( scalar( @{ $status->payload } ), 1, "interval count is 1" );
+#is( ref( $status->payload->[0] ), 'HASH' );
+#is( $status->payload->[0]->{'long_desc'}, $iae_interval_long_desc );
+#
+#note( "let 'active' use GET interval/eid/:eid/:ts/:psqlint to list it" );
+#$status = req( $test, 200, 'active', 'GET', "interval/eid/$eid_active/1958-01-01/1 year" );
+#is( $status->level, 'OK' );
+#is( $status->code, 'DISPATCH_RECORDS_FOUND' );
+#ok( defined( $status->payload ) );
+#is( ref( $status->payload ), 'ARRAY' );
+#is( scalar( @{ $status->payload } ), 1, "interval count is 1" );
+#is( ref( $status->payload->[0] ), 'HASH' );
+#is( $status->payload->[0]->{'long_desc'}, $iae_interval_long_desc );
+#
+#note( "let active try to GET interval/eid/:eid/:tsrange on another user\'s intervals" );
+#$status = req( $test, 403, 'active', 'GET', "interval/eid/$eid_inactive/[ 1958-01-01, 1958-12-31 )" );
+#is( $status->level, 'ERR' );
+#is( $status->code, 'DISPATCH_KEEP_TO_YOURSELF' );
+#
+#foreach my $user ( qw( inactive demo ) ) {
+#    note( "let $user try GET interval/eid/:eid/:tsrange and get 403" );
+#    req( $test, 403, $user, 'GET', "interval/eid/$eid_active/[ 1958-01-01, 1958-12-31 )" );
+#}
 
 
 # delete the testing employees
