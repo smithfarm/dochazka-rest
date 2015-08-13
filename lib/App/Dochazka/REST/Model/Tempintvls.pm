@@ -117,13 +117,15 @@ sub tiid {
 }
 
 
-=head2 tiid_next
+=head2 populate
+
+Called automatically when new object is instantiated; assigns next TIID.
 
 =cut
 
-sub tiid_next {
-
-    return _next_tiid();
+sub populate {
+    my $self = shift;
+    return $self->tiid;
 }
 
 
@@ -186,11 +188,11 @@ sub _vet_tsrange {
 
 Expects to be called *after* C<_vet_tsrange>.
 
-Takes a C<DBIx::Connector> object and an EID. First, retrieves from the
-database the employee object corresponding to that EID. Second, checks that
-the employee's privlevel did not change during the tsrange. Third, retrieves
-the prevailing schedule and checks that the schedule does not change at all
-during the tsrange. Returns a status object.
+Takes a C<DBIx::Connector> object and an employee object. First, retrieves
+from the database the employee object corresponding to the EID. Second,
+checks that the employee's privlevel did not change during the tsrange.
+Third, retrieves the prevailing schedule and checks that the schedule does
+not change at all during the tsrange. Returns a status object.
 
 =cut
 
@@ -198,37 +200,16 @@ sub _vet_employee {
     my $self = shift;
     my ( %ARGS ) = validate( @_, {
         dbix_conn => { isa => 'DBIx::Connector' },
-        eid => { type => SCALAR|UNDEF, optional => 1 },
         emp_obj => { 
-            type => HASHREF|UNDEF, 
+            type => HASHREF, 
             isa => 'App::Dochazka::REST::Model::Employee', 
-            optional => 1 
         },
     } );
     my $status;
 
-    if ( exists( $ARGS{emp_obj} ) and defined( $ARGS{emp_obj} ) ) {
-        # emp_obj is provided
-        die 'AKLDWW###$$%AAAAAH!' unless $ARGS{emp_obj}->eid;
-        $self->{'emp_obj'} = $ARGS{emp_obj};
-        $self->{'eid'} = $ARGS{emp_obj}->eid;
-    } else {
-        # load employee object from database into $self->{emp_obj}
-        $status = App::Dochazka::REST::Model::Employee->load_by_eid( 
-            $ARGS{dbix_conn}, 
-            $ARGS{eid} 
-        );
-        if ( $status->ok and $status->code eq 'DISPATCH_RECORDS_FOUND' ) {
-            # all green
-            $self->{'emp_obj'} = $status->payload;
-            $self->{'eid'} = $ARGS{eid};
-        } elsif ( $status->level eq 'NOTICE' and $status->code eq 'DISPATCH_NO_RECORDS_FOUND' ) {
-            # non-existent employee
-            return $CELL->status_err( 'DOCHAZKA_EMPLOYEE_EID_NOT_EXIST', args => [ $ARGS{eid} ] );
-        } else {
-            return $status;
-        }
-    }
+    die 'AKLDWW###$$%AAAAAH!' unless $ARGS{emp_obj}->eid;
+    $self->{'emp_obj'} = $ARGS{emp_obj};
+    $self->{'eid'} = $ARGS{emp_obj}->eid;
 
     # check for priv and schedule changes during the tsrange
     if ( $self->{'emp_obj'}->priv_change_during_range( $ARGS{dbix_conn}, $self->{tsrange} ) ) {
@@ -326,18 +307,16 @@ sub vet {
         dbix_conn => { isa => 'DBIx::Connector' },
         tsrange => { type => SCALAR },
         aid => { type => SCALAR|UNDEF, optional => 1 },
-        eid => { type => SCALAR|UNDEF, optional => 1 },
         emp_obj => { 
             type => HASHREF|UNDEF, 
             isa => 'App::Dochazka::REST::Model::Employee', 
-            optional => 1 
         },
     } );
     my $status;
 
     $status = $self->_vet_tsrange( dbix_conn => $ARGS{dbix_conn}, tsrange => $ARGS{tsrange} );
     return $status unless $status->ok;
-    $status = $self->_vet_employee( dbix_conn => $ARGS{dbix_conn}, eid => $ARGS{eid} );
+    $status = $self->_vet_employee( dbix_conn => $ARGS{dbix_conn}, emp_obj => $ARGS{emp_obj} );
     return $status unless $status->ok;
     $status = $self->_vet_activity( dbix_conn => $ARGS{dbix_conn}, aid => $ARGS{aid} );
     return $status unless $status->ok;
@@ -464,11 +443,9 @@ sub new {
         dbix_conn => { isa => 'DBIx::Connector' },
         tsrange => { type => SCALAR },
         aid => { type => SCALAR|UNDEF, optional => 1 },
-        eid => { type => SCALAR|UNDEF, optional => 1 },
         emp_obj => { 
             type => HASHREF|UNDEF, 
             isa => 'App::Dochazka::REST::Model::Employee', 
-            optional => 1 
         },
     } );
     my $status;
@@ -534,36 +511,43 @@ sub commit {
         dry_run => { type => SCALAR, default => 0 },
     } );
     my $status;
-    my $next = $self->tiid_next;
+    my $count = 0;
+    my $next = App::Dochazka::REST::Model::Tempintvls->spawn;
+    die 'AGCKDSWQ#$L! newly spawned Tempintvls object has no TIID?' unless $next->tiid;
 
     my $sql = $ARGS{dry_run}
         ? $site->SQL_TEMPINTVLS_SELECT_EXCLUSIVE
         : $site->SQL_TEMPINTVLS_SELECT_EXCLUSIVE; # FIXME
 
-    $log->info( "commit tiid=" . $self->tiid . " tiid_next=$tiid_next" );
     $status = cud_generic(
         conn => $ARGS{dbix_conn},
         eid => $self->{eid},
         sql => $site->SQL_TEMPINTVLS_COMMIT,
         bind_params => [ 
-            "$tiid_next", $self->tiid, $self->{tsrange},
-            "$tiid_next", $self->tiid, $self->{tsrange},
-            "$tiid_next", $self->tiid, $self->{tsrange},
+            $next->tiid, $self->tiid, $self->{tsrange},
+            $next->tiid, $self->tiid, $self->{tsrange},
+            $next->tiid, $self->tiid, $self->{tsrange},
         ],
     );
-    return $status unless $status->ok;
-    my $count = $status->payload;
+    goto WRAPUP unless $status->ok;
+    $count = $status->payload;
 
     if ( $ARGS{dry_run} ) {
         $status = select_set_of_single_scalar_rows(
             conn => $ARGS{dbix_conn},
             sql => $site->SQL_TEMPINTVLS_SELECT_COMMITTED,
-            keys => [ $tiid_next ],
+            keys => [ $next->tiid ],
         );
         return $status;
     }
 
     # write attendance intervals to database
+    # ...
+
+WRAPUP:
+    # cleanup internal working object $next
+    $next->DESTROY;
+    return $status unless $status->ok;
     return $CELL->status_ok( 'SUCCESS', count => $count );
 }
 
