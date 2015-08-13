@@ -3173,3 +3173,13 @@ SPLIT OFF App::MREST into separate distribution
 - ResourceDefs.pm: clean up 'interval/fillup/...' resource definitions
   References: https://github.com/smithfarm/dochazka-rest/issues/9
 
+0.492  2015-08-13 12:47 CEST
+- dbinit_Config.pm: add partial_interval_lower() and partial_interval_upper() stored procedures
+- Build.PL: require latest version of App::Dochazka::Common
+- Model/Tempintvls.pm: make _vet_employee() optionally take employee object instead of EID
+- t/model/tempintvls.t: make unit clean up after itself
+- Dispatch.pm: call Tempintvls->new() with employee object instead of EID
+- Tempintvls class: drop superfluous attributes, re-implement commit() to use SQL stored procedure
+- Make 'interval/fillup/...' take tsrange and return partial intervals on overlap
+  Fixes: https://github.com/smithfarm/dochazka-rest/issues/9
+
