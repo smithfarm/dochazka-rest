@@ -58,10 +58,10 @@ t/300-ACL.t
 t/301-resource.t
 t/dispatch/activity.t
 t/dispatch/employee.t
+t/dispatch/fillup.t
 t/dispatch/history-bug.t
 t/dispatch/history.t
 t/dispatch/holiday.t
-t/dispatch/interval_fillup.t
 t/dispatch/interval_lock.t
 t/dispatch/interval_newline.t
 t/dispatch/priv.t

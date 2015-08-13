@@ -30,13 +30,13 @@
 # POSSIBILITY OF SUCH DAMAGE.
 # ************************************************************************* 
 #
-# test interval and lock resources, which are very similar
+# test 'interval/fillup/...' resources
 #
 
 #!perl
 use 5.012;
 use strict;
-use warnings FATAL => 'all';
+use warnings;
 
 #use App::CELL::Test::LogToFile;
 use App::CELL qw( $log $meta $site );
