@@ -534,7 +534,7 @@ sub commit {
         dry_run => { type => SCALAR, default => 0 },
     } );
     my $status;
-    my $tiid_next = $self->tiid_next;
+    my $next = $self->tiid_next;
 
     my $sql = $ARGS{dry_run}
         ? $site->SQL_TEMPINTVLS_SELECT_EXCLUSIVE

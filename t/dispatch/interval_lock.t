@@ -47,6 +47,8 @@ use Plack::Test;
 use Test::JSON;
 use Test::More;
 
+my $illegal = qr/illegal attendance interval/;
+
 
 # initialize, connect to database, and set up a testing plan
 my $status = initialize_unit();
@@ -322,14 +324,13 @@ EOH
 { "$idmap{$il}" : $test_id, "remark" : "mine" }
 EOH
     note( 'now root will try to post an illegal interval' );
-    dbi_err( $test, 500, 'root', 'POST', "$il/$idmap{$il}", <<"EOH", qr/illegal interval/ );
+    dbi_err( $test, 500, 'root', 'POST', "$il/$idmap{$il}", <<"EOH", $illegal );
 { "$idmap{$il}" : $test_id, "intvl" : "(-infinity, today)" }
 EOH
     
     note( 'unbounded tsrange' );
     dbi_err( $test, 500, 'root', 'POST', "$il/$idmap{$il}", 
-        "{ \"$idmap{$il}\" : $test_id, \"intvl\" : \"[1957-01-01 00:00,)\" }",
-        qr/illegal interval/ );
+        "{ \"$idmap{$il}\" : $test_id, \"intvl\" : \"[1957-01-01 00:00,)\" }", $illegal );
     
     note( 'DELETE' );
     req( $test, 405, 'demo', 'DELETE', $base );
@@ -668,8 +669,7 @@ req( $test, 404, 'active', 'GET', "interval/iid/$tiid" );
 note( '- illegal interval' );
 dbi_err( $test, 500, 'active', 'POST', 'interval/new', 
     '{ "aid" : ' . $aid_of_work . ', "eid" : ' . $eid_active . 
-        ', "intvl" : "[2014-07-31 20:00, 2014-08-01 00:00]" }',
-    qr/illegal interval/ );
+        ', "intvl" : "[2014-07-31 20:00, 2014-08-01 00:00]" }', $illegal );
 #
 note( '- upper bound not evenly divisible by 5 minutes' );
 dbi_err( $test, 500, 'active', 'POST', 'interval/new',
@@ -758,10 +758,8 @@ foreach my $il ( qw( interval lock ) ) {
         '"( 1977-10-22 08:00, 1977-10-23 08:00 ]"',
     ) {
         #diag( "$insert_part1$i }" );
-        dbi_err( $test, 500, 'root', 'POST', $insert_base, "$insert_part1$i }",
-            qr/illegal interval/ );
-        dbi_err( $test, 500, 'root', 'PUT', $update_base, "$update_part1$i }",
-            qr/illegal interval/ );
+        dbi_err( $test, 500, 'root', 'POST', $insert_base, "$insert_part1$i }", $illegal );
+        dbi_err( $test, 500, 'root', 'PUT', $update_base, "$update_part1$i }", $illegal );
     }
 
     note( 'intervals that trigger DOCHAZKA_DBI_ERR "No dates earlier than 1892-01-01 please"' );

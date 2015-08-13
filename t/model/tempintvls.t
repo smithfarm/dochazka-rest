@@ -258,16 +258,24 @@ note( 'proceed with fillup' );
 $status = $tio->fillup( dbix_conn => $dbix_conn );
 is( $status->level, 'OK' );
 is( $status->code, 'DOCHAZKA_TEMPINTVLS_INSERT_OK' );
-#$status = $tio->dump( dbix_conn => $dbix_conn, tiid => $tio->tiid );
-#diag( Dumper $status );
-#BAIL_OUT(0);
 
 note( 'commit (dry run)' );
 $status = $tio->commit( dbix_conn => $dbix_conn, dry_run => 1 );
-diag( Dumper $status );
-BAIL_OUT(0);
 is( $status->level, 'OK' );
 is( $status->code, 'RESULT_SET' );
+is_deeply( $status->payload, [
+    '["1998-05-05 10:00:00+02","1998-05-05 12:00:00+02")',
+    '["1998-05-05 12:30:00+02","1998-05-05 16:30:00+02")',
+    '["1998-05-06 08:00:00+02","1998-05-06 12:00:00+02")',
+    '["1998-05-06 12:30:00+02","1998-05-06 16:30:00+02")',
+    '["1998-05-07 08:00:00+02","1998-05-07 12:00:00+02")',
+    '["1998-05-07 12:30:00+02","1998-05-07 16:30:00+02")',
+    '["1998-05-11 08:00:00+02","1998-05-11 12:00:00+02")',
+    '["1998-05-11 12:30:00+02","1998-05-11 16:30:00+02")',
+    '["1998-05-12 08:00:00+02","1998-05-12 12:00:00+02")',
+    '["1998-05-12 12:30:00+02","1998-05-12 16:30:00+02")',
+    '["1998-05-13 08:00:00+02","1998-05-13 10:00:00+02")'
+] );
 
 note( 'delete the tempintvls not necessary; DESTROY() is called automatically' );
 
