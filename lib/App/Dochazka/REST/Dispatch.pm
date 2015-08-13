@@ -2342,6 +2342,7 @@ sub _handler_interval_fillup {
         if ( $key eq 'self' ) {
             $key = 'eid';
             $value = $context->{'current'}->{'eid'};
+            #$log->info("_handler_interval_fillup (self): key ->$key<- value ->$value<-" );
         } else {
             $value = $context->{'mapping'}->{ $key };
         }
@@ -2350,7 +2351,7 @@ sub _handler_interval_fillup {
             return 0;
         }
         my $emp = shared_first_pass_lookup( $self, $key, $value );
-        return 0 unless $emp;
+        return 0 unless $emp->isa( 'App::Dochazka::REST::Model::Employee' );
 
         # create Tempintvls object
         my $status = App::Dochazka::REST::Model::Tempintvls->new( 
@@ -2380,7 +2381,7 @@ sub _handler_interval_fillup {
     my $payload = $status->payload;
     $tio->DESTROY;
     return $CELL->status_ok( 
-        'DISPATCH_SCHEDULE_INTERVALS_FOUND',
+        'DISPATCH_RECORDS_FOUND', args => [ scalar( @$payload ) ],
         payload => $payload
     );
 }
