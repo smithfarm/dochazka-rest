@@ -30,7 +30,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 # ************************************************************************* 
 #
-# tests for Dispatch/ACL.pm
+# tests for ACL.pm
 #
 
 #!perl

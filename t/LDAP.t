@@ -30,7 +30,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 # ************************************************************************* 
 #
-# tests for LDAP.pm
+# tests for LDAP.pm - only run if $site->DOCHAZKA_LDAP is true
 #
 
 #!perl
