@@ -3183,3 +3183,18 @@ SPLIT OFF App::MREST into separate distribution
 - Make 'interval/fillup/...' take tsrange and return partial intervals on overlap
   Fixes: https://github.com/smithfarm/dochazka-rest/issues/9
 
+0.493  2015-08-14 09:30 CEST
+- t/dispatch/interval_lock.t: make illegal interval regex configurable
+- messages: standardize on DOCHAZKA_UNBOUNDED_TSRANGE
+- Dispatch.pm: make _handler_interval_fillup() return DISPATCH_RECORDS_FOUND
+  with correct count
+- Model/Tempintvls.pm: accept employee object only, not eid
+- global: allow warnings
+- Model/Tempintvls.pm: start mods to enable POST on interval/fillup/...
+  resources
+- dbinit_Config.pm: add stored procedure returning boolean whether two
+  tstzranges overlap
+- t/: update to current state, drop 000-depends.t unit that duplicates work
+  done by the OBS, rename some units for better consistency, consolidate
+  split_tsrange() tests in split_tsrange.t
+
