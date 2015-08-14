@@ -117,6 +117,32 @@ sub tiid {
 }
 
 
+=head2 eid
+
+Accessor for C<eid> attribute. May return undef.
+
+=cut
+
+sub eid {
+    my $self = shift;
+    $self->{'eid'} = $_[0] if exists $_[0];
+    return $self->{'eid'};
+}
+
+
+=head2 aid
+
+Accessor for C<aid> attribute. May return undef.
+
+=cut
+
+sub aid {
+    my $self = shift;
+    $self->{'eid'} = $_[0] if exists $_[0];
+    return $self->{'aid'};
+}
+
+
 =head2 populate
 
 Called automatically when new object is instantiated; assigns next TIID.
@@ -209,7 +235,7 @@ sub _vet_employee {
 
     die 'AKLDWW###$$%AAAAAH!' unless $ARGS{emp_obj}->eid;
     $self->{'emp_obj'} = $ARGS{emp_obj};
-    $self->{'eid'} = $ARGS{emp_obj}->eid;
+    $self->eid( $ARGS{emp_obj}->eid );
 
     # check for priv and schedule changes during the tsrange
     if ( $self->{'emp_obj'}->priv_change_during_range( $ARGS{dbix_conn}, $self->{tsrange} ) ) {
@@ -339,9 +365,9 @@ sub vetted {
         $self->{'vetted'}->{'tsrange'} and 
         $self->{'tsrange'} and
         $self->{'vetted'}->{'employee'} and 
-        $self->{'eid'} and
+        $self->eid and
         $self->{'vetted'}->{'activity'} and
-        $self->{'aid'}
+        $self->aid
     ) ? 1 : 0;
 }
 
@@ -525,7 +551,7 @@ sub commit {
     # write the rows
     $status = cud_generic(
         conn => $ARGS{dbix_conn},
-        eid => $self->{eid},
+        eid => $self->eid,
         sql => $site->SQL_TEMPINTVLS_COMMIT,
         bind_params => [ 
             $next->tiid, $self->tiid, $self->{tsrange},
@@ -550,8 +576,8 @@ sub commit {
     # attendance intervals are in $status->payload; write them to database
     map {
         my $int = App::Dochazka::REST::Model::Interval->spawn(
-            eid => $self->{eid},
-            aid => $self->{aid},
+            eid => $self->eid,
+            aid => $self->aid,
             intvl => $_,
             remark => 'fillup',
         );
