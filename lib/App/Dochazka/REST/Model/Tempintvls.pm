@@ -515,10 +515,9 @@ sub commit {
     my $next = App::Dochazka::REST::Model::Tempintvls->spawn;
     die 'AGCKDSWQ#$L! newly spawned Tempintvls object has no TIID?' unless $next->tiid;
 
-    my $sql = $ARGS{dry_run}
-        ? $site->SQL_TEMPINTVLS_SELECT_EXCLUSIVE
-        : $site->SQL_TEMPINTVLS_SELECT_EXCLUSIVE; # FIXME
+    my $sql = $site->SQL_TEMPINTVLS_SELECT_EXCLUSIVE;
 
+    # write the rows
     $status = cud_generic(
         conn => $ARGS{dbix_conn},
         eid => $self->{eid},
@@ -532,17 +531,26 @@ sub commit {
     goto WRAPUP unless $status->ok;
     $count = $status->payload;
 
+    # get the rows we just wrote
+    $status = select_set_of_single_scalar_rows(
+        conn => $ARGS{dbix_conn},
+        sql => $site->SQL_TEMPINTVLS_SELECT_COMMITTED,
+        keys => [ $next->tiid ],
+    );
     if ( $ARGS{dry_run} ) {
-        $status = select_set_of_single_scalar_rows(
-            conn => $ARGS{dbix_conn},
-            sql => $site->SQL_TEMPINTVLS_SELECT_COMMITTED,
-            keys => [ $next->tiid ],
-        );
         return $status;
     }
+    return $status if $status->not_ok;
 
-    # write attendance intervals to database
-    # ...
+    # attendance intervals are in $status->payload; write them to database
+    map {
+        my $int = App::Dochazka::REST::Model::Interval->spawn(
+            eid => $self->{eid},
+            aid => $self->{aid},
+            intvl => $_,
+            remark => 'fillup',
+        );
+    } @{ $status->payload };
 
 WRAPUP:
     # cleanup internal working object $next
