@@ -45,12 +45,6 @@ use App::Dochazka::REST::Test;
 use Test::Fatal;
 use Test::More;
 
-note( 'initialize, connect to database, and set up a testing plan' );
-my $status = initialize_unit();
-if ( $status->not_ok ) {
-    plan skip_all => "not configured or server not running";
-}
-
 sub test_is_ok {
     my ( $status, $deep ) = @_;
     is( $status->level, 'OK' );
@@ -58,11 +52,24 @@ sub test_is_ok {
     is_deeply( $status->payload, $deep );
 }
 
+note( 'initialize, connect to database, and set up a testing plan' );
+my $status = initialize_unit();
+if ( $status->not_ok ) {
+    plan skip_all => "not configured or server not running";
+}
+
+note( 'split a legal tsrange' );
+$status = split_tsrange( $dbix_conn, '[ 2015-01-1, 2015-02-1 )' );
+test_is_ok( $status, [
+    '2015-01-01 00:00:00+01',
+    '2015-02-01 00:00:00+01'
+] );
+
 note( 'split boring tsrange' );
 $status = split_tsrange( $dbix_conn, '[ 1957-01-01 00:00, 1957-01-02 00:00 )' );
 test_is_ok( $status, [
-   '1957-01-01 00:00:00+01',
-   '1957-01-02 00:00:00+01'
+    '1957-01-01 00:00:00+01',
+    '1957-01-02 00:00:00+01'
 ] );
 
 note( 'split a less boring tsrange' );
@@ -78,6 +85,18 @@ test_is_ok( $status, [
     '1979-04-02 01:01:00+02',
     '1980-04-11 01:02:00+02'
 ] );
+
+note( 'split another borderline legal tsrange' );
+$status = split_tsrange( $dbix_conn, '( "April 2, 1979" 1:1, "April 11, 1980" 1:2 )' );
+test_is_ok( $status, [
+    '1979-04-02 01:01:00+02',
+    '1980-04-11 01:02:00+02'
+] );
+
+note( 'split an illegal tsrange' );
+$status = split_tsrange( $dbix_conn, '( "April 002, 1979" 1:1, "April 11th, 1980" 1:2 )' );
+is( $status->level, 'ERR' );
+is( $status->code, 'DOCHAZKA_DBI_ERR' );
 
 note( 'split a half-undefined tsrange (1)' );
 $status = split_tsrange( $dbix_conn, '(1979-4-02, )' );
@@ -137,11 +156,31 @@ my @non_ranges = (
     '( infinity ,infinity]',
     '(infinity,)',
     '( ,infinity )',
+    "[,2014-07-14 17:00)",
+    "[ ,2014-07-14 17:00)",
+    "[2014-07-14 17:15,)",
+    "[2014-07-14 17:15, )",
+    "[ infinity,2014-07-14 17:00)",
+    "[2014-07-14 17:15,infinity)",
 );
 foreach my $non_range ( @non_ranges ) {
     $status = split_tsrange( $dbix_conn, '[,]' );
     is( $status->level, 'ERR' );
     is( $status->code, 'DOCHAZKA_UNBOUNDED_TSRANGE' );
 }
+
+# attempt to split_tsrange bogus tsranges individually
+my $bogus = [
+        "[)",
+        "(2014-07-34 09:00, 2014-07-14 17:05)",
+        "[2014-07-14 09:00, 2014-07-14 25:05]",
+        "( 2014-07-34 09:00, 2014-07-14 17:05)",
+        "[2014-07-14 09:00, 2014-07-14 25:05 ]",
+    ];
+map {
+        $status = split_tsrange( $dbix_conn, $_ );
+        #diag( $status->level . ' ' . $status->text );
+        is( $status->level, 'ERR' ); 
+    } @$bogus;
 
 done_testing;

@@ -69,6 +69,7 @@ t/dispatch/schedule.t
 t/dispatch/supervisor.t
 t/dispatch/top.t
 t/model/activity.t
+t/model/canonicalize.t
 t/model/during_range.t
 t/model/employee.t
 t/model/id.t
@@ -85,6 +86,5 @@ t/sql/immutable_id.t
 t/sql/privhistory.t
 t/sql/root.t
 t/sql/schedintvl.t
-t/util/canonicalize.t
 t/util/holiday.t
 t/util/timestamp_delta.t

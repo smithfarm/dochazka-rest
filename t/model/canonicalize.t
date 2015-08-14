@@ -74,14 +74,6 @@ $status = canonicalize_tsrange( $dbix_conn, '[ 2015-01-1, 2015-02-1 )' );
 is( $status->level, 'OK' );
 like( $status->payload, qr/^\[.*2015-01-01 00:00:00.*2015-02-01 00:00:00.*\)/ );
 
-note( 'split a legal tsrange' );
-$status = split_tsrange( $dbix_conn, '[ 2015-01-1, 2015-02-1 )' );
-is( $status->level, 'OK' );
-is_deeply( $status->payload, [
-           '2015-01-01 00:00:00+01',
-           '2015-02-01 00:00:00+01'
-         ] );
-
 note( 'attempt to canonicalize an illegal timestamp' );
 $status = canonicalize_ts( $dbix_conn, '[2015-01-99, 2015-02-1)' );
 is( $status->level, 'ERR' );
@@ -94,12 +86,6 @@ is( $status->level, 'ERR' );
 is( $status->code, 'DOCHAZKA_DBI_ERR' );
 like( $status->text, qr/range lower bound must be less than or equal to range upper bound/ );
 
-note( 'attempt to split an illegal tsrange' );
-$status = split_tsrange( $dbix_conn, '[2015-01-99, 2015-02-1)' );
-is( $status->level, 'ERR' );
-is( $status->code, 'DOCHAZKA_DBI_ERR' );
-like( $status->text, qr#date/time field value out of range: "2015-01-99"# );
-
 note( 'attempt to canonicalize an innocent-looking date' );
 $status = canonicalize_date( $dbix_conn, 'May 1, 2015' );
 is( $status->level, 'OK' );
@@ -111,28 +97,5 @@ $status = canonicalize_date( $dbix_conn, 'Jan 99, 2015' );
 is( $status->level, 'ERR' );
 is( $status->code, 'DOCHAZKA_DBI_ERR' );
 like( $status->text, qr#date/time field value out of range: "Jan 99, 2015"# );
-
-# attempt to split_tsrange bogus tsranges individually
-my $bogus = [
-        "[)",
-        "[,)",
-        "[ ,)",
-        "(2014-07-34 09:00, 2014-07-14 17:05)",
-        "[2014-07-14 09:00, 2014-07-14 25:05]",
-        "( 2014-07-34 09:00, 2014-07-14 17:05)",
-        "[2014-07-14 09:00, 2014-07-14 25:05 ]",
-	"[,2014-07-14 17:00)",
-	"[ ,2014-07-14 17:00)",
-        "[2014-07-14 17:15,)",
-        "[2014-07-14 17:15, )",
-        "[ infinity, infinity)",
-	"[ infinity,2014-07-14 17:00)",
-        "[2014-07-14 17:15,infinity)",
-    ];
-map {
-        $status = split_tsrange( $dbix_conn, $_ );
-        #diag( $status->level . ' ' . $status->text );
-        is( $status->level, 'ERR' ); 
-    } @$bogus;
 
 done_testing;
