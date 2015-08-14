@@ -50,7 +50,6 @@ META.json
 META.yml
 README
 README.md
-t/000-depends.t
 t/001-init.t
 t/201-LDAP.t
 t/202-qualifiers.t
