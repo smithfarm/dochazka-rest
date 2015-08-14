@@ -375,6 +375,11 @@ sub fillup {
         'end' => $self->{upper_canon},
     );
 
+    sub _is_holiday {
+        my $datum = shift;
+        return exists( $holidays->{ $datum } );
+    }
+    
     # the insert operation needs to take place within a transaction
     # so we don't leave a mess behind if there is a problem
     try {
@@ -389,7 +394,7 @@ sub fillup {
             my $d = $self->{'lower_canon'};
             my $canon_upper = Date_to_Days( @{ $self->{upper_ymd} } );
             WHILE_LOOP: while ( $d ne get_tomorrow( $self->{'upper_canon'} ) ) {
-                if ( exists $holidays->{ $d } ) {
+                if ( _is_holiday( $d ) ) {
                     $d = get_tomorrow( $d );
                     next WHILE_LOOP;
                 }
