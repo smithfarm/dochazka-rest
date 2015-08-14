@@ -92,6 +92,20 @@ set( 'DBINIT_CREATE', [
         END;
       $$ LANGUAGE plpgsql#,
 
+    q/CREATE OR REPLACE FUNCTION overlaps(tstzrange, tstzrange)
+      RETURNS boolean AS $$
+        BEGIN
+            IF $1 && $2 THEN
+                RETURN 't'::boolean;
+            ELSE
+                RETURN 'f'::boolean;
+            END IF;
+        END;
+      $$ LANGUAGE plpgsql/,
+
+    q/COMMENT ON FUNCTION overlaps(tstzrange, tstzrange) IS
+      'Tests two tstzranges whether they overlap'/,
+
     q/CREATE OR REPLACE FUNCTION not_before_1892(timestamptz) 
       RETURNS TIMESTAMPTZ AS $IMM$
       BEGIN
