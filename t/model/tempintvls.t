@@ -44,6 +44,7 @@ use Data::Dumper;
 #use App::Dochazka::Common qw( $today $yesterday $tomorrow );
 use App::Dochazka::REST::ConnBank qw( $dbix_conn );
 use App::Dochazka::REST::Model::Activity;
+use App::Dochazka::REST::Model::Interval qw( delete_intervals_by_eid_and_tsrange );
 use App::Dochazka::REST::Model::Tempintvls;
 use App::Dochazka::REST::Model::Shared qw( noof );
 use App::Dochazka::REST::Model::Schedhistory;
@@ -301,6 +302,33 @@ ok( $tio2->constructor_status );
 isa_ok( $tio2->constructor_status, 'App::CELL::Status' );
 is( $tio2->tsrange, '[ 1998-05-05 10:00:00+02, 1998-05-13 10:00:00+02 )' );
 
+note( 'commit (dry run)' );
+$status = $tio->commit( dry_run => 1 );
+is( $status->level, 'OK' );
+is( $status->code, 'RESULT_SET' );
+is_deeply( $status->payload, [
+    '["1998-05-05 10:00:00+02","1998-05-05 12:00:00+02")',
+    '["1998-05-05 12:30:00+02","1998-05-05 16:30:00+02")',
+    '["1998-05-06 08:00:00+02","1998-05-06 12:00:00+02")',
+    '["1998-05-06 12:30:00+02","1998-05-06 16:30:00+02")',
+    '["1998-05-07 08:00:00+02","1998-05-07 12:00:00+02")',
+    '["1998-05-07 12:30:00+02","1998-05-07 16:30:00+02")',
+    '["1998-05-11 08:00:00+02","1998-05-11 12:00:00+02")',
+    '["1998-05-11 12:30:00+02","1998-05-11 16:30:00+02")',
+    '["1998-05-12 08:00:00+02","1998-05-12 12:00:00+02")',
+    '["1998-05-12 12:30:00+02","1998-05-12 16:30:00+02")',
+    '["1998-05-13 08:00:00+02","1998-05-13 10:00:00+02")'
+] );
+my $count = scalar( @{ $status->payload } );
+
+note( 'commit attendance intervals' );
+is( noof( $dbix_conn, 'intervals' ), 0 );
+$status = $tio2->commit;
+is( $status->level, 'OK' );
+is( $status->code, 'DOCHAZKA_TEMPINTVLS_COMMITTED' );
+is( $status->{count}, $count );
+is( noof( $dbix_conn, 'intervals' ), $count );
+
 note( 'delete the tempintvls not necessary; DESTROY() is called automatically' );
 
 sub _vet_cleanup {
@@ -315,6 +343,8 @@ sub _vet_cleanup {
 
 # CLEANUP
 isa_ok( $dbix_conn, 'DBIx::Connector' );
+$status = delete_intervals_by_eid_and_tsrange( $tio2->dbix_conn, $tio2->eid, $tio2->tsrange );
+is( $status->level, 'OK' );
 map {
     _vet_cleanup( App::Dochazka::REST::Model::Schedhistory->load_by_shid( $dbix_conn, $_ ) );
 } @shids_to_delete;

@@ -3198,3 +3198,11 @@ SPLIT OFF App::MREST into separate distribution
   done by the OBS, rename some units for better consistency, consolidate
   split_tsrange() tests in split_tsrange.t
 
+0.494  TBA
+- Model/Tempintvls.pm: make constructor take context hash instead of
+  DBIx::Connector object; store the context and DBIx::Connector object in the
+  object, implement several accessors that were missing, drop the vet() method,
+  make constructor return the object itself instead of a status object
+  (put the constructor status in an attribute)
+- Dispatch.pm, t/: update to current state
+

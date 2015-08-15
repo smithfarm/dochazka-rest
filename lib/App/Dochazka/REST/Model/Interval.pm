@@ -316,7 +316,7 @@ sub delete_intervals_by_eid_and_tsrange {
     my ( $conn, $eid, $tsrange ) = validate_pos( @_,
         { isa => 'DBIx::Connector' },
         { type => SCALAR },
-        { type => SCALAR, optional => 1 },
+        { type => SCALAR },
     );
 
     my $status = canonicalize_tsrange( $conn, $tsrange );

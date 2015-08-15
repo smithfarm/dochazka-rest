@@ -2378,17 +2378,29 @@ sub _handler_interval_fillup {
     
     # second pass
     my $tio = $context->{'stashed_tempintvls_object'};
-    my $status = $tio->commit( dry_run => 1 );
+    my $dry_run;
+    if ( $method eq 'GET' ) {
+        $dry_run = 1;
+    } elsif ( $method eq 'POST' ) {
+        $dry_run = 0;
+    } else {
+        die "AGGHHDDNPRRWHOA!!";
+    }
+    my $status = $tio->commit( dry_run => $dry_run );
     if ( $status->not_ok ) {
         $self->mrest_declare_status( code => 500, explanation => $status->text );
         return $fail;
     }
     my $payload = $status->payload;
     $tio->DESTROY;
-    return $CELL->status_ok( 
-        'DISPATCH_RECORDS_FOUND', args => [ scalar( @$payload ) ],
-        payload => $payload
-    );
+    if ( $method eq 'GET' ) {
+        return $CELL->status_ok( 
+            'DISPATCH_RECORDS_FOUND', args => [ scalar( @$payload ) ],
+            payload => $payload
+        );
+    }
+    # POST
+    return $status;
 }
 
 

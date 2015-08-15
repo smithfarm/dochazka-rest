@@ -577,7 +577,7 @@ sub commit {
         dry_run => { type => SCALAR, default => 0 },
     } );
     my $status;
-    my $count = 0;
+    my $count;
     my $next = App::Dochazka::REST::Model::Tempintvls->spawn;
     die 'AGCKDSWQ#$L! newly spawned Tempintvls object has no TIID?' unless $next->tiid;
 
@@ -632,7 +632,7 @@ WRAPUP:
     # cleanup internal working object $next
     $next->DESTROY;
     return $status unless $status->ok;
-    return $CELL->status_ok( 'SUCCESS', count => $count );
+    return $CELL->status_ok( 'DOCHAZKA_TEMPINTVLS_COMMITTED', count => $count );
 }
 
 

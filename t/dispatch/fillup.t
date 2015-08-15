@@ -175,30 +175,27 @@ foreach my $method ( qw( PUT DELETE  ) ) {
     }
 }
 
-#note( 'POST' );
-#foreach my $user ( 'demo', 'root', 'WAMBLE owdkmdf 5**' ) {
-#    req( $test, 403, $user, 'DELETE', "$base/2/[,)" );
-#}
-
 note( 'list fillup intervals as active employee' );
 my $aid_of_work = get_aid_by_code( $test, 'WORK' );
-my $iae_interval_long_desc = 'iae interval';
 $status = req( $test, 200, 'active', 'GET', 'interval/fillup/self/[1958-01-03 23:59, 1958-02-03 08:00)' );
 is( $status->level, 'OK' );
 is( $status->code, 'DISPATCH_RECORDS_FOUND' );
+my $count = scalar( @{ $status->payload } );
+is( $count, 28 );
 
-note( 'This is as far as we\'ve got - next is enable POST' );
+note( 'POST fillup intervals as active employee' );
+$status = req( $test, 200, 'active', 'POST', 'interval/fillup/self/[1958-01-03 23:59, 1958-02-03 08:00)' );
+is( $status->level, 'OK' );
+is( $status->code, 'DOCHAZKA_TEMPINTVLS_COMMITTED' );
 
-#note( "let 'active' use GET interval/eid/:eid/:tsrange to list it" );
-#$status = req( $test, 200, 'active', 'GET', "interval/eid/$eid_active/[ 1958-01-01, 1958-12-31 )" );
-#is( $status->level, 'OK' );
-#is( $status->code, 'DISPATCH_RECORDS_FOUND' );
-#ok( defined( $status->payload ) );
-#is( ref( $status->payload ), 'ARRAY' );
-#is( scalar( @{ $status->payload } ), 1, "interval count is 1" );
-#is( ref( $status->payload->[0] ), 'HASH' );
-#is( $status->payload->[0]->{'long_desc'}, $iae_interval_long_desc );
-#
+note( "let 'active' use GET interval/eid/:eid/:tsrange to list fillup intervals" );
+$status = req( $test, 200, 'active', 'GET', "interval/eid/$eid_active/[ 1958-01-01, 1958-12-31 )" );
+is( $status->level, 'OK' );
+is( $status->code, 'DISPATCH_RECORDS_FOUND' );
+ok( defined( $status->payload ) );
+is( ref( $status->payload ), 'ARRAY' );
+is( scalar( @{ $status->payload } ), $count, "interval count is $count" );
+
 #note( "let 'active' use GET interval/eid/:eid/:ts/:psqlint to list it" );
 #$status = req( $test, 200, 'active', 'GET', "interval/eid/$eid_active/1958-01-01/1 year" );
 #is( $status->level, 'OK' );
@@ -219,6 +216,10 @@ note( 'This is as far as we\'ve got - next is enable POST' );
 #    req( $test, 403, $user, 'GET', "interval/eid/$eid_active/[ 1958-01-01, 1958-12-31 )" );
 #}
 
+# delete the testing intervals
+$status = req( $test, 200, 'active', 'DELETE', "interval/eid/$eid_active/[ 1958-01-01, 1958-12-31 )" );
+is( $status->level, 'OK' );
+is( $status->code, 'DOCHAZKA_CUD_OK' );
 
 # delete the testing employees
 delete_employee_by_nick( $test, 'active' );
