@@ -58,12 +58,25 @@ if ( $status->not_ok ) {
     plan skip_all => "not configured or server not running";
 }
 
+note( 'tempintvls table should be empty' );
+if ( 0 != noof( $dbix_conn, 'tempintvls') ) {
+    diag( "tempintvls table is not empty; bailing out!" );
+    BAIL_OUT(0);
+}
+
 note( "spawn a tempintvls object" );
 my $tio = App::Dochazka::REST::Model::Tempintvls->spawn;
 isa_ok( $tio, 'App::Dochazka::REST::Model::Tempintvls' );
 
 note( 'test that populate() was called and that it did its job' );
 ok( $tio->tiid > 0 );
+
+note( "populate context" );
+is( ref( $faux_context ), 'HASH', "\$faux_context is a HASHREF" );
+isa_ok( $faux_context->{dbix_conn}, 'DBIx::Connector' );
+$tio->context( $faux_context );
+isa_ok( $tio->context->{dbix_conn}, 'DBIx::Connector' );
+isa_ok( $tio->dbix_conn, 'DBIx::Connector' );
 
 note( 'quickly test canon_to_ymd' );
 my @ymd = canon_to_ymd( '2015-01-01' );
@@ -90,18 +103,18 @@ my $bogus = [
         "[2014-07-14 17:15,infinity)",
     ];
 map {
-        $status = $tio->_vet_tsrange( dbix_conn => $dbix_conn, tsrange => $_ );
+        $status = $tio->_vet_tsrange( tsrange => $_ );
         #diag( $status->level . ' ' . $status->text );
-        is( $status->level, 'ERR' ); 
+        is( $status->level, 'ERR', "$_ is a bogus tsrange" ); 
     } @$bogus;
 
 note( 'vet a too-long tsrange' );
-$status = $tio->_vet_tsrange( dbix_conn => $dbix_conn, tsrange => '[ 2015-1-1, 2016-1-2 )' );
+$status = $tio->_vet_tsrange( tsrange => '[ 2015-1-1, 2016-1-2 )' );
 is( $status->level, 'ERR' );
 is( $status->code, 'DOCHAZKA_TSRANGE_TOO_BIG' );
 
 note( 'vet a non-bogus tsrange' );
-$status = $tio->_vet_tsrange( dbix_conn => $dbix_conn, tsrange => '[ "Jan 1, 2015", 2015-12-31 )' );
+$status = $tio->_vet_tsrange( tsrange => '[ "Jan 1, 2015", 2015-12-31 )' );
 is( $status->level, 'OK' );
 is( $status->code, 'SUCCESS' );
 is( $tio->{'tsrange'}, '[ 2015-01-01 00:00:00+01, 2015-12-31 00:00:00+01 )' );
@@ -115,22 +128,24 @@ ok( ! $tio->vetted );
 
 note( 'vet a non-bogus employee (no schedule)' );
 $status = App::Dochazka::REST::Model::Employee->load_by_eid( $dbix_conn, 1 );
-$status = $tio->_vet_employee( dbix_conn => $dbix_conn, emp_obj => $status->payload );
+$status = $tio->_vet_employee( emp_obj => $status->payload );
 is( $status->level, 'ERR' );
 is( $status->code, 'DISPATCH_EMPLOYEE_NO_SCHEDULE' );
 
-#note( 'vet a non-existent employee' );
-#my $throwaway_obj = App::Dochazka::REST::Model::Employee->spawn( eid => 0);
-#$status = $tio->_vet_employee( dbix_conn => $dbix_conn, emp_obj => $throwaway_obj );
-#is( $status->level, 'ERR' );
-#is( $status->code, 'DOCHAZKA_EMPLOYEE_EID_NOT_EXIST' );
+note( 'we do not try to vet non-existent employee objects here, because the Tempintvls' );
+note( 'class is designed to be called from Dispatch.pm *after* the employee has been' );
+note( 'determined to exist' );
+##my $throwaway_obj = App::Dochazka::REST::Model::Employee->spawn( eid => 0);
+##$status = $tio->_vet_employee( dbix_conn => $dbix_conn, emp_obj => $throwaway_obj );
+##is( $status->level, 'ERR' );
+##is( $status->code, 'DOCHAZKA_EMPLOYEE_EID_NOT_EXIST' );
 
 note( 'create a testing employee with nick "active"' );
 my $active = create_testing_employee( { nick => 'active', password => 'active' } );
 push my @eids_to_delete, $active->eid;
 
 note( 'vet active - no privhistory' );
-$status = $tio->_vet_employee( dbix_conn => $dbix_conn, emp_obj => $active );
+$status = $tio->_vet_employee( emp_obj => $active );
 is( $status->level, 'ERR' );
 is( $status->code, 'DISPATCH_EMPLOYEE_NO_PRIVHISTORY' );
 
@@ -154,7 +169,7 @@ is( $priv->remark, $ins_remark, "remark survived INSERT" );
 push my @phids_to_delete, $priv->phid;
 
 note( 'vet active - no schedule' );
-$status = $tio->_vet_employee( dbix_conn => $dbix_conn, emp_obj => $active );
+$status = $tio->_vet_employee( emp_obj => $active );
 is( $status->level, 'ERR' );
 is( $status->code, 'DISPATCH_EMPLOYEE_NO_SCHEDULE' );
 
@@ -187,18 +202,13 @@ is( $status->code, 'DOCHAZKA_CUD_OK' );
 push my @shids_to_delete, $schedhistory->shid;
 
 note( 'vet active - all green' );
-$status = $tio->_vet_employee( dbix_conn => $dbix_conn, emp_obj => $active );
+$status = $tio->_vet_employee( emp_obj => $active );
 is( $status->level, "OK" );
 is( $status->code, "SUCCESS" );
 isa_ok( $tio->{'emp_obj'}, 'App::Dochazka::REST::Model::Employee' );
 is( $tio->{'emp_obj'}->eid, $active->eid );
 is( $tio->{'emp_obj'}->nick, 'active' );
 my $active_obj = $tio->{'emp_obj'};
-
-note( 'vet active using employee object' );
-$status = $tio->_vet_employee( dbix_conn => $dbix_conn, emp_obj => $active_obj );
-is( $status->level, "OK" );
-is( $status->code, "SUCCESS" );
 
 note( 'but not fully vetted yet' );
 ok( ! $tio->vetted );
@@ -212,7 +222,7 @@ my $activity = $status->payload;
 #diag( "AID of WORK: " . $activity->aid );
 
 note( 'vet activity (default)' );
-$status = $tio->_vet_activity( dbix_conn => $dbix_conn, );
+$status = $tio->_vet_activity;
 is( $status->level, 'OK' );
 is( $status->code, 'SUCCESS' );
 isa_ok( $tio->{'act_obj'}, 'App::Dochazka::REST::Model::Activity' ); 
@@ -221,12 +231,12 @@ is( $tio->{'act_obj'}->aid, $activity->aid );
 is( $tio->{'aid'}, $activity->aid );
 
 note( 'vet non-existent activity 1' );
-$status = $tio->_vet_activity( dbix_conn => $dbix_conn, aid => 'WORBLE' );
+$status = $tio->_vet_activity( aid => 'WORBLE' );
 is( $status->level, 'ERR' );
 is( $status->code, 'DOCHAZKA_DBI_ERR' );
 
 note( 'vet non-existent activity 2' );
-$status = $tio->_vet_activity( dbix_conn => $dbix_conn, aid => '-1' );
+$status = $tio->_vet_activity( aid => '-1' );
 is( $status->level, 'ERR' );
 is( $status->code, 'DOCHAZKA_GENERIC_NOT_EXIST' );
 is( $status->text, 'There is no activity with AID ->-1<-' );
@@ -234,13 +244,13 @@ is( $status->text, 'There is no activity with AID ->-1<-' );
 my $note = 'vet non-existent activity 3';
 note( $note );
 $log->info( "*** $note" );
-$status = $tio->_vet_activity( dbix_conn => $dbix_conn, aid => '0' );
+$status = $tio->_vet_activity( aid => '0' );
 is( $status->level, 'ERR' );
 is( $status->code, 'DOCHAZKA_GENERIC_NOT_EXIST' );
 is( $status->text, 'There is no activity with AID ->0<-' );
 
 note( 'vet activity WORK by explicit AID' );
-$status = $tio->_vet_activity( dbix_conn => $dbix_conn, aid => $activity->aid );
+$status = $tio->_vet_activity( aid => $activity->aid );
 is( $status->level, 'OK' );
 is( $status->code, 'SUCCESS' );
 isa_ok( $tio->{'act_obj'}, 'App::Dochazka::REST::Model::Activity' ); 
@@ -252,17 +262,18 @@ note( 'vetted now true' );
 ok( $tio->vetted );
 
 note( 'change the tsrange' );
-$status = $tio->_vet_tsrange( dbix_conn => $dbix_conn, tsrange => '[ "May 5, 1998" 10:00, 1998-05-13 10:00 )' );
+$status = $tio->_vet_tsrange( tsrange => '[ "May 5, 1998" 10:00, 1998-05-13 10:00 )' );
 is( $status->level, 'OK' );
 is( $status->code, 'SUCCESS' );
+is( $tio->tsrange, '[ 1998-05-05 10:00:00+02, 1998-05-13 10:00:00+02 )' );
 
 note( 'proceed with fillup' );
-$status = $tio->fillup( dbix_conn => $dbix_conn );
+$status = $tio->fillup;
 is( $status->level, 'OK' );
 is( $status->code, 'DOCHAZKA_TEMPINTVLS_INSERT_OK' );
 
 note( 'commit (dry run)' );
-$status = $tio->commit( dbix_conn => $dbix_conn, dry_run => 1 );
+$status = $tio->commit( dry_run => 1 );
 is( $status->level, 'OK' );
 is( $status->code, 'RESULT_SET' );
 is_deeply( $status->payload, [
@@ -278,6 +289,17 @@ is_deeply( $status->payload, [
     '["1998-05-12 12:30:00+02","1998-05-12 16:30:00+02")',
     '["1998-05-13 08:00:00+02","1998-05-13 10:00:00+02")'
 ] );
+
+note( 'test the new() method' );
+my $tio2 = App::Dochazka::REST::Model::Tempintvls->new(
+    context => $faux_context,
+    tsrange => '[ "May 5, 1998" 10:00, 1998-05-13 10:00 )',
+    emp_obj => $active,
+);
+isa_ok( $tio2, 'App::Dochazka::REST::Model::Tempintvls' );
+ok( $tio2->constructor_status );
+isa_ok( $tio2->constructor_status, 'App::CELL::Status' );
+is( $tio2->tsrange, '[ 1998-05-05 10:00:00+02, 1998-05-13 10:00:00+02 )' );
 
 note( 'delete the tempintvls not necessary; DESTROY() is called automatically' );
 

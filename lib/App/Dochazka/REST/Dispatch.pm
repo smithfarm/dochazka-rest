@@ -2354,26 +2354,31 @@ sub _handler_interval_fillup {
         return 0 unless $emp->isa( 'App::Dochazka::REST::Model::Employee' );
 
         # create Tempintvls object
-        my $status = App::Dochazka::REST::Model::Tempintvls->new( 
-            dbix_conn => $context->{'dbix_conn'},
+        my $tempintvls = App::Dochazka::REST::Model::Tempintvls->new( 
+            context => $context,
             tsrange => $context->{'mapping'}->{'tsrange'},
             emp_obj => $emp,
         );
-        if ( $status->not_ok ) {
+        if ( ! $tempintvls->constructor_status or
+             ! $tempintvls->constructor_status->isa( 'App::CELL::Status' ) or
+             ! $tempintvls->constructor_status->ok 
+           ) 
+        {
+            my $status = $tempintvls->constructor_status;
             $status->{'http_code'} = ( $status->code eq 'DOCHAZKA_DBI_ERR' )
                 ? 500 
                 : 400;
             $self->mrest_declare_status( $status );
             return 0;
         }
-        $context->{'stashed_tempintvls_object'} = $status->payload;
+        $context->{'stashed_tempintvls_object'} = $tempintvls;
 
         return 1;
     }
     
     # second pass
     my $tio = $context->{'stashed_tempintvls_object'};
-    my $status = $tio->commit( dbix_conn => $context->{'dbix_conn'}, dry_run => 1 );
+    my $status = $tio->commit( dry_run => 1 );
     if ( $status->not_ok ) {
         $self->mrest_declare_status( code => 500, explanation => $status->text );
         return $fail;

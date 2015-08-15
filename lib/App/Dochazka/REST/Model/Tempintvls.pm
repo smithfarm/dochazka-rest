@@ -117,6 +117,63 @@ sub tiid {
 }
 
 
+=head2 aid
+
+Accessor for C<aid> attribute. May return undef.
+
+=cut
+
+sub aid {
+    my $self = shift;
+    $self->{'aid'} = $_[0] if exists $_[0];
+    return $self->{'aid'};
+}
+
+
+=head2 constructor_status
+
+Accessor for C<constructor_status> attribute. May return undef.
+
+=cut
+
+sub constructor_status {
+    my $self = shift;
+    $self->{'constructor_status'} = $_[0] if exists $_[0];
+    return $self->{'constructor_status'};
+}
+
+
+=head2 context
+
+Accessor for C<context> attribute. May return undef.
+
+=cut
+
+sub context {
+    my $self = shift;
+    if ( exists $_[0] ) {
+        $self->{'context'} = $_[0]; 
+        if ( exists( $_[0]->{dbix_conn} ) and $_[0]->{dbix_conn}->isa( 'DBIx::Connector' ) ) {
+            $self->dbix_conn( $_[0]->{dbix_conn} );
+        }
+    }
+    return $self->{'context'};
+}
+
+
+=head2 dbix_conn
+
+Accessor for C<dbix_conn> attribute. May return undef.
+
+=cut
+
+sub dbix_conn {
+    my $self = shift;
+    $self->{'dbix_conn'} = $_[0] if exists $_[0];
+    return $self->{'dbix_conn'};
+}
+
+
 =head2 eid
 
 Accessor for C<eid> attribute. May return undef.
@@ -130,16 +187,16 @@ sub eid {
 }
 
 
-=head2 aid
+=head2 tsrange
 
-Accessor for C<aid> attribute. May return undef.
+Accessor for C<tsrange> attribute. May return undef.
 
 =cut
 
-sub aid {
+sub tsrange {
     my $self = shift;
-    $self->{'eid'} = $_[0] if exists $_[0];
-    return $self->{'aid'};
+    $self->{'tsrange'} = $_[0] if exists $_[0];
+    return $self->{'tsrange'};
 }
 
 
@@ -169,14 +226,13 @@ bounds - it does not know about timestamps or tsranges
 sub _vet_tsrange {
     my $self = shift;
     my ( %ARGS ) = validate( @_, {
-        dbix_conn => { isa => 'DBIx::Connector' },
         tsrange => { type => SCALAR },
     } );
     $log->debug( "Entering " . __PACKAGE__ . "::_vet_tsrange to vet the tsrange $ARGS{tsrange}" );
 
     # split the tsrange
     my @parens = $ARGS{tsrange} =~ m/[^\[(]*([\[(])[^\])]*([\])])/;
-    my $status = split_tsrange( $ARGS{dbix_conn}, $ARGS{tsrange} );
+    my $status = split_tsrange( $self->dbix_conn, $ARGS{tsrange} );
     $log->info( "split_tsrange() returned: " . Dumper( $status ) );
     return $status unless $status->ok;
     my $low = $status->payload->[0];
@@ -225,7 +281,6 @@ not change at all during the tsrange. Returns a status object.
 sub _vet_employee {
     my $self = shift;
     my ( %ARGS ) = validate( @_, {
-        dbix_conn => { isa => 'DBIx::Connector' },
         emp_obj => { 
             type => HASHREF, 
             isa => 'App::Dochazka::REST::Model::Employee', 
@@ -238,15 +293,15 @@ sub _vet_employee {
     $self->eid( $ARGS{emp_obj}->eid );
 
     # check for priv and schedule changes during the tsrange
-    if ( $self->{'emp_obj'}->priv_change_during_range( $ARGS{dbix_conn}, $self->{tsrange} ) ) {
+    if ( $self->{'emp_obj'}->priv_change_during_range( $self->dbix_conn, $self->{tsrange} ) ) {
         return $CELL->status_err( 'DOCHAZKA_EMPLOYEE_PRIV_CHANGED' ); 
     }
-    if ( $self->{'emp_obj'}->schedule_change_during_range( $ARGS{dbix_conn}, $self->{tsrange} ) ) {
+    if ( $self->{'emp_obj'}->schedule_change_during_range( $self->dbix_conn, $self->{tsrange} ) ) {
         return $CELL->status_err( 'DOCHAZKA_EMPLOYEE_SCHEDULE_CHANGED' ); 
     }
 
     # get privhistory record prevailing at beginning of tsrange
-    my $probj = $self->{emp_obj}->privhistory_at_timestamp( $ARGS{dbix_conn}, $self->{tsrange} );
+    my $probj = $self->{emp_obj}->privhistory_at_timestamp( $self->dbix_conn, $self->{tsrange} );
     if ( ! $probj->priv ) {
         return $CELL->status_err( 'DISPATCH_EMPLOYEE_NO_PRIVHISTORY' );
     }
@@ -257,12 +312,12 @@ sub _vet_employee {
     }
 
     # get schedhistory record prevailing at beginning of tsrange
-    my $shobj = $self->{emp_obj}->schedhistory_at_timestamp( $ARGS{dbix_conn}, $self->{tsrange} );
+    my $shobj = $self->{emp_obj}->schedhistory_at_timestamp( $self->dbix_conn, $self->{tsrange} );
     if ( ! $shobj->sid ) {
         return $CELL->status_err( 'DISPATCH_EMPLOYEE_NO_SCHEDULE' );
     }
     my $sched_obj = App::Dochazka::REST::Model::Schedule->load_by_sid(
-        $ARGS{dbix_conn},
+        $self->dbix_conn,
         $shobj->sid
     )->payload;
     die "AGAHO-NO!" unless ref( $sched_obj) eq 'App::Dochazka::REST::Model::Schedule'
@@ -284,14 +339,13 @@ and populates the C<activity_obj> attribute.
 sub _vet_activity {
     my $self = shift;
     my ( %ARGS ) = validate( @_, {
-        dbix_conn => { isa => 'DBIx::Connector' },
         aid => { type => SCALAR|UNDEF, optional => 1 },
     } );
     my $status;
 
     if ( exists( $ARGS{aid} ) and defined( $ARGS{aid} ) ) {
         # load activity object from database into $self->{act_obj}
-        $status = App::Dochazka::REST::Model::Activity->load_by_aid( $ARGS{dbix_conn}, $ARGS{aid} );
+        $status = App::Dochazka::REST::Model::Activity->load_by_aid( $self->dbix_conn, $ARGS{aid} );
         if ( $status->ok and $status->code eq 'DISPATCH_RECORDS_FOUND' ) {
             # all green; fall thru to success
             $self->{'act_obj'} = $status->payload;
@@ -304,7 +358,7 @@ sub _vet_activity {
         }
     } else {
         # if no aid given, try to look up "WORK"
-        $status = App::Dochazka::REST::Model::Activity->load_by_code( $ARGS{dbix_conn}, 'WORK' );
+        $status = App::Dochazka::REST::Model::Activity->load_by_code( $self->dbix_conn, 'WORK' );
         if ( $status->ok and $status->code eq 'DISPATCH_RECORDS_FOUND' ) {
             # all green; fall thru to success
             $self->{'act_obj'} = $status->payload;
@@ -317,38 +371,6 @@ sub _vet_activity {
     }
 
     $self->{'vetted'}->{'activity'} = 1;
-    return $CELL->status_ok( 'SUCCESS' );
-}
-
-
-=head2 vet
-
-Calls the C<_vet_tsrange>, C<_vet_employee>, and C<_vet_activity> methods.
-
-=cut
-
-sub vet {
-    my $self = shift;
-    my ( %ARGS ) = validate( @_, {
-        dbix_conn => { isa => 'DBIx::Connector' },
-        tsrange => { type => SCALAR },
-        aid => { type => SCALAR|UNDEF, optional => 1 },
-        emp_obj => { 
-            type => HASHREF|UNDEF, 
-            isa => 'App::Dochazka::REST::Model::Employee', 
-        },
-    } );
-    my $status;
-
-    $status = $self->_vet_tsrange( dbix_conn => $ARGS{dbix_conn}, tsrange => $ARGS{tsrange} );
-    return $status unless $status->ok;
-    $status = $self->_vet_employee( dbix_conn => $ARGS{dbix_conn}, emp_obj => $ARGS{emp_obj} );
-    return $status unless $status->ok;
-    $status = $self->_vet_activity( dbix_conn => $ARGS{dbix_conn}, aid => $ARGS{aid} );
-    return $status unless $status->ok;
-
-    die "AGHGCHKFSCK! should be vetted by now!" unless $self->vetted;
-
     return $CELL->status_ok( 'SUCCESS' );
 }
 
@@ -389,9 +411,6 @@ intervals that will be created if the C<commit> method is called.
 
 sub fillup {
     my $self = shift;
-    my ( %ARGS ) = validate( @_, {
-        dbix_conn => { isa => 'DBIx::Connector' },
-    } );
     my $status;
 
     my $rest_sched_hash_lower = _init_lower_sched_hash( $self->{sched_obj}->schedule );
@@ -409,7 +428,7 @@ sub fillup {
     # the insert operation needs to take place within a transaction
     # so we don't leave a mess behind if there is a problem
     try {
-        $ARGS{dbix_conn}->txn( fixup => sub {
+        $self->dbix_conn->txn( fixup => sub {
             my $sth = $_->prepare( $site->SQL_TEMPINTVLS_INSERT );
             my $intvls;
 
@@ -463,15 +482,18 @@ sub fillup {
 
 =head2 new
 
-Constructor using all of the above. Returns a status object. If successful,
-level will be 'OK' and tempintvls object will be in the payload.
+Constructor method. Returns an C<App::Dochazka::REST::Model::Tempintvls>
+object.
+
+The constructor method does everything up to C<fillup>. It also populates the
+C<constructor_status> attribute with an C<App::CELL::Status> object.
 
 =cut
 
 sub new {
-    my $class = shift;  # throwaway value
+    my $self = shift;
     my ( %ARGS ) = validate( @_, {
-        dbix_conn => { isa => 'DBIx::Connector' },
+        context => { type => HASHREF },
         tsrange => { type => SCALAR },
         aid => { type => SCALAR|UNDEF, optional => 1 },
         emp_obj => { 
@@ -479,20 +501,35 @@ sub new {
             isa => 'App::Dochazka::REST::Model::Employee', 
         },
     } );
-    my $status;
+    my ( $status );
 
-    my $obj = __PACKAGE__->spawn;
-    die "AGHOOPOWDD@! No tiid in Tempintvls object!" unless $obj->tiid;
+    if ( ref( $self ) and $self->isa( 'App::Dochazka::REST::Model::Tempintvls' ) ) {
+        $self->reset;
+    } else {
+        $self = __PACKAGE__->spawn;
+    }
+    die "AGHOOPOWDD@! No tiid in Tempintvls object!" unless $self->tiid;
 
-    $status = $obj->vet( %ARGS );
-    return $status unless $status->ok;
+    $self->context( $ARGS{context} );
 
-    die "AGHOOPOWDC@! not vetted?!?" unless $obj->vetted;
+    if ( exists( $ARGS{context}->{dbix_conn} ) and $ARGS{context}->{dbix_conn}->isa('DBIx::Connector') ) {
+        $self->dbix_conn( $ARGS{context}->{dbix_conn} );
+    } else {
+        die "AGHOOPOWDB@! No DBIx::Connector in context!";
+    }
 
-    $status = $obj->fillup( dbix_conn => $ARGS{dbix_conn} );
-    return $status unless $status->ok;
+    $self->constructor_status( $self->_vet_tsrange( tsrange => $ARGS{tsrange} ) );
+    return unless $self->constructor_status->ok;
+    $self->constructor_status( $self->_vet_employee( emp_obj => $ARGS{emp_obj} ) );
+    return unless $self->constructor_status->ok;
+    $self->constructor_status( $self->_vet_activity( aid => $ARGS{aid} ) );
+    return unless $self->constructor_status->ok;
+    die "AGHGCHKFSCK! should be vetted by now!" unless $self->vetted;
 
-    return $CELL->status_ok( 'SUCCESS', payload => $obj );
+    $self->constructor_status( $self->fillup );
+    return unless $self->constructor_status->ok;
+
+    return $self;
 }
 
 
@@ -506,13 +543,12 @@ property. Returns all intervals matching that C<tiid>.
 sub dump {
     my $self = shift;
     my ( %ARGS ) = validate( @_, {
-        dbix_conn => { isa => 'DBIx::Connector' },
         tiid => { type => SCALAR },
     } );
     my $status;
 
     $status = select_set_of_single_scalar_rows(
-        conn => $ARGS{dbix_conn},
+        conn => $self->dbix_conn,
         sql => $site->SQL_TEMPINTVLS_SELECT,
         keys => [ $ARGS{tiid} ],
     );
@@ -538,7 +574,6 @@ intervals table.
 sub commit {
     my $self = shift;
     my ( %ARGS ) = validate( @_, {
-        dbix_conn => { isa => 'DBIx::Connector' },
         dry_run => { type => SCALAR, default => 0 },
     } );
     my $status;
@@ -550,7 +585,7 @@ sub commit {
 
     # write the rows
     $status = cud_generic(
-        conn => $ARGS{dbix_conn},
+        conn => $self->dbix_conn,
         eid => $self->eid,
         sql => $site->SQL_TEMPINTVLS_COMMIT,
         bind_params => [ 
@@ -564,24 +599,34 @@ sub commit {
 
     # get the rows we just wrote
     $status = select_set_of_single_scalar_rows(
-        conn => $ARGS{dbix_conn},
+        conn => $self->dbix_conn,
         sql => $site->SQL_TEMPINTVLS_SELECT_COMMITTED,
         keys => [ $next->tiid ],
     );
     if ( $ARGS{dry_run} ) {
         return $status;
     }
-    return $status if $status->not_ok;
-
-    # attendance intervals are in $status->payload; write them to database
-    map {
-        my $int = App::Dochazka::REST::Model::Interval->spawn(
-            eid => $self->eid,
-            aid => $self->aid,
-            intvl => $_,
-            remark => 'fillup',
-        );
-    } @{ $status->payload };
+    goto WRAPUP unless $status->ok;
+    my $fillup_intervals = $status->payload;
+    
+    # write intervals to database
+    $status = undef;
+    try {
+        $self->dbix_conn->txn( fixup => sub {
+            map {
+                my $int = App::Dochazka::REST::Model::Interval->spawn(
+                    eid => $self->eid,
+                    aid => $self->aid,
+                    intvl => $_,
+                    remark => 'fillup',
+                );
+                $status = $int->insert( $self->context );
+                die $status->text unless $status->ok;
+            } @{ $fillup_intervals };
+        } );
+    } catch {
+        $status = $CELL->status_err( 'DOCHAZKA_DBI_ERR', args => [ $_ ] );
+    };
 
 WRAPUP:
     # cleanup internal working object $next
