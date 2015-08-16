@@ -3210,3 +3210,7 @@ SPLIT OFF App::MREST into separate distribution
 - Enable POST on interval/fillup/... resources
   https://github.com/smithfarm/dochazka-rest/issues/7 Fixes: #7
 
+0.495  2015-08-16 17:12 CEST
+- Model/Tempintvls.pm: return $self even when there is an error
+  https://github.com/smithfarm/dochazka-rest/issues/20 Fixes: #20
+
