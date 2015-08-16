@@ -2402,12 +2402,16 @@ sub _handler_interval_fillup {
         $self->mrest_declare_status( code => 500, explanation => $status->text );
         return $fail;
     }
-    my $payload = $status->payload;
+    my $intervals = $status->payload;
+    my $count = ( ref( $intervals ) eq 'ARRAY' ) 
+        ? scalar @$intervals
+        : 0;
     $tio->DESTROY;
     if ( $method eq 'GET' ) {
-        return $CELL->status_ok( 
-            'DISPATCH_RECORDS_FOUND', args => [ scalar( @$payload ) ],
-            payload => $payload
+        return $CELL->status_ok( 'DISPATCH_RECORDS_FOUND', 
+            args => [ $count ],
+            count => $count,
+            payload => $intervals,
         );
     }
     # POST

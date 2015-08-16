@@ -181,7 +181,33 @@ $status = req( $test, 200, 'active', 'GET', 'interval/fillup/self/[1958-01-03 23
 is( $status->level, 'OK' );
 is( $status->code, 'DISPATCH_RECORDS_FOUND' );
 my $count = scalar( @{ $status->payload } );
+is( $status->{'count'}, $count );
 is( $count, 28 );
+
+note( 'fillup dry run over tsrange with no scheduled intervals' );
+$status = req( $test, 200, 'active', 'GET', 'interval/fillup/self/[1958-01-01 00:00, 1958-01-02 24:00)' );
+is( $status->level, 'OK' );
+is( $status->code, 'DISPATCH_RECORDS_FOUND' );
+ok( exists( $status->{'count'} ) );
+is( $status->{'count'}, 0 );
+ok( ! defined( $status->payload ) );
+
+note( 'fillup dry run over an even shorter tsrange with no scheduled intervals' );
+$status = req( $test, 200, 'active', 'GET', 'interval/fillup/self/[1958-01-01 14:00, 1958-01-01 16:00)' );
+is( $status->level, 'OK' );
+is( $status->code, 'DISPATCH_RECORDS_FOUND' );
+ok( exists( $status->{'count'} ) );
+is( $status->{'count'}, 0 );
+ok( ! defined( $status->payload ) );
+
+#note( 'fillup dry run over a short tsrange with a scheduled interval' );
+#note( 'reproduces bug https://github.com/smithfarm/dochazka-rest/issues/21' );
+#$status = req( $test, 200, 'active', 'GET', 'interval/fillup/self/[1958-01-03 14:00, 1958-01-03 16:00)' );
+#is( $status->level, 'OK' );
+#is( $status->code, 'DISPATCH_RECORDS_FOUND' );
+#ok( exists( $status->{'count'} ) );
+#is( $status->{'count'}, 0 );
+#ok( ! defined( $status->payload ) );
 
 note( 'POST fillup intervals as active employee' );
 $status = req( $test, 200, 'active', 'POST', 'interval/fillup/self/[1958-01-03 23:59, 1958-02-03 08:00)' );
