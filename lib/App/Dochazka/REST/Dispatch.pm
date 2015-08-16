@@ -2359,17 +2359,28 @@ sub _handler_interval_fillup {
             tsrange => $context->{'mapping'}->{'tsrange'},
             emp_obj => $emp,
         );
+        if ( ! defined( $tempintvls ) ) {
+            $self->mrest_declare_status( 
+                code => 500, 
+                explanation => "No Tempintvls object" 
+            );
+            return 0;
+        }
         if ( ! $tempintvls->constructor_status or
-             ! $tempintvls->constructor_status->isa( 'App::CELL::Status' ) or
-             ! $tempintvls->constructor_status->ok 
-           ) 
+             ! $tempintvls->constructor_status->isa( 'App::CELL::Status' ) )
         {
+            $self->mrest_declare_status( 
+                code => 500, 
+                explanation => "No constructor_status in Tempintvls object" 
+            );
+            return 0;
+        }
+        if ( $tempintvls->constructor_status->not_ok ) {
             my $status = $tempintvls->constructor_status;
             $status->{'http_code'} = ( $status->code eq 'DOCHAZKA_DBI_ERR' )
                 ? 500 
                 : 400;
             $self->mrest_declare_status( $status );
-            return 0;
         }
         $context->{'stashed_tempintvls_object'} = $tempintvls;
 

@@ -519,15 +519,15 @@ sub new {
     }
 
     $self->constructor_status( $self->_vet_tsrange( tsrange => $ARGS{tsrange} ) );
-    return unless $self->constructor_status->ok;
+    return $self unless $self->constructor_status->ok;
     $self->constructor_status( $self->_vet_employee( emp_obj => $ARGS{emp_obj} ) );
-    return unless $self->constructor_status->ok;
+    return $self unless $self->constructor_status->ok;
     $self->constructor_status( $self->_vet_activity( aid => $ARGS{aid} ) );
-    return unless $self->constructor_status->ok;
+    return $self unless $self->constructor_status->ok;
     die "AGHGCHKFSCK! should be vetted by now!" unless $self->vetted;
 
     $self->constructor_status( $self->fillup );
-    return unless $self->constructor_status->ok;
+    return $self unless $self->constructor_status->ok;
 
     return $self;
 }
