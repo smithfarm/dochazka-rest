@@ -396,9 +396,8 @@ sub vetted {
 
 =head2 fillup
 
-Takes a C<DBIx::Connector> object. In addition, it optionally takes an
-C<include_holidays> boolean flag, which defaults to 0. This method expects to
-be called on a fully vetted object (see C<vetted>, above).
+Optionally takes an C<include_holidays> boolean flag, which defaults to 0. This
+method expects to be called on a fully vetted object (see C<vetted>, above).
 
 This method attempts to INSERT records into the tempintvls table according to
 the tsrange and the employee's schedule.  Returns a status object.
@@ -411,18 +410,29 @@ intervals that will be created if the C<commit> method is called.
 
 sub fillup {
     my $self = shift;
+    my ( %ARGS ) = validate( @_, {
+        include_holidays => { type => SCALAR|UNDEF, optional => 1 },
+    );
     my $status;
+    my $include_holidays = $ARGS{'include_holidays'} ? 1 : 0;
+
+    die "ARG_NOT_VETTED" unless $self->vetted;
 
     my $rest_sched_hash_lower = _init_lower_sched_hash( $self->{sched_obj}->schedule );
 
-    my $holidays = holidays_in_daterange(
-        'begin' => $self->{lower_canon},
-        'end' => $self->{upper_canon},
-    );
+    my $holidays = $include_holidays 
+        ? undef
+        : holidays_in_daterange(
+            'begin' => $self->{lower_canon},
+            'end' => $self->{upper_canon},
+          );
 
+    # if $include_holidays is true, _is_holiday should be false over all
+    # values of $datum
     sub _is_holiday {
         my $datum = shift;
-        return exists( $holidays->{ $datum } );
+        return exists( $holidays->{ $datum } ) unless $include_holidays;
+        return 0;
     }
     
     # the insert operation needs to take place within a transaction
