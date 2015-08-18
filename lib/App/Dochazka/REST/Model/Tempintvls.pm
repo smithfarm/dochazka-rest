@@ -411,8 +411,8 @@ intervals that will be created if the C<commit> method is called.
 sub fillup {
     my $self = shift;
     my ( %ARGS ) = validate( @_, {
-        include_holidays => { type => SCALAR|UNDEF, optional => 1 },
-    );
+        include_holidays => { type => SCALAR|UNDEF, default => 0 },
+    } );
     my $status;
     my $include_holidays = $ARGS{'include_holidays'} ? 1 : 0;
 
@@ -568,8 +568,8 @@ sub dump {
 
 =head2 commit
 
-Takes a PARAMHASH containing a C<DBIx::Connector> object and, optionally, a
-C<dry_run> boolean value that defaults to 0.
+Optionally takes a PARAMHASH containing, optionally, a C<dry_run> boolean value
+that defaults to 0.
 
 If C<dry_run> is true, merely SELECTs intervals from the tempintvls table
 corresponding to the tsrange (already vetted and stored in the object by
@@ -584,10 +584,10 @@ intervals table.
 sub commit {
     my $self = shift;
     my ( %ARGS ) = validate( @_, {
-        dry_run => { type => SCALAR, default => 0 },
+        dry_run => { type => SCALAR|UNDEF, default => 0 },
     } );
     my $status;
-    my $count;
+    my $dry_run = $ARGS{dry_run} ? 1 : 0;
     my $next = App::Dochazka::REST::Model::Tempintvls->spawn;
     die 'AGCKDSWQ#$L! newly spawned Tempintvls object has no TIID?' unless $next->tiid;
 
@@ -605,7 +605,6 @@ sub commit {
         ],
     );
     goto WRAPUP unless $status->ok;
-    $count = $status->payload;
 
     # get the rows we just wrote
     $status = select_set_of_single_scalar_rows(
@@ -613,11 +612,15 @@ sub commit {
         sql => $site->SQL_TEMPINTVLS_SELECT_COMMITTED,
         keys => [ $next->tiid ],
     );
-    if ( $ARGS{dry_run} ) {
+    my $fillup_intervals = $status->payload;
+    my $count = defined( $fillup_intervals )
+        ? @$fillup_intervals
+        : 0;
+    if ( $dry_run ) {
+        $status->{'count'} = $count;
         return $status;
     }
     goto WRAPUP unless $status->ok;
-    my $fillup_intervals = $status->payload;
     
     # write intervals to database
     $status = undef;
