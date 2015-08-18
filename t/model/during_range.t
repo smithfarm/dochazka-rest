@@ -145,56 +145,111 @@ my $range;
 
 note( 'priv_change_during_range' );
 
+note( 'ranges that definitely have no change' );
 $range = "( 1997-01-01, 1997-01-02 )";
 ok( ! $mrfu->priv_change_during_range( $dbix_conn, $range  ),
     "mrfu no priv change during $range" );
-ok( ! $mrsfu->priv_change_during_range( $dbix_conn, $range  ),
-    "mrsfu no priv change during $range" );
 
-$range = "( 1996-12-31, 1997-01-02 )";
+$range = "[ 1996-12-31, 1997-01-02 )";
 ok( ! $mrfu->priv_change_during_range( $dbix_conn, $range  ),
     "mrfu: no priv change during $range" );
-ok( $mrsfu->priv_change_during_range( $dbix_conn, $range  ),
-    "mrsfu: priv change during $range" );
 
-$range = "( 1994-12-31, 1997-01-02 )";
+$range = "( 1996-12-31, 1997-01-02 ]";
+ok( ! $mrfu->priv_change_during_range( $dbix_conn, $range  ),
+    "mrfu: no priv change during $range" );
+
+$range = "[ 1996-12-31, 1997-01-02 ]";
+ok( ! $mrfu->priv_change_during_range( $dbix_conn, $range  ),
+    "mrfu: no priv change during $range" );
+
+note( 'ranges that definitely have a change' );
+$range = "( 1994-12-31, 1995-01-02 )";
 ok( $mrfu->priv_change_during_range( $dbix_conn, $range  ),
-    "mrfu: priv change during $range" );
-ok( $mrsfu->priv_change_during_range( $dbix_conn, $range  ),
-    "mrsfu: priv change during $range" );
+    "mrfu has priv change during $range" );
 
-$range = "( 1994-12-31, 1996-11-02 )";
+$range = "[ 1994-12-31, 1995-01-02 )";
 ok( $mrfu->priv_change_during_range( $dbix_conn, $range  ),
-    "mrfu: priv change during $range" );
-ok( ! $mrsfu->priv_change_during_range( $dbix_conn, $range  ),
-    "mrsfu: no priv change during $range" );
+    "mrfu has priv change during $range" );
 
+$range = "( 1994-12-31, 1995-01-02 ]";
+ok( $mrfu->priv_change_during_range( $dbix_conn, $range  ),
+    "mrfu has priv change during $range" );
+
+$range = "[ 1994-12-31, 1995-01-02 ]";
+ok( $mrfu->priv_change_during_range( $dbix_conn, $range  ),
+    "mrfu has priv change during $range" );
+
+note( 'borderline priv level change - negative' );
+$range = "[ 1995-01-01 00:00, 1995-01-02 )";
+ok( ! $mrfu->priv_change_during_range( $dbix_conn, $range  ),
+    "mrfu: no priv change during borderline range $range" );
+
+$range = "( 1994-01-01, 1994-12-31 24:00 ]";
+ok( ! $mrfu->priv_change_during_range( $dbix_conn, $range  ),
+    "mrfu: no priv change during borderline range $range" );
+
+note( 'borderline priv level change - positive' );
+$range = "[ 1994-12-31 23:59, 1995-01-02 )";
+ok( $mrfu->priv_change_during_range( $dbix_conn, $range  ),
+    "mrfu has priv change during borderline range $range" );
+
+$range = "( 1994-01-01, 1995-01-01 00:01 ]";
+ok( $mrfu->priv_change_during_range( $dbix_conn, $range  ),
+    "mrfu has priv change during borderline range $range" );
 
 note( 'schedule_change_during_range' );
 
+note( 'ranges that definitely have no change' );
 $range = "( 1997-01-01, 1997-01-02 )";
 ok( ! $mrfu->schedule_change_during_range( $dbix_conn, $range  ),
     "mrfu no schedule change during $range" );
-ok( ! $mrsfu->schedule_change_during_range( $dbix_conn, $range  ),
-    "mrsfu no schedule change during $range" );
 
-$range = "( 1996-12-31, 1997-01-02 )";
+$range = "[ 1996-12-31, 1997-01-02 )";
 ok( ! $mrfu->schedule_change_during_range( $dbix_conn, $range  ),
     "mrfu: no schedule change during $range" );
-ok( $mrsfu->schedule_change_during_range( $dbix_conn, $range  ),
-    "mrsfu: schedule change during $range" );
 
-$range = "( 1994-12-31, 1997-01-02 )";
-ok( $mrfu->schedule_change_during_range( $dbix_conn, $range  ),
-    "mrfu: schedule change during $range" );
-ok( $mrsfu->schedule_change_during_range( $dbix_conn, $range  ),
-    "mrsfu: schedule change during $range" );
+$range = "( 1996-12-31, 1997-01-02 ]";
+ok( ! $mrfu->schedule_change_during_range( $dbix_conn, $range  ),
+    "mrfu: no schedule change during $range" );
 
-$range = "( 1994-12-31, 1996-11-02 )";
+$range = "[ 1996-12-31, 1997-01-02 ]";
+ok( ! $mrfu->schedule_change_during_range( $dbix_conn, $range  ),
+    "mrfu: no schedule change during $range" );
+
+note( 'ranges that definitely have a change' );
+$range = "( 1994-12-31, 1995-01-02 )";
 ok( $mrfu->schedule_change_during_range( $dbix_conn, $range  ),
-    "mrfu: schedule change during $range" );
-ok( ! $mrsfu->schedule_change_during_range( $dbix_conn, $range  ),
-    "mrsfu: no schedule change during $range" );
+    "mrfu has schedule change during $range" );
+
+$range = "[ 1994-12-31, 1995-01-02 )";
+ok( $mrfu->schedule_change_during_range( $dbix_conn, $range  ),
+    "mrfu has schedule change during $range" );
+
+$range = "( 1994-12-31, 1995-01-02 ]";
+ok( $mrfu->schedule_change_during_range( $dbix_conn, $range  ),
+    "mrfu has schedule change during $range" );
+
+$range = "[ 1994-12-31, 1995-01-02 ]";
+ok( $mrfu->schedule_change_during_range( $dbix_conn, $range  ),
+    "mrfu has schedule change during $range" );
+
+note( 'borderline priv level change - negative' );
+$range = "[ 1995-01-01 00:00, 1995-01-02 )";
+ok( ! $mrfu->schedule_change_during_range( $dbix_conn, $range  ),
+    "mrfu: no schedule change during borderline range $range" );
+
+$range = "( 1994-01-01, 1994-12-31 24:00 ]";
+ok( ! $mrfu->schedule_change_during_range( $dbix_conn, $range  ),
+    "mrfu: no schedule change during borderline range $range" );
+
+note( 'borderline priv level change - positive' );
+$range = "[ 1994-12-31 23:59, 1995-01-02 )";
+ok( $mrfu->schedule_change_during_range( $dbix_conn, $range  ),
+    "mrfu has schedule change during borderline range $range" );
+
+$range = "( 1994-01-01, 1995-01-01 00:01 ]";
+ok( $mrfu->schedule_change_during_range( $dbix_conn, $range  ),
+    "mrfu has schedule change during borderline range $range" );
 
 
 my ( $phobj, $shobj );

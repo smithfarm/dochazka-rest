@@ -495,20 +495,36 @@ $body$#,
           FROM schedhistory_at_timestamp( $1, lower( $2 ) )
       $$ LANGUAGE sql#,
 
-    q#-- given an EID and a tstzrange, IF a single privlevel applies throughout
-      -- the entire range, returns that privlevel, otherwise NULL
+    q#-- given an EID and a tstzrange, returns a boolean value indicating
+      -- whether or not the employee's privlevel changed during that tstzrange
       CREATE OR REPLACE FUNCTION priv_change_during_range(INTEGER, TSTZRANGE)
       RETURNS boolean AS $$
-          SELECT $2::tstzrange @> effective AS priv_change_during_range 
-              FROM privhistory WHERE eid=$1;
+          SELECT 
+              $2::tstzrange @> effective 
+              AND NOT
+              ( 
+                  ( lower_inc($2) AND effective = lower($2) )
+                  OR
+                  ( upper_inc($2) AND effective = upper($2) )
+              )
+          AS priv_change_during_range 
+          FROM privhistory WHERE eid=$1;
       $$ LANGUAGE sql IMMUTABLE#,
 
-    q#-- given an EID and a tstzrange, IF a single SID applies throughout
-      -- the entire range, returns that SID, otherwise NULL
+    q#-- given an EID and a tstzrange, returns a boolean value indicating
+      -- whether or not the employee's schedule changed during that tstzrange
       CREATE OR REPLACE FUNCTION schedule_change_during_range(INTEGER, TSTZRANGE)
       RETURNS boolean AS $$
-          SELECT $2::tstzrange @> effective AS schedule_change_during_range 
-              FROM schedhistory WHERE eid=$1;
+          SELECT 
+              $2::tstzrange @> effective 
+              AND NOT
+              ( 
+                  ( lower_inc($2) AND effective = lower($2) )
+                  OR
+                  ( upper_inc($2) AND effective = upper($2) )
+              )
+          AS schedule_change_during_range 
+          FROM schedhistory WHERE eid=$1;
       $$ LANGUAGE sql IMMUTABLE#,
 
     q#-- wrapper function to get priv as of current timestamp
