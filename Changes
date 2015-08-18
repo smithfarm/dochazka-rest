@@ -3214,3 +3214,12 @@ SPLIT OFF App::MREST into separate distribution
 - Model/Tempintvls.pm: return $self even when there is an error
   https://github.com/smithfarm/dochazka-rest/issues/20 Fixes: #20
 
+0.496  2015-08-18 22:02 CEST
+- Dispatch.pm: handle fillup tsranges that do not have any scheduled attendance
+  intervals
+- Model/Tempintvls.pm: let fillup() take a PARAMHASH that might say
+  include_holidays => 1
+- Model/Tempintvls.pm: fix count in fillup/commit
+- dbinit_Config.pm: fix priv_change_during_range() and
+  schedule_change_during_range() stored procedures
+
