@@ -1,0 +1,16 @@
+In config/sql/dbinit_Config.pm, we define a schedule_change_during_range() stored
+procedure like so:
+
+    q#-- given an EID and a tstzrange, IF a single SID applies throughout
+      -- the entire range, returns that SID, otherwise NULL
+      CREATE OR REPLACE FUNCTION schedule_change_during_range(INTEGER, TSTZRANGE)
+      RETURNS boolean AS $$
+          SELECT $2::tstzrange @> effective AS schedule_change_during_range 
+              FROM schedhistory WHERE eid=$1;
+      $$ LANGUAGE sql IMMUTABLE#,
+
+This is problematic because if the range is e.g. [ 2015-01-01, ... ) and there
+is a schedhistory record with timestamp 2015-01-01 00:00, the stored procedure
+will return true. We need to allow a schedule change on the range boundary
+provided that boundary is inclusive.
+
