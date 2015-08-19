@@ -1,6 +1,18 @@
 DISPATCH_TOO_MANY_RECORDS_FOUND message should be triggered when the
 interval/lock SELECT limit is reached. This mechanism should be documented.
 
+-*-
+
 We also need to document the DBIx::Connector object in the request context:
 where it is instantiated, how it gets into the context.
 
+-*-
+
+In dbinit_Config.pm there is a stored procedure called not_too_future()
+which is used in triggers to prevent users from entering locks and intervals
+that extent too far into the future. What constitutes "too far" should be a
+matter of site policy, but currently the value (a PostgreSQL interval) is
+hard-coded in the stored procedure itself. That means it can never be changed.  . .
+
+It is finally time to implement the original vision of having a "policy" table
+in the database, containing values like this one.
