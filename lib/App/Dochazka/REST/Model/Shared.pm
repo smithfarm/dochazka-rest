@@ -255,11 +255,8 @@ sub cud {
 
             } elsif ( $rv eq '0E0' ) {
 
-                ## no error, but no record returned either
-                #$status = $CELL->status_notice( 
-                #    'DOCHAZKA_CUD_NO_RECORDS_AFFECTED', 
-                #    args => [ $sth->{'Statement'} ] 
-                #); 
+                # no error, but no record returned either
+
             } else {
 
                 # non-standard return value
@@ -371,16 +368,12 @@ sub cud_generic {
             $log->debug( "cud_generic: DBI execute returned " . Dumper( $rv ) );
             if ( $rv >= 1 ) {
 
-                # a record was returned; get the values
-                #my $rh = $sth->fetchrow_hashref;
+                # one or more records returned
 
             } elsif ( $rv eq '0E0' ) {
 
-                ## no error, but no record returned either
-                #$status = $CELL->status_notice( 
-                #    'DOCHAZKA_CUD_NO_RECORDS_AFFECTED', 
-                #    args => [ $sth->{'Statement'} ] 
-                #); 
+                # no error, but no record returned either
+
             } elsif ( $rv == -1 ) {
                 $status = $CELL->status_err( 
                     'DOCHAZKA_CUD_UNKNOWN_NUMBER_OF_RECORDS_AFFECTED', 

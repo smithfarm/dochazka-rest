@@ -244,19 +244,24 @@ is_deeply( $status->payload, [ 'mrfu' ] );
 note( "attempt to change Mrs. Fu's EID" );
 my $saved_eid = $emp->eid;
 ok( $saved_eid > 1 );
-$emp->eid( 34342 );
-is( $emp->eid, 34342 );
+my $bogus_eid = 34342;
+$emp->eid( $bogus_eid );
+ok( $emp->eid != $saved_eid );
 ok( $saved_eid != $emp->eid );
+is( $emp->eid, $bogus_eid );
 $status = $emp->update( $faux_context );
 is( $status->level, "OK" );
-#is( $status->level, 'NOTICE' );
-#is( $status->code, 'DOCHAZKA_CUD_NO_RECORDS_AFFECTED' );
+is( $status->code, 'DOCHAZKA_CUD_OK' );
 
-note( 'reload from saved eid' );
+note( ' . . . but nothing changed in the database because the UPDATE statement' );
+note( 'in question does not set the eid at all. Not sure what to do about this.' );
+
+note( 'reload from saved EID' );
 $status = App::Dochazka::REST::Model::Employee->load_by_eid( $dbix_conn, $saved_eid );
 is( $status->level, "OK" );
 $emp = $status->payload;
 is( $emp->eid, $saved_eid );
+ok( $emp->eid != $bogus_eid );
 
 note( 'test accessors' );
 is( $emp->eid, $emp->{eid}, "accessor: eid" );
