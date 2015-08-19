@@ -77,15 +77,24 @@ ok( $status->ok, "Database dropped and re-created" );
 note( 'initialize the $dbix_conn singleton' ); 
 App::Dochazka::REST::ConnBank::init_singleton();
 
-# get EID of root user
-#diag( "get EID of initial roles" );
+note( "get EID of root and demo users according to site configuration" );
 ok( $site->DOCHAZKA_EID_OF_ROOT );
 ok( $site->DOCHAZKA_EID_OF_DEMO );
+
+note( 'get EID of root and demo users by database lookup' );
 my $eids = App::Dochazka::REST::get_eid_of( $dbix_conn, "root", "demo" );
+ok( $eids->{'root'} );
+ok( $eids->{'demo'} );
+
+note( 'compare that they are the same' );
+is( $site->DOCHAZKA_EID_OF_ROOT, $eids->{'root'} );
+is( $site->DOCHAZKA_EID_OF_DEMO, $eids->{'demo'} );
+
+note( 'check that their values are 1 and 2, respectively' );
 is( $eids->{'root'}, 1 );
 is( $eids->{'demo'}, 2 );
 
-# check the conn_status value
+note( 'check the conn_status value' );
 is( conn_status(), "UP" );
 
 done_testing;
