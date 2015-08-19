@@ -30,19 +30,12 @@
 # POSSIBILITY OF SUCH DAMAGE.
 # ************************************************************************* 
 
-# -------------------------------------------
-# App::Dochazka::REST
-# -------------------------------------------
+# REST_Config.pm - Top-level configuration file providing default values for
+# various site configuration parameters. Any or all of these parameters can be
+# overrided in your site configuration file(s).
 #
-# REST_Config.pm - Top-level configuration file
-# providing default values for various site
-# configuration parameters. Any or all of these
-# parameters can be overrided in your site
-# configuration file(s).
-#
-# WARNING: THIS FILE MAY CONTAIN PASSWORDS
-# (restrictive permissions may be warranted)
-# -------------------------------------------
+# WARNING: THIS FILE MAY CONTAIN PASSWORDS (restrictive permissions may be
+#          warranted) 
 
 
 # DOCHAZKA_REST_LOG_FILE
@@ -123,12 +116,6 @@ set( 'DOCHAZKA_ACTIVITY_DEFINITIONS', [
         { code => 'MEDICAL_LEAVE', long_desc => 'Statutory medical leave' },
     ] );   
 
-# DOCHAZKA_MAX_FUTURE_DAYS
-#     Some employees may try to enter attendance intervals days, weeks, 
-#     or even months in advance. This sets the maximum number of days
-#     in advance that Dochazka will accept an activity interval.
-set( 'DOCHAZKA_MAX_FUTURE_DAYS', 45 );
-
 # DOCHAZKA_BASIC_AUTH_REALM
 #     message displayed to user when she is asked to enter her credentials
 set( 'DOCHAZKA_BASIC_AUTH_REALM', 
@@ -182,10 +169,6 @@ set( 'DOCHAZKA_LDAP_POPULATE_MATRIX', {} );
 # DOCHAZKA_REST_SESSION_EXPIRATION_TIME
 #     number of seconds after which a session will be considered stale
 set( 'DOCHAZKA_REST_SESSION_EXPIRATION_TIME', 3600 );
-
-# DOCHAZKA_REST_DEBUG_MODE
-#     whether or not debug- and trace-level messages are logged
-set( 'DOCHAZKA_REST_DEBUG_MODE', 0 );
 
 # DOCHAZKA_PROFILE_EDITABLE_FIELDS
 #     which employee fields can be updated by employees with privlevel 'inactive' and 'active'

@@ -1040,7 +1040,7 @@ First, create a sitedir:
 and, second, a file therein:
 
     # cat << EOF > /etc/dochazka-rest/REST_SiteConfig.pm
-    set( 'DOCHAZKA_REST_DEBUG_MODE', 1 );
+    set( 'MREST_DEBUG_MODE', 1 );
     set( 'DBINIT_CONNECT_SUPERAUTH', 'mypass' );
     set( 'DOCHAZKA_REST_LOG_FILE', "dochazka-rest.log" );
     set( 'DOCHAZKA_REST_LOG_FILE_RESET', 1);
@@ -1209,9 +1209,9 @@ If the C<DOCHAZKA_DEBUG> environment variable is set to a true value, the
 entire 'context' will be returned in each JSON response, instead of just 
 the 'entity'. For more information, see C<Resource.pm>.
 
-=item * DOCHAZKA_REST_DEBUG_MODE site configuration parameter
+=item * MREST_DEBUG_MODE site configuration parameter
 
-If the C<DOCHAZKA_REST_DEBUG_MODE> site parameter is set to a true value,
+If the C<MREST_DEBUG_MODE> site parameter is set to a true value,
 debug messages will be logged.
 
 =back
