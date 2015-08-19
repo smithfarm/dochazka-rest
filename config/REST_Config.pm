@@ -45,21 +45,6 @@
 # -------------------------------------------
 
 
-# DOCHAZKA_URI
-#    the bare URI where the server listens (no trailing '/') -- this
-#    information is used in the various "help" (or "default") resources. If
-#    this parameter is not set, the URI is obtained from the HTTP request
-#    itself.
-#set( 'DOCHAZKA_URI', 'http://dochazka.site' );
-
-# DOCHAZKA_HOST
-#    the hostname (vhost) where REST server will listen on a part
-set( 'DOCHAZKA_HOST', 'localhost' );
-
-# DOCHAZKA_PORT
-#    the port where the REST server will listen
-set( 'DOCHAZKA_PORT', 5000 );
-
 # DOCHAZKA_REST_LOG_FILE
 #     full path of log file to log to
 set( 'DOCHAZKA_REST_LOG_FILE', '/var/log/dochazka-rest.log' );
@@ -68,23 +53,10 @@ set( 'DOCHAZKA_REST_LOG_FILE', '/var/log/dochazka-rest.log' );
 #     should the logfile be deleted/wiped/unlinked/reset before each use
 set( 'DOCHAZKA_REST_LOG_FILE_RESET', 0 );
 
-# DOCHAZKA_DOCUMENTATION_URI
-#    used in the "help"/"default" resources
-set( 'DOCHAZKA_DOCUMENTATION_URI', 'https://metacpan.org/pod/App::Dochazka::REST' );
-
 # DOCHAZKA_REPORT_BUGS_TO
 #    this should be an ordinary string like "bugs@dochazka.com" or
 #    "http://bugs.dochazka.com"
 set( 'DOCHAZKA_REPORT_BUGS_TO', 'bug-App-Dochazka-REST@rt.cpan.org' );
-
-# DOCHAZKA_URI_MAX_LENGTH
-#    maximum length of a URI -- see Resource.pm->uri_too_long
-set( 'DOCHAZKA_URI_MAX_LENGTH', 1000 );
-
-# DOCHAZKA_APPNAME
-#    name of application (for logging) -- this can be set to any string, with
-#    the proviso that it should not contain ':' characters
-set( 'DOCHAZKA_APPNAME', 'App-Dochazka-REST' );
 
 # DOCHAZKA_DBNAME
 #    name of PostgreSQL database to use
@@ -151,7 +123,7 @@ set( 'DOCHAZKA_ACTIVITY_DEFINITIONS', [
         { code => 'MEDICAL_LEAVE', long_desc => 'Statutory medical leave' },
     ] );   
 
-# DOCHAZKA_ADVANCE_INTERVALS_MAX_DAYS
+# DOCHAZKA_MAX_FUTURE_DAYS
 #     Some employees may try to enter attendance intervals days, weeks, 
 #     or even months in advance. This sets the maximum number of days
 #     in advance that Dochazka will accept an activity interval.

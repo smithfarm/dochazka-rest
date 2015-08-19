@@ -59,7 +59,7 @@ plan skip_all => "not configured or server not running" unless $status->ok;
 my $app = $status->payload;
 
 note( 'check a random site param' );
-is( $site->DOCHAZKA_HOST, 'localhost' );
+is( $site->DOCHAZKA_DBUSER, 'dochazka' );
 
 note( 'instantiate Plack::Test object' );
 my $test = Plack::Test->create( $app );

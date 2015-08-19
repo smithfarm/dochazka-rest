@@ -727,7 +727,7 @@ $body$#,
             --
             -- does the interval extend too far into the future?
             --
-            SELECT date_trunc('MONTH', (now() + interval '3 month'))::TIMESTAMPTZ INTO limit_ts;
+            SELECT date_trunc('MONTH', (now() + interval '3 months'))::TIMESTAMPTZ INTO limit_ts;
             IF upper(NEW.intvl) >= limit_ts THEN 
                 RAISE EXCEPTION 'interval extends too far into the future';
             END IF;
