@@ -29,15 +29,12 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 # ************************************************************************* 
-
-# -----------------------------------
-# Dochazka-REST
-# -----------------------------------
-# tempintvls_Config.pm
 #
-# SQL code related to tempintvls
-# -----------------------------------
+# sql/tempintvls_Config.pm
+#
+# SQL statements related to tempintvls
 
+#
 # SQL_NEXT_TIID
 #     SQL to get next value from temp_intvl_seq
 #
@@ -45,6 +42,7 @@ set( 'SQL_NEXT_TIID', q/
       SELECT nextval('temp_intvl_seq');
       / );
 
+#
 # SQL_TEMPINTVLS_INSERT
 #     SQL to insert a single record in the 'tempintvls' table
 #
@@ -53,12 +51,14 @@ set( 'SQL_TEMPINTVLS_INSERT', q/
       VALUES (?, ?)
       / );
 
+#
 # SQL_TEMPINTVLS_DELETE
 #     SQL to delete scratch intervals once they are no longer needed
 set( 'SQL_TEMPINTVLS_DELETE', q/
       DELETE FROM tempintvls WHERE tiid = ?
       / );
 
+#
 # SQL_TEMPINTVLS_COMMIT
 #     SQL to select scratch intervals matching a range
 set( 'SQL_TEMPINTVLS_COMMIT', q/
@@ -71,12 +71,14 @@ set( 'SQL_TEMPINTVLS_COMMIT', q/
       SELECT CAST( ? AS integer ) AS tiid, partial_tempintvls_upper(?, ?);
       / );
 
+#
 # SQL_TEMPINTVLS_SELECT
 #     SELECT all intervals associated with a tiid
 set( 'SQL_TEMPINTVLS_SELECT', q/
       SELECT intvl FROM tempintvls WHERE tiid = ? ORDER BY intvl
       / );
 
+#
 # SQL_TEMPINTVLS_SELECT_COMMITTED
 #     SQL to select committed scratch intervals
 set( 'SQL_TEMPINTVLS_SELECT_COMMITTED', q/

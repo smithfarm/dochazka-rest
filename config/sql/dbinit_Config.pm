@@ -29,23 +29,23 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 # ************************************************************************* 
-
-# -----------------------------------
-# Dochazka-REST
-# -----------------------------------
-# dbinit_Config.pm
 #
-# SQL vitals
-# -----------------------------------
+# sql/dbinit_Config.pm
+#
+# database initialization SQL
 
+#
+# DBINIT_CONNECT_SUPERUSER
+# DBINIT_CONNECT_SUPERAUTH
+#
 # These should be overrided in Dochazka_SiteConfig.pm with real
 # superuser credentials (but only for testing - do not put production
 # credentials in any configuration file!!!!)
-
+#
 set( 'DBINIT_CONNECT_SUPERUSER', 'postgres' );
 set( 'DBINIT_CONNECT_SUPERAUTH', 'bogus_password_to_be_overrided' );
 
-
+#
 # DBINIT_CREATE
 # 
 #  A list of SQL statements that are executed when the database is first
@@ -59,7 +59,6 @@ set( 'DBINIT_CREATE', [
     q/CREATE EXTENSION IF NOT EXISTS btree_gist/,
 
     q/SET client_min_messages=WARNING/,
-
 
     # generalized (utility) functions used in multiple datamodel classes
 
@@ -151,7 +150,6 @@ attendance.
 $body$
 #,
 
-
     # the 'employees' table
 
     q/CREATE TABLE IF NOT EXISTS employees (
@@ -186,7 +184,6 @@ $body$
       FOR EACH ROW EXECUTE PROCEDURE eid_immutable()/,
 
     q/COMMENT ON TRIGGER no_eid_update ON employees IS 'trigger for eid_immutable()'/,
-
 
     # the 'schedintvls' table
 
@@ -276,7 +273,6 @@ strings (e.g., "WED" "08:00") denotes the lower bound of the
 range, while the second pair denotes the upper bound
 $body$#,
 
-
     # the 'schedules' table
 
     q#CREATE TABLE IF NOT EXISTS schedules (
@@ -319,6 +315,8 @@ $body$#,
     CREATE TRIGGER disabled_to_zero BEFORE INSERT OR UPDATE ON schedules
         FOR EACH ROW EXECUTE PROCEDURE disabled_to_zero()/,
 
+    # the 'schedhistory' table
+
     q/CREATE TABLE IF NOT EXISTS schedhistory (
         shid       serial PRIMARY KEY,
         eid        integer REFERENCES employees (eid) NOT NULL,
@@ -342,7 +340,11 @@ $body$#,
     CREATE TRIGGER no_shid_update BEFORE UPDATE ON schedhistory
       FOR EACH ROW EXECUTE PROCEDURE shid_immutable()/,
     
+    # the 'privilege' type
+
     q/CREATE TYPE privilege AS ENUM ('passerby', 'inactive', 'active', 'admin')/,
+
+    # the 'schedhistory' table
 
     q/CREATE TABLE IF NOT EXISTS privhistory (
         phid       serial PRIMARY KEY,
@@ -367,6 +369,8 @@ $body$#,
     CREATE TRIGGER no_phid_update BEFORE UPDATE ON privhistory
       FOR EACH ROW EXECUTE PROCEDURE phid_immutable()/,
     
+    # triggers shared by 'privhistory' and 'schedhistory'
+
     q/CREATE OR REPLACE FUNCTION round_effective() RETURNS trigger AS $$
         BEGIN
             NEW.effective = round_time(NEW.effective);
@@ -392,6 +396,8 @@ $body$#,
 
     q/CREATE TRIGGER enforce_ts_sanity BEFORE INSERT OR UPDATE ON privhistory
         FOR EACH ROW EXECUTE PROCEDURE sane_timestamp()/,
+
+    # stored procedures relating to privhistory, schedhistory, and schedule
 
     q#-- generalized function to get privilege level for an employee
       -- as of a given timestamp
@@ -544,6 +550,8 @@ $body$#,
           SELECT sid_at_timestamp($1, current_timestamp)
       $$ LANGUAGE sql IMMUTABLE#,
 
+    # the 'activities' table
+
     q/-- activities
       CREATE TABLE activities (
           aid        serial PRIMARY KEY,
@@ -582,6 +590,8 @@ $body$#,
     q/CREATE TRIGGER disabled_to_zero BEFORE INSERT OR UPDATE ON activities
         FOR EACH ROW EXECUTE PROCEDURE disabled_to_zero()/,
 
+    # the 'intervals' table
+
     q/-- intervals
       CREATE TABLE IF NOT EXISTS intervals (
           iid        serial PRIMARY KEY,
@@ -593,58 +603,6 @@ $body$#,
           stamp      json,
           EXCLUDE USING gist (eid WITH =, intvl WITH &&)
       )/,
-
-    q/CREATE SEQUENCE temp_intvl_seq/,
-
-    q/COMMENT ON SEQUENCE temp_intvl_seq IS 'sequence guaranteeing that each set of temporary intervals will have a unique identifier'/,
-
-    q/-- tempintvls
-      -- for staging fillup intervals 
-      CREATE TABLE IF NOT EXISTS tempintvls (
-          int_id     serial PRIMARY KEY,
-          tiid       integer NOT NULL,
-          intvl      tstzrange
-      )/,
-
-    q#CREATE OR REPLACE FUNCTION partial_tempintvls_lower(integer, tstzrange)
-      RETURNS tstzrange AS $$
-        DECLARE
-            overlap_lower  tstzrange;
-            temp_lower     tstzrange;
-            lparen         text;
-            rparen         text;
-        BEGIN
-            SELECT a, b FROM parens($2) INTO lparen, rparen AS ( a text, b text );
-            SELECT intvl FROM tempintvls INTO overlap_lower
-            WHERE tiid = $1 AND intvl @> lower($2);
-            IF overlap_lower IS NOT NULL THEN
-                temp_lower := concat( lparen, lower($2), ',', upper(overlap_lower), rparen )::tstzrange;
-            ELSE
-                temp_lower := null::tstzrange;
-            END IF;
-            RETURN temp_lower;
-        END;
-      $$ LANGUAGE plpgsql#,
-
-    q#CREATE OR REPLACE FUNCTION partial_tempintvls_upper(integer, tstzrange)
-      RETURNS tstzrange AS $$
-        DECLARE
-            overlap_upper  tstzrange;
-            temp_upper     tstzrange;
-            lparen         text;
-            rparen         text;
-        BEGIN
-            SELECT a, b FROM parens($2) INTO lparen, rparen AS ( a text, b text );
-            SELECT intvl FROM tempintvls INTO overlap_upper
-            WHERE tiid = $1 AND intvl @> upper($2);
-            IF overlap_upper IS NOT NULL THEN
-                temp_upper := concat( lparen, lower(overlap_upper), ',', upper($2), rparen )::tstzrange;
-            ELSE
-                temp_upper := null::tstzrange;
-            END IF;
-            RETURN temp_upper;
-        END;
-      $$ LANGUAGE plpgsql#,
 
     q#-- trigger function to ensure that a privhistory/schedhistory record
       -- does not fall within an existing attendance interval
@@ -763,6 +721,8 @@ $body$#,
     q/CREATE TRIGGER a3_no_iid_update BEFORE UPDATE ON intervals
       FOR EACH ROW EXECUTE PROCEDURE iid_immutable()/,
     
+    # the 'locks' table
+
     q/-- locks
       CREATE TABLE locks (
           lid     serial PRIMARY KEY,
@@ -827,6 +787,62 @@ $body$#,
           
     q/CREATE TRIGGER intvl_not_locked BEFORE INSERT OR UPDATE OR DELETE ON intervals
       FOR EACH ROW EXECUTE PROCEDURE no_lock_conflict()/,
+
+    # the 'tempintvls' table and associated plumbing
+
+    q/CREATE SEQUENCE temp_intvl_seq/,
+
+    q/COMMENT ON SEQUENCE temp_intvl_seq IS 'sequence guaranteeing that each set of temporary intervals will have a unique identifier'/,
+
+    q/-- tempintvls
+      -- for staging fillup intervals 
+      CREATE TABLE IF NOT EXISTS tempintvls (
+          int_id     serial PRIMARY KEY,
+          tiid       integer NOT NULL,
+          intvl      tstzrange
+      )/,
+
+    q#CREATE OR REPLACE FUNCTION partial_tempintvls_lower(integer, tstzrange)
+      RETURNS tstzrange AS $$
+        DECLARE
+            overlap_lower  tstzrange;
+            temp_lower     tstzrange;
+            lparen         text;
+            rparen         text;
+        BEGIN
+            SELECT a, b FROM parens($2) INTO lparen, rparen AS ( a text, b text );
+            SELECT intvl FROM tempintvls INTO overlap_lower
+            WHERE tiid = $1 AND intvl @> lower($2);
+            IF overlap_lower IS NOT NULL THEN
+                temp_lower := concat( lparen, lower($2), ',', upper(overlap_lower), rparen )::tstzrange;
+            ELSE
+                temp_lower := null::tstzrange;
+            END IF;
+            RETURN temp_lower;
+        END;
+      $$ LANGUAGE plpgsql#,
+
+    q#CREATE OR REPLACE FUNCTION partial_tempintvls_upper(integer, tstzrange)
+      RETURNS tstzrange AS $$
+        DECLARE
+            overlap_upper  tstzrange;
+            temp_upper     tstzrange;
+            lparen         text;
+            rparen         text;
+        BEGIN
+            SELECT a, b FROM parens($2) INTO lparen, rparen AS ( a text, b text );
+            SELECT intvl FROM tempintvls INTO overlap_upper
+            WHERE tiid = $1 AND intvl @> upper($2);
+            IF overlap_upper IS NOT NULL THEN
+                temp_upper := concat( lparen, lower(overlap_upper), ',', upper($2), rparen )::tstzrange;
+            ELSE
+                temp_upper := null::tstzrange;
+            END IF;
+            RETURN temp_upper;
+        END;
+      $$ LANGUAGE plpgsql#,
+
+    # create 'root' and 'demo' employees
 
     q/-- insert root employee into employees table and grant admin
       -- privilege to the resulting EID

@@ -30,87 +30,79 @@
 # POSSIBILITY OF SUCH DAMAGE.
 # ************************************************************************* 
 #
-# sql/privhistory_Config.pm
+# sql/schedhistory_Config.pm
 #
-# SQL statements related to privhistory
+# SQL statements related to schedhistory
 
 #
-# SQL_PRIVHISTORY_INSERT
-#     SQL to insert a single row in privhistory table
-#
-set( 'SQL_PRIVHISTORY_INSERT', q/
-      INSERT INTO privhistory (eid, priv, effective, remark) 
+# SQL_SCHEDHISTORY_INSERT
+#     SQL query to insert a schedhistory row
+set( 'SQL_SCHEDHISTORY_INSERT', q/
+      INSERT INTO schedhistory (eid, sid, effective, remark)
       VALUES (?, ?, ?, ?)
-      RETURNING phid, eid, priv, effective, remark
+      RETURNING shid, eid, sid, effective, remark
       / );
 
+# SQL_SCHEDHISTORY_UPDATE
+#     SQL to update a single row from schedhistory table
 #
-# SQL_PRIVHISTORY_UPDATE
-#     SQL to update a single row from privhistory table
-#
-set( 'SQL_PRIVHISTORY_UPDATE', q/
-      UPDATE privhistory 
-      SET priv = ?, effective = ?, remark = ?
-      WHERE phid = ?
-      RETURNING phid, eid, priv, effective, remark
+set( 'SQL_SCHEDHISTORY_UPDATE', q/
+      UPDATE schedhistory 
+      SET sid = ?, effective = ?, remark = ?
+      WHERE shid = ?
+      RETURNING shid, eid, sid, effective, remark
       / );
 
-#
-# SQL_PRIVHISTORY_DELETE
-#     SQL to delete a single row from privhistory table
-#
-set( 'SQL_PRIVHISTORY_DELETE', q/
-      DELETE FROM privhistory WHERE phid = ?
-      RETURNING phid, eid, priv, effective, remark
+# SQL_SCHEDHISTORY_DELETE
+#     SQL query to delete a schedhistory row
+set( 'SQL_SCHEDHISTORY_DELETE', q/
+      DELETE FROM schedhistory
+      WHERE shid = ?
+      RETURNING shid, eid, sid, effective, remark
       / );
 
+# SQL_SCHEDHISTORY_SELECT_ARBITRARY
+#     SQL to select from schedhistory based on EID and arbitrary timestamp
 #
-# SQL_PRIVHISTORY_SELECT_ARBITRARY
-#     SQL to select from privhistory based on EID and arbitrary timestamp
-#
-set( 'SQL_PRIVHISTORY_SELECT_ARBITRARY', q/
-      SELECT phid, eid, priv, effective, remark FROM privhistory
+set( 'SQL_SCHEDHISTORY_SELECT_ARBITRARY', q/
+      SELECT shid, eid, sid, effective, remark FROM schedhistory
       WHERE eid = ? and effective <= ?
       ORDER BY effective DESC
       FETCH FIRST ROW ONLY
       / );
 
+# SQL_SCHEDHISTORY_SELECT_CURRENT
+#     SQL to select from schedhistory based on EID and current timestamp
 #
-# SQL_PRIVHISTORY_SELECT_CURRENT
-#     SQL to select from privhistory based on EID and current timestamp
-#
-set( 'SQL_PRIVHISTORY_SELECT_CURRENT', q/
-      SELECT phid, eid, priv, effective, remark FROM privhistory
+set( 'SQL_SCHEDHISTORY_SELECT_CURRENT', q/
+      SELECT shid, eid, sid, effective, remark FROM schedhistory
       WHERE eid = ? and effective <= current_timestamp
       ORDER BY effective DESC
       FETCH FIRST ROW ONLY
       / );
 
-#
-# SQL_PRIVHISTORY_SELECT_BY_PHID
-#     SQL to select a privhistory record by its phid
-set( 'SQL_PRIVHISTORY_SELECT_BY_PHID', q/
-      SELECT phid, eid, priv, effective, remark FROM privhistory
-      WHERE phid = ? 
+# SQL_SCHEDHISTORY_SELECT_BY_SHID
+#     SQL to select a schedhistory record by its shid
+set( 'SQL_SCHEDHISTORY_SELECT_BY_SHID', q/
+      SELECT shid, eid, sid, effective, remark FROM schedhistory
+      WHERE shid = ? 
       / );
 
-#
-# SQL_PRIVHISTORY_SELECT_RANGE_BY_EID
-#     SQL to select a range of privhistory records
-set( 'SQL_PRIVHISTORY_SELECT_RANGE_BY_EID', q/
-      SELECT phid, eid, priv, effective, remark FROM privhistory 
+# SQL_SCHEDHISTORY_SELECT_RANGE_BY_EID
+#     SQL to select a range of SCHEDHISTORY records
+set( 'SQL_SCHEDHISTORY_SELECT_RANGE_BY_EID', q/
+      SELECT shid, eid, sid, effective, remark FROM SCHEDHISTORY 
       WHERE eid = ? AND effective <@ CAST( ? AS tstzrange )
       ORDER BY effective
       / );
 
-#
-# SQL_PRIVHISTORY_SELECT_RANGE_BY_NICK
-#     SQL to select a range of privhistory records
-set( 'SQL_PRIVHISTORY_SELECT_RANGE_BY_NICK', q/
-      SELECT ph.phid AS phid, ph.eid AS eid, ph.priv AS priv, ph.effective AS effective, ph.remark AS remark 
-      FROM privhistory ph, employees em
-      WHERE ph.eid = em.eid AND em.nick = ? AND ph.effective <@ CAST( ? AS tstzrange )
-      ORDER BY ph.effective
+# SQL_SCHEDHISTORY_SELECT_RANGE_BY_NICK
+#     SQL to select a range of SCHEDHISTORY records
+set( 'SQL_SCHEDHISTORY_SELECT_RANGE_BY_NICK', q/
+      SELECT sh.shid AS shid, sh.eid AS eid, sh.sid AS sid, sh.effective AS effective, sh.remark AS remark 
+      FROM SCHEDHISTORY sh, employees em
+      WHERE sh.eid = em.eid AND em.nick = ? AND sh.effective <@ CAST( ? AS tstzrange )
+      ORDER BY sh.effective
       / );
 
 # -----------------------------------

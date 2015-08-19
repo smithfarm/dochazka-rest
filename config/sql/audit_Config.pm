@@ -29,14 +29,11 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 # ************************************************************************* 
-
-# -----------------------------------
-# App::Dochazka::REST
-# -----------------------------------
-# audit_Config.pm
 #
-# configuration parameters related to the audit table
-# -----------------------------------
+# sql/audit_Config.pm
+#
+# - audit-related SQL statements 
+# - code to initialize audit schema and related triggers
 
 #
 # the audit trigger expects to be able to do "SELECT current_setting('dochazka.eid')"

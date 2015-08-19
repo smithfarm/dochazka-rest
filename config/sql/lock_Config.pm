@@ -29,14 +29,10 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 # ************************************************************************* 
-
-# -----------------------------------
-# Dochazka-REST
-# -----------------------------------
-# lock_Config.pm
 #
-# configuration parameters related to locks
-# -----------------------------------
+# sql/lock_Config.pm
+#
+# SQL statements related to locks
 
 # 
 set( 'SQL_LOCK_SELECT_BY_LID', q/

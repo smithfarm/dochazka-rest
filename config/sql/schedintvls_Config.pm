@@ -30,67 +30,51 @@
 # POSSIBILITY OF SUCH DAMAGE.
 # ************************************************************************* 
 #
-# sql/activity_Config.pm
+# sql/schedintvls_Config.pm
 #
-# SQL statements related to activities
-
-#
-set( 'SQL_ACTIVITY_SELECT_ALL_INCLUDING_DISABLED', q/
-      SELECT aid, code, long_desc, remark, disabled
-      FROM activities
-      / );
+# SQL statements related to schedintvls
 
 #
-set( 'SQL_ACTIVITY_SELECT_ALL_EXCEPT_DISABLED', q/
-      SELECT aid, code, long_desc, remark, disabled
-      FROM activities WHERE disabled != TRUE
-      / );
-
-# 
-set( 'SQL_ACTIVITY_SELECT_BY_AID', q/
-      SELECT aid, code, long_desc, remark, disabled
-      FROM activities WHERE aid = ?
-      / );
-
-# 
-set( 'SQL_ACTIVITY_SELECT_BY_AID_NOT_DISABLED', q/
-      SELECT aid, code, long_desc, remark, disabled
-      FROM activities WHERE aid = ? and disabled != TRUE
+# SQL_SCRATCH_SID
+#     SQL to get next value from scratch_sid_seq
+#
+set( 'SQL_SCRATCH_SID', q/
+      SELECT nextval('scratch_sid_seq');
       / );
 
 #
-set( 'SQL_ACTIVITY_SELECT_BY_CODE', q/
-      SELECT aid, code, long_desc, remark, disabled
-      FROM activities WHERE code = upper(?)
+# SQL_SCHEDINTVLS_INSERT
+#     SQL to insert a single record in the 'scratchintvls' table
+#
+set( 'SQL_SCHEDINTVLS_INSERT', q/
+      INSERT INTO schedintvls (ssid, intvl)
+      VALUES (?, ?)
       / );
 
 #
-set( 'SQL_ACTIVITY_SELECT_BY_CODE_NOT_DISABLED', q/
-      SELECT aid, code, long_desc, remark, disabled
-      FROM activities WHERE code = upper(?) and disabled != TRUE
+# SQL_SCHEDINTVLS_SELECT
+#     SQL to select all the schedintvls belonging to a given SID,
+#     translated, all in one go, resulting in n rows, each containing
+#     four columns: low_dow, low_time, high_dow, high_time
+set( 'SQL_SCHEDINTVLS_SELECT', q/
+      -- ORDER BY intvl sorts the intervals!
+      SELECT 
+          (translate_schedintvl(int_id)).low_dow, 
+          (translate_schedintvl(int_id)).low_time, 
+          (translate_schedintvl(int_id)).high_dow, 
+          (translate_schedintvl(int_id)).high_time
+      FROM (
+          SELECT int_id FROM schedintvls WHERE ssid = ?
+          ORDER BY intvl
+      ) AS int_ids
       / );
 
 #
-set( 'SQL_ACTIVITY_INSERT', q/
-      INSERT INTO activities 
-                (code, long_desc, remark, disabled)
-      VALUES    (upper(?), ?, ?, FALSE) 
-      RETURNING  aid, code, long_desc, remark, disabled
+# SQL_SCHEDINTVLS_DELETE
+#     SQL to delete scratch intervals once they are no longer needed
+set( 'SQL_SCHEDINTVLS_DELETE', q/
+      DELETE FROM schedintvls WHERE ssid = ?
       / );
-
-set( 'SQL_ACTIVITY_UPDATE', q/
-      UPDATE activities 
-      SET code = upper(?), long_desc = ?, remark = ?, disabled = ?
-      WHERE aid = ?
-      RETURNING  aid, code, long_desc, remark, disabled
-      / );
-
-set( 'SQL_ACTIVITY_DELETE', q/
-      DELETE FROM activities
-      WHERE aid = ?
-      RETURNING  aid, code, long_desc, remark, disabled
-      / );
-      
 
 # -----------------------------------
 # DO NOT EDIT ANYTHING BELOW THIS LINE

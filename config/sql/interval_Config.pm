@@ -29,14 +29,10 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 # ************************************************************************* 
-
-# -----------------------------------
-# Dochazka-REST
-# -----------------------------------
-# interval_Config.pm
 #
-# configuration parameters related to activity intervals
-# -----------------------------------
+# sql/interval_Config.pm
+#
+# SQL statements related to attendance intervals
 
 # 
 set( 'SQL_INTERVAL_SELECT_BY_IID', q/

@@ -16,6 +16,8 @@ config/sql/employee_Config.pm
 config/sql/interval_Config.pm
 config/sql/lock_Config.pm
 config/sql/privhistory_Config.pm
+config/sql/schedhistory_Config.pm
+config/sql/schedintvls_Config.pm
 config/sql/schedule_Config.pm
 config/sql/tempintvls_Config.pm
 lib/App/Dochazka/REST.pm
