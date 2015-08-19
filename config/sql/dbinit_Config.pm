@@ -715,9 +715,6 @@ $body$#,
     q/CREATE TRIGGER a2_interval_not_too_future BEFORE INSERT OR UPDATE ON intervals
       FOR EACH ROW EXECUTE PROCEDURE not_too_future()/,
 
-    q/CREATE TRIGGER a2_interval_not_too_future BEFORE INSERT OR UPDATE ON tempintvls
-      FOR EACH ROW EXECUTE PROCEDURE not_too_future()/,
-
     q/CREATE TRIGGER a3_no_iid_update BEFORE UPDATE ON intervals
       FOR EACH ROW EXECUTE PROCEDURE iid_immutable()/,
     
@@ -801,6 +798,9 @@ $body$#,
           tiid       integer NOT NULL,
           intvl      tstzrange
       )/,
+
+    q/CREATE TRIGGER a2_interval_not_too_future BEFORE INSERT OR UPDATE ON tempintvls
+      FOR EACH ROW EXECUTE PROCEDURE not_too_future()/,
 
     q#CREATE OR REPLACE FUNCTION partial_tempintvls_lower(integer, tstzrange)
       RETURNS tstzrange AS $$
