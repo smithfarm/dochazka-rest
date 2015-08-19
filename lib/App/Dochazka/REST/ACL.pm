@@ -29,10 +29,8 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 # ************************************************************************* 
-
-# ------------------------
-# ACL module
-# ------------------------
+#
+# ACL routines
 
 package App::Dochazka::REST::ACL;
 
@@ -99,33 +97,27 @@ my %acl_lookup = (
 
 =head2 check_acl
 
-Compare ACL profile of a resource, C<$profile>, with the privlevel of the current
-employee, C<$privlevel>. If the former is at least as high as the latter, the
-function returns true, otherwise false.
+Takes two strings, C<$profile> and C<$privlevel>. Both should be either
+"passerby", "inactive", "active", or "admin". 
+
+These values, C<$profile> and C<$privlevel>, are assumed to be the ACL profile
+of a resource and the privlevel of an employee, respectively. The function
+returns a true or false value indicating whether that employee satisfies the
+given ACL profile.
+
+Additionally, C<$profile> can be undef, in which case the function returns
+false regardless of the value of C<$privlevel>.
 
 =cut
 
 sub check_acl {
-    my ( $profile, $privlevel ) = validate_pos( @_,
-        { type => SCALAR | UNDEF }, 
-        { type => SCALAR }, 
-    );
-
-    my $levels = qr/^(passerby)|(inactive)|(active)|(admin)$/;
-
-    $log->debug( "Entering " . __PACKAGE__ . "::check_acl with \$profile " . Dumper( $profile )
-        . " and \$privlevel " . Dumper( $privlevel ) );
-
-    # handle undef
-    # - the ACL profile might be undefined (e.g. "/forbidden")
-    return 0 unless defined $profile;
-
-    die "Invalid ACL profile $profile" unless $profile =~ $levels;
-    die "Invalid employee privlevel $privlevel" unless $privlevel =~ $levels;
-
-    return 1 if exists $acl_lookup{$privlevel}->{$profile};
-
-    return 0;
+    my ( %ARGS ) = validate( @_, {
+        profile => { type => SCALAR, regex => qr/^(passerby)|(inactive)|(active)|(admin)|(forbidden)$/ }, 
+        privlevel => { type => SCALAR, regex => qr/^(passerby)|(inactive)|(active)|(admin)$/ }, 
+    } );
+    return exists( $acl_lookup{$ARGS{privlevel}}->{$ARGS{profile}} )
+        ? 1
+        : 0;
 }
 
 

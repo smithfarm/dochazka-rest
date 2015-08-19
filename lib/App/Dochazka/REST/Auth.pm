@@ -422,7 +422,7 @@ sub forbidden {
         . ( $acl_profile || "undefined" ) );
 
     # compare the two
-    my $acl_check_passed = check_acl( $acl_profile, $acl_priv );
+    my $acl_check_passed = check_acl( profile => $acl_profile, privlevel => $acl_priv );
     if ( $acl_check_passed ) {
         $log->debug( "ACL check passed" );
         $self->push_onto_context( { 'acl_priv' => $acl_priv } );

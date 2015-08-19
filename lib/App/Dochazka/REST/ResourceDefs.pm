@@ -254,7 +254,7 @@ EOH
     {
         parent => '/',
         handler => 'handler_forbidden',
-        acl_profile => undef,
+        acl_profile => 'forbidden',
         cli => 'forbidden',
         description => 'A resource that is forbidden to all',
         documentation => <<'EOH',

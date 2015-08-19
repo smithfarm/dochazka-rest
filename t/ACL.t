@@ -46,58 +46,45 @@ use App::Dochazka::REST::Test;
 use Test::Fatal;
 use Test::More;
 
+note( 'initialize, connect to database, and set up a testing plan' );
 my $status = initialize_unit();
 if ( $status->not_ok ) {
     plan skip_all => "not configured or server not running";
 }
 
-# standard functionality
+note( 'check_acl() tests' );
 
 my $profile = 'passerby';
-ok( check_acl( $profile, 'passerby' ) );
-ok( check_acl( $profile, 'inactive' ) );
-ok( check_acl( $profile, 'active' ) );
-ok( check_acl( $profile, 'admin' ) );
+note( "check privlevel logic: $profile" );
+ok( check_acl( profile => $profile, privlevel => 'passerby' ) );
+ok( check_acl( profile => $profile, privlevel => 'inactive' ) );
+ok( check_acl( profile => $profile, privlevel => 'active' ) );
+ok( check_acl( profile => $profile, privlevel => 'admin' ) );
 
 $profile = 'inactive';
-ok( ! check_acl( $profile, 'passerby' ) );
-ok( check_acl( $profile, 'inactive' ) );
-ok( check_acl( $profile, 'active' ) );
-ok( check_acl( $profile, 'admin' ) );
+note( "check privlevel logic: $profile" );
+ok( ! check_acl( profile => $profile, privlevel => 'passerby' ) );
+ok( check_acl( profile => $profile, privlevel => 'inactive' ) );
+ok( check_acl( profile => $profile, privlevel => 'active' ) );
+ok( check_acl( profile => $profile, privlevel => 'admin' ) );
 
 $profile = 'active';
-ok( ! check_acl( $profile, 'passerby' ) );
-ok( ! check_acl( $profile, 'inactive' ) );
-ok( check_acl( $profile, 'active' ) );
-ok( check_acl( $profile, 'admin' ) );
+note( "check privlevel logic: $profile" );
+ok( ! check_acl( profile => $profile, privlevel => 'passerby' ) );
+ok( ! check_acl( profile => $profile, privlevel => 'inactive' ) );
+ok( check_acl( profile => $profile, privlevel => 'active' ) );
+ok( check_acl( profile => $profile, privlevel => 'admin' ) );
 
 $profile = 'admin';
-ok( ! check_acl( $profile, 'passerby' ) );
-ok( ! check_acl( $profile, 'inactive' ) );
-ok( ! check_acl( $profile, 'active' ) );
-ok( check_acl( $profile, 'admin' ) );
+note( "check privlevel logic: $profile" );
+ok( ! check_acl( profile => $profile, privlevel => 'passerby' ) );
+ok( ! check_acl( profile => $profile, privlevel => 'inactive' ) );
+ok( ! check_acl( profile => $profile, privlevel => 'active' ) );
+ok( check_acl( profile => $profile, privlevel => 'admin' ) );
 
-# slightly non-standard functionality
-ok( ! check_acl( undef, 'passerby' ) );
-ok( ! check_acl( undef, 'inactive' ) );
-ok( ! check_acl( undef, 'active' ) );
-ok( ! check_acl( undef, 'admin' ) );
-
-# pathological states
+note( 'forbidden functionality' );
 foreach my $p ( qw( passerby inactive active admin ) ) {
-    like( exception { check_acl( $p, undef ); }, 
-        qr/Parameter #2 \(undef\) to App::Dochazka::REST::ACL::check_acl was an 'undef', which is not one of the allowed types: scalar/
-    );
+    ok( ! check_acl( profile => 'forbidden', privlevel => $p ) );
 }
-like( exception { check_acl( 'passerby', 'passerby', 'foobar' ); }, 
-    qr/3 parameters were passed to App::Dochazka::REST::ACL::check_acl but 2 were expected/ );
-like( exception { check_acl( 'passerby', 'foobar' ); }, 
-    qr/Invalid employee privlevel/ );
-like( exception { check_acl( 'passerby' ); }, 
-    qr/1 parameter was passed to App::Dochazka::REST::ACL::check_acl but 2 were expected/ );
-like( exception { check_acl( { "passergry" => "foobar" } ); }, 
-    qr/which is not one of the allowed types/ );
-like( exception { check_acl(); },
-    qr/0 parameters were passed to App::Dochazka::REST::ACL::check_acl but 2 were expected/ );
 
 done_testing;
