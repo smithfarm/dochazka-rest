@@ -6,7 +6,7 @@ use Module::Build;
 my $builder = Module::Build->new(
     module_name          => 'App::Dochazka::REST',
     license              => 'bsd',
-    dist_author          => q{Nathan Cutler <ncutler@suse.cz>},
+    dist_author          => q{Nathan Cutler <ncutler@suse.com>},
     dist_version_from    => 'lib/App/Dochazka/REST.pm',
     create_license       => 0,
     create_readme        => 0,
