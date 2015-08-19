@@ -30,17 +30,14 @@
 # POSSIBILITY OF SUCH DAMAGE.
 # ************************************************************************* 
 
-# -----------------------------------
-# App::Dochazka::REST
-# -----------------------------------
 # REST_MetaConfig.pm
 #
 # Configuration file for meta params
-# -----------------------------------
 
 
 # META_DOCHAZKA_UNIT_TESTING
-#    we set this to true when we are running unit tests
+#    set to a true value by Test.pm->initialize_unit(), so it be expected
+#    to be true in all units initialized by that routine
 set( 'META_DOCHAZKA_UNIT_TESTING', 0 );
 
 
