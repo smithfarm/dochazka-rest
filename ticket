@@ -1,0 +1,6 @@
+DISPATCH_TOO_MANY_RECORDS_FOUND message should be triggered when the
+interval/lock SELECT limit is reached. This mechanism should be documented.
+
+We also need to document the DBIx::Connector object in the request context:
+where it is instantiated, how it gets into the context.
+
