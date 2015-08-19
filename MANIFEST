@@ -2,7 +2,6 @@ bin/dochazka-dbinit
 bin/dochazka-rest
 Build.PL
 Changes
-config/dispatch/HTTP_Message_en.conf
 config/dispatch_Message_en.conf
 config/docgen_Config.pm
 config/README
