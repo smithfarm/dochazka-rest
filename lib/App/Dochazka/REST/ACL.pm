@@ -97,16 +97,14 @@ my %acl_lookup = (
 
 =head2 check_acl
 
-Takes two strings, C<$profile> and C<$privlevel>. Both should be either
-"passerby", "inactive", "active", or "admin". 
+Takes a PARAMHASH with two properties: C<profile> and C<privlevel>. Their
+values are assumed to be the ACL profile of a resource and the privlevel of an
+employee, respectively. The function returns a true or false value indicating
+whether that employee satisfies the given ACL profile.
 
-These values, C<$profile> and C<$privlevel>, are assumed to be the ACL profile
-of a resource and the privlevel of an employee, respectively. The function
-returns a true or false value indicating whether that employee satisfies the
-given ACL profile.
-
-Additionally, C<$profile> can be undef, in which case the function returns
-false regardless of the value of C<$privlevel>.
+In addition to the usual privlevels, the C<profile> property can be
+'forbidden', in which case the function returns false for all possible values
+of C<privlevel>.
 
 =cut
 
