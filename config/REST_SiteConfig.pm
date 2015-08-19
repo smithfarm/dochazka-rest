@@ -38,9 +38,7 @@
 #
 
 # MREST_APPLICATION_MODULE
-#    This controls where the $VERSION value is taken from when someone
-#    calls "GET version" -- if this is not set, the Web::MREST version 
-#    will be displayed.
+#    Defines the module whose $VERSION variable will be used by "GET version"
 set( 'MREST_APPLICATION_MODULE', 'App::Dochazka::REST' );
 
 
