@@ -136,10 +136,6 @@ is( $status->code, 'DISPATCH_EMPLOYEE_NO_SCHEDULE' );
 note( 'we do not try to vet non-existent employee objects here, because the Tempintvls' );
 note( 'class is designed to be called from Dispatch.pm *after* the employee has been' );
 note( 'determined to exist' );
-##my $throwaway_obj = App::Dochazka::REST::Model::Employee->spawn( eid => 0);
-##$status = $tio->_vet_employee( dbix_conn => $dbix_conn, emp_obj => $throwaway_obj );
-##is( $status->level, 'ERR' );
-##is( $status->code, 'DOCHAZKA_EMPLOYEE_EID_NOT_EXIST' );
 
 note( 'create a testing employee with nick "active"' );
 my $active = create_testing_employee( { nick => 'active', password => 'active' } );
