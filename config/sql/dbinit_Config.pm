@@ -495,8 +495,10 @@ $body$#,
           FROM schedhistory_at_timestamp( $1, lower( $2 ) )
       $$ LANGUAGE sql#,
 
-    q#-- given an EID and a tstzrange, returns a boolean value indicating
-      -- whether or not the employee's privlevel changed during that tstzrange
+    q#-- Given an EID and a tstzrange, returns a boolean value indicating
+      -- whether or not the employee's privlevel changed during that tstzrange.
+      -- History changes lying on an inclusive boundary of the range
+      -- do not trigger a positive.
       CREATE OR REPLACE FUNCTION priv_change_during_range(INTEGER, TSTZRANGE)
       RETURNS boolean AS $$
           SELECT 
@@ -511,8 +513,10 @@ $body$#,
           FROM privhistory WHERE eid=$1;
       $$ LANGUAGE sql IMMUTABLE#,
 
-    q#-- given an EID and a tstzrange, returns a boolean value indicating
-      -- whether or not the employee's schedule changed during that tstzrange
+    q#-- Given an EID and a tstzrange, returns a boolean value indicating
+      -- whether or not the employee's schedule changed during that tstzrange.
+      -- History changes lying on an inclusive boundary of the range
+      -- do not trigger a positive.
       CREATE OR REPLACE FUNCTION schedule_change_during_range(INTEGER, TSTZRANGE)
       RETURNS boolean AS $$
           SELECT 
