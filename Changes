@@ -3223,3 +3223,11 @@ SPLIT OFF App::MREST into separate distribution
 - dbinit_Config.pm: fix priv_change_during_range() and
   schedule_change_during_range() stored procedures
 
+0.497  2015-08-19 22:45 CEST
+- config/: go over all files and clean them up
+- Build.PL: change author email to official @suse.com address
+- Shared.pm: refrain from piecing together App::CELL::Status codes
+- Model/Shared.pm: clean up cud() and cud_generic()
+- t/001-init.t: cleanup, improve tests
+- ACL.pm: cleanup/fixup the check_acl() routine
+

@@ -1,7 +1,7 @@
 {
    "abstract" : "Dochazka REST server",
    "author" : [
-      "Nathan Cutler <ncutler@suse.cz>"
+      "Nathan Cutler <ncutler@suse.com>"
    ],
    "dynamic_config" : 1,
    "generated_by" : "Module::Build version 0.4212",
@@ -72,7 +72,7 @@
    "provides" : {
       "App::Dochazka::REST" : {
          "file" : "lib/App/Dochazka/REST.pm",
-         "version" : "0.496"
+         "version" : "0.497"
       },
       "App::Dochazka::REST::ACL" : {
          "file" : "lib/App/Dochazka/REST/ACL.pm"
@@ -156,5 +156,5 @@
          "url" : "https://github.com/smithfarm/dochazka-rest"
       }
    },
-   "version" : "0.496"
+   "version" : "0.497"
 }
