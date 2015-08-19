@@ -511,8 +511,15 @@ sub shared_get_privsched {
                 );
                 return $CELL->status_not_ok;
             }
-            return $CELL->status_ok(
-                'DISPATCH_EMPLOYEE_' . uc( $t ) . '_AS_AT',
+            my $code;
+            if ( 'PRIV' eq uc( $t ) ) {
+                $code = 'DISPATCH_EMPLOYEE_PRIV_AS_AT';
+            } elsif ( 'SCHEDULE' eq uc( $t ) ) {
+                $code = 'DISPATCH_EMPLOYEE_SCHEDULE_AS_AT';
+            } else {
+                die "AGHNEVERNEVERNEVERPRIVSCHED1";
+            }
+            return $CELL->status_ok( $code,
                 args => [ $ts, $emp->nick, $return_value ],
                 payload => {
                     eid => $eid += 0,  # "numify"
@@ -529,8 +536,15 @@ sub shared_get_privsched {
                 );
                 return $CELL->status_not_ok;
             }
-            return $CELL->status_ok(
-                'DISPATCH_EMPLOYEE_' . uc( $t ),
+            my $code;
+            if ( 'PRIV' eq uc( $t ) ) {
+                $code = 'DISPATCH_EMPLOYEE_PRIV';
+            } elsif ( 'SCHEDULE' eq uc( $t ) ) {
+                $code = 'DISPATCH_EMPLOYEE_SCHEDULE';
+            } else {
+                die "AGHNEVERNEVERNEVERPRIVSCHED2";
+            }
+            return $CELL->status_ok( $code,
                 args => [ $emp->nick, $return_value ],
                 payload => {
                     eid => $eid += 0,  # "numify"
@@ -610,7 +624,7 @@ sub shared_employee_acl_part2 {
             next if exists $lut{$prop};
             $d_obj->mrest_declare_status(
                 $CELL->status_err( 
-                    'DOCHAZKA_ACL_VIOLATION', 
+                    'DISPATCH_ACL_VIOLATION', 
                     args => [ $cp, "update $prop property" ],
                     http_code => 403,
                     uri_path => $context->{'uri_path'},
@@ -622,7 +636,7 @@ sub shared_employee_acl_part2 {
     }
     $d_obj->mrest_declare_status(
         $CELL->status_err( 
-            'DOCHAZKA_ACL_VIOLATION', 
+            'DISPATCH_ACL_VIOLATION', 
             args => [ $cp, "update employee profiles" ],
             http_code => 403,
         )
