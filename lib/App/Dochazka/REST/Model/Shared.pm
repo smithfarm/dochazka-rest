@@ -257,25 +257,18 @@ sub cud {
 
                 # no error, but no record returned either
 
+            } elsif ( $rv > 1 ) {
+                $status = $CELL->status_crit( 
+                    'DOCHAZKA_CUD_MORE_THAN_ONE_RECORD_AFFECTED', 
+                    args => [ $sth->{'Statement'} ] 
+                ); 
+            } elsif ( $rv == -1 ) {
+                $status = $CELL->status_err( 
+                    'DOCHAZKA_CUD_UNKNOWN_NUMBER_OF_RECORDS_AFFECTED', 
+                    args => [ $sth->{'Statement'} ] 
+                ); 
             } else {
-
-                # non-standard return value
-                if ( $rv > 1 ) {
-                    $status = $CELL->status_crit( 
-                        'DOCHAZKA_CUD_MORE_THAN_ONE_RECORD_AFFECTED', 
-                        args => [ $sth->{'Statement'} ] 
-                    ); 
-                } elsif ( $rv == -1 ) {
-                    $status = $CELL->status_err( 
-                        'DOCHAZKA_CUD_UNKNOWN_NUMBER_OF_RECORDS_AFFECTED', 
-                        args => [ $sth->{'Statement'} ] 
-                    ); 
-                } else {
-                    $status = $CELL->status_crit( 
-                        "AAAAAAAAAaaaaahhaAAAAAAAA! I\'m at a loss. I might be having a personal crisis!" 
-                    );
-                }
-                die 'jump to catch';
+                $status = $CELL->status_crit( 'DOCHAZKA_DBI_EXECUTE_WEIRDNESS' );
             }
         } );
     } catch {
@@ -379,12 +372,8 @@ sub cud_generic {
                     'DOCHAZKA_CUD_UNKNOWN_NUMBER_OF_RECORDS_AFFECTED', 
                     args => [ $sth->{'Statement'} ] 
                 ); 
-                die 'jump to catch';
             } else {
-                $status = $CELL->status_crit( 
-                    "AAAAAAAAAaaaaahhaAAAAAAAA! I\'m at a loss. I might be having a personal crisis!" 
-                );
-                die 'jump to catch';
+                $status = $CELL->status_crit( 'DOCHAZKA_DBI_EXECUTE_WEIRDNESS' );
             }
         } );
     } catch {
