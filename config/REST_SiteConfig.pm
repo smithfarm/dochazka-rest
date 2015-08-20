@@ -37,6 +37,10 @@
 # to put them here.
 #
 
+# MREST_APPNAME
+#    The name of our application
+set( 'MREST_APPNAME', 'App::Dochazka::REST' );
+
 # MREST_APPLICATION_MODULE
 #    Defines the module whose $VERSION variable will be used by "GET version"
 set( 'MREST_APPLICATION_MODULE', 'App::Dochazka::REST' );
