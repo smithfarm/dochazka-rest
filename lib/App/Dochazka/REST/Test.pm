@@ -39,7 +39,7 @@ package App::Dochazka::REST::Test;
 use strict;
 use warnings;
 
-use App::CELL qw( $CELL $meta $site );
+use App::CELL qw( $CELL $log $meta $site );
 use App::Dochazka::Common;
 use App::Dochazka::REST;
 use App::Dochazka::REST::ConnBank qw( $dbix_conn conn_up );
@@ -137,6 +137,12 @@ sub initialize_unit {
     );
     return $status unless $status->ok;
 
+    note( "Set log level" );
+    $log->init( 
+        ident => $site->MREST_APPNAME, 
+        debug_mode => 1,
+    );
+
     note( "Connect to PostgreSQL server" );
     App::Dochazka::REST::ConnBank::init_singleton();
 
@@ -157,7 +163,7 @@ sub initialize_unit {
     # add Web::Machine object to payload
     $status->payload( Web::Machine->new( resource => 'App::Dochazka::REST::Dispatch', )->to_app );
 
-    # initialize App::Dochazka::Common package variables $t, $today, etc.
+    note( 'initialize App::Dochazka::Common package variables $t, $today, etc.' );
     App::Dochazka::Common::init_timepiece();
 
     return $status;
