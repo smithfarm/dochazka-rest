@@ -54,7 +54,7 @@ plan skip_all => "not configured or server not running" unless $status->ok;
 my $app = $status->payload;
 
 note( 'check a random site param' );
-is( $site->DOCHAZKA_DBUSER, 'dochazka' );
+ok( $site->DOCHAZKA_DBUSER );
 
 note( 'instantiate Plack::Test object' );
 my $test = Plack::Test->create( $app );
@@ -67,45 +67,20 @@ note( '=============================' );
 note( '"employee/count/?:priv" resource' );
 note( '=============================' );
 my $base = 'employee/count';
-docu_check($test, "$base/?:priv");
+docu_check( $test, "$base/?:priv" );
 
-note( 'GET employee/count' );
+note( "GET $base/?:priv" );
 note( '- fail 403 as demo' );
 $status = req( $test, 403, 'demo', 'GET', $base );
-#
-note( '- succeed as root' );
+
+note( 'succeed as root' );
 $status = req( $test, 200, 'root', 'GET', $base );
 is( $status->level, 'OK', "GET $base 2" );
 is( $status->code, 'DISPATCH_COUNT_EMPLOYEES', "GET $base 3" );
 
-note( 'PUT, POST, DELETE' );
-note( '- fail 405 in all cases' );
-$status = req( $test, 405, 'demo', 'PUT', $base );
-$status = req( $test, 405, 'active', 'PUT', $base );
-$status = req( $test, 405, 'WOMBAT', 'PUT', $base );
-$status = req( $test, 405, 'root', 'PUT', $base );
-$status = req( $test, 405, 'demo', 'POST', $base );
-$status = req( $test, 405, 'active', 'POST', $base );
-$status = req( $test, 405, 'root', 'POST', $base );
-$status = req( $test, 405, 'demo', 'DELETE', $base );
-$status = req( $test, 405, 'active', 'DELETE', $base );
-$status = req( $test, 405, 'root', 'DELETE', $base );
-
-note( 'GET' );
-note( '- valid priv strings' );
-foreach my $priv ( qw( 
-    passerby
-    PASSERBY
-    paSsERby
-    inactive
-    INACTIVE
-    inAcTive
-    active
-    ACTIVE
-    actIVe
-    admin
-    ADMIN
-    AdmiN
+note( 'demonstrate that :priv parameter is case-insensitive' );
+foreach my $priv ( qw( passerby PASSERBY paSsERby inactive
+    INACTIVE inAcTive active ACTIVE actIVe admin ADMIN AdmiN
 ) ) {
     #diag( "$base/$priv" );
     $status = req( $test, 200, 'root', 'GET', "$base/$priv" );
@@ -123,8 +98,9 @@ foreach my $priv ( qw(
     req( $test, 403, 'demo', 'GET', "$base/$priv" );
 }
 
-note( '- invalid priv strings' );
+note( 'demonstrate that invalid values of :priv are not accepted' );
 foreach my $priv (
+    '*pimpled teenager*',
     'nanaan',
     '%^%#$#',
     'Žluťoucký kǔň',
@@ -136,9 +112,25 @@ foreach my $priv (
     req( $test, 400, 'demo', 'GET', "$base/$priv" );
 }
 
-note( 'PUT, POST, DELETE' );
-note( '- fail 405 in all cases' );
+note( "PUT, POST, DELETE $base" );
+
+note( 'fail 405 as demo, active, root, WOMBAT' );
+$status = req( $test, 405, 'demo', 'PUT', $base );
+$status = req( $test, 405, 'active', 'PUT', $base );
+$status = req( $test, 405, 'WOMBAT', 'PUT', $base );
+$status = req( $test, 405, 'root', 'PUT', $base );
+$status = req( $test, 405, 'demo', 'POST', $base );
+$status = req( $test, 405, 'active', 'POST', $base );
+$status = req( $test, 405, 'root', 'POST', $base );
+$status = req( $test, 405, 'demo', 'DELETE', $base );
+$status = req( $test, 405, 'active', 'DELETE', $base );
+$status = req( $test, 405, 'root', 'DELETE', $base );
+
 $base .= '/admin';
+
+note( "PUT, POST, DELETE $base" );
+
+note( 'fail 405 for demo, active, root' );
 $status = req( $test, 405, 'demo', 'PUT', $base );
 $status = req( $test, 405, 'active', 'PUT', $base );
 $status = req( $test, 405, 'root', 'PUT', $base );
@@ -151,8 +143,8 @@ $status = req( $test, 405, 'root', 'DELETE', $base );
 
 
 note( '=============================' );
-# "employee/current" resource
-# "employee/self" resource
+note( '"employee/current" resource' );
+note( '"employee/self" resource' );
 note( '=============================' );
 
 my $ts_eid_inactive = create_inactive_employee( $test );
@@ -161,7 +153,7 @@ my $ts_eid_active = create_active_employee( $test );
 foreach my $base ( "employee/current", "employee/self" ) {
     docu_check($test, $base);
     
-    note( "GET employee/current" );
+    note( "looping GET $base" );
     $status = req( $test, 200, 'demo', 'GET', $base );
     is( $status->level, 'OK' );
     is( $status->code, 'DISPATCH_EMPLOYEE_CURRENT', "GET $base 3" );
@@ -189,12 +181,12 @@ foreach my $base ( "employee/current", "employee/self" ) {
         'remark' => 'dbinit',
     }, "GET $base 10" );
     
-    note( "PUT" );
+    note( "looping: PUT $base" );
     $status = req( $test, 405, 'demo', 'PUT', $base );
     $status = req( $test, 405, 'active', 'PUT', $base );
     $status = req( $test, 405, 'root', 'PUT', $base );
     
-    note( "POST" );
+    note( "looping: POST $base" );
     note( "- default configuration is that 'active' and 'inactive' can modify" );
     note( '  their own passhash and salt fields; demo should *not* be ' );
     note( ' authorized to do this' );
@@ -221,11 +213,8 @@ foreach my $base ( "employee/current", "employee/self" ) {
         req( $test, 400, $user, 'POST', $base, 0 );
         
         note( "- 'salt' is a permitted field, but 'inactive'/$user employees" );
-        # should not, for example, be allowed to change 'nick'
+        note( "  should not, for example, be allowed to change 'nick'" );
         req( $test, 403, $user, 'POST', $base, '{ "nick": "wanger" }' );
-        #
-        ## - nor should they be able to change 'email'
-        #req( $test, 403, $user, 'POST', $base, '{ "email": "5000thbat@cave.com" }' );
     }
     
     note( 'root can theoretically update any field, but certain fields of its own' );
@@ -233,15 +222,15 @@ foreach my $base ( "employee/current", "employee/self" ) {
     $status = req( $test, 200, 'root', 'POST', $base, '{ "email": "root@rotoroot.com" }' );
     is( $status->level, 'OK' );
     is( $status->code, 'DOCHAZKA_CUD_OK' );
-    #
+    
     $status = req( $test, 200, 'root', 'POST', $base, '{ "email": "root@site.org" }' );
     is( $status->level, 'OK' );
     is( $status->code, 'DOCHAZKA_CUD_OK' );
-    #
+   
     dbi_err( $test, 500, 'root', 'POST', $base, '{ "nick": "aaaaazz" }', qr/root employee is immutable/ );
-    #
+    
 
-    note( 'DELETE' );
+    note( "DELETE $base" );
     $status = req( $test, 405, 'demo', 'DELETE', $base );
     $status = req( $test, 405, 'active', 'DELETE', $base );
     $status = req( $test, 405, 'root', 'DELETE', $base );
@@ -249,13 +238,13 @@ foreach my $base ( "employee/current", "employee/self" ) {
 
 
 note( '=============================' );
-# "employee/current/priv" resource
-# "employee/self/priv" resource
+note( '"employee/current/priv" resource' );
+note( '"employee/self/priv" resource' );
 note( '=============================' );
 foreach my $base ( "employee/current/priv", "employee/self/priv" ) {
     docu_check($test, "employee/current/priv");
 
-    note( 'GET employee/current/priv' );
+    note( "looping: GET $base" );
     $status = req( $test, 200, 'demo', 'GET', $base );
     is( $status->level, 'OK' );
     is( $status->code, 'DISPATCH_EMPLOYEE_CURRENT_PRIV' );
@@ -266,7 +255,7 @@ foreach my $base ( "employee/current/priv", "employee/self/priv" ) {
     is( $status->payload->{'current_emp'}->{'nick'}, 'demo' );
     is( $status->payload->{'priv'}, 'passerby' );
     is( $status->payload->{'schedule'}, undef );
-    #
+    
     $status = req( $test, 200, 'root', 'GET', $base );
     is( $status->level, 'OK' );
     is( $status->code, 'DISPATCH_EMPLOYEE_CURRENT_PRIV' );
@@ -278,7 +267,7 @@ foreach my $base ( "employee/current/priv", "employee/self/priv" ) {
     is( $status->payload->{'priv'}, 'admin' );
     is( $status->payload->{'schedule'}, undef );
     
-    note( 'PUT, POST, DELETE' );
+    note( "looping: PUT, POST, DELETE $base" );
     $status = req( $test, 405, 'demo', 'PUT', $base );
     $status = req( $test, 405, 'active', 'PUT', $base );
     $status = req( $test, 405, 'root', 'PUT', $base );
@@ -295,10 +284,11 @@ note( '=============================' );
 note( '"employee/eid" resource' );
 note( '=============================' );
 $base = "employee/eid";
+
 note( "docu_check on $base" );
 docu_check($test, "employee/eid");
 
-note( "GET, PUT" );
+note( "GET, PUT: $base" );
 $status = req( $test, 405, 'demo', 'GET', $base );
 $status = req( $test, 405, 'active', 'GET', $base );
 $status = req( $test, 405, 'root', 'GET', $base );
@@ -306,7 +296,7 @@ $status = req( $test, 405, 'demo', 'PUT', $base );
 $status = req( $test, 405, 'active', 'PUT', $base );
 $status = req( $test, 405, 'root', 'PUT', $base );
 
-note( "POST" );
+note( "POST: $base" );
 
 note( "create a 'mrfu' employee" );
 my $mrfu = create_testing_employee( { nick => 'mrfu', password => 'mrfu' } );
@@ -383,31 +373,31 @@ req( $test, 403, 'demo', 'POST', $base, '{ "eid" : 5442 }' );
 req( $test, 404, 'root', 'POST', $base, '{ "eid" : 5442 }' );
 req( $test, 404, 'root', 'POST', $base, '{ "eid": 534, "nick": "mrfu", "fullname":"Lizard Scale" }' );
 
-# - missing EID
+note( 'missing EID' );
 req( $test, 400, 'root', 'POST', $base, '{ "long-john": "silber" }' );
-#
-# - incorrigibly attempt to update totally bogus and invalid EIDs
+
+note( 'incorrigibly attempt to update totally bogus and invalid EIDs' );
 req( $test, 400, 'root', 'POST', $base, '{ "eid" : }' );
 req( $test, 400, 'root', 'POST', $base, '{ "eid" : jj }' );
 $status = req( $test, 500, 'root', 'POST', $base, '{ "eid" : "jj" }' );
 like( $status->text, qr/invalid input syntax for integer/ );
-#
-# - and give it a bogus parameter (on update, bogus parameters cause REST to
-#   vomit 400; on insert, they are ignored)
+
+note( 'and give it a bogus parameter (on update, bogus parameters cause REST to' );
+note( 'return 400 status code; on insert, they are ignored)' );
 req( $test, 400, 'root', 'POST', $base, '{ "eid" : 2, "bogus" : "json" }' ); 
-#
-# - update to existing nick
+
+note( 'update to existing nick' );
 dbi_err( $test, 500, 'root', 'POST', $base, 
     '{ "eid": ' . $mrfu->eid . ', "nick" : "root" , "fullname":"Tom Wang" }',
     qr/Key \(nick\)=\(root\) already exists/ );
-#
-# - update nick to null
+
+note( 'update nick to null' );
 dbi_err( $test, 500, 'root', 'POST', $base, 
     '{ "eid": ' . $mrfu->eid . ', "nick" : null  }',
     qr/null value in column "nick" violates not-null constraint/ );
-# 
-# - inactive and active users get a little piece of the action, too:
-#   they can operate on themselves (certain fields), but not on, e.g., Mr. Fu
+
+note( 'inactive and active users get a little piece of the action, too:' );
+note( 'they can operate on themselves (certain fields), but not on, e.g., Mr. Fu' );
 foreach my $user ( qw( demo inactive active ) ) {
     req( $test, 403, $user, 'POST', $base, <<"EOH" );
 { "eid" : $eid_of_mrfu, "passhash" : "HAHAHAHA" }
@@ -434,11 +424,11 @@ foreach my $user ( qw( inactive active ) ) {
 EOH
     is( $status->level, 'OK' );
     is( $status->code, 'DOCHAZKA_CUD_OK' );
-    # 
-    # - can no longer log in because Test.pm expects password to be same as $user
+    
+    note( "$user can no longer log in because Test.pm expects password to be same as $user" );
     req( $test, 401, $user, 'GET', "employee/nick/$user" );
-    #
-    # - use root power to change password back 
+    
+    note( "use root power to change $user\'s password back to $user" );
     $status = req( $test, 200, 'root', 'POST', $base, <<"EOH" );
 { "eid" : $eid, "password" : "$user" }
 EOH
@@ -448,22 +438,23 @@ EOH
 
 
 
-# delete the testing user
-# 1. first delete his privhistory entry
+note( "teardown: delete the testing user mrfu" );
+
+note( "first, delete his privhistory entry" );
 $status = req( $test, 200, 'root', 'DELETE', "priv/history/phid/$mrfu_phid" );
 ok( $status->ok );
+
+note( "then, delete the employee" );
 delete_testing_employee( $eid_of_mrfu );
 
-#
-# DELETE 
-#
+note( "DELETE $base" );
 req( $test, 405, 'demo', 'DELETE', $base );
 req( $test, 405, 'active', 'DELETE', $base );
 req( $test, 405, 'root', 'DELETE', $base );
 
 
 note( '=============================' );
-# "employee/eid/:eid" resource
+note( '"employee/eid/:eid" resource' );
 note( '=============================' );
 $base = 'employee/eid';
 docu_check($test, "$base/:eid");
@@ -475,12 +466,10 @@ my @invalid_eids = (
     '1234/123/124/',
 );
 
-#
-# GET
-#
-#
-# - normal usage: get employee with nick [0], eid [2], fullname [3] as employee
-#   with nick [1]
+note( "GET $base/:eid" );
+
+note( "normal usage: get employee with nick [0], eid [2], fullname [3] as employee" );
+note( "with nick [1]" );
 foreach my $params (
     [ 'root', 'root', $site->DOCHAZKA_EID_OF_ROOT, 'Root Immutable' ],
     [ 'demo', 'root', 2, 'Demo Employee' ],
@@ -499,50 +488,52 @@ foreach my $params (
     ok( exists $status->payload->{'fullname'} );
     is( $status->payload->{'fullname'}, $params->[3] );
 }
-# 
+
+note( "GET $base/2 as demo" );
 req( $test, 200, 'demo', 'GET', "$base/2" );
 is( $status->level, 'OK' );
 is( $status->code, 'DISPATCH_EMPLOYEE_FOUND' );
-#
+
+note( "GET $base/53432 as root" );
 req( $test, 404, 'root', 'GET', "$base/53432" );
-#
+
+note( "GET $base/53432 as demo" );
 req( $test, 403, 'demo', 'GET', "$base/53432" );
-#
-# - invalid EIDs caught by Path::Router validations clause
+
+note( 'invalid EIDs caught by Path::Router validations clause' );
 foreach my $eid ( @invalid_eids ) {
     foreach my $user ( qw( root demo ) ) {
         req( $test, 400, $user, 'GET', "$base/$eid" );
     }
 }
-#
-# as demonstrated above, an active employee can see his own profile using this
-# resource -- demonstrate it again
+
+note( 'as demonstrated above, an active employee can see his own profile using this' );
+note( 'resource -- demonstrate it again' );
 $status = req( $test, 200, 'active', 'GET', "$base/$ts_eid_active" );
 is( $status->level, 'OK' );
 is( $status->code, 'DISPATCH_EMPLOYEE_FOUND' );
-#
-# an 'inactive' employee can do the same
+
+note( 'an \'inactive\' employee can do the same' );
 $status = req( $test, 200, 'inactive', 'GET', "$base/$ts_eid_inactive" );
 is( $status->level, 'OK' );
 is( $status->code, 'DISPATCH_EMPLOYEE_FOUND' );
-#
-# and demo as well
+
+note( 'and, indeed, demo as well' );
 req( $test, 200, 'demo', 'GET', "$base/2" );  # EID 2 is 'demo'
 is( $status->level, 'OK' );
 is( $status->code, 'DISPATCH_EMPLOYEE_FOUND' );
-#
-# or for unknown users
+
+note( 'unknown user gets 401' );
 req( $test, 401, 'unknown', 'GET', "$base/2" );  # EID 2 is 'demo'
-#
-# and non-administrators cannot use this resource to look at other employees
+
+note( 'non-administrators cannot use this resource to look at other employees' );
 foreach my $user ( qw( active inactive demo ) ) {
     my $status = req( $test, 403, $user, 'GET', "$base/1" );
 }
 
-#
-# PUT employee/eid/:eid
-#
-# create a testing employee by cheating a little
+note( "PUT $base/:eid" );
+
+note( "create a testing employee 'brotherchen'" );
 my $emp = create_testing_employee( {
     nick => 'brotherchen',
     email => 'goodbrother@orient.cn',
@@ -550,12 +541,12 @@ my $emp = create_testing_employee( {
 } );
 my $eid_of_brchen = $emp->{eid};
 is( $eid_of_brchen, $emp->eid );
-#
-# - insufficient priv
+
+note( "insufficient priv" );
 req( $test, 403, 'demo', 'PUT', "$base/$eid_of_brchen",
     '{ "eid": ' . $eid_of_brchen . ', "fullname":"Chen Update Again" }' );
-#
-# - be nice
+
+note( "be nice" );
 req( $test, 403, 'demo', 'PUT', "$base/$eid_of_brchen",
     '{ "fullname":"Chen Update Again", "salt":"tasty" }' );
 $status = req( $test, 200, 'root', 'PUT', "$base/$eid_of_brchen",
@@ -568,8 +559,8 @@ my $brchenprime = App::Dochazka::REST::Model::Employee->spawn( eid => $eid_of_br
     nick => 'brotherchen', email => 'goodbrother@orient.cn', fullname =>
     'Chen Update Again', salt => 'tasty' );
 is_deeply( $brchen, $brchenprime );
-# 
-# - provide invalid EID in request body -> it will be ignored
+
+note( "provide invalid EID in request body -> it will be ignored" );
 $status = req( $test, 200, 'root', 'PUT', "$base/$eid_of_brchen",
     '{ "eid": 99999, "fullname":"Chen Update Again 2" }' );
 is( $status->level, 'OK' );
@@ -581,8 +572,8 @@ $brchenprime = App::Dochazka::REST::Model::Employee->spawn( eid => $eid_of_brche
     nick => 'brotherchen', email => 'goodbrother@orient.cn', fullname =>
     'Chen Update Again 2', salt => 'tasty' );
 is_deeply( $brchen, $brchenprime );
-#
-# - change the nick
+
+note( 'change the nick' );
 req( $test, 403, 'demo', 'PUT', "$base/$eid_of_brchen", '{' );
 req( $test, 400, 'root', 'PUT', "$base/$eid_of_brchen", '{' );
 req( $test, 403, 'demo', 'PUT', "$base/$eid_of_brchen", '{ "nick": "mrfu", "fullname":"Lizard Scale" }' );
@@ -599,30 +590,30 @@ my $mrfuprime = App::Dochazka::REST::Model::Employee->spawn( eid => $eid_of_brch
 is_deeply( $mrfu, $mrfuprime );
 $eid_of_mrfu = $mrfu->eid;
 is( $eid_of_mrfu, $eid_of_brchen );
-#
-# - provide non-existent EID
+
+note( 'provide non-existent EID' );
 req( $test, 403, 'demo', 'PUT', "$base/5633", '{' );
 req( $test, 404, 'root', 'PUT', "$base/5633", '{' );
 req( $test, 403, 'demo', 'PUT', "$base/5633",
     '{ "nick": "mrfu", "fullname":"Lizard Scale" }' );
 req( $test, 404, 'root', 'PUT', "$base/5633",
     '{ "eid": 534, "nick": "mrfu", "fullname":"Lizard Scale" }' );
-#
-# - with valid JSON that is not what we are expecting
+
+note( 'with valid JSON that is not what we are expecting' );
 req( $test, 400, 'root', 'PUT', "$base/2", 0 );
-# - another kind of bogus JSON
+
+note( 'another kind of bogus JSON' );
 req( $test, 400, 'root', 'PUT', "$base/2", '{ "legal" : "json" }' );
-#
-# - invalid EIDs caught by Path::Router validations clause
+
+note( 'invalid EIDs caught by Path::Router validations clause' );
 foreach my $eid ( @invalid_eids ) {
     foreach my $user ( qw( root demo ) ) {
         req( $test, 400, $user, 'PUT', "$base/$eid" );
     }
 }
 
-# 
-# - inactive and active users get a little piece of the action, too:
-#   they can operate on themselves (certain fields), but not on, e.g., Mr. Fu
+note( 'inactive and active users get a little piece of the action, too:' );
+note( 'they can operate on themselves (certain fields), but not on, e.g., Mr. Fu' );
 foreach my $user ( qw( demo inactive active ) ) {
     req( $test, 403, $user, 'PUT', "$base/$eid_of_mrfu", <<"EOH" );
 { "passhash" : "HAHAHAHA" }
@@ -649,36 +640,32 @@ foreach my $user ( qw( inactive active ) ) {
 EOH
     is( $status->level, 'OK' );
     is( $status->code, 'DOCHAZKA_CUD_OK' );
-    #
-    # - so far so good, but now we can't log in because Test.pm assumes password is $user
+    
+    note( "so far so good, but now we can\'t log in because Test.pm assumes password is $user" );
     req( $test, 401, $user, 'GET', "$base/$eid" );
-    #
-    # - change it back
+    
+    note( 'change it back' );
     $status = req( $test, 200, 'root', 'PUT', "$base/$eid", "{ \"password\" : \"$user\" }" );
     is( $status->level, 'OK' );
     is( $status->code, 'DOCHAZKA_CUD_OK' );
-    #
+    
+    note( 'working again' );
     $status = req( $test, 200, 'root', 'GET', "employee/nick/$user" );
     is( $status->level, 'OK' );
     is( $status->code, 'DISPATCH_EMPLOYEE_FOUND' );
     is( ref( $status->payload ), 'HASH' );
 }
 
-
-#
-# delete the testing user
+note( 'delete the \'brotherchen\' testing user' );
 delete_testing_employee( $eid_of_brchen );
 
-#
-# POST employee/eid/:eid
-#
+note( "POST $base/:eid" );
 req( $test, 405, 'demo', 'POST', "$base/2" );
 req( $test, 405, 'active', 'POST', "$base/2" );
 req( $test, 405, 'root', 'POST', "$base/2" );
 
-#
-# DELETE employee/eid/:eid
-#
+note( "DELETE $base/:eid" );
+
 note( 'create a "cannon fodder" employee' );
 my $cf = create_testing_employee( { nick => 'cannonfodder' } );
 my $eid_of_cf = $cf->eid;
@@ -722,7 +709,7 @@ foreach my $eid ( @invalid_eids ) {
 
 
 note( '=============================' );
-# "employee/eid/:eid/minimal" resource
+note( '"employee/eid/:eid/minimal" resource' );
 note( '=============================' );
 $base = 'employee/eid';
 docu_check($test, "$base/:eid/minimal");
@@ -750,21 +737,21 @@ is( join( '', sort( keys( %{ $status->payload } ) ) ),
     join( '', sort( @{ $site->DOCHAZKA_EMPLOYEE_MINIMAL_FIELDS } ) ) );
 
 note( '=============================' );
-# "employee/eid/:eid/team" resource
+note( '"employee/eid/:eid/team" resource' );
 note( '=============================' );
 $base = "employee/eid";
 docu_check($test, "$base/:eid/team" );
-# 
+
+note( 'FIXME: NO TESTS!!!' );
 
 
 note( '=============================' );
-# "employee/list/?:priv" resource
+note( '"employee/list/?:priv" resource' );
 note( '=============================' );
 $base = "employee/list";
 docu_check($test, "employee/list/?:priv");
-#
-# GET employee/list/?:priv
-#
+
+note( 'GET employee/list/?:priv' );
 req( $test, 403, 'demo', 'GET', $base );
 $status = req( $test, 200, 'root', 'GET', $base );
 test_employee_list( $status, [ 'active', 'demo', 'inactive', 'root' ] );
@@ -777,9 +764,7 @@ test_employee_list( $status, [ 'inactive' ] );
 $status = req( $test, 200, 'root', 'GET', "$base/passerby" );
 test_employee_list( $status, [ 'demo' ] );
 
-#
-# PUT, POST, DELETE employee/list/?:priv
-#
+note( 'PUT, POST, DELETE employee/list/?:priv' );
 req( $test, 405, 'demo', 'PUT', $base );
 req( $test, 405, 'root', 'PUT', $base );
 req( $test, 405, 'demo', 'POST', $base );
@@ -788,45 +773,40 @@ req( $test, 405, 'demo', 'DELETE', $base );
 req( $test, 405, 'root', 'DELETE', $base );
 
 
-
 note( "=============================" );
 note( '"employee/nick" resource' );
 note( "=============================" );
 $base = "employee/nick";
 docu_check($test, "employee/nick");
-#
-# GET, PUT employee/nick
-#
+
+note( 'GET, PUT employee/nick' );
 req( $test, 405, 'demo', 'GET', $base );
 req( $test, 405, 'root', 'GET', $base );
 req( $test, 405, 'demo', 'PUT', $base );
 req( $test, 405, 'root', 'PUT', $base );
 
-#
-# POST employee/nick
-#
-# - create a 'mrfu' employee
+note( 'POST employee/nick' );
+
+note( 'create a \'mrfu\' employee' );
 $mrfu = create_testing_employee( { nick => 'mrfu' } );
 my $nick_of_mrfu = $mrfu->nick;
 $eid_of_mrfu = $mrfu->eid;
-#
-# - give Mr. Fu an email address
-#diag("--- POST employee/nick (update email)");
+
+note( 'give Mr. Fu an email address' );
 my $j = '{ "nick": "' . $nick_of_mrfu . '", "email" : "mrsfu@dragon.cn" }';
 req( $test, 403, 'demo', 'POST', $base, $j );
-#
+
 $status = req( $test, 200, 'root', 'POST', $base, $j );
 is( $status->level, "OK" );
 is( $status->code, 'DOCHAZKA_CUD_OK' );
 is( $status->payload->{'email'}, 'mrsfu@dragon.cn' );
-#
-# - non-existent nick (insert new employee)
-#diag("--- POST employee/nick (non-existent nick)");
+
+note( "non-existent nick (insert new employee)" );
 req( $test, 403, 'demo', 'POST', $base, '{ "nick" : 5442' );
 req( $test, 400, 'root', 'POST', $base, '{ "nick" : 5442' );
 req( $test, 403, 'demo', 'POST', $base, '{ "nick" : 5442 }' );
-#
-# - attempt to insert new employee with bogus "eid" value
+
+note( 'attempt to insert new employee with bogus "eid" value' );
 $status = req( $test, 200, 'root', 'POST', $base,
     '{ "eid": 534, "nick": "mrfutra", "fullname":"Rovnou do futer" }' );
 is( $status->level, 'OK' );
@@ -835,16 +815,15 @@ is( $status->payload->{'nick'}, 'mrfutra' );
 is( $status->payload->{'fullname'}, 'Rovnou do futer' );
 isnt( $status->payload->{'eid'}, 534 );
 my $eid_of_mrfutra = $status->payload->{'eid'};
-#
-# - bogus property
+
+note( 'bogus property' );
 $status = req( $test, 400, 'root', 'POST', $base, '{ "Nick" : "foobar" }' );
-#
-# delete the testing user
+
+note( 'cleanup: delete the testing users' );
 delete_testing_employee( $eid_of_mrfu );
 delete_testing_employee( $eid_of_mrfutra );
 
-# - add a new employee with nick in request body
-#diag("--- POST employee/nick (insert)");
+note( 'add a new employee with nick in request body' );
 req( $test, 403, 'demo', 'POST', $base, '{' );
 req( $test, 400, 'root', 'POST', $base, '{' );
 req( $test, 403, 'demo', 'POST', $base, 
@@ -858,31 +837,29 @@ $mrfuprime = App::Dochazka::REST::Model::Employee->spawn( eid => $mrfu->eid,
     nick => 'mrfu', fullname => 'Dragon Scale', email => 'mrfu@dragon.cn' );
 is_deeply( $mrfu, $mrfuprime );
 $eid_of_mrfu = $mrfu->eid;
-#
-# - and give it valid, yet bogus JSON (unknown nick - insert)
+
+note( "POST valid, yet bogus JSON (bogus property will be ignored and wombat employee inserted)" );
 $status = req( $test, 200, 'root', 'POST', $base, 
     '{ "nick" : "wombat", "bogus" : "json" }' );
 is( $status->level, 'OK' );
 is( $status->code, 'DOCHAZKA_CUD_OK' );
 my $eid_of_wombat = $status->payload->{'eid'};
-#
-#
-# - get wombat
+
+note( 'GET employee/nick/wombat' );
 $status = req( $test, 200, 'root', 'GET', '/employee/nick/wombat' );
 is( $status->level, 'OK' );
 is( $status->code, 'DISPATCH_EMPLOYEE_FOUND' );
 my $wombat_emp = App::Dochazka::REST::Model::Employee->spawn( $status->payload );
 
-# - and give it valid, yet bogus JSON -- update has nothing to do
+note( 'POST with valid, yet bogus JSON -- wombat exists, so this is an update' );
+note( 'operation, but after the bogus property is filtered out there is no work to do' );
 $status = req( $test, 400, 'root', 'POST', $base, 
     '{ "nick" : "wombat", "bogus" : "json" }' );
 
-#
+note( 'cleanup: delete wombat employee' ); 
 delete_testing_employee( $eid_of_wombat );
 
-
-# - update existing employee
-#diag("--- POST employee/nick (update)");
+note( "update existing employee" );
 req( $test, 403, 'demo', 'POST', $base, 
     '{ "nick":"mrfu", "fullname":"Dragon Scale Update", "email" : "scale@dragon.org" }' );
 $status = req( $test, 200, 'root', 'POST', $base, 
@@ -893,58 +870,31 @@ $mrfu = App::Dochazka::REST::Model::Employee->spawn( %{ $status->payload } );
 $mrfuprime = App::Dochazka::REST::Model::Employee->spawn( eid => $eid_of_mrfu,
     nick => 'mrfu', fullname => 'Dragon Scale Update', email => 'scale@dragon.org' );
 is_deeply( $mrfu, $mrfuprime );
-#
-# - create a bogus user with a bogus property
+
+note( 'create a bogus user with a bogus property' );
 $status = req( $test, 200, 'root', 'POST', $base, 
     '{ "nick":"bogus", "wago":"svorka", "fullname":"bogus user" }' );
 is( $status->level, "OK" );
 is( $status->code, 'DOCHAZKA_CUD_OK' );
 my $eid_of_bogus = $status->payload->{'eid'};
 
-# 
-# - inactive and active users get a little piece of the action, too:
-#   they can operate on themselves (certain fields), but not on, e.g., Mr. Fu
-#foreach my $user ( qw( demo inactive active ) ) {
-#    req( $test, 403, $user, 'POST', "$base", '{ "nick" : "mrfu", "passhash" : "HAHAHAHA" }' );
-#    foreach my $target ( qw( wombat unknown ) ) {
-#        my $entity = <<"EOH";
-#{ "nick" : "$target", "passhash" : "HAHAHAHA" }' );
-#EOH
-#        diag( $entity );
-#        req( $test, 403, $user, 'POST', "$base", $entity );
-#    }
-#}
-#foreach my $user ( qw( inactive active ) ) {
-#    $status = req( $test, 200, $user, 'POST', "$base", <<"EOH" );
-#{ "nick" : "$user", "salt" : "tHE gREAT wOMBAT" }
-#EOH
-#    is( $status->level, 'OK' );
-#    is( $status->code, 'DOCHAZKA_CUD_OK' );
-#    $status = req( $test, 200, 'root', 'GET', "employee/nick/$user" );
-#    is( $status->level, 'OK' );
-#    is( $status->code, 'DISPATCH_RECORDS_FOUND' );
-#    is( ref( $status->payload ), 'HASH' );
-#    is( $status->payload->{'salt'}, "tHE gREAT wOMBAT" );
-#}
-
+note( 'delete testing employees' );
 map { delete_testing_employee( $_ ); } ( $eid_of_mrfu, $eid_of_bogus );
 
-#
-# DELETE employee/nick
-#
+note( "DELETE employee/nick" );
 req( $test, 405, 'demo', 'DELETE', $base );
 req( $test, 405, 'root', 'DELETE', $base );
 
 
 note( '=============================' );
-# "employee/nick/:nick" resource
+note( '"employee/nick/:nick" resource' );
 note( '=============================' );
 $base = "employee/nick";
 docu_check($test, "employee/nick/:nick");
-#
-# GET employee/nick/:nick
-#
-# - with nick == 'root'
+
+note( 'GET employee/nick/:nick' );
+
+note( 'nick: root' );
 $status = req( $test, 200, 'root', 'GET', "$base/root" );
 is( $status->level, "OK" );
 is( $status->code, 'DISPATCH_EMPLOYEE_FOUND' );
@@ -955,8 +905,8 @@ ok( exists $status->payload->{'nick'} );
 is( $status->payload->{'nick'}, 'root' );
 ok( exists $status->payload->{'fullname'} );
 is( $status->payload->{'fullname'}, 'Root Immutable' );
-#
-# - with nick == 'demo'
+
+note( 'nick: demo' );
 $status = req( $test, 200, 'root', 'GET', "$base/demo" );
 is( $status->level, "OK" );
 is( $status->code, 'DISPATCH_EMPLOYEE_FOUND' );
@@ -967,32 +917,37 @@ ok( exists $status->payload->{'nick'} );
 is( $status->payload->{'nick'}, 'demo' );
 ok( exists $status->payload->{'fullname'} );
 is( $status->payload->{'fullname'}, 'Demo Employee' );
-#
+
+note( "GET $base/demo" );
 req( $test, 200, 'demo', 'GET', "$base/demo" );
 is( $status->level, "OK" );
 is( $status->code, 'DISPATCH_EMPLOYEE_FOUND' );
-#
+
+note( "GET $base/nick/{various bogus nicks}" );
 req( $test, 404, 'root', 'GET', "$base/53432" );
 req( $test, 403, 'demo', 'GET', "$base/53432" );
 req( $test, 404, 'root', 'GET', "$base/heathledger" );
-# 
+
 # this one triggers "wide character in print" warnings
 #req( $test, 404, 'root', 'GET', "$base/" . uri_escape_utf8('/employee/nick//////áěěoěščqwšáščšýš..-...-...-..-.00') );
 
-#
-# - single-character nicks are allowed
-#
+note( 'single-character nicks' );
 $status = req( $test, 404, 'root', 'GET', "$base/4" );
 
 
-# 
-# PUT employee/nick/:nick
-#
-# - insert and be nice
+note( "PUT employee/nick/:nick" );
+
+note( 'demo cannot PUT no matter what' );
 req( $test, 403, 'demo', 'PUT', "$base/mrsfu", '{' );
+
+note( 'root can PUT, but JSON entity is invalid' );
 req( $test, 400, 'root', 'PUT', "$base/mrsfu", '{' );
+
+note( 'demo cannot PUT no matter what' );
 req( $test, 403, 'demo', 'PUT', "$base/mrsfu", 
     '{ "fullname":"Dragonness" }' );
+
+note( 'insert happy path' );
 $status = req( $test, 200, 'root', 'PUT', "$base/mrsfu", 
     '{ "fullname":"Dragonness" }' );
 is( $status->level, 'OK' );
@@ -1003,8 +958,9 @@ $mrsfuprime = App::Dochazka::REST::Model::Employee->spawn( eid => $mrsfu->eid,
 is_deeply( $mrsfu, $mrsfuprime );
 my $eid_of_mrsfu = $mrsfu->eid;
 
-# - insert and be pathological
-# - provide conflicting 'nick' property in the content body
+note( 'insert pathological paths' );
+
+note( 'provide conflicting \'nick\' property in the content body' );
 req( $test, 403, 'demo', 'PUT', "$base/hapless", '{' );
 req( $test, 400, 'root', 'PUT', "$base/hapless", '{' );
 req( $test, 403, 'demo', 'PUT', "$base/hapless", 
@@ -1021,7 +977,7 @@ my $haplessprime = App::Dochazka::REST::Model::Employee->spawn( eid => $hapless-
 is_deeply( $hapless, $haplessprime );
 my $eid_of_hapless = $hapless->eid;
 
-# - update and be nice
+note( "update happy path" );
 $status = req( $test, 200, 'root', 'PUT', "$base/hapless", 
     '{ "fullname":"Chen Update", "salt":"none, please" }' );
 is( $status->level, 'OK' );
@@ -1034,7 +990,7 @@ $haplessprime = App::Dochazka::REST::Model::Employee->spawn( eid => $eid_of_hapl
     nick => 'hapless', fullname => 'Chen Update', salt => "none, please" );
 is_deeply( $hapless, $haplessprime );
 
-# - update and be nice and also change salt to null
+note( "update: change salt to null" );
 $status = req( $test, 200, 'root', 'PUT', "$base/hapless", 
     '{ "fullname":"Chen Update", "salt":null }' );
 is( $status->level, 'OK' );
@@ -1047,8 +1003,9 @@ $haplessprime = App::Dochazka::REST::Model::Employee->spawn( eid => $eid_of_hapl
     nick => 'hapless', fullname => 'Chen Update' );
 is_deeply( $hapless, $haplessprime );
 
-# - update and be pathological
-# - attempt to set a bogus EID
+note( "update: pathological paths" );
+
+note( 'attempt to set a bogus EID' );
 $status = req( $test, 200, 'root', 'PUT', "$base/hapless",
     '{ "eid": 534, "fullname":"Good Brother Chen", "salt":"" }' );
 is( $status->level, 'OK' );
@@ -1061,16 +1018,14 @@ $haplessprime = App::Dochazka::REST::Model::Employee->spawn( eid => $eid_of_hapl
     nick => 'hapless', fullname => 'Good Brother Chen' );
 is_deeply( $hapless, $haplessprime );
 
-# - pathologically attempt to change nick to null
+note( 'attempt to change nick to null' );
 dbi_err( $test, 500, 'root', 'PUT', "$base/hapless",
     '{ "nick":null }', qr/violates not-null constraint/ );
 
-# - feed it more bogusness
+note( 'feed it some random bogusness' );
 req( $test, 400, 'root', 'PUT', "$base/hapless", '{ "legal" : "json" }' );
 
-# 
-# - inactive and active users get a little piece of the action, too:
-#   they can operate on themselves (certain fields), but not on, e.g., Mrs. Fu or Hapless
+note( 'inactive and active users can not change passwords of other users' );
 foreach my $user ( qw( demo inactive active ) ) {
     foreach my $target ( qw( mrsfu hapless ) ) {
         req( $test, 403, $user, 'PUT', "$base/$target", <<"EOH" );
@@ -1079,84 +1034,68 @@ EOH
     }
 }
 
-#foreach my $user ( qw( inactive active ) ) {
-#    $status = req( $test, 200, $user, 'PUT', "$base/$user", <<"EOH" );
-#{ "salt" : "tHE gREAT wOMBAT" }
-#EOH
-#    is( $status->level, 'OK' );
-#    is( $status->code, 'DOCHAZKA_CUD_OK' );
-#    $status = req( $test, 200, 'root', 'GET', "employee/nick/$user" );
-#    is( $status->level, 'OK' );
-#    is( $status->code, 'DISPATCH_RECORDS_FOUND' );
-#    is( ref( $status->payload ), 'HASH' );
-#    is( $status->payload->{'salt'}, "tHE gREAT wOMBAT" );
-#}
-
-# 
+note( 'clean up testing employees' );
 delete_testing_employee( $eid_of_mrsfu );
 delete_testing_employee( $eid_of_hapless );
 
-
-#
-# POST employee/nick:nick
-#
+note( 'POST employee/nick:nick' );
 req( $test, 405, 'demo', 'POST', "$base/root" );
 req( $test, 405, 'root', 'POST', "$base/root" );
 
-#
-# DELETE employee/nick/:nick
-#
-# create a "cannon fodder" employee
+note( 'DELETE employee/nick/:nick' );
+
+note( 'create a "cannon fodder" employee' );
 $cf = create_testing_employee( { nick => 'cannonfodder' } );
 ok( $cf->eid > 1 );
 $eid_of_cf = $cf->eid;
 
-# get cannonfodder - no problem
+note( 'get cannonfodder - no problem' );
 $status = req( $test, 200, 'root', 'GET', "$base/cannonfodder" );
 is( $status->level, 'OK' );
 is( $status->code, 'DISPATCH_EMPLOYEE_FOUND' );
 
-# 'employee/nick/:nick' - delete cannonfodder
+note( 'DELETE "employee/nick/:nick" with nick cannonfodder' );
 req( $test, 403, 'demo', 'DELETE', $base . "/" . $cf->nick );
 $status = req( $test, 200, 'root', 'DELETE', $base . "/" . $cf->nick );
 is( $status->level, 'OK' );
 is( $status->code, 'DOCHAZKA_CUD_OK' );
 
-# attempt to get cannonfodder - not there anymore
+note( 'attempt to get cannonfodder - not there anymore' );
 req( $test, 404, 'root', 'GET', "$base/cannonfodder" );
 
-# attempt to get in a different way
+note( 'attempt to get in a different way' );
 $status = App::Dochazka::REST::Model::Employee->load_by_nick( $dbix_conn, 'cannonfodder' );
 is( $status->level, 'NOTICE' );
 is( $status->code, 'DISPATCH_NO_RECORDS_FOUND' );
 
-# create another "cannon fodder" employee
+note( 'create another "cannon fodder" employee' );
 $cf = create_testing_employee( { nick => 'cannonfodder' } );
 ok( $cf->eid > $eid_of_cf ); # EID will have incremented
 $eid_of_cf = $cf->eid;
 
-# get cannonfodder - again, no problem
+note( 'get cannonfodder - again, no problem' );
 $status = req( $test, 200, 'root', 'GET', "$base/cannonfodder" );
 is( $status->level, 'OK' );
 is( $status->code, 'DISPATCH_EMPLOYEE_FOUND' );
 
-# - delete with a typo (non-existent nick)
+note( 'delete with a typo (non-existent nick)' );
 req( $test, 403, 'demo', 'DELETE', "$base/cannonfoddertypo" );
 req( $test, 404, 'root', 'DELETE', "$base/cannonfoddertypo" );
 
-# attempt to get cannonfodder - still there
+note( 'attempt to get cannonfodder - still there' );
 $status = req( $test, 200, 'root', 'GET', "$base/cannonfodder" );
 is( $status->level, 'OK' );
 is( $status->code, 'DISPATCH_EMPLOYEE_FOUND' );
 
+note( 'tear down testing employee' );
 delete_testing_employee( $eid_of_cf );
 
-# attempt to delete 'root the immutable' (won't work)
+note( 'attempt to delete \'root the immutable\' (won\'t work)' );
 dbi_err( $test, 500, 'root', 'DELETE', "$base/root", undef, qr/immutable/i );
 
 
 note( '=============================' );
-# "employee/nick/:nick/minimal" resource
+note( '"employee/nick/:nick/minimal" resource' );
 note( '=============================' );
 $base = 'employee/nick';
 docu_check($test, "$base/:nick/minimal");
@@ -1184,15 +1123,16 @@ is( join( '', sort( keys( %{ $status->payload } ) ) ),
 
 
 note( '=============================' );
-# "employee/nick/:nick/team" resource
+note( '"employee/nick/:nick/team" resource' );
 note( '=============================' );
 $base = "employee/nick";
 docu_check($test, "$base/:nick/team" );
-# 
+
+note( 'FIXME: NO TESTS!!!' );
 
 
 note( '=============================' );
-# "employee/search/nick/:key" resource
+note( '"employee/search/nick/:key" resource' );
 note( '=============================' );
 $base = "employee/search/nick";
 docu_check($test, "$base/:key");
@@ -1212,22 +1152,25 @@ is( $status->payload->[0]->{'nick'}, 'root' );
 #is( $status->payload->{'result_set'}->[0]->{'nick'}, 'root' );
 
 note( '=============================' );
-# "employee/sec_id/:sec_id" resource
+note( '"employee/sec_id/:sec_id" resource' );
 note( '=============================' );
 $base = "employee/sec_id";
 docu_check($test, "$base/:sec_id");
-# 
+
+note( "give 'inactive' employee a sec_id" );
 $status = req( $test, 200, 'root', 'PUT', "employee/nick/inactive",
     '{ "sec_id" : 1024 }' );
 is( $status->level, "OK" );
 is( $status->code, 'DOCHAZKA_CUD_OK' );
-#
+
+note( 'read it back' );
 $status = req( $test, 200, 'root', 'GET', "employee/nick/inactive" ); 
 is( $status->level, "OK" );
 is( $status->code, 'DISPATCH_EMPLOYEE_FOUND' );
 is( $status->payload->{'sec_id'}, 1024 );
 my $mustr = $status->payload;
-#
+
+note( 'GET employee/sec_id/1024' );
 $status = req( $test, 200, 'root', 'GET', "employee/sec_id/1024" ); 
 is( $status->level, "OK" );
 is( $status->code, 'DISPATCH_EMPLOYEE_FOUND' );
@@ -1235,7 +1178,7 @@ is_deeply( $status->payload, $mustr );
 
 
 note( '=============================' );
-# "employee/sec_id/:sec_id/minimal" resource
+note( '"employee/sec_id/:sec_id/minimal" resource' );
 note( '=============================' );
 $base = 'employee/sec_id';
 docu_check($test, "$base/:sec_id/minimal");
@@ -1283,8 +1226,10 @@ note( '"employee/team" resource' );
 note( '=============================' );
 $base = "employee/team";
 docu_check($test, "$base");
-# 
 
+note( 'FIXME: NO TESTS!!!' );
+
+note( 'tear down testing employees' );
 delete_employee_by_nick( $test, 'inactive' );
 delete_employee_by_nick( $test, 'active' );
 
