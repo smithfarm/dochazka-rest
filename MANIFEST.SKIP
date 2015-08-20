@@ -74,3 +74,4 @@
 \bApp-Dochazka-REST-[\d\.\_]+
 \bCPAN_NAME$
 release.sh$
+\bticket$
