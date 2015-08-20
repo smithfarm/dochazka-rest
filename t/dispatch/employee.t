@@ -38,6 +38,7 @@ use strict;
 use warnings;
 use utf8;
 
+#use App::CELL::Test::LogToFile;
 use App::CELL qw( $log $meta $site );
 use App::Dochazka::REST::ConnBank qw( $dbix_conn );
 use App::Dochazka::REST::Test;
@@ -47,13 +48,7 @@ use Plack::Test;
 use Test::JSON;
 use Test::More;
 
-#
-# To activate debugging, uncomment the following
-#
-#use App::CELL::Test::LogToFile;
-#$log->init( debug_mode => 1 );
-
-note( 'initialize' );
+note( 'initialize, connect to database, and set up a testing plan' );
 my $status = initialize_unit();
 plan skip_all => "not configured or server not running" unless $status->ok;
 my $app = $status->payload;
@@ -68,9 +63,9 @@ isa_ok( $test, 'Plack::Test::MockHTTP' );
 my $res;
 
 
-#=============================
-# "employee/count/?:priv" resource
-#=============================
+note( '=============================' );
+note( '"employee/count/?:priv" resource' );
+note( '=============================' );
 my $base = 'employee/count';
 docu_check($test, "$base/?:priv");
 
@@ -155,10 +150,10 @@ $status = req( $test, 405, 'active', 'DELETE', $base );
 $status = req( $test, 405, 'root', 'DELETE', $base );
 
 
-#=============================
+note( '=============================' );
 # "employee/current" resource
 # "employee/self" resource
-#=============================
+note( '=============================' );
 
 my $ts_eid_inactive = create_inactive_employee( $test );
 my $ts_eid_active = create_active_employee( $test );
@@ -253,10 +248,10 @@ foreach my $base ( "employee/current", "employee/self" ) {
 }
 
 
-#=============================
+note( '=============================' );
 # "employee/current/priv" resource
 # "employee/self/priv" resource
-#=============================
+note( '=============================' );
 foreach my $base ( "employee/current/priv", "employee/self/priv" ) {
     docu_check($test, "employee/current/priv");
 
@@ -467,9 +462,9 @@ req( $test, 405, 'active', 'DELETE', $base );
 req( $test, 405, 'root', 'DELETE', $base );
 
 
-#=============================
+note( '=============================' );
 # "employee/eid/:eid" resource
-#=============================
+note( '=============================' );
 $base = 'employee/eid';
 docu_check($test, "$base/:eid");
 
@@ -726,9 +721,9 @@ foreach my $eid ( @invalid_eids ) {
 }
 
 
-#=============================
+note( '=============================' );
 # "employee/eid/:eid/minimal" resource
-#=============================
+note( '=============================' );
 $base = 'employee/eid';
 docu_check($test, "$base/:eid/minimal");
 
@@ -754,17 +749,17 @@ is( $status->payload->{'eid'}, $ts_eid_active );
 is( join( '', sort( keys( %{ $status->payload } ) ) ),
     join( '', sort( @{ $site->DOCHAZKA_EMPLOYEE_MINIMAL_FIELDS } ) ) );
 
-#=============================
+note( '=============================' );
 # "employee/eid/:eid/team" resource
-#=============================
+note( '=============================' );
 $base = "employee/eid";
 docu_check($test, "$base/:eid/team" );
 # 
 
 
-#=============================
+note( '=============================' );
 # "employee/list/?:priv" resource
-#=============================
+note( '=============================' );
 $base = "employee/list";
 docu_check($test, "employee/list/?:priv");
 #
@@ -941,9 +936,9 @@ req( $test, 405, 'demo', 'DELETE', $base );
 req( $test, 405, 'root', 'DELETE', $base );
 
 
-#=============================
+note( '=============================' );
 # "employee/nick/:nick" resource
-#=============================
+note( '=============================' );
 $base = "employee/nick";
 docu_check($test, "employee/nick/:nick");
 #
@@ -1160,9 +1155,9 @@ delete_testing_employee( $eid_of_cf );
 dbi_err( $test, 500, 'root', 'DELETE', "$base/root", undef, qr/immutable/i );
 
 
-#=============================
+note( '=============================' );
 # "employee/nick/:nick/minimal" resource
-#=============================
+note( '=============================' );
 $base = 'employee/nick';
 docu_check($test, "$base/:nick/minimal");
 
@@ -1188,17 +1183,17 @@ is( join( '', sort( keys( %{ $status->payload } ) ) ),
     join( '', sort( @{ $site->DOCHAZKA_EMPLOYEE_MINIMAL_FIELDS } ) ) );
 
 
-#=============================
+note( '=============================' );
 # "employee/nick/:nick/team" resource
-#=============================
+note( '=============================' );
 $base = "employee/nick";
 docu_check($test, "$base/:nick/team" );
 # 
 
 
-#=============================
+note( '=============================' );
 # "employee/search/nick/:key" resource
-#=============================
+note( '=============================' );
 $base = "employee/search/nick";
 docu_check($test, "$base/:key");
 # 
@@ -1216,9 +1211,9 @@ is( $status->payload->[0]->{'nick'}, 'root' );
 #ok( ref( $status->payload->{'result_set'} ) eq 'ARRAY' );
 #is( $status->payload->{'result_set'}->[0]->{'nick'}, 'root' );
 
-#=============================
+note( '=============================' );
 # "employee/sec_id/:sec_id" resource
-#=============================
+note( '=============================' );
 $base = "employee/sec_id";
 docu_check($test, "$base/:sec_id");
 # 
@@ -1239,9 +1234,9 @@ is( $status->code, 'DISPATCH_EMPLOYEE_FOUND' );
 is_deeply( $status->payload, $mustr );
 
 
-#=============================
+note( '=============================' );
 # "employee/sec_id/:sec_id/minimal" resource
-#=============================
+note( '=============================' );
 $base = 'employee/sec_id';
 docu_check($test, "$base/:sec_id/minimal");
 
@@ -1283,9 +1278,9 @@ is( $status->code, 'DOCHAZKA_CUD_OK' );
 
 
 
-#=============================
-# "employee/team" resource
-#=============================
+note( '=============================' );
+note( '"employee/team" resource' );
+note( '=============================' );
 $base = "employee/team";
 docu_check($test, "$base");
 # 
