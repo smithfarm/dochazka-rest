@@ -427,14 +427,6 @@ sub fillup {
             'end' => $self->{upper_canon},
           );
 
-    # if $include_holidays is true, _is_holiday should be false over all
-    # values of $datum
-    sub _is_holiday {
-        my $datum = shift;
-        return exists( $holidays->{ $datum } ) unless $include_holidays;
-        return 0;
-    }
-    
     # the insert operation needs to take place within a transaction
     # so we don't leave a mess behind if there is a problem
     try {
@@ -449,7 +441,7 @@ sub fillup {
             my $d = $self->{'lower_canon'};
             my $canon_upper = Date_to_Days( @{ $self->{upper_ymd} } );
             WHILE_LOOP: while ( $d ne get_tomorrow( $self->{'upper_canon'} ) ) {
-                if ( _is_holiday( $d ) ) {
+                if ( _is_holiday( $d, $holidays, $include_holidays ) ) {
                     $d = get_tomorrow( $d );
                     next WHILE_LOOP;
                 }
@@ -755,6 +747,22 @@ sub _init_lower_sched_hash {
     return $rest_sched_hash_lower;
 }
 
+
+=head2 _is_holiday
+
+Takes a date, a C<$holidays> hashref, and an C<$include_holidays> boolean.
+Returns true or false.
+
+If C<$include_holidays> is true, C<_is_holiday> will be false over
+all dates.
+
+=cut
+
+sub _is_holiday {
+    my ( $datum, $holidays, $include_holidays ) = @_;
+    return exists( $holidays->{ $datum } ) unless $include_holidays;
+    return 0;
+}    
 
 
 =head1 AUTHOR
