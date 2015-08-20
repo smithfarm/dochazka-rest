@@ -52,49 +52,51 @@ use Test::JSON;
 use Test::More;
 use Web::MREST::Resource;
 
-$log->info( "Entering t/301-resource.t" );
-
-# initialize 
+note( 'initialize, connect to database, and set up a testing plan' );
 my $status = initialize_unit();
 plan skip_all => "not configured or server not running" unless $status->ok;
 my $app = $status->payload;
 
-# instantiate Plack::Test object
+note( 'instantiate Plack::Test object' );
 my $test = Plack::Test->create( $app );
 isa_ok( $test, 'Plack::Test::MockHTTP' );
 
 my ( $res, $json );
 
-# the very basic-est request (200)
+note( 'the very basic-est request (200)' );
 req( $test, 200, 'demo', 'GET', '/' );
 
-# a too-long request (414)
+note( 'a too-long request (414)' );
 req( $test, 414, 'demo', 'GET', '/' x 1001 );
 
-# request for HTML
-#$res = $test->request( req_html GET => '/' );
-#is( $res->code, 200 );
-#like( $res->content, qr/<html>/ );
+note( 'request for HTML' );
+my $r = GET '/', 'Accept' => 'text/html';
+isa_ok( $r, 'HTTP::Request' );
+$r->authorization_basic( 'root', 'immutable' );
+my $resp = $test->request( $r );
+isa_ok( $resp, 'HTTP::Response' );
+is( $resp->code, 200 );
+like( $resp->content, qr/<html>/ );
 
-# request with bad credentials (401)
+note( 'request with bad credentials (401)' );
 req( $test, 401, 'fandango', 'GET', '/' );
 
-# request that doesn't pass ACL check (403)
+note( 'request that doesn\'t pass ACL check (403)' );
 req( $test, 403, 'demo', 'GET', '/forbidden' );
 
-# GET request for non-existent resource (400)
+note( 'GET request for non-existent resource (400)' );
 req( $test, 400, 'demo', 'GET', '/HEE HAW!!!/non-existent/resource' );
 
-# PUT request for non-existent resource (400)
+note( 'PUT request for non-existent resource (400)' );
 req( $test, 400, 'demo', 'PUT', '/HEE HAW!!!/non-existent/resource' );
 
-# POST request for non-existent resource (400)
+note( 'POST request for non-existent resource (400)' );
 req( $test, 400, 'demo', 'POST', '/HEE HAW!!!/non-existent/resource' );
 
-# DELETE request on non-existent resource (400)
+note( 'DELETE request on non-existent resource (400)' );
 req( $test, 400, 'demo', 'DELETE', '/HEE HAW!!!/non-existent/resource' );
 
-# test argument validation in 'push_onto_context' method
+note( 'test argument validation in \'push_onto_context\' method' );
 like( exception { Web::MREST::Resource::push_onto_context( undef, 'DUMMY2' ); },
       qr/not one of the allowed types: hashref/ );
 like( exception { Web::MREST::Resource::push_onto_context( undef, {}, ( 3..12 ) ); },
@@ -102,22 +104,17 @@ like( exception { Web::MREST::Resource::push_onto_context( undef, {}, ( 3..12 ) 
 like( exception { Web::MREST::Resource::push_onto_context(); },
       qr/0 parameters were passed.+but 1 was expected/ );
 
-# test if we can get the context
+note( 'test if we can get the context' );
 my $resource_self = bless {}, 'Web::MREST::Resource';
-#is( $resource_self->context, undef );
+is_deeply( $resource_self->context, {} );
 $resource_self->context( { 'bubba' => 'BAAAA' } );
 is( $resource_self->context->{'bubba'}, 'BAAAA' );
 
-# test if the 'no_cache' headers are present in each response
-# - alas, our clever 'req' function does not allow us to test headers, so we
-# have to run the request manually
-# - $test is a Plack::Test object
-# - we have already done use HTTP::Request::Common qw( GET PUT POST DELETE );
-my $r = GET '/', 'Accept' => 'application/json', 'Content_Type' => 'application/json';
+note( 'test if the \'no_cache\' headers are present in each response' );
+$r = GET '/', 'Accept' => 'application/json', 'Content_Type' => 'application/json';
 isa_ok( $r, 'HTTP::Request' );
-# - add authorization
 $r->authorization_basic( 'root', 'immutable' );
-my $resp = $test->request( $r );
+$resp = $test->request( $r );
 isa_ok( $resp, 'HTTP::Response' );
 is( $resp->header( 'Cache-Control' ), 'no-cache, no-store, must-revalidate, private' );
 is( $resp->header( 'Pragma' ), 'no-cache' );

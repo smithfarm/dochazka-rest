@@ -46,12 +46,6 @@ use App::Dochazka::REST::Test;
 use Test::Fatal;
 use Test::More;
 
-note( 'initialize, connect to database, and set up a testing plan' );
-my $status = initialize_unit();
-if ( $status->not_ok ) {
-    plan skip_all => "not configured or server not running";
-}
-
 note( 'check_acl() tests' );
 
 my $profile = 'passerby';
