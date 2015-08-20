@@ -3231,3 +3231,10 @@ SPLIT OFF App::MREST into separate distribution
 - t/001-init.t: cleanup, improve tests
 - ACL.pm: cleanup/fixup the check_acl() routine
 
+0.498  2016-08-20 09:55 CEST
+- Test.pm: set log level to debug in initialize_unit()
+  https://github.com/smithfarm/dochazka-rest/issues/16 Fixes: #16
+- t/: more cleanup
+- Model/Tempintvls.pm: implement _is_holiday() correctly
+- config/REST_SiteConfig.pm: override MREST_APPNAME
+
