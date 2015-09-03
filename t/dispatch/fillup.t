@@ -47,17 +47,14 @@ use Plack::Test;
 use Test::JSON;
 use Test::More;
 
-# initialize, connect to database, and set up a testing plan
+note( 'initialize, connect to database, and set up a testing plan' );
 my $status = initialize_unit();
-if ( $status->not_ok ) {
-    plan skip_all => "not configured or server not running";
-}
+plan skip_all => "not configured or server not running" unless $status->ok;
 my $app = $status->payload;
 
-# instantiate Plack::Test object
+note( 'instantiate Plack::Test object' );
 my $test = Plack::Test->create( $app );
 
-my $res;
 my $note;
 
 note( $note = 'create a testing schedule' );
@@ -81,10 +78,12 @@ ok( $status->{'payload'}->{'shid'} );
 push @shid_for_deletion, $status->{'payload'}->{'shid'};
 #ok( $status->{'payload'}->{'schedule'} );
 
-note( 'create testing employee \'inactive\' with \'inactive\' privlevel' );
+note( $note = 'create testing employee \'inactive\' with \'inactive\' privlevel' );
+$log->info( "=== $note" );
 my $eid_inactive = create_inactive_employee( $test );
 
-note( 'create testing employee \'bubba\' with \'active\' privlevel' );
+note( $note = 'create testing employee \'bubba\' with \'active\' privlevel' );
+$log->info( "=== $note" );
 my $eid_bubba = create_testing_employee( { nick => 'bubba', password => 'bubba' } )->eid;
 $status = req( $test, 201, 'root', 'POST', 'priv/history/nick/bubba', <<"EOH" );
 { "eid" : $eid_bubba, "priv" : "active", "effective" : "1967-06-17 00:00" }
@@ -96,7 +95,6 @@ is( $status->level, "OK" );
 is( $status->code, "DISPATCH_EMPLOYEE_PRIV" );
 ok( $status->{'payload'} );
 is( $status->{'payload'}->{'priv'}, 'active' );
-
 
 sub create_testing_interval {
     my ( $test ) = @_;
@@ -128,20 +126,22 @@ my @failing_tsranges = (
     'wamble wumble womble',
 );
 
-#=============================
-# "interval/fillup/eid/:eid/:tsrange" resource
-#=============================
+note( '=============================' );
+note( '"interval/fillup/eid/:eid/:tsrange" resource' );
+note( '=============================' );
 my $base = "interval/fillup/eid";
-docu_check($test, "$base/:eid/:tsrange");
+docu_check( $test, "$base/:eid/:tsrange" );
     
-note( 'GET' );
-#
-note( 'root has no intervals but these users can\'t find that out' );
+note( "GET $base/:eid/:tsrange" );
+
+note( $note = 'root has no intervals but these users can\'t find that out' );
+$log->info( "=== $note" );
 foreach my $user ( qw( demo inactive active ) ) {
     req( $test, 403, $user, 'GET', "$base/1/[,)" );
 }
-#
-note( 'active has one interval in 2014 - from create_testing_interval()' );
+
+note( $note = 'active has one interval in 2014 - from create_testing_interval()' );
+$log->info( "=== $note" );
 $status = req( $test, 200, 'root', 'GET',
     "interval/eid/$eid_active/[2014-01-01 00:00, 2014-12-31 24:00)" );
 is( $status->level, 'OK' );
@@ -153,21 +153,24 @@ foreach my $tsr ( @failing_tsranges ) {
         req( $test, 400, $user, 'GET', "$base/1/$tsr" );
     }
 }
-#
+
 note( 'use DELETE interval/eid/:eid/:tsrange on it' );
-#
-note( '- bubba cannot do this' );
+
+note( $note = '- bubba cannot do this' );
+$log->info( "=== $note" );
 $status = req( $test, 403, 'bubba', 'DELETE',
     "interval/eid/$eid_active/[2014-01-01 00:00, 2014-12-31 24:00)" );
 is( $status->code, 'DISPATCH_KEEP_TO_YOURSELF' );
-#
-note( '- but active can' );
+
+note( $note = '- but active can' );
+$log->info( "=== $note" );
 $status = req( $test, 200, 'active', 'DELETE',
     "interval/eid/$eid_active/[2014-01-01 00:00, 2014-12-31 24:00)" );
 is( $status->code, 'DOCHAZKA_CUD_OK' );
 is( $status->payload, 1 );
 
-note( 'PUT, DELETE' );
+note( $note = "PUT, DELETE $base/:eid/:tsrange" );
+$log->info( "=== $note" );
 foreach my $method ( qw( PUT DELETE  ) ) {
     note( "Testing method: $method" );
     foreach my $user ( 'demo', 'root', 'WAMBLE owdkmdf 5**' ) {
@@ -242,12 +245,12 @@ is( scalar( @{ $status->payload } ), $count, "interval count is $count" );
 #    req( $test, 403, $user, 'GET', "interval/eid/$eid_active/[ 1958-01-01, 1958-12-31 )" );
 #}
 
-# delete the testing intervals
+note( 'delete the testing intervals' );
 $status = req( $test, 200, 'active', 'DELETE', "interval/eid/$eid_active/[ 1958-01-01, 1958-12-31 )" );
 is( $status->level, 'OK' );
 is( $status->code, 'DOCHAZKA_CUD_OK' );
 
-# delete the testing employees
+note( 'delete the testing employees' );
 delete_employee_by_nick( $test, 'active' );
 delete_employee_by_nick( $test, 'inactive' );
 delete_employee_by_nick( $test, 'bubba' );
