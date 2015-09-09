@@ -51,17 +51,18 @@ use Test::JSON;
 use Test::More;
 
 
-# initialize, connect to database, and set up a testing plan
+note( 'initialize, connect to database, and set up a testing plan' );
 my $status = initialize_unit();
 if ( $status->not_ok ) {
     plan skip_all => "not configured or server not running";
 }
 my $app = $status->payload;
 
-# instantiate Plack::Test object
+note( 'instantiate Plack::Test object' );
 my $test = Plack::Test->create( $app );
 
-# this has to be defined after initialization because it uses $test
+note( 'define delete_history_recs() subroutine' );
+note( 'this has to be defined after initialization because it uses $test' );
 sub delete_history_recs {
     my ( $base, $set ) = @_;
     my $prop = ( $base =~ m/^priv/ ) 
@@ -82,11 +83,11 @@ my $j;
 my $res;
 
 
-#=============================
-# "{priv,schedule}/history/self/?:tsrange" resource
-#=============================
+note( '=============================' );
+note( '"{priv,schedule}/history/self/?:tsrange" resource' );
+note( '=============================' );
 
-# make sure root has some kind of schedule history
+note( 'make sure root has some kind of schedule history' );
 my $ts_sid = create_testing_schedule( $test );
 $status = req( $test, 201, 'root', 'POST', 'schedule/history/nick/root',
     '{ "effective":"1892-01-01 00:00", "sid":' . $ts_sid . ' }' );
@@ -101,14 +102,17 @@ my $root_shid = $status->payload->{'shid'};
 
 my $base;
 foreach $base ( 'priv/history/self', 'schedule/history/self' ) {
+    note( "testing $base" );
+
+    note( 'docu_check()' );
     docu_check($test, "$base/?:tsrange");
-    #
-    # GET
-    #
-    # - auth fail
+
+    note( 'GET' );
+    
+    note( '403 fail as demo' );
     req( $test, 403, 'demo', 'GET', $base );
-    #
-    # as root
+    
+    note( 'succeed as root' );
     $status = req( $test, 200, 'root', 'GET', $base );
     is( $status->level, 'OK' );
     is( $status->code, "DISPATCH_RECORDS_FOUND" );
@@ -119,8 +123,8 @@ foreach $base ( 'priv/history/self', 'schedule/history/self' ) {
     is( scalar @{ $status->payload->{'history'} }, 1 );
     is( $status->payload->{'history'}->[0]->{'eid'}, $site->DOCHAZKA_EID_OF_ROOT );
     ok( exists $status->payload->{'history'}->[0]->{'effective'} );
-    #
-    # with a valid tsrange
+
+    note( 'demo 403 with a valid tsrange' );
     req( $test, 403, 'demo', 'GET', "$base/[,)" );
     $status = req( $test, 200, 'root', 'GET', "$base/[,)" );
     is( $status->level, 'OK' );
@@ -132,8 +136,8 @@ foreach $base ( 'priv/history/self', 'schedule/history/self' ) {
     is( scalar @{ $status->payload->{'history'} }, 1 );
     is( $status->payload->{'history'}->[0]->{'eid'}, $site->DOCHAZKA_EID_OF_ROOT );
     ok( exists $status->payload->{'history'}->[0]->{'effective'} );
-    #
-    # - with invalid tsranges
+    
+    note( 'a number of invalid tsranges' );
     foreach my $inv_tsr (
         '0',
         'whinger',
@@ -145,31 +149,34 @@ foreach $base ( 'priv/history/self', 'schedule/history/self' ) {
     dbi_err( $test, 500, 'root', 'GET', "$base/[\"2014-01-01 00:00\",\"2013-01-01 00:00\")", undef, 
         qr/range lower bound must be less than or equal to range upper bound/ );
 
-    #
-    # PUT, POST, DELETE
-    #
+    note( 'PUT, POST, DELETE' );
     req( $test, 405, 'demo', 'PUT', $base );
     req( $test, 405, 'demo', 'POST', $base );
     req( $test, 405, 'demo', 'DELETE', $base );
-    #
     req( $test, 405, 'demo', 'PUT', "$base/[,)" );
     req( $test, 405, 'demo', 'POST', "$base/[,)" );
     req( $test, 405, 'demo', 'DELETE', "$base/[,)" );
 }
 
 
-#===========================================
-# "{priv,schedule}/history/eid/:eid" resource
-#===========================================
+note( '===========================================' );
+note( '"{priv,schedule}/history/eid/:eid" resource' );
+note( '===========================================' );
+
 foreach $base ( "priv/history/eid", "schedule/history/eid" ) {
+    note( "testing $base" );
+
+    note( "docu_check()" );
     docu_check($test, "$base/:eid");
-    #
-    # GET
-    #
-    # get history of EID 1 (root)
-    # - as demo
+
+    note( 'GET' );
+
+    note( 'GET history of EID 1 (root)' );
+
+    note( 'fail 403 as demo' );
     req( $test, 403, 'demo', 'GET', $base . '/' . $site->DOCHAZKA_EID_OF_ROOT );
-    # - as root
+
+    note( 'succeed as root' );
     $status = req( $test, 200, 'root', 'GET', $base . '/' . $site->DOCHAZKA_EID_OF_ROOT );
     is( $status->level, 'OK' );
     is( $status->code, "DISPATCH_RECORDS_FOUND" );
@@ -179,6 +186,8 @@ foreach $base ( "priv/history/eid", "schedule/history/eid" ) {
         BAIL_OUT(0);
     }
     ok( exists $status->payload->{'eid'} );
+
+    note( 'returned EID should be same as the one we asked for' );
     if ( $status->payload->{'eid'} != $site->DOCHAZKA_EID_OF_ROOT ) {
         diag( Dumper $status );
         BAIL_OUT(0);
@@ -188,14 +197,16 @@ foreach $base ( "priv/history/eid", "schedule/history/eid" ) {
     is( scalar @{ $status->payload->{'history'} }, 1 );
     is( $status->payload->{'history'}->[0]->{'eid'}, $site->DOCHAZKA_EID_OF_ROOT );
     ok( exists $status->payload->{'history'}->[0]->{'effective'} );
-    #
-    # get history of non-existent EID
-    # - as demo
+
+    note( 'get history of non-existent EID' );
+
+    note( 'fail 403 as demo' );
     req( $test, 403, 'demo', 'GET', "$base/4534" );
-    # - as root
+
+    note( '"succeed" (404) as root' );
     req( $test, 404, 'root', 'GET', "$base/4534" );
-    #
-    # get history of various invalid EIDs
+
+    note( 'GET history of various invalid EIDs' );
     foreach my $inv_eid ( 'asas', '!*!*', 'A long list of useless words followed by lots of spaces                                           \\,', '3.1415926', '; drop database dochazka-test;' ) {
         foreach my $user ( qw( demo root ) ) {
             req( $test, 400, 'demo', 'GET', "$base/$inv_eid" );
@@ -216,16 +227,12 @@ foreach $base ( "priv/history/eid", "schedule/history/eid" ) {
         req( $test, 400, 'root', 'GET', "$base/$inv_eid" );
     }
 
-    #
-    # PUT
-    #
+    note( 'PUT' );
     req( $test, 405, 'demo', 'PUT', "$base/2" );
     req( $test, 405, 'active', 'PUT', "$base/2" );
     req( $test, 405, 'root', 'PUT', "$base/2" );
     
-    #
-    # POST
-    #
+    note( 'POST' );
 
     note( 'dates before 1892-01-01 will not make it through the trigger' );
     foreach my $ts ( 
@@ -244,8 +251,8 @@ foreach $base ( "priv/history/eid", "schedule/history/eid" ) {
         );
     }
 
-    # - we will be inserting a bunch of records so push them onto an array 
-    #   for easy deletion later
+    note( 'we will be inserting a bunch of records so push them onto an array' );
+    note( 'for easy deletion later' );
     my @history_recs_to_delete;
     # - be nice
     $j = ( $base =~ m/^priv/ )
@@ -264,14 +271,12 @@ foreach $base ( "priv/history/eid", "schedule/history/eid" ) {
     ok( defined $pho->{$prop}, "$prop defined in payload after POST $base/2" );
     push @history_recs_to_delete, { eid => $pho->{eid}, $prop => $pho->{$prop} };
 
-    #
-    # - be pathological
+    note( 'be pathological' );
     $j = '{ "effective":"1979-05-24", "horse" : "E-Or" }';
     req( $test, 403, 'demo', 'POST', "$base/2", $j );
     req( $test, 400, 'root', 'POST', "$base/2", $j );
 
-    #
-    # - addition of privlevel makes the above request less pathological
+    note( 'addition of privlevel makes the above request less pathological' );
     $j = ( $base =~ m/^priv/ )
         ? '{ "effective":"1979-05-24", "horse" : "E-Or", "priv" : "admin" }'
         : '{ "effective":"1979-05-24", "horse" : "E-Or", "sid" : ' . $ts_sid . ' }';
@@ -280,7 +285,7 @@ foreach $base ( "priv/history/eid", "schedule/history/eid" ) {
     is( $status->level, 'OK' );
     $pho = $status->payload;
     push @history_recs_to_delete, { eid => $pho->{eid}, $prop => $pho->{$prop} };
-    #
+
     if ( $base =~ m/^priv/ ) {
         # check if demo really is an admin
         $status = req( $test, 200, 'demo', 'GET', "employee/current/priv" );
@@ -291,30 +296,33 @@ foreach $base ( "priv/history/eid", "schedule/history/eid" ) {
         is( $status->payload->{'priv'}, 'admin' );
     }
 
-    #
-    # DELETE
-    #
+    note( 'DELETE' );
     req( $test, 405, 'demo', 'DELETE', "$base/2" );
     req( $test, 405, 'active', 'DELETE', "$base/2" );
     req( $test, 405, 'root', 'DELETE', "$base/2" );
     
-    # - we have some records queued for deletion
+    note( 'teardown: we have some records queued for deletion' );
     delete_history_recs( $base, \@history_recs_to_delete );
     @history_recs_to_delete = ();
 }
 
-#===========================================
-# "{priv,schedule}/history/eid/:eid/:tsrange" resource
-#===========================================
-#foreach $base ( "priv/history/eid", "schedule/history/eid" ) {
-foreach $base ( "priv/history/eid" ) {
+note( '===========================================' );
+note( '"{priv,schedule}/history/eid/:eid/:tsrange" resource' );
+note( '===========================================' );
+
+foreach $base ( "priv/history/eid", "schedule/history/eid" ) {
+    note( "testing $base" );
+
+    note( 'docu_check()' );
     docu_check($test, "$base/:eid/:tsrange");
-    #
-    # GET
-    #
-    # - root employee, with tsrange, records found
+
+    note( 'GET' );
+
+    note( 'fail 403 as demo' );
     req( $test, 403, 'demo', 'GET', $base. '/' . $site->DOCHAZKA_EID_OF_ROOT . 
         '/[1891-12-30, 1892-01-02)' );
+
+    note( 'root employee, with tsrange, records found' );
     note( "GET $base" . '/' . $site->DOCHAZKA_EID_OF_ROOT . 
         '/[1891-12-30, 1892-01-02)' );
     $status = req( $test, 200, 'root', 'GET', $base. '/' . $site->DOCHAZKA_EID_OF_ROOT . 
@@ -328,26 +336,27 @@ foreach $base ( "priv/history/eid" ) {
     is( scalar @{ $status->payload->{'history'} }, 1 );
     is( $status->payload->{'history'}->[0]->{'eid'}, $site->DOCHAZKA_EID_OF_ROOT );
     ok( exists $status->payload->{'history'}->[0]->{'effective'} );
-    #
-    # - root employee, with tsrange but no records found
+
     my $uri = $base . '/' .  $site->DOCHAZKA_EID_OF_ROOT .
               '/[1999-12-31 23:59, 2000-01-01 00:01)';
+
+    note( 'fail 403 as demo' );
     req( $test, 403, 'demo', 'GET', $uri );
+
+    note( '"succeed" (404) as root' );
     req( $test, 404, 'root', 'GET', $uri );
-    #
-    # - non-existent EID
+
+    note( 'non-existent EID');
     my $tsr = '[1999-12-31 23:59, 2000-01-01 00:01)';
     req( $test, 403, 'demo', 'GET', "$base/4534/$tsr" );
     req( $test, 404, 'root', 'GET', "$base/4534/$tsr" );
-    #
-    # - invalid EID (caught by Path::Router validations)
+
+    note( 'invalid EID (caught by Path::Router validations)' );
     foreach my $user ( qw( demo root ) ) {
         req( $test, 400, $user, 'GET', "$base/asas/$tsr" );
     }
     
-    #
-    # PUT, POST, DELETE
-    #
+    note( 'PUT, POST, DELETE' );
     foreach my $user ( qw( demo root ) ) {
         foreach my $method ( qw( PUT POST DELETE ) ) {
             req( $test, 405, $user, $method, "$base/23/[,)" );
@@ -360,12 +369,15 @@ foreach $base ( "priv/history/eid" ) {
 # "{priv,schedule}/history/nick/:nick" resource
 #===========================================
 foreach $base ( "priv/history/nick", "schedule/history/nick" ) {
+    note( "testing $base" );
+
+    note( 'docu_check()' );
     docu_check($test, "$base/:nick");
-    #
-    # GET
-    #
-    # - root employee
+
+    note( 'GET' );
+    note( 'root employee: fail 403 as demo' );
     req( $test, 403, 'demo', 'GET', "$base/root" );
+    note( 'root employee: succeed as root' );
     $status = req( $test, 200, 'root', 'GET', "$base/root" );
     is( $status->level, 'OK' );
     is( $status->code, "DISPATCH_RECORDS_FOUND" );
@@ -376,20 +388,16 @@ foreach $base ( "priv/history/nick", "schedule/history/nick" ) {
     is( scalar @{ $status->payload->{'history'} }, 1 );
     is( $status->payload->{'history'}->[0]->{'eid'}, 1 );
     ok( exists $status->payload->{'history'}->[0]->{'effective'} );
-    #
-    # - non-existent employee
+
+    note( 'non-existent employee' );
     req( $test, 403, 'demo', 'GET', "$base/rotoroot" );
     req( $test, 404, 'root', 'GET', "$base/rotoroot" );
     
-    #
-    # PUT
-    #
+    note( 'PUT' );
     req( $test, 405, 'demo', 'PUT', "$base/asdf" );
     req( $test, 405, 'root', 'PUT', "$base/asdf" );
     
-    #
-    # POST
-    #
+    note( "POST" );
     $j = ( $base =~ m/^priv/ ) 
         ? '{ "effective":"1969-04-27 9:45", "priv":"inactive" }'
         : '{ "effective":"1969-04-27 9:45", "sid":' . $ts_sid . ' }';
@@ -403,30 +411,32 @@ foreach $base ( "priv/history/nick", "schedule/history/nick" ) {
     my $prop = ( $base =~ m/^priv/ ) ? 'phid' : 'shid';
     push my @history_recs_to_delete, { nick => 'demo', $prop => $pho->{$prop} };
     
-    #
-    # DELETE
-    #
+    note( 'DELETE' );
     req( $test, 405, 'demo', 'DELETE', "$base/madagascar" );
     req( $test, 405, 'active', 'DELETE', "$base/madagascar" );
     req( $test, 405, 'root', 'DELETE', "$base/madagascar" );
-    
-    # - we have some records queued for deletion
+   
+    note( 'teardown: we have some records queued for deletion' );
     delete_history_recs( $base, \@history_recs_to_delete );
     @history_recs_to_delete = ();
 }
 
 
-#===========================================
-# "{priv,schedule}/history/nick/:nick/:tsrange" resource
-#===========================================
-#foreach $base ( "priv/history/nick", "schedule/history/nick" ) {
-foreach $base ( "priv/history/nick" ) {
+note( '===========================================' );
+note( '"{priv,schedule}/history/nick/:nick/:tsrange" resource' );
+note( '===========================================' );
+
+foreach $base ( "priv/history/nick", "schedule/history/nick" ) {
+    note( "testing $base" );
+
+    note( 'docu_check()' );
     docu_check($test, "$base/:nick/:tsrange");
-    #
-    # GET
-    #
-    # - root employee, with tsrange, records found
+
+    note( 'GET' );
+
+    note( 'GET root: fail 403 as demo' ); 
     req( $test, 403, 'demo', 'GET', "$base/root/[1891-12-30, 1892-01-02)" );
+    note( 'GET root as root: employee, with tsrange, records found' );
     $status = req( $test, 200, 'root', 'GET', "$base/root/[1891-12-30, 1892-01-02)" );
     is( $status->level, 'OK' );
     is( $status->code, "DISPATCH_RECORDS_FOUND" );
@@ -437,19 +447,17 @@ foreach $base ( "priv/history/nick" ) {
     is( scalar @{ $status->payload->{'history'} }, 1 );
     is( $status->payload->{'history'}->[0]->{'eid'}, 1 );
     ok( exists $status->payload->{'history'}->[0]->{'effective'} );
-    #
-    # - non-existent employee
+
+    note( 'non-existent employee' );
     my $tsr = '[1891-12-30, 1892-01-02)';
     req( $test, 403, 'demo', 'GET', "$base/humphreybogart/$tsr" );
     req( $test, 404, 'root', 'GET', "$base/humphreybogart/$tsr" );
-    #
-    # - root employee, with tsrange but no records found
+
+    note( 'root employee, with tsrange but no records found' );
     req( $test, 403, 'demo', 'GET', "$base/root/[1999-12-31 23:59, 2000-01-01 00:01)" );
     req( $test, 404, 'root', 'GET', "$base/root/[1999-12-31 23:59, 2000-01-01 00:01)" );
     
-    #
-    # PUT, POST, DELETE
-    #
+    note( 'PUT, POST, DELETE' );
     foreach my $user ( qw( demo root ) ) {
         foreach my $method ( qw( PUT POST DELETE ) ) {
             req( $test, 405, $user, $method, "$base/root/[1999-12-31 23:59, 2000-01-01 00:01)" );
@@ -458,17 +466,16 @@ foreach $base ( "priv/history/nick" ) {
 }    
 
 
-#===========================================
-# "priv/history/phid/:phid" resource
-# "schedule/history/shid/:shid" resource
-#===========================================
+note( '===========================================' );
+note( '"{priv,schedule}/history/phid/:phid" resource' );
+note( '===========================================' );
+
 foreach $base ( "priv/history/phid", "schedule/history/shid" ) {
     my $prop = ( $base =~ m/^priv/ ) ? 'phid' : 'shid';
     note( "now testing the $base/:$prop resource" );
     docu_check($test, "$base/:$prop" );
-    #
-    # preparation
-    #
+
+    note( 'preparation' );
     my $tphid;
     if ( $base =~ m/^priv/ ) {
         note( 'priv-specific preparations' );
@@ -505,9 +512,8 @@ foreach $base ( "priv/history/phid", "schedule/history/shid" ) {
         $tphid = $status->payload->{'shid'};
     }
     
-    #
-    # GET
-    #
+    note( 'GET' );
+
     note( "GET $base/$tphid as root" );
     $status = req( $test, 200, 'root', 'GET', "$base/$tphid" );
     is( $status->level, 'OK' );
@@ -520,17 +526,15 @@ foreach $base ( "priv/history/phid", "schedule/history/shid" ) {
         'effective' => '1977-04-27 15:30:00+01'
     } );
     
-    #
-    # PUT
-    #
+    note( 'PUT' );
+
     note( "PUT operations on $base/$tphid will fail with 405" );
     foreach my $user ( qw( demo root ) ) {
         req( $test, 405, $user, 'PUT', "$base/$tphid" );
     }
     
-    #
-    # POST
-    #
+    note( 'POST' );
+
     note( "Update the history record inserted above" );
     $status = req( $test, 200, 'root', 'POST', "$base/$tphid", <<"EOS" );
 { "remark" : "I am foo!" }
@@ -546,9 +550,7 @@ EOS
     ok( $status->ok );
     is( $status->payload->{'remark'}, 'I am foo!' );
 
-    #
-    # DELETE
-    #
+    note( 'DELETE' );
 
     note( 'delete the privhistory record we created earlier' );
     $status = req( $test, 200, 'root', 'DELETE', "$base/$tphid" );

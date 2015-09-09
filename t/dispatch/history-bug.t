@@ -30,7 +30,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 # ************************************************************************* 
 #
-# test for various 'history' related bugs 
+# test various 'history'-related bugfixes
 #
 
 #!perl
