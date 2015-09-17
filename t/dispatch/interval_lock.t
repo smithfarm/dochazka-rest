@@ -157,10 +157,10 @@ my @failing_tsranges = (
     'wamble wumble womble',
 );
 
-#=============================
-# "interval/eid/:eid/:tsrange" resource
-# "lock/eid/:eid/:tsrange" resource
-#=============================
+note( '=============================' );
+note( '"interval/eid/:eid/:tsrange" resource' );
+note( '"lock/eid/:eid/:tsrange" resource' );
+note( '=============================' );
 foreach my $il ( qw( interval lock ) ) {
     my $base = "$il/eid";
     docu_check($test, "$base/:eid/:tsrange");
@@ -253,10 +253,10 @@ $status = req( $test, 200, 'root', 'DELETE', "interval/iid/$iae_iid" );
 ok( $status->ok );
 
 
-#=============================
-# "interval/iid" resource
-# "lock/lid" resource
-#=============================
+note( '=============================' );
+note( 'interval/iid" resource' );
+note( '"lock/lid" resource' );
+note( '=============================' );
 foreach my $il ( qw( interval lock ) ) {
     my $base = "$il/$idmap{$il}";
     docu_check($test, "$base");
@@ -339,10 +339,10 @@ EOH
 }
 
 
-#=============================
-# "interval/iid/:iid" resource
-# "lock/lid/:lid" resource
-#=============================
+note( "=============================" );
+note( '"interval/iid/:iid" resource' );
+note( '"lock/lid/:lid" resource' );
+note( "=============================" );
 foreach my $il ( qw( interval lock ) ) {
     my $base = "$il/$idmap{$il}";
     docu_check($test, "$base/:$idmap{$il}");
@@ -426,9 +426,9 @@ $test_iid = create_testing_interval( $test );
 $test_lid = create_testing_lock( $test );
 
 
-#=============================
+note( '=============================' );
 note( 'The "interval/new" resource ( see below for tests common to both "interval/new" and "lock/new" )' );
-#=============================
+note( '=============================' );
 my $base = 'interval/new';
 docu_check($test, $base);
 
@@ -441,14 +441,14 @@ foreach my $method ( 'GET', 'PUT' ) {
 }
 
 note( 'POST' );
-#
+
 note( '- instigate a "403 Forbidden"' );
 foreach my $user ( qw( demo inactive ) ) {
     req( $test, 403, $user, 'POST', $base, <<"EOH" );
 { "aid" : $aid_of_work, "intvl" : "[1957-01-02 08:00, 1957-01-03 08:00)" }
 EOH
 }
-#
+
 note( '- let active and root create themselves an interval and promptly delete it' );
 foreach my $user ( qw( active root ) ) {
     $status = req( $test, 201, $user, 'POST', $base, <<"EOH" );
@@ -469,7 +469,7 @@ EOH
     is( $status->level, 'OK' );
     is( $status->code, 'DOCHAZKA_CUD_OK' );
 }
-#
+
 note( '- as long as all required properties are present, JSON with bogus properties' );
 note( '  will be accepted for insert operation (bogus properties will be silently ignored)' );
 foreach my $rb ( 
@@ -493,15 +493,14 @@ foreach my $rb (
     is( $status->level, 'OK' );
     is( $status->code, 'DOCHAZKA_CUD_OK' );
 }
-#
+
 note( '- required property missing' );
 req( $test, 400, 'root', 'POST', $base, <<"EOH" );
 { "intvl" : "[1957-01-02 08:00, 1957-01-02 08:00)", "whinger" : "me" }
 EOH
-#
+
 note( '- nonsensical JSON' );
 req( $test, 400, 'root', 'POST', $base, 0 );
-#
 req( $test, 400, 'root', 'POST', $base, '[ 1, 2, [1, 2], { "wombat":"five" } ]' );
 
 note( 'DELETE' );
@@ -510,32 +509,30 @@ req( $test, 405, 'root', 'DELETE', $base );
 req( $test, 405, 'WOMBAT5', 'DELETE', $base );
 
 
-#=============================
-# "lock/new" resource (see below for tests common to both "interval/new" and "lock/new" )
-#=============================
+note( '=============================' );
+note( '"lock/new" resource (see below for tests common to both "interval/new" and "lock/new" )' );
+note( '=============================' );
 $base = 'lock/new';
 docu_check($test, $base);
 
-#
-# GET, PUT
-#
+note( 'GET, PUT -> 405' );
 foreach my $method ( 'GET', 'PUT' ) {
     foreach my $user ( 'demo', 'active', 'root', 'WOMBAT5', 'WAMBLE owdkmdf 5**' ) {
         req( $test, 405, $user, $method, $base );
     }
 }
 
-#
-# POST
-#
-# - instigate a "403 Forbidden"
+note( 'POST' );
+note ('instigate a "403 Forbidden"' );
 foreach my $user ( qw( demo inactive ) ) {
     req( $test, 403, $user, 'POST', $base, <<"EOH" );
 { "intvl" : "[1957-01-02 00:00, 1957-01-03 24:00)" }
 EOH
 }
-# - let active and root create themselves a lock
+
+note( 'let active and root create themselves a lock' );
 foreach my $user ( qw( active root ) ) {
+    note( 'user == "active"' );
     $status = req( $test, 201, $user, 'POST', $base, <<"EOH" );
 { "intvl" : "[1957-01-02 00:00, 1957-01-03 24:00)" }
 EOH
@@ -549,8 +546,9 @@ EOH
     ok( $status->{'payload'} );
     ok( $status->{'payload'}->{'lid'} );
     my $lid = $status->payload->{'lid'};
+    note( "$user successfully created a lock" );
 
-    # and then try to add an intervals that overlap the locked period in various ways
+    note( "let $user try to add an intervals that overlap the locked period in various ways" );
     foreach my $intvl ( 
         '[1957-01-02 08:00, 1957-01-02 12:00)', # completely within the lock interval
         '[1957-01-03 23:00, 1957-01-04 01:00)', # extends past end of lock interval
@@ -563,14 +561,14 @@ EOH
         );
     }
 
-    # 'active' can't delete locks so we have to delete them as root
+    note( "'active' can't delete locks so we have to delete them as root" );
     $status = req( $test, 200, 'root', 'DELETE', "/lock/lid/$lid" );
     is( $status->level, 'OK' );
     is( $status->code, 'DOCHAZKA_CUD_OK' );
 }
-#
-# - as long as all required properties are present, JSON with bogus properties
-#   will be accepted for insert operation (bogus properties will be silently ignored)
+
+note( 'as long as all required properties are present, JSON with bogus properties' );
+note( 'will be accepted for insert operation (bogus properties will be silently ignored)' );
 foreach my $rb ( 
     "{ \"intvl\" : \"[1957-01-02 00:00, 1957-01-02 24:00)\", \"whinger\" : \"me\" }",
     "{ \"intvl\" : \"[1957-01-03 00:00, 1957-01-03 24:00)\", \"horse\" : \"E-Or\" }",
@@ -592,21 +590,20 @@ foreach my $rb (
     is( $status->level, 'OK' );
     is( $status->code, 'DOCHAZKA_CUD_OK' );
 }
-#
-# - required property missing
+
+note( 'required property missing' );
 $status = req( $test, 400, 'root', 'POST', $base, <<"EOH" );
 { "whinger" : "me" }
 EOH
 is( $status->level, 'ERR' );
 is( $status->code, 'DISPATCH_PROP_MISSING_IN_ENTITY' );
-#
-# - nonsensical JSON
+
+note( 'nonsensical JSON' );
 $status = req( $test, 400, 'root', 'POST', $base, 0 );
-#
 $status = req( $test, 400, 'root', 'POST', $base, '[ 1, 2, [1, 2], { "wombat":"five" } ]' );
 
 note( 'create an interval, lock it, and then try to update it and delete it' );
-#
+
 note( '- create interval' );
 $status = req( $test, 201, 'root', 'POST', 'interval/new', <<"EOH" );
 { "aid" : $aid_of_work, "intvl" : "[1957-01-02 08:00, 1957-01-03 08:00)" }
@@ -614,7 +611,7 @@ EOH
 is( $status->level, 'OK' );
 is( $status->code, 'DOCHAZKA_CUD_OK' );
 my $ti = $status->payload->{'iid'};
-#
+
 note( '- lock it' );
 $status = req( $test, 201, 'root', 'POST', 'lock/new', <<"EOH" );
 { "intvl" : "[1957-01-01 00:00, 1957-02-01 00:00)" }
@@ -622,21 +619,21 @@ EOH
 is( $status->level, 'OK' );
 is( $status->code, 'DOCHAZKA_CUD_OK' );
 my $tl = $status->payload->{'lid'};
-#
+
 note( '- try to update it' );
 dbi_err( $test, 500, 'root', 'PUT', "interval/iid/$ti", 
     '{ "long_desc" : "I\'m changing this interval even though it\'s locked!" }',
     qr/interval is locked/ );
-#
+
 note( '- try to delete it' );
 dbi_err( $test, 500, 'root', 'DELETE', "interval/iid/$ti", undef,
     qr/interval is locked/ );
-#
+
 note( '- remove the lock' );
 $status = req( $test, 200, 'root', 'DELETE', "lock/lid/$tl" );
 is( $status->level, 'OK' );
 is( $status->code, 'DOCHAZKA_CUD_OK' );
-#
+
 note( '- now we can delete it' );
 $status = req( $test, 200, 'root', 'DELETE', "interval/iid/$ti" );
 is( $status->level, 'OK' );
@@ -644,7 +641,7 @@ is( $status->code, 'DOCHAZKA_CUD_OK' );
 
 note( 'create a lock over the entire month of August 2014 and try to create' );
 note( 'intervals that might be considered "edge cases"' );
-#
+
 $status = req( $test, 201, 'root', 'POST', 'lock/new', <<"EOH" );
 { "eid" : $eid_active, "intvl" : "[2014-08-01 00:00, 2014-09-01 00:00)" }
 EOH
@@ -653,7 +650,7 @@ is( $status->code, 'DOCHAZKA_CUD_OK' );
 my $tlid = $status->payload->{'lid'};
 $status = req( $test, 200, 'root', 'GET', "lock/lid/$tlid" );
 ok( $status->ok );
-#
+
 note( '- this one will be OK' );
 $status = req( $test, 201, 'active', 'POST', 'interval/new', <<"EOH" );
 { "aid" : $aid_of_work, "eid" : $eid_active, "intvl" : "[2014-07-31 20:00, 2014-08-01 00:00)" }
@@ -665,29 +662,29 @@ $status = req( $test, 200, 'active', 'DELETE', "interval/iid/$tiid" );
 is( $status->level, 'OK' );
 is( $status->code, 'DOCHAZKA_CUD_OK' );
 req( $test, 404, 'active', 'GET', "interval/iid/$tiid" );
-#
+
 note( '- illegal interval' );
 dbi_err( $test, 500, 'active', 'POST', 'interval/new', 
     '{ "aid" : ' . $aid_of_work . ', "eid" : ' . $eid_active . 
         ', "intvl" : "[2014-07-31 20:00, 2014-08-01 00:00]" }', $illegal );
-#
+
 note( '- upper bound not evenly divisible by 5 minutes' );
 dbi_err( $test, 500, 'active', 'POST', 'interval/new',
     '{ "aid" : '. $aid_of_work . ', "eid" : ' . $eid_active .
         ', "intvl" : "[2014-07-31 20:00, 2014-08-01 00:01)" }',
     qr/upper and lower bounds of interval must be evenly divisible by 5 minutes/ );
-#
+
 note( '- interval is locked' );
 dbi_err( $test, 500, 'active', 'POST', 'interval/new',
     '{ "aid" : '. $aid_of_work . ', "eid" : ' . $eid_active .
         ', "intvl" : "[2014-07-31 20:00, 2014-08-01 00:05)" }',
     qr/interval is locked/ );
-#
+
 note( 'now let\'s try to attack upper bound of lock' );
 note( '- this one looks like it might conflict with the lock\'s upper bound');
 note( '  (2014-09-01), but since the upper bound is non-inclusive, the interval will');
 note( '  be OK');
-#
+
 $status = req( $test, 201, 'active', 'POST', 'interval/new', <<"EOH" );
 { "aid" : $aid_of_work, "eid" : $eid_active, "intvl" : "[2014-09-01 00:00, 2014-09-01 04:00)" }
 EOH
@@ -698,53 +695,51 @@ $status = req( $test, 200, 'active', 'DELETE', "interval/iid/$tiid" );
 is( $status->level, 'OK' );
 is( $status->code, 'DOCHAZKA_CUD_OK' );
 req( $test, 404, 'active', 'GET', "interval/iid/$tiid" );
-#
-# - conclusion: I don't see any way to create an unexpected conflict
-#
-# CLEANUP: delete the lock
+
+note( '- conclusion: I see no way to create an unexpected conflict (famous last words)' );
+
+note( 'CLEANUP: delete the lock' );
 $status = req( $test, 200, 'root', 'DELETE', "lock/lid/$tlid" );
 is( $status->level, 'OK' );
 is( $status->code, 'DOCHAZKA_CUD_OK' );
 req( $test, 404, 'root', 'GET', "lock/lid/$tlid" );
 
+note( "have an active user try to create a lock on someone else's attendance" );
 
-# have an active user try to create a lock on someone else's attendance
-#
 req( $test, 403, 'active', 'POST', $base, <<"EOH" );
 { "eid" : $eid_inactive, "intvl" : "[1957-02-01 00:00, 1957-03-01 00:00)" }
 EOH
 
-
-#
-# DELETE
-#
+note( 'DELETE -> 405' );
 req( $test, 405, 'demo', 'DELETE', $base );
 req( $test, 405, 'root', 'DELETE', $base );
 req( $test, 405, 'WOMBAT5', 'DELETE', $base );
 
 
-#========================
-# '/interval/new' resource
-# '/lock/new' resource
-#
-# tests of many pathological intervals
-#========================
-# - tests common to both 
+note( "========================" );
+note( "'/interval/new' resource" );
+note( "'/lock/new' resource" );
+note( "tests of many pathological intervals" );
+note( "========================" );
+
+note( "tests common to both /interval/new and /lock/new" );
 
 foreach my $il ( qw( interval lock ) ) {
 
-    # initialize insert tests
+    note( "looping: il == $il" );
+
+    note( 'initialize insert tests' );
     my $insert_base = "$il/new";
     my $insert_part1 = ( $il eq 'interval' ) 
         ? "{ \"aid\" : $aid_of_work, \"intvl\" : "
         : "{ \"intvl\" : ";
 
-    # initialize update tests
+    note( 'initialize update tests' );
     my $test_id = ( $il eq 'interval' ) ? $test_iid : $test_lid;
     my $update_base = "$il/$idmap{$il}/$test_id";
     my $update_part1 = "{ \"$idmap{$il}\" : $test_id, \"intvl\" : ";
 
-    # intervals that trigger 400
+    note( 'intervals that trigger 400' );
     foreach my $i ( 
         '"(-infinity,today)"',
         '"(,infinity)"',
@@ -784,7 +779,7 @@ foreach my $il ( qw( interval lock ) ) {
             qr/malformed range literal/ );
     }
 
-    # intervals that trigger DOCHAZKA_DBI_ERR 'upper and lower bounds (etc.)'
+    note( "intervals that trigger DOCHAZKA_DBI_ERR 'upper and lower bounds (etc.)'" );
     foreach my $i (
         '"[ 1958-05-27 08:00, 1958-05-27 08:01 )"',
         '"[ 1958-05-27 08:00, 1958-05-27 08:02 )"',
@@ -803,31 +798,36 @@ foreach my $il ( qw( interval lock ) ) {
     }
 }
 
-#=============================
-# "interval/nick/:nick/:tsrange" resource
-# "lock/nick/:nick/:tsrange" resource
-#=============================
+
+note( '=============================' );
+note( '"interval/nick/:nick/:tsrange" resource' );
+note( '"lock/nick/:nick/:tsrange" resource' );
+note( '=============================' );
+
 foreach my $il ( qw( interval lock ) ) {
+
+    note( "looping: il == $il" );
 
     $base = "$il/nick";
     docu_check($test, "$base/:nick/:tsrange");
 
     note( 'GET' );
-    # - these users have no intervals but these users can't find that out
+    note( "- these users have no intervals but these users can't find that out" );
     foreach my $user ( qw( demo inactive active ) ) {
         foreach my $nick ( qw( root whanger foobar tsw57 ) ) {
             req( $test, 403, $user, 'GET', "$base/$nick/[,)" );
         }
     }
     req( $test, 400, 'root', 'GET', "$base/-1/[,)" );
-    # - active has one interval in 2014 and one lock in 2013
+
+    note( "- active has one interval in 2014 and one lock in 2013" );
     $status = req( $test, 200, 'root', 'GET',
         "$base/active/[2013-01-01 00:00, 2014-12-31 24:00)" );
     is( $status->level, 'OK' );
     is( $status->code, 'DISPATCH_RECORDS_FOUND' );
     is( $status->{'count'}, 1 );
-    #
-    # - tsranges that fail validations clause
+
+    note( "- tsranges that fail validations clause" );
     foreach my $tsr ( @failing_tsranges ) {
         foreach my $user ( qw( demo inactive active root ) ) {
             req( $test, 400, $user, 'GET', "$base/$user/$tsr" );
@@ -865,6 +865,9 @@ ok( $status->{'payload'}->{'iid'} );
 my $ian_iid = $status->payload->{'iid'}; # store for later deletion
 
 foreach my $user ( qw( root active ) ) {
+
+    note( "looping: user == $user" );
+
     note( "let $user use GET interval/nick/:nick/:tsrange to list it" );
     $status = req( $test, 200, $user, 'GET', "interval/nick/active/[ 1958-01-01, 1958-12-31 )" );
     is( $status->level, 'OK' );
@@ -903,18 +906,23 @@ $status = req( $test, 200, 'root', 'DELETE', "interval/iid/$ian_iid" );
 ok( $status->ok );
 
 
-#=============================
-# "interval/self/:tsrange" resource
-# "lock/self/:tsrange" resource
-#=============================
+note( '=============================' );
+note( '"interval/self/:tsrange" resource' );
+note( '"lock/self/:tsrange" resource' );
+note( '=============================' );
+
 foreach my $il ( qw( interval lock ) ) {
+
+    note( "looping: il == $il" );
+
     $base = "$il/self";
     docu_check($test, "$base/:tsrange");
     
     note( 'GET' );
     note( 'demo is not allowed to see any intervals (even his own)' );
     req( $test, 403, 'demo', 'GET', "$base/[,)" );
-    # - active has one interval in 2014 and one lock in 2013
+
+    note( '- active has one interval in 2014 and one lock in 2013' );
     $status = req( $test, 200, 'active', 'GET',
         "$base/[2013-01-01 00:00, 2014-12-31 24:00)" );
     is( $status->level, 'OK' );
@@ -942,13 +950,12 @@ foreach my $il ( qw( interval lock ) ) {
     #}
 }
     
-# delete the testing interval
-
+note( 'delete the testing interval' );
 $status = req( $test, 200, 'root', 'DELETE', "/interval/iid/$test_iid" );
 is( $status->level, 'OK' );
 is( $status->code, 'DOCHAZKA_CUD_OK' );
 
-# delete the testing lock
+note( 'delete the testing lock' );
 $status = req( $test, 200, 'root', 'DELETE', "/lock/lid/$test_lid" );
 is( $status->level, 'OK' );
 is( $status->code, 'DOCHAZKA_CUD_OK' );
@@ -962,22 +969,24 @@ foreach my $shid ( @shid_for_deletion ) {
 }
 
 
-#=============================
-# "interval/summary/?:qualifiers" resource
-#=============================
+note( '=============================' );
+note( '"interval/summary/?:qualifiers" resource' );
+note( '=============================' );
+
 $base = "interval/summary";
 docu_check($test, "$base/?:qualifiers");
 
-#
-# PUT, POST, DELETE
-#
+note( 'PUT, POST, DELETE -> 405' );
 foreach my $method ( qw( PUT POST DELETE ) ) {
     foreach my $user ( qw( demo inactive active root ) ) {
         req( $test, 405, $user, $method, $base );
     }
 }
 
-# delete the testing employees
+note( "GET: WIP" );
+# FIXME: tests are missing
+
+note( 'delete the testing employees' );
 delete_employee_by_nick( $test, 'active' );
 delete_employee_by_nick( $test, 'inactive' );
 delete_employee_by_nick( $test, 'bubba' );
