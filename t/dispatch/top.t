@@ -62,112 +62,113 @@ my $test = Plack::Test->create( $app );
 my $res;
 
 
-#=============================
-# "/" resource
-#=============================
+note( '=============================' );
+note( '"/" resource' );
+note( '=============================' );
 docu_check($test, "/");
-# GET ""
-# - as demo
+
+note( 'GET ""' );
+note( '- as demo' );
 $status = req( $test, 200, 'demo', 'GET', '/' );
 is( $status->level, 'OK' );
 is( $status->code, 'DISPATCH_NOOP' );
-#
-# - as root
+
+note( '- as root' );
 $status = req( $test, 200, 'root', 'GET', '/' );
 is( $status->level, 'OK' );
 is( $status->code, 'DISPATCH_NOOP' );
-#
-# PUT ""
-# - as demo
+
+note( 'PUT ""' );
+note( '- as demo' );
 $status = req( $test, 200, 'demo', 'PUT', '/' );
 is( $status->level, 'OK' );
 is( $status->code, 'DISPATCH_NOOP' );
-#
-# PUT "" 
-# - as root
+
+note( 'PUT ""' );
+note( '- as root' );
 $status = req( $test, 200, 'root', 'PUT', '/' );
 is( $status->level, 'OK' );
 is( $status->code, 'DISPATCH_NOOP' );
-#
-# POST "" 
-# - as demo
+
+note( 'POST ""' );
+note( '- as demo' );
 $status = req( $test, 200, 'demo', 'POST', '/' );
 is( $status->level, 'OK' );
 is( $status->code, 'DISPATCH_NOOP' );
-#
-# POST "" 
-# - as root
+
+note( 'POST ""' );
+note( '- as root' );
 $status = req( $test, 200, 'root', 'POST', '/' );
 is( $status->level, 'OK' );
 is( $status->code, 'DISPATCH_NOOP' );
-#
-# DELETE "" 
-# - as demo
+
+note( 'DELETE ""' );
+note( '- as demo' );
 $status = req( $test, 200, 'demo', 'DELETE', '/' );
 is( $status->level, 'OK' );
 is( $status->code, 'DISPATCH_NOOP' );
-#
-# DELETE "" - as root
+
+note( '- as root' );
 $status = req( $test, 200, 'root', 'DELETE', '/' );
 is( $status->level, 'OK' );
 is( $status->code, 'DISPATCH_NOOP' );
 
 
-#=============================
-# "bugreport" resource
-#=============================
+note( '=============================' );
+note( '"bugreport" resource' );
+note( '=============================' );
 docu_check($test, "bugreport");
-# GET bugreport
-# - as demo
+
+note( 'GET bugreport' );
+
+note( '- as demo' );
 $status = req( $test, 200, 'demo', 'GET', 'bugreport' );
 is( $status->level, 'OK' );
 is( $status->code, 'DISPATCH_BUGREPORT' );
 ok( exists $status->payload->{'report_bugs_to'} );
-# - as root
+
+note( '- as root' );
 $status = req( $test, 200, 'root', 'GET', 'bugreport' );
 is( $status->level, 'OK' );
 is( $status->code, 'DISPATCH_BUGREPORT' );
 ok( exists $status->payload->{'report_bugs_to'} );
-#
-# PUT bugreport
+
+note( 'PUT bugreport -> 405' );
 req( $test, 405, 'demo', 'PUT', 'bugreport' );
 req( $test, 405, 'root', 'PUT', 'bugreport' );
-#
-# POST bugreport
+
+note( 'POST bugreport -> 405');
 req( $test, 405, 'demo', 'PUT', 'bugreport' );
 req( $test, 405, 'root', 'PUT', 'bugreport' );
-#
-# DELETE bugreport
+
+note( 'DELETE bugreport -> 405' );
 req( $test, 405, 'demo', 'DELETE', 'bugreport' );
 req( $test, 405, 'root', 'DELETE', 'bugreport' );
-
 
 
 my $eid_of_inactive = create_inactive_employee( $test );
 my $eid_of_active = create_active_employee( $test );
 
 
-
-#=============================
-# "dbstatus" resource
-#=============================
+note( '=============================' );
+note( '"dbstatus" resource' );
+note( '=============================' );
 my $base = 'dbstatus';
 docu_check( $test, $base );
-#
-# GET
-#
-# - as demo
+
+note( 'GET' );
+
+note( '- as demo' );
 req( $test, 403, 'demo', 'GET', $base );
-#
-# - as inactive, active, and root
+
+note( '- as inactive, active, and root' );
 foreach my $user ( 'inactive', 'active', 'root' ) {
     $status = req( $test, 200, $user, 'GET', $base );
     is( $status->level, 'OK' );
     is( $status->code, 'DOCHAZKA_DBSTATUS' );
 }
-#
-# PUT, POST, DELETE
-#
+
+note( 'PUT, POST, DELETE -> 405' );
 foreach my $method ( 'PUT', 'POST', 'DELETE' ) {
     foreach my $user ( qw( demo inactive active root ) ) {
         req( $test, 405, $user, $method, $base );
@@ -175,94 +176,92 @@ foreach my $method ( 'PUT', 'POST', 'DELETE' ) {
 }
 
 
+note( '=============================' );
+note( '"docu" resource' );
+note( '=============================' );
 
-#=============================
-#=============================
-# "docu" resource
-#=============================
-#=============================
-# "docu/html" resource
-#=============================
-#foreach my $base ( 'docu', 'docu/html' ) {
-    $base = 'docu/html';
-    docu_check($test, $base);
-    #
-    # GET docu
-    #
-    req( $test, 405, 'demo', 'GET', $base );
-    req( $test, 405, 'root', 'GET', $base );
-    #
-    # PUT docu
-    #
-    req( $test, 405, 'demo', 'PUT', $base );
-    req( $test, 405, 'root', 'PUT', $base );
-    #
-    # POST docu
-    #
-    # - be nice
-    $status = req( $test, 200, 'demo', 'POST', $base, '"echo"' );
-    is( $status->level, 'OK' );
-    is( $status->code, 'DISPATCH_ONLINE_DOCUMENTATION' );
-    ok( exists $status->payload->{'resource'} );
-    is( $status->payload->{'resource'}, 'echo' );
-    ok( exists $status->payload->{'documentation'} );
-    my $docustr = $status->payload->{'documentation'};
-    my $docustr_len = length( $docustr );
-    ok( $docustr_len > 10 );
-    like( $docustr, qr/echoes/ );
-    #
-    # - ask nicely for documentation of a slightly more complicated resource
-    $status = req( $test, 200, 'demo', 'POST', $base, '"param/:type/:param"' );
-    is( $status->level, 'OK' );
-    is( $status->code, 'DISPATCH_ONLINE_DOCUMENTATION' );
-    ok( exists $status->payload->{'resource'} );
-    is( $status->payload->{'resource'}, 'param/:type/:param' );
-    ok( exists $status->payload->{'documentation'} );
-    ok( length( $status->payload->{'documentation'} ) > 10 );
-    isnt( $status->payload->{'documentation'}, $docustr, "We are not getting the same string over and over again" );
-    isnt( $docustr_len, length( $status->payload->{'documentation'} ), "We are not getting the same string over and over again" );
-    #
-    # - ask nicely for documentation of the "/" resource
-    $status = req( $test, 200, 'demo', 'POST', $base, '"/"' );
-    is( $status->level, 'OK' );
-    is( $status->code, 'DISPATCH_ONLINE_DOCUMENTATION' );
-    ok( exists $status->payload->{'resource'} );
-    is( $status->payload->{'resource'}, '/' );
-    ok( exists $status->payload->{'documentation'} );
-    ok( length( $status->payload->{'documentation'} ) > 10 );
-    isnt( $status->payload->{'documentation'}, $docustr, "We are not getting the same string over and over again" );
-    isnt( $docustr_len, length( $status->payload->{'documentation'} ), "We are not getting the same string over and over again" );
-    #
-    # - be nice but not careful (non-existent resource)
-    $status = req( $test, 404, 'demo', 'POST', $base, '"echop"' );
-    is( $status->text, 'Could not find resource definition for echop');
-    #
-    # - be pathological (invalid JSON)
-    req( $test, 400, 'demo', 'POST', $base, 'bare, unquoted string will never pass for JSON' );
-    req( $test, 400, 'demo', 'POST', $base, '[ 1, 2' );
-    #
-    # DELETE docu
-    #
-    req( $test, 405, 'demo', 'DELETE', $base );
-    req( $test, 405, 'root', 'DELETE', $base );
-#}
+note( '=============================' );
+note( '"docu/text" resource' );
+note( '=============================' );
+
+note( '=============================' );
+note( '"docu/html" resource' );
+note( '=============================' );
+
+$base = 'docu/html';
+docu_check($test, $base);
+
+note( 'GET docu -> 405' );
+req( $test, 405, 'demo', 'GET', $base );
+req( $test, 405, 'root', 'GET', $base );
+
+note( 'PUT docu -> 405' );
+req( $test, 405, 'demo', 'PUT', $base );
+req( $test, 405, 'root', 'PUT', $base );
+
+note( 'POST docu' );
+note( '- be nice' );
+$status = req( $test, 200, 'demo', 'POST', $base, '"echo"' );
+is( $status->level, 'OK' );
+is( $status->code, 'DISPATCH_ONLINE_DOCUMENTATION' );
+ok( exists $status->payload->{'resource'} );
+is( $status->payload->{'resource'}, 'echo' );
+ok( exists $status->payload->{'documentation'} );
+my $docustr = $status->payload->{'documentation'};
+my $docustr_len = length( $docustr );
+ok( $docustr_len > 10 );
+like( $docustr, qr/echoes/ );
+
+note( '- ask nicely for documentation of a slightly more complicated resource' );
+$status = req( $test, 200, 'demo', 'POST', $base, '"param/:type/:param"' );
+is( $status->level, 'OK' );
+is( $status->code, 'DISPATCH_ONLINE_DOCUMENTATION' );
+ok( exists $status->payload->{'resource'} );
+is( $status->payload->{'resource'}, 'param/:type/:param' );
+ok( exists $status->payload->{'documentation'} );
+ok( length( $status->payload->{'documentation'} ) > 10 );
+isnt( $status->payload->{'documentation'}, $docustr, "We are not getting the same string over and over again" );
+isnt( $docustr_len, length( $status->payload->{'documentation'} ), "We are not getting the same string over and over again" );
+
+note( '- ask nicely for documentation of the "/" resource' );
+$status = req( $test, 200, 'demo', 'POST', $base, '"/"' );
+is( $status->level, 'OK' );
+is( $status->code, 'DISPATCH_ONLINE_DOCUMENTATION' );
+ok( exists $status->payload->{'resource'} );
+is( $status->payload->{'resource'}, '/' );
+ok( exists $status->payload->{'documentation'} );
+ok( length( $status->payload->{'documentation'} ) > 10 );
+isnt( $status->payload->{'documentation'}, $docustr, "We are not getting the same string over and over again" );
+isnt( $docustr_len, length( $status->payload->{'documentation'} ), "We are not getting the same string over and over again" );
+
+note( '- be nice but not careful (non-existent resource)' );
+$status = req( $test, 404, 'demo', 'POST', $base, '"echop"' );
+is( $status->text, 'Could not find resource definition for echop');
+
+note( '- be pathological (invalid JSON)' );
+req( $test, 400, 'demo', 'POST', $base, 'bare, unquoted string will never pass for JSON' );
+req( $test, 400, 'demo', 'POST', $base, '[ 1, 2' );
+
+note( 'DELETE docu -> 405' );
+req( $test, 405, 'demo', 'DELETE', $base );
+req( $test, 405, 'root', 'DELETE', $base );
     
 
-#=============================
-# "echo" resource
-#=============================
+note( '=============================' );
+note( '"echo" resource' );
+note( '=============================' );
 docu_check($test, "echo");
-#
-# GET echo
+
+note( 'GET echo -> 405' );
 $status = req( $test, 405, 'demo', 'GET', 'echo' );
 $status = req( $test, 405, 'root', 'GET', 'echo' );
-#
-# PUT echo
+
+note( 'PUT echo -> 405' );
 $status = req( $test, 405, 'demo', 'PUT', 'echo' );
 $status = req( $test, 405, 'root', 'PUT', 'echo' );
-#
-# POST echo
-# - as root with legal JSON
+
+note( 'POST echo' );
+note( '- as root, with legal JSON' );
 $status = req( $test, 200, 'root', 'POST', 'echo', '{ "username": "foo", "password": "bar" }' );
 is( $status->level, 'OK' );
 is( $status->code, 'ECHO_REQUEST_ENTITY' );
@@ -270,27 +269,27 @@ ok( exists $status->payload->{'username'} );
 is( $status->payload->{'username'}, 'foo' );
 ok( exists $status->payload->{'password'} );
 is( $status->payload->{'password'}, 'bar' );
-#
-# - with illegal JSON
+
+note( '- with illegal JSON' );
 $status = req( $test, 400, 'root', 'POST', 'echo', '{ "username": "foo", "password": "bar"' );
-#
-# - with empty request body, as demo
+
+note( '- with empty request body, as demo' );
 $status = req( $test, 403, 'demo', 'POST', 'echo' );
-#
-# - with empty request body
+
+note( '- with empty request body' );
 $status = req( $test, 200, 'root', 'POST', 'echo' );
 is( $status->level, 'OK' );
 is( $status->code, 'ECHO_REQUEST_ENTITY' );
 ok( exists $status->{'payload'} );
 is( $status->payload, undef );
-#
-# DELETE echo
+
+note( 'DELETE echo -> 405' );
 $status = req( $test, 405, 'demo', 'DELETE', 'echo' );
 $status = req( $test, 405, 'root', 'DELETE', 'echo' );
 
-#=============================
-# "forbidden" resource
-#=============================
+note( '=============================' );
+note( '"forbidden" resource' );
+note( '=============================' );
 docu_check($test, "forbidden");
 foreach my $user ( qw( demo root ) ) {
     foreach my $method ( qw( GET PUT POST DELETE ) ) {
@@ -298,16 +297,13 @@ foreach my $user ( qw( demo root ) ) {
     }
 }
 
-#=============================
-# "param/:type/:param" resource
-#=============================
+note( '=============================' );
+note( '"param/:type/:param" resource' );
+note( '=============================' );
 $base = "param";
 docu_check($test, "param/:type/:param");
-#
 
-#
-# POST
-# 
+note( 'POST' );
 is( $meta->META_DOCHAZKA_UNIT_TESTING, 1 );
 
 $status = req( $test, 200, 'root', 'PUT', "$base/meta/META_DOCHAZKA_UNIT_TESTING", '"foobar"' );
@@ -320,12 +316,9 @@ is( $status->level, 'OK' );
 is( $status->code, 'CELL_OVERWRITE_META_PARAM' );
 is( $meta->META_DOCHAZKA_UNIT_TESTING, 1 );
 
+note( 'GET' );
 
-#
-# GET
-#
-
-# non-existent and otherwise bogus parameters
+note( 'non-existent and otherwise bogus parameters' );
 foreach my $base ( "$base/meta", "$base/site" ) {
     foreach my $user ( qw( demo root ) ) {
         # these are bogus in that the resource does not exist
@@ -351,25 +344,24 @@ foreach my $base ( "$base/meta", "$base/site" ) {
     }
 }
 
-# metaparam-specific tests
-#
-# - try to use metaparam to access a site parameter
+note( 'metaparam-specific tests' );
+
+note( '- try to use metaparam to access a site parameter' );
 req( $test, 404, 'root', 'GET', "param/meta/DOCHAZKA_APPNAME" );
-# - as root, existent parameter
+
+note( '- as root, existent parameter' );
 $status = req( $test, 200, 'root', 'GET', 'param/meta/META_DOCHAZKA_UNIT_TESTING/' );
 is( $status->level, 'OK' );
 is( $status->code, 'MREST_PARAMETER_VALUE' );
 is_deeply( $status->payload, { 'META_DOCHAZKA_UNIT_TESTING' => 1 } );
-#
-# - as root, existent parameter without trailing '/'
+
+note( "- as root, existent parameter without trailing '/'" );
 $status = req( $test, 200, 'root', 'GET', 'param/meta/META_DOCHAZKA_UNIT_TESTING' );
 is( $status->level, 'OK' );
 is( $status->code, 'MREST_PARAMETER_VALUE' );
 is_deeply( $status->payload, { 'META_DOCHAZKA_UNIT_TESTING' => 1 } );
-#
-#
-# POST
-#
+
+note( 'POST -> 405' );
 foreach my $base ( "$base/meta", "$base/site" ) {
     foreach my $user ( qw( demo root ) ) {
         req( $test, 405, $user, 'POST', 'param/meta/META_DOCHAZKA_UNIT_TESTING' );
@@ -377,25 +369,24 @@ foreach my $base ( "$base/meta", "$base/site" ) {
 }
 
 
-#=============================
-# "session" resource
-#=============================
+note( '=============================' );
+note( '"session" resource' );
+note( '=============================' );
 docu_check($test, "session");
-#
-# GET session
-#
+
+note( 'GET session' );
 $status = req( $test, 200, 'demo', 'GET', 'session' );
 is( $status->level, 'OK' );
 is( $status->code, 'DISPATCH_SESSION_DATA' );
 ok( exists $status->payload->{'session'} );
 ok( exists $status->payload->{'session_id'} );
-# N.B.: no session data when running via Plack::Test
+
+note( 'N.B.: no session data when running via Plack::Test' );
 #ok( exists $status->payload->{'session'}->{'ip_addr'} );
 #ok( exists $status->payload->{'session'}->{'last_seen'} );
 #ok( exists $status->payload->{'session'}->{'eid'} );
-#
-# PUT, POST, DELETE
-#
+
+note( 'PUT, POST, DELETE -> 405' );
 foreach my $user ( qw( demo root ) ) {
     foreach my $method ( qw( PUT POST DELETE ) ) {
         $status = req( $test, 405, $user, $method, 'session' );
@@ -403,25 +394,23 @@ foreach my $user ( qw( demo root ) ) {
 }
 
 
-#=============================
-# "version" resource
-#=============================
+note( '=============================' );
+note( '"version" resource' );
+note( '=============================' );
 docu_check($test, "version");
-#
-# GET version
-#
+
+note( 'GET version' );
 $status = req( $test, 200, 'demo', 'GET', 'version' );
 is( $status->level, 'OK' );
 is( $status->code, 'DISPATCH_VERSION' );
 ok( exists $status->payload->{'version'} );
-#
+
 $status = req( $test, 200, 'root', 'GET', 'version' );
 is( $status->level, 'OK' );
 is( $status->code, 'DISPATCH_VERSION' );
 ok( exists $status->payload->{'version'} );
-#
-# PUT, POST, DELETE version
-#
+
+note( 'PUT, POST, DELETE version -> 405' );
 foreach my $user ( qw( demo root ) ) {
     foreach my $method ( qw( PUT POST DELETE ) ) {
         $status = req( $test, 405, $user, $method, 'version' );
@@ -429,12 +418,12 @@ foreach my $user ( qw( demo root ) ) {
 }
 
 
-#=============================
-# "whoami" resource
-#=============================
+note( '=============================' );
+note( '"whoami" resource' );
+note( '=============================' );
 docu_check($test, "whoami");
-#
-# GET whoami
+
+note( 'GET whoami' );
 $status = req( $test, 200, 'demo', 'GET', 'whoami' );
 is( $status->level, 'OK' );
 ok( $status->code, 'DISPATCH_RECORDS_FOUND' );
@@ -443,7 +432,7 @@ ok( exists $status->payload->{'eid'} );
 ok( exists $status->payload->{'nick'} );
 ok( not exists $status->payload->{'priv'} );
 is( $status->payload->{'nick'}, 'demo' );
-#
+
 $status = req( $test, 200, 'root', 'GET', 'whoami' );
 is( $status->level, 'OK' );
 ok( $status->code, 'DISPATCH_RECORDS_FOUND' );
@@ -452,9 +441,8 @@ ok( exists $status->payload->{'eid'} );
 ok( exists $status->payload->{'nick'} );
 ok( not exists $status->payload->{'priv'} );
 is( $status->payload->{'nick'}, 'root' );
-#
-# PUT, POST, DELETE whoami
-#
+
+note( 'PUT, POST, DELETE whoami -> 405' );
 foreach my $user ( qw( demo root ) ) {
     foreach my $method ( qw( PUT POST DELETE ) ) {
         $status = req( $test, 405, $user, $method, 'whoami' );

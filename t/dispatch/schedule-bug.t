@@ -59,8 +59,8 @@ my $app = $status->payload;
 note( "instantiate Plack::Test object");
 my $test = Plack::Test->create( $app );
 
-# a bug where the App::Dochazka::REST::Model::Schedule->insert
-# method was returning DOCHAZKA_CUD_OK (which was undesirable)
+note( 'a bug where the insert method in App::Dochazka::REST::Model::Schedule' );
+note( 'was returning DOCHAZKA_CUD_OK (which was undesirable)' );
 my $intvls = { "schedule" => [
     "[$today 12:30, $today 16:30)",
     "[$today 08:00, $today 12:00)",
@@ -74,16 +74,16 @@ my $furry = App::Dochazka::REST::Model::Schedule->spawn( %$pl );
 $furry->scode( 'FURRY' );
 is( $furry->scode, 'FURRY' );
 
-# update the schedule record and see that FURRY gets stored in the database
+note( 'update the schedule record and see that FURRY gets stored in the database' );
 $intvls->{'scode'} = $furry->scode;
 $intvls_json = JSON->new->utf8->canonical(1)->encode( $intvls );
 $status = req( $test, 201, 'root', 'POST', 'schedule/new', $intvls_json );
 is( $status->payload->{'scode'}, 'FURRY' );
 is( $status->payload->{'sid'}, $furry->sid );
 
-# use 'POST schedule/new' with the same schedue but a different scode
-# (a "corner case") -> the desired result is for the new scode to be
-# ignored and the existing one to be returned
+note( "use 'POST schedule/new' with the same schedue but a different scode" );
+note( "(a corner case) -> the desired result is for the new scode to be" );
+note( "ignored and the existing one to be returned" );
 $intvls->{'scode'} = 'SOME DIFFERENT VALUE THAT WILL BE IGNORED';
 $intvls_json = JSON->new->utf8->canonical(1)->encode( $intvls );
 $status = req( $test, 201, 'root', 'POST', 'schedule/new', $intvls_json );
@@ -92,7 +92,7 @@ is( $status->code, 'DISPATCH_SCHEDULE_EXISTS' );
 is( $status->payload->{'scode'}, 'FURRY' );
 is( $status->payload->{'sid'}, $furry->sid );
 
-# delete the testing schedule so it doesn't trip us up later
+note( "delete the testing schedule so it doesn't trip us up later" );
 $status = req( $test, 200, 'root', 'DELETE', "schedule/sid/" . $furry->sid );
 ok( $status->ok );
 

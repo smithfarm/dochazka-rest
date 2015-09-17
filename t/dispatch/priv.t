@@ -59,7 +59,7 @@ my $app = $status->payload;
 note( "instantiate Plack::Test object");
 my $test = Plack::Test->create( $app );
 
-# this has to be defined after initialization because it uses $test
+note( 'define delete_ph_recs() function after initialization because it uses \$test' );
 sub delete_ph_recs {
     my ( $set ) = @_;
     foreach my $rec ( @$set ) {
@@ -69,19 +69,16 @@ sub delete_ph_recs {
     }
 }
 
-
 my $res;
 
 
-#=============================
-# "priv/self/?:ts" resource
-#=============================
+note( '=============================' );
+note( '"priv/self/?:ts" resource' );
+note( '=============================' );
 my $base = "priv/self";
 docu_check($test, "$base/?:ts");
 
-#
-# GET
-#
+note( 'GET' );
 
 note( "GET $base as demo" );
 $status = req( $test, 200, 'demo', 'GET', $base );
@@ -121,9 +118,7 @@ is_deeply( $status->payload, {
     eid => "1"
 } );
 
-#
-# PUT, POST, DELETE
-#
+note( 'PUT, POST, DELETE -> 405' );
 foreach my $base ( '/priv/self', '/priv/self/1892-01-01' ) {
     req( $test, 405, 'demo', 'PUT', $base );
     req( $test, 405, 'demo', 'POST', $base );
@@ -135,15 +130,13 @@ foreach my $base ( '/priv/self', '/priv/self/1892-01-01' ) {
 }
 
 
-#===========================================
-# "priv/eid/:eid/?:ts" resource
-#===========================================
+note( '===========================================' );
+note( '"priv/eid/:eid/?:ts" resource' );
+note( '===========================================' );
 $base = "priv/eid";
 docu_check($test, "$base/:eid/?:ts");
 
-#
-# GET
-#
+note( 'GET' );
 
 note( "GET $base/1 as demo" );
 req( $test, 403, 'demo', 'GET', "$base/1" );
@@ -158,8 +151,8 @@ is_deeply( $status->payload, {
     "eid" => "1",
     "nick" => "root"
 });
-#
-# - as root, with timestamp (before 1892 A.D. root was a passerby)
+
+note( '- as root, with timestamp (before 1892 A.D. root was a passerby)' );
 $status = req( $test, 200, 'root', 'GET', "$base/1/1891-12-31 23:59" );
 is( $status->level, 'OK' );
 is( $status->code, "DISPATCH_EMPLOYEE_PRIV_AS_AT" );
@@ -169,8 +162,8 @@ is_deeply( $status->payload, {
     priv => "passerby",
     eid => "1"
 } );
-#
-# - as root, with timestamp (root became an admin on 1892-01-01 at 00:00)
+
+note( '- as root, with timestamp (root became an admin on 1892-01-01 at 00:00)' );
 $status = req( $test, 200, 'root', 'GET', "$base/1/1892-01-01 00:01" );
 is( $status->level, 'OK' );
 is( $status->code, "DISPATCH_EMPLOYEE_PRIV_AS_AT" );
@@ -181,9 +174,7 @@ is_deeply( $status->payload, {
     eid => "1"
 } );
 
-#
-# PUT, POST, DELETE
-#
+note( 'PUT, POST, DELETE -> 405' );
 foreach my $base ( '/priv/eid/1', '/priv/eid/1/1892-01-01' ) {
     req( $test, 405, 'demo', 'PUT', $base );
     req( $test, 405, 'demo', 'POST', $base );
@@ -195,14 +186,13 @@ foreach my $base ( '/priv/eid/1', '/priv/eid/1/1892-01-01' ) {
 }
 
 
-#===========================================
-# "priv/nick/:nick/?:ts" resource
-#===========================================
+note( '===========================================' );
+note( '"priv/nick/:nick/?:ts" resource' );
+note( '===========================================' );
 $base = "priv/nick";
 docu_check($test, "$base/:nick/?:ts");
-#
-# GET
-#
+
+note( 'GET' );
 req( $test, 403, 'demo', 'GET', "$base/root" );
 $status = req( $test, 200, 'root', 'GET', "$base/root" );
 is( $status->level, 'OK' );
@@ -213,8 +203,8 @@ is_deeply( $status->payload, {
     "eid" => "1",
     "nick" => "root"
 });
-#
-# - as root, with timestamp (before 1892 A.D. root was a passerby)
+
+note( '- as root, with timestamp (before 1892 A.D. root was a passerby)' );
 $status = req( $test, 200, 'root', 'GET', "$base/root/1891-12-31 23:59" );
 is( $status->level, 'OK' );
 is( $status->code, "DISPATCH_EMPLOYEE_PRIV_AS_AT" );
@@ -224,8 +214,8 @@ is_deeply( $status->payload, {
     priv => "passerby",
     eid => "1"
 } );
-#
-# - as root, with timestamp (root became an admin on 1892-01-01 at 00:00)
+
+note( '- as root, with timestamp (root became an admin on 1892-01-01 at 00:00)' );
 $status = req( $test, 200, 'root', 'GET', "$base/root/1892-01-01 00:01" );
 is( $status->level, 'OK' );
 is( $status->code, "DISPATCH_EMPLOYEE_PRIV_AS_AT" );
@@ -236,9 +226,7 @@ is_deeply( $status->payload, {
     eid => "1"
 } );
 
-#
-# PUT, POST, DELETE
-#
+note( 'PUT, POST, DELETE -> 405' );
 foreach my $user ( qw( demo root ) ) {
     foreach my $method ( qw( PUT POST DELETE ) ) {
         foreach my $uri ( "$base/root", "$base/root/1892-01-01" ) {

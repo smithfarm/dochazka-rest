@@ -30,7 +30,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 # ************************************************************************* 
 #
-# tests for Shared.pm->shared_process_quals
+# tests for shared_process_quals() function in App::Dochazka::REST::Shared
 #
 
 #!perl
@@ -44,7 +44,7 @@ use App::Dochazka::REST::Test;
 use Data::Dumper;
 use Test::More;
 
-# initialize 
+note( 'initialize unit' );
 my $status = initialize_unit();
 plan skip_all => "not configured or server not running" unless $status->ok;
 my $app = $status->payload;
@@ -53,7 +53,7 @@ $status = shared_process_quals( '' );
 is( $status->level, "OK" );
 is( $status->payload, undef );
 
-# try passing a bunch of malformed strings
+note( 'try passing a bunch of malformed strings' );
 my @str = (
     'sadf',
     'nick=bubba,sadf',

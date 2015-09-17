@@ -30,7 +30,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 # ************************************************************************* 
 #
-# test interval and lock resources, which are very similar
+# test interval resources when description contains one or more newline characters
 #
 
 #!perl
@@ -46,6 +46,7 @@ use Plack::Test;
 use Test::JSON;
 use Test::More;
 
+plan skip_all => "WIP";
 
 note( "initialize, connect to database, and set up a testing plan" );
 my $status = initialize_unit();
@@ -114,6 +115,7 @@ EOH
 #ok( $status->{'payload'}->{'iid'} );
 #push @iid_for_deletion, $status->{'payload'}->{'iid'};
 #
+
 note( 'delete all testing intervals' );
 foreach my $iid ( @iid_for_deletion ) {
     req( $test, 200, 'root', 'DELETE', "interval/iid/$iid" );

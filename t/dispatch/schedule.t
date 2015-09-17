@@ -66,17 +66,15 @@ my $res;
 my $ts_eid_active = create_active_employee( $test );
 my $ts_eid_inactive = create_inactive_employee( $test );
 
-#===========================================
-# "schedule/all" resource
-#===========================================
+note( '===========================================' );
+note( '"schedule/all" resource' );
+note( '===========================================' );
 my $base = "schedule/all";
 docu_check($test, $base);
 
 my $ts_sid = create_testing_schedule( $test );
 
-#
-# GET
-#
+note( 'GET' );
 
 note( "GET $base as demo user" );
 req( $test, 403, 'demo', 'GET', $base );
@@ -136,24 +134,20 @@ is( $status->level, 'OK' );
 is( $status->code, "DISPATCH_RECORDS_FOUND" );
 is( $status->{'count'}, 6 );
 
-#
-# PUT, POST, DELETE
-#
+note( 'PUT, POST, DELETE -> 405' );
 foreach my $user ( qw( demo root ) ) {
     foreach my $method ( qw( PUT POST DELETE ) ) {
         req( $test, 405, $user, $method, $base );
     }
 }
 
-#===========================================
-# "schedule/all/disabled" resource
-#===========================================
+note( '===========================================' );
+note( '"schedule/all/disabled" resource' );
+note( '===========================================' );
 $base = "schedule/all/disabled";
 docu_check($test, $base);
 
-#
-# GET
-#
+note( 'GET' );
 
 note( "GET $base as demo user" );
 req( $test, 403, 'demo', 'GET', $base );
@@ -170,9 +164,7 @@ is( $status->level, 'OK' );
 is( $status->code, "DISPATCH_RECORDS_FOUND" );
 is( $status->{'count'}, 7 );
 
-# 
-# delete two schedules
-#
+note( 'delete two schedules' );
 my $counter = 0;
 foreach my $sid ( @sid_range[0..1] ) {
     $counter += 1;
@@ -182,26 +174,20 @@ foreach my $sid ( @sid_range[0..1] ) {
 }
 is( $counter, 2 );
 
-#
-# now only 4 when disabled are not counted
-#
+note( 'now only 4 when disabled are not counted' );
 $status = req( $test, 200, 'root', 'GET', 'schedule/all' );
 is( $status->level, 'OK' );
 is( $status->code, "DISPATCH_RECORDS_FOUND" );
 is( $status->{'count'}, 4 );
 
-#
-# the total number has dropped from 7 to 5
-#
+note( 'the total number has dropped from 7 to 5' );
 req( $test, 403, 'demo', 'GET', $base );
 $status = req( $test, 200, 'root', 'GET', $base );
 is( $status->level, 'OK' );
 is( $status->code, "DISPATCH_RECORDS_FOUND" );
 is( $status->{'count'}, 5 );
 
-#
-# delete them
-#
+note( 'delete them' );
 my $obj = App::Dochazka::REST::Model::Schedule->spawn;
 foreach my $schedule ( @{ $status->payload } ) {
     $obj->reset( $schedule );
@@ -212,14 +198,10 @@ foreach my $schedule ( @{ $status->payload } ) {
     ok( ! sid_exists( $dbix_conn, $obj->sid ) );
 }
 
-# 
-# total number is now zero
-#
+note( 'total number is now zero' );
 $status = req( $test, 404, 'root', 'GET', $base );
 
-#
-# PUT, POST, DELETE
-#
+note( 'PUT, POST, DELETE -> 405' );
 foreach my $user ( qw( demo root ) ) {
     foreach my $method ( qw( PUT POST DELETE ) ) {
         req( $test, 405, $user, $method, $base );
@@ -228,13 +210,14 @@ foreach my $user ( qw( demo root ) ) {
 
 #delete_testing_schedule( $ts_sid );
 
-#===========================================
-# "schedule/eid/:eid/?:ts" resource
-#===========================================
+note( '===========================================' );
+note( '"schedule/eid/:eid/?:ts" resource' );
+note( '===========================================' );
 $base = "schedule/eid";
 docu_check($test, "$base/:eid/?:ts");
 
 $ts_sid = create_testing_schedule( $test );
+
 note( "bestow testing schedule upon the inactive employee" );
 $status = req( $test, 201, 'root', 'POST', "/schedule/history/eid/$ts_eid_inactive", 
     '{ "effective":"2014-10-10", "sid":' . $ts_sid . ' }' );
@@ -244,9 +227,7 @@ ok( exists $status->{payload} );
 ok( $status->payload->{shid} );
 my $ts_shid = $status->payload->{shid};
 
-#
-# GET
-#
+note( 'GET' );
 
 note( 'root has no schedule' );
 req( $test, 403, 'demo', 'GET', "$base/1" );
@@ -267,6 +248,7 @@ foreach my $spec (
     [ 'root', "/schedule/nick/inactive/2015-06-01 00:00" ],
     [ 'inactive', "/schedule/self/2015-06-01 00:00" ],
    ) {
+
     note( 'GET ' . $spec->[1] . ' as ' . $spec->[0] );
     $status = req( $test, 200, $spec->[0], 'GET', $spec->[1] );
     is( $status->level, 'OK' );
@@ -326,9 +308,7 @@ dbi_err( $test, 500, 'root', 'GET', "$base/1/wanger", undef,
     qr/invalid input syntax for type timestamp/ );
 
 
-#
-# PUT, POST, DELETE
-#
+note( 'PUT, POST, DELETE -> 405' );
 foreach my $user ( qw( demo root ) ) {
     foreach my $method ( qw( PUT POST DELETE ) ) {
         foreach my $baz ( "$base/1", "$base/1/1892-01-01" ) {
@@ -337,32 +317,29 @@ foreach my $user ( qw( demo root ) ) {
     }
 }
 
-# delete inactive's schedule history record
+note( "delete inactive's schedule history record" );
 $status = req( $test, 200, 'root', 'DELETE', "/schedule/history/shid/$ts_shid" );
 is( $status->level, 'OK' );
 is( $status->code, 'DOCHAZKA_CUD_OK' );
 
-# delete the testing schedule itself
+note( "delete the testing schedule itself" );
 delete_testing_schedule( $ts_sid );
 
 
-#===========================================
-# "schedule/new" resource
-#===========================================
+note( '===========================================' );
+note( '"schedule/new" resource' );
+note( '===========================================' );
 $base = "schedule/new";
 docu_check( $test, $base );
 
-#
-# GET, PUT
-#
+note( 'GET, PUT -> 405' );
 req( $test, 405, 'demo', 'GET', $base );
 req( $test, 405, 'root', 'GET', $base );
 req( $test, 405, 'demo', 'PUT', $base );
 req( $test, 405, 'root', 'PUT', $base );
 
-# test typical workflow for this resource
-#
-# - set up an array of schedule intervals for testing
+note( "test typical workflow for this resource, $base" );
+note( '- set up an array of schedule intervals for testing' );
 my $intvls = { "schedule" => [
     "[$tomorrow 12:30, $tomorrow 16:30)",
     "[$tomorrow 08:00, $tomorrow 12:00)",
@@ -372,18 +349,16 @@ my $intvls = { "schedule" => [
     "[$yesterday 08:00, $yesterday 12:00)",
 ], "scode" => 'testfoo' };
 my $intvls_json = JSON->new->utf8->canonical(1)->encode( $intvls );
-#
 
-#
-# POST
-#
-# - request as demo will fail with 403
+note( 'POST' );
+
+note( '- request as demo will fail with 403' );
 req( $test, 403, 'demo', 'POST', $base, $intvls_json );
 
-# - request as root with no request body will return 400
+note( '- request as root with no request body will return 400' );
 req( $test, 400, 'root', 'POST', $base );
 
-# - request as root 
+note( '- request as root' );
 $status = req( $test, 201, 'root', 'POST', $base, $intvls_json );
 diag( Dumper $status ) unless $status->ok;
 is( $status->level, 'OK' );
@@ -395,7 +370,7 @@ my $sid = $status->payload->{'sid'};
 my $scode = $status->payload->{'scode'};
 is( $scode, 'testfoo' );
 
-# - request the same schedule - code should change to DISPATCH_SCHEDULE_EXISTS
+note( '- request the same schedule - code should change to DISPATCH_SCHEDULE_EXISTS' );
 $status = req( $test, 201, 'root', 'POST', $base, $intvls_json );
 diag( Dumper $status ) unless $status->ok;
 is( $status->level, 'OK' );
@@ -404,16 +379,15 @@ ok( exists $status->{'payload'} );
 ok( exists $status->payload->{'sid'} );
 is( $status->payload->{'sid'}, $sid );
 
-# - and now delete the schedules record (schedintvls records are already gone)
+note( '- and now delete the schedules record (schedintvls records are already gone)' );
 $status = req( $test, 200, 'root', 'DELETE', "schedule/sid/$sid" );
 diag( Dumper $status ) unless $status->ok;
 is( $status->code, 'DOCHAZKA_CUD_OK' );
 
-# - count should now be zero
+note( '- count should now be zero' );
 $status = req( $test, 404, 'root', 'GET', 'schedule/all/disabled' );
 
-#
-# - for the next test case, insert a testing schedule _without_ an scode
+note( '- for the next test case, insert a testing schedule _without_ an scode' );
 $intvls = { "schedule" => [
     "[$today 12:30, $today 16:30)",
     "[$today 08:00, $today 12:00)",
@@ -429,7 +403,7 @@ ok( exists $status->payload->{'scode'} );
 ok( ! defined $status->payload->{'scode'} );
 $sid = $status->payload->{'sid'};
 
-# - now, change the scode and insert again
+note( '- now, change the scode and insert again' );
 $intvls = { "schedule" => [
     "[$today 12:30, $today 16:30)",
     "[$today 08:00, $today 12:00)",
@@ -445,7 +419,7 @@ ok( exists $status->payload->{'scode'} );
 is( $status->payload->{'sid'}, $sid );
 is( $status->payload->{'scode'}, 'WANGERFETZ' );
 
-# use GET, just to make sure
+note( 'use GET, just to make sure' );
 $status = req( $test, 200, 'root', 'GET', "schedule/scode/WANGERFETZ" );
 is( $status->level, 'OK' );
 is( $status->code, 'DISPATCH_SCHEDULE_FOUND' );
@@ -455,7 +429,7 @@ ok( exists $status->payload->{'scode'} );
 is( $status->payload->{'sid'}, $sid );
 is( $status->payload->{'scode'}, 'WANGERFETZ' );
 
-# now insert the same schedule again, but with a different scode
+note( 'now insert the same schedule again, but with a different scode' );
 $intvls = { "schedule" => [
     "[$today 12:30, $today 16:30)",
     "[$today 08:00, $today 12:00)",
@@ -465,7 +439,7 @@ $status = req( $test, 201, 'root', 'POST', $base, $intvls_json );
 is( $status->payload->{'sid'}, $sid );
 is( $status->payload->{'scode'}, 'WANGERFETZ' );
 
-# update WANGERFETZ, replacing WANGERFETZ with NULL
+note( 'update WANGERFETZ, replacing WANGERFETZ with NULL' );
 $status = req( $test, 200, 'root', 'PUT', "schedule/scode/WANGERFETZ", '{ "scode" : null }' );
 is( $status->level, 'OK' );
 is( $status->code, 'DOCHAZKA_CUD_OK' );
@@ -475,25 +449,22 @@ ok( exists $status->payload->{'scode'} );
 is( $status->payload->{'sid'}, $sid );
 is( $status->payload->{'scode'}, undef );
 
-# delete WANGERFETZ, so it doesn't trip us up later
+note( 'delete WANGERFETZ, so it doesn\'t trip us up later' );
 $status = req( $test, 200, 'root', 'DELETE', "schedule/sid/$sid" );
 ok( $status->ok );
 
-#
-# DELETE
-#
+note( 'DELETE -> 405' );
 req( $test, 405, 'demo', 'DELETE', $base );
 req( $test, 405, 'root', 'DELETE', $base );
 
 
-#===========================================
-# "schedule/nick/:nick/?:ts" resource
-#===========================================
+note( '===========================================' );
+note( '"schedule/nick/:nick/?:ts" resource' );
+note( '===========================================' );
 $base = "schedule/nick";
 docu_check($test, "$base/:nick/?:ts");
-#
-# GET
-#
+
+note( 'GET' );
 
 note( "GET $base/root as demo" );
 req( $test, 403, 'demo', 'GET', "$base/root" );
@@ -541,9 +512,7 @@ note( 'wanger' );
 dbi_err( $test, 500, 'root', 'GET', "$base/root/wanger", undef,
     qr/invalid input syntax for type timestamp/ );
 
-#
-# PUT, POST, DELETE
-#
+note( 'PUT, POST, DELETE -> 405' );
 foreach my $user ( qw( demo root ) ) {
     foreach my $method ( qw( PUT POST DELETE ) ) {
         foreach my $baz ( "$base/root", "$base/root/1892-01-01" ) {
@@ -553,15 +522,13 @@ foreach my $user ( qw( demo root ) ) {
 }
 
 
-
-#=============================
-# "schedule/self/?:ts" resource
-#=============================
+note( '=============================' );
+note( '"schedule/self/?:ts" resource' );
+note( '=============================' );
 $base = "schedule/self";
 docu_check($test, "$base/?:ts");
-#
-# GET
-#
+
+note( 'GET' );
 
 note( "GET $base as demo, but demo has no schedule history" );
 req( $test, 404, 'demo', 'GET', $base );
@@ -578,19 +545,16 @@ req( $test, 404, 'root', 'GET', "$base/1892-01-01 00:01" );
 note( "wanger" );
 dbi_err( $test, 500, 'root', 'GET', "$base/wanger", undef,
     qr/invalid input syntax for type timestamp/ );
-#
-# - stupid ts
+
+note( "stupid ts" );
 dbi_err( $test, 500, 'root', 'GET', "$base/ 12341 12 jjj", undef, 
     qr/invalid input syntax for type timestamp/ );
-#
-# - valid nick, valid timestamp
+
+note( "valid nick, valid timestamp" );
 dbi_err( $test, 500, 'root', 'GET', "$base/2999-01-33 00:-1", undef,
     qr#date/time field value out of range# );
 
-
-#
-# PUT, POST, DELETE
-#
+note( 'PUT, POST, DELETE -> 405' );
 foreach my $user ( qw( demo root ) ) {
     foreach my $method ( qw( PUT POST DELETE ) ) {
         foreach my $baz ( $base, "$base/1892-01-01" ) {
@@ -600,17 +564,15 @@ foreach my $user ( qw( demo root ) ) {
 }
 
 
-#===========================================
-# "schedule/sid/:sid" resource
-#===========================================
+note( '===========================================' );
+note( '"schedule/sid/:sid" resource' );
+note( '===========================================' );
 $base = 'schedule/sid';
 docu_check( $test, "$base/:sid" );
 
 $sid = create_testing_schedule( $test );
 
-#
-# GET
-#
+note( 'GET' );
 $status = req( $test, 200, 'root', 'GET', "$base/$sid" );
 diag( Dumper $status ) unless $status->ok;
 #diag( Dumper $status );
@@ -622,16 +584,13 @@ is( $status->payload->{'schedule'}, '[{"high_dow":"FRI","high_time":"12:00","low
 ok( $status->payload->{'sid'} > 0 );
 is( $status->payload->{'sid'}, $sid );
 
-#
-# POST
-#
+note( 'POST -> 405' );
 req( $test, 405, 'demo', 'POST', "$base/1" );
 req( $test, 405, 'root', 'POST', "$base/1" );
 
-#
-# PUT
-#
-# - add a remark to the schedule
+note( 'PUT' );
+
+note( 'add a remark to the schedule' );
 req( $test, 403, 'demo', 'PUT', "$base/$sid" );
 $status = req( $test, 200, 'root', 'PUT', "$base/$sid", '{ "remark" : "foobar" }' );
 is( $status->level, 'OK' );
@@ -641,23 +600,23 @@ ok( defined( $status->payload ) );
 ok( exists( $status->{'payload'}->{'remark'} ) );
 ok( defined( $status->{'payload'}->{'remark'} ) );
 is( $status->{'payload'}->{'remark'}, "foobar" );
-#
-# verify with GET
+
+note( 'verify with GET' );
 $status = req( $test, 200, 'root', 'GET', "$base/$sid" );
 is( $status->level, 'OK' );
 is( $status->code, 'DISPATCH_SCHEDULE_FOUND' );
 is( $status->payload->{'remark'}, 'foobar' );
-#
-# - disable the schedule in the wrong way
+
+note( 'disable the schedule in the wrong way' );
 dbi_err( $test, 500, 'root', 'PUT', "$base/$sid", '{ "pebble" : [1,2,3], "disabled":"hoogar" }',
     qr/invalid input syntax for type boolean/ );
-#
-# - disable the schedule in the right way
+
+note( 'disable the schedule in the right way' );
 $status = req( $test, 200, 'root', 'PUT', "$base/$sid", '{ "pebble" : [1,2,3], "disabled":true }' );
 is( $status->level, 'OK' );
 is( $status->code, 'DOCHAZKA_CUD_OK' );
-#
-# - add an scode
+
+note( 'add an scode' );
 req( $test, 403, 'demo', 'PUT', "$base/$sid" );
 $status = req( $test, 200, 'root', 'PUT', "$base/$sid", '{ "scode" : "bazblare" }' );
 is( $status->level, 'OK' );
@@ -667,35 +626,32 @@ ok( defined( $status->payload ) );
 ok( exists( $status->{'payload'}->{'scode'} ) );
 ok( defined( $status->{'payload'}->{'scode'} ) );
 is( $status->{'payload'}->{'scode'}, "bazblare" );
-#
-# verify with GET
+
+note( 'verify with GET' );
 $status = req( $test, 200, 'root', 'GET', "$base/$sid" );
 is( $status->level, 'OK' );
 is( $status->code, 'DISPATCH_SCHEDULE_FOUND' );
 is( $status->payload->{'scode'}, 'bazblare' );
 
-#
-# DELETE
-#
-# - delete the testing schedule 
+note( 'DELETE' );
+
+note( 'delete the testing schedule' );
 $status = req( $test, 200, 'root', 'DELETE', "$base/$sid" );
 is( $status->level, 'OK' );
 is( $status->code, 'DOCHAZKA_CUD_OK' );
 
 
-#===========================================
-# "schedule/scode/:scode" resource
-#===========================================
+note( '===========================================' );
+note( '"schedule/scode/:scode" resource' );
+note( '===========================================' );
 $base = 'schedule/scode';
 docu_check( $test, "$base/:scode" );
 
-# create testing schedule with scode == 'KOBOLD'
+note( "create testing schedule with scode == 'KOBOLD'" );
 $sid = create_testing_schedule( $test );
 $scode = 'KOBOLD';
 
-#
-# GET
-#
+note( 'GET' );
 $status = req( $test, 200, 'root', 'GET', "schedule/sid/$sid" );
 diag( Dumper $status ) unless $status->ok;
 #diag( Dumper $status );
@@ -706,16 +662,13 @@ is( $status->payload->{'remark'}, undef );
 is( $status->payload->{'schedule'}, '[{"high_dow":"FRI","high_time":"12:00","low_dow":"FRI","low_time":"08:00"},{"high_dow":"FRI","high_time":"16:30","low_dow":"FRI","low_time":"12:30"},{"high_dow":"SAT","high_time":"12:00","low_dow":"SAT","low_time":"08:00"},{"high_dow":"SAT","high_time":"16:30","low_dow":"SAT","low_time":"12:30"},{"high_dow":"SUN","high_time":"12:00","low_dow":"SUN","low_time":"08:00"},{"high_dow":"SUN","high_time":"16:30","low_dow":"SUN","low_time":"12:30"}]' );
 is( $status->payload->{'scode'}, $scode );
 
-#
-# POST
-#
+note( 'POST -> 405' );
 req( $test, 405, 'demo', 'POST', "$base/1" );
 req( $test, 405, 'root', 'POST', "$base/1" );
 
-#
-# PUT
-#
-# - add a remark to the schedule
+note( 'PUT' );
+
+note( 'add a remark to the schedule' );
 req( $test, 403, 'demo', 'PUT', "$base/$scode" );
 $status = req( $test, 200, 'root', 'PUT', "$base/$scode", '{ "remark" : "foobar" }' );
 is( $status->level, 'OK' );
@@ -725,23 +678,23 @@ ok( defined( $status->payload ) );
 ok( exists( $status->{'payload'}->{'remark'} ) );
 ok( defined( $status->{'payload'}->{'remark'} ) );
 is( $status->{'payload'}->{'remark'}, "foobar" );
-#
-# verify with GET
+
+note( 'verify with GET' );
 $status = req( $test, 200, 'root', 'GET', "$base/$scode" );
 is( $status->level, 'OK' );
 is( $status->code, 'DISPATCH_SCHEDULE_FOUND' );
 is( $status->payload->{'remark'}, 'foobar' );
-#
-# - disable the schedule in the wrong way
+
+note( 'disable the schedule in the wrong way' );
 dbi_err( $test, 500, 'root', 'PUT', "$base/$scode", '{ "pebble" : [1,2,3], "disabled":"hoogar" }',
     qr/invalid input syntax for type boolean/ );
-#
-# - disable the schedule in the right way
+
+note( 'disable the schedule in the right way' );
 $status = req( $test, 200, 'root', 'PUT', "$base/$scode", '{ "pebble" : [1,2,3], "disabled":true }' );
 is( $status->level, 'OK' );
 is( $status->code, 'DOCHAZKA_CUD_OK' );
-#
-# - change the scode
+
+note( 'change the scode' );
 req( $test, 403, 'demo', 'PUT', "$base/$scode" );
 $status = req( $test, 200, 'root', 'PUT', "$base/$scode", '{ "scode" : "bazblare" }' );
 is( $status->level, 'OK' );
@@ -751,17 +704,16 @@ ok( defined( $status->payload ) );
 ok( exists( $status->{'payload'}->{'scode'} ) );
 ok( defined( $status->{'payload'}->{'scode'} ) );
 is( $status->{'payload'}->{'scode'}, "bazblare" );
-#
-# verify with GET
+
+note( 'verify with GET' );
 $status = req( $test, 200, 'root', 'GET', "$base/bazblare" );
 is( $status->level, 'OK' );
 is( $status->code, 'DISPATCH_SCHEDULE_FOUND' );
 is( $status->payload->{'scode'}, 'bazblare' );
 
-#
-# DELETE
-#
-# - delete the testing schedule 
+note( 'DELETE' );
+
+note( 'delete the testing schedule' );
 $status = req( $test, 200, 'root', 'DELETE', "$base/bazblare" );
 is( $status->level, 'OK' );
 is( $status->code, 'DOCHAZKA_CUD_OK' );
