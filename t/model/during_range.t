@@ -138,7 +138,7 @@ is( $status->code, 'DOCHAZKA_CUD_OK', "mrsfu schedhistory record insert OK" );
 my $shid_of_mrsfu = $status->payload->{'shid'};
 ok( $shid_of_mrsfu > 0 );
 
-#===END_OF_SET_UP===
+note( '===END_OF_SET_UP===' );
 
 my $range;
 
@@ -350,7 +350,7 @@ is( $shobj->shid, undef );
 is( $shobj->remark, undef );
 
 
-#===BEGIN_OF_TEAR_DOWN===
+note( '===BEGIN_OF_TEAR_DOWN===' );
 
 $status = App::Dochazka::REST::Model::Privhistory->load_by_phid( $dbix_conn, $phid_of_mrfu );
 ok( $status->ok, "mrfu privhistory record loaded" );

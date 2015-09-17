@@ -54,17 +54,16 @@ if ( $status->not_ok ) {
     plan skip_all => "not configured or server not running";
 }
 
-
-# spawn two activity objects
+note( 'spawn two activity objects' );
 my $act = App::Dochazka::REST::Model::Activity->spawn;
 isa_ok( $act, 'App::Dochazka::REST::Model::Activity' );
 my $act2 = App::Dochazka::REST::Model::Activity->spawn;
 isa_ok( $act2, 'App::Dochazka::REST::Model::Activity' );
 
-# they are the same
+note( 'they are the same' );
 ok( $act->compare( $act2 ) );
 
-# set a property
+note( 'set a property' );
 my $a = "prdy vody";
 $act->remark( $a );
 $act2->remark( $a );
@@ -76,7 +75,7 @@ ok( $act2->compare( $act ) );
 $act2->remark( "jine fody" );
 ok( ! $act->compare( $act2 ) );  # different
 
-# reset the activities
+note( 'reset the activities' );
 $act->reset;
 $act2->reset;
 ok( $act->compare( $act2 ) );
@@ -85,8 +84,8 @@ foreach my $prop ( qw( aid code long_desc disabled ) ) {
     is( $act2->{$prop}, undef );
 }
 
-# test existence and viability of initial set of activities
-# this also conducts positive tests of load_by_code and load_by_aid
+note( 'test existence and viability of initial set of activities' );
+note( 'this also conducts positive tests of load_by_code and load_by_aid' );
 foreach my $actdef ( @{ $site->DOCHAZKA_ACTIVITY_DEFINITIONS } ) {
     my $status = App::Dochazka::REST::Model::Activity->load_by_code( $dbix_conn, $actdef->{code} );
     is( $status->code, 'DISPATCH_RECORDS_FOUND' ); 
@@ -103,7 +102,7 @@ foreach my $actdef ( @{ $site->DOCHAZKA_ACTIVITY_DEFINITIONS } ) {
     is_deeply( $act, $act2 );
 }
 
-# test get_all_activities function
+note( 'test get_all_activities function' );
 $status = get_all_activities( $dbix_conn );
 is( $status->level, 'OK' );
 is( $status->code, 'DISPATCH_RECORDS_FOUND' );
@@ -111,7 +110,7 @@ is( scalar( @{ $status->payload } ), scalar( @{ $site->DOCHAZKA_ACTIVITY_DEFINIT
 is( $status->{'count'}, scalar( @{ $site->DOCHAZKA_ACTIVITY_DEFINITIONS } ) );
 my $initial_noof_act = $status->{'count'};
 
-# test some bad parameters
+note( 'test some bad parameters' );
 like( exception { $act2->load_by_aid( $dbix_conn, undef ) }, 
       qr/not one of the allowed types/ );
 like( exception { $act2->load_by_code( $dbix_conn, undef ) }, 
@@ -121,14 +120,14 @@ like( exception { App::Dochazka::REST::Model::Activity->load_by_aid( $dbix_conn,
 like( exception { App::Dochazka::REST::Model::Activity->load_by_code( $dbix_conn, undef ) }, 
       qr/not one of the allowed types/ );
 
-# load non-existent activity
+note( 'load non-existent activity' );
 $status = App::Dochazka::REST::Model::Activity->load_by_code( $dbix_conn, 'orneryFooBarred' );
 is( $status->level, 'NOTICE' );
 is( $status->code, 'DISPATCH_NO_RECORDS_FOUND' );
 ok( ! exists( $status->{'payload'} ) );
 ok( ! defined( $status->payload ) );
 
-# load existent activity
+note( 'load existent activity' );
 $status = App::Dochazka::REST::Model::Activity->load_by_code( $dbix_conn, 'wOrK' );
 is( $status->level, 'OK' );
 is( $status->code, 'DISPATCH_RECORDS_FOUND' );
@@ -144,13 +143,13 @@ like ( exception { $work_aid = aid_by_code( $dbix_conn, ( 1..6 ) ); },
 
 is( aid_by_code( $dbix_conn, 'orneryFooBarred' ), undef, 'aid_by_code returns undef if code does not exist' );
 
-# insert an activity (success)
+note( 'insert an activity (success)' );
 my $bogus_act = App::Dochazka::REST::Model::Activity->spawn(
     code => 'boguS',
     long_desc => 'An activity',
     remark => 'ACTIVITY',
 );
-#diag( "About to insert bogus_act" );
+note( "About to insert bogus_act" );
 $status = $bogus_act->insert( $faux_context );
 if ( $status->not_ok ) {
     diag( Dumper $status );
@@ -164,20 +163,20 @@ is( $bogus_act->code, 'BOGUS' );
 is( $bogus_act->long_desc, "An activity" );
 is( $bogus_act->remark, 'ACTIVITY' );
 
-# try to insert the same activity again (fail with DOCHAZKA_DBI_ERR)
+note( 'try to insert the same activity again (fail with DOCHAZKA_DBI_ERR)' );
 $status = $bogus_act->insert( $faux_context );
 ok( $status->not_ok );
 is( $status->level, 'ERR' );
 is( $status->code, 'DOCHAZKA_DBI_ERR' );
 like( $status->text, qr/Key \(code\)\=\(BOGUS\) already exists/ );
 
-# get_all_activities -> now there is one more
+note( 'get_all_activities -> now there is one more' );
 $status = get_all_activities( $dbix_conn );
 is( $status->level, 'OK' );
 is( $status->code, 'DISPATCH_RECORDS_FOUND' );
 is( scalar( @{ $status->payload } ), ( $initial_noof_act + 1 ) );
 
-# update the activity (success)
+note( 'update the activity (success)' );
 $bogus_act->{code} = "bogosITYVille";
 $bogus_act->{long_desc} = "A bogus activity that doesn't belong here";
 $bogus_act->{remark} = "BOGUS ACTIVITY";
@@ -189,17 +188,19 @@ if ( $status->not_ok ) {
     BAIL_OUT(0);
 }
 is( $status->level, 'OK' );
-# test accessors
+
+note( 'test accessors' );
 is( $bogus_act->code, 'BOGOSITYVILLE' );
 is( $bogus_act->long_desc, "A bogus activity that doesn't belong here" );
 is( $bogus_act->remark, 'BOGUS ACTIVITY' );
 ok( $bogus_act->disabled );
-# update without affecting any records
+
+note( 'update without affecting any records' );
 $status = $bogus_act->update( $faux_context );
 is( $status->level, 'OK' );
 is( $status->code, 'DOCHAZKA_CUD_OK' );
 
-# load it and compare it
+note( 'load it and compare it' );
 $status = App::Dochazka::REST::Model::Activity->load_by_code( $dbix_conn, $bogus_act->code );
 is( $status->code, 'DISPATCH_RECORDS_FOUND' );
 my $ba2 = $status->payload;
@@ -213,14 +214,14 @@ my $code_of_bogus_act = $bogus_act->code;
 ok( aid_exists( $dbix_conn, $aid_of_bogus_act ) );
 ok( code_exists( $dbix_conn, $code_of_bogus_act ) );
 
-# bogus activity is disabled, so the number of activities goes down by one
-# - this also tests that get_all_activities defaults to NOT include disableds
+note( 'bogus activity is disabled, so the number of activities goes down by one' );
+note( '- this also tests that get_all_activities defaults to NOT include disableds' );
 $status = get_all_activities( $dbix_conn );
 is( $status->level, 'OK' );
 is( $status->code, 'DISPATCH_RECORDS_FOUND' );
 is( $status->{'count'}, $initial_noof_act );
 
-# but if we include disableds in the count, it is one higher
+note( 'but if we include disableds in the count, it is one higher' );
 $status = get_all_activities( $dbix_conn, disabled => 1 );
 is( $status->level, 'OK' );
 is( $status->code, 'DISPATCH_RECORDS_FOUND' );
@@ -228,7 +229,7 @@ is( $status->{'count'}, ( $initial_noof_act + 1 ) );
 # - and BOGOSITYVILLE is there
 ok( scalar( grep { $_->{'code'} eq 'BOGOSITYVILLE'; } @{ $status->payload } ) );
 
-# CLEANUP: delete the bogus activity
+note( 'CLEANUP: delete the bogus activity' );
 #diag( "About to delete bogus_act" );
 $status = $bogus_act->delete( $faux_context );
 if ( $status->not_ok ) {
@@ -240,18 +241,19 @@ is( $status->level, 'OK' );
 ok( ! aid_exists( $dbix_conn, $aid_of_bogus_act ) );
 ok( ! code_exists( $dbix_conn, $code_of_bogus_act ) );
 
-# attempt to load the bogus activity - no longer there
+note( 'attempt to load the bogus activity - no longer there' );
 $status = App::Dochazka::REST::Model::Activity->load_by_code( $dbix_conn, 'BOGUS' );
 is( $status->level, 'NOTICE' );
 is( $status->code, 'DISPATCH_NO_RECORDS_FOUND' );
 is( $status->{'count'}, 0 );
 
-# look for BOGOSITYVILLE
+note( 'look for BOGOSITYVILLE' );
 $status = get_all_activities( $dbix_conn, disabled => 1 );
 is( $status->level, 'OK' );
 is( $status->code, 'DISPATCH_RECORDS_FOUND' );
 is( $status->{'count'}, $initial_noof_act );
-# gone
+
+note( 'gone' );
 ok( ! scalar( grep { $_->{'code'} eq 'BOGOSITYVILLE'; } @{ $status->payload } ) );
 
 done_testing;

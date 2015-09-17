@@ -52,11 +52,8 @@ if ( $status->not_ok ) {
     plan skip_all => "not configured or server not running";
 }
 
-
-#
-# dispatch map enabling 'gen_...' functions to be called from within the loop
-# - these functions are imported automatically from App::Dochazka::REST::Test
-#
+note( "dispatch map enabling 'gen_...' functions to be called from within the loop" );
+note( '- these functions are imported automatically from App::Dochazka::REST::Test' );
 my %d_map = (
     'activity' => \&gen_activity,
     'employee' => \&gen_employee,
@@ -67,9 +64,7 @@ my %d_map = (
     'schedule' => \&gen_schedule,
 );
 
-#
-# the id map enabling the ID property/accessor to be referred to from within the loop
-#
+note( 'the id map enabling the ID property/accessor to be referred to from within the loop' );
 my %id_map = (
     'activity' => 'aid',
     'employee' => 'eid',
@@ -80,9 +75,9 @@ my %id_map = (
     'schedule' => 'sid',
 );
 
-#
-# the main testing loop
-#
+note( 'the main testing loop - note that only activity and employee' );
+note( 'are working because the gen_... functions for the others have' );
+note( 'yet to be implemented.' );
 foreach my $cl ( 
     'activity',
     'employee',
@@ -93,37 +88,37 @@ foreach my $cl (
 #    'schedule',
 ) {
 
-    #DEBUG
-    #diag( "Testing model class: $cl" );
-    #DEBUG
+    note( "Testing model class: $cl" );
 
-    # first, create a test object
+    note( 'first, create a test object' );
     my $testobj = $d_map{$cl}->( 'create' );
 
-    # second, create a pristine clone of that object to compare against
+    note( 'second, create a pristine clone of that object to compare against' );
     my $testclone = $testobj->clone;
 
-    # attempt to change ID to a different integer
+    note( 'attempt to change ID to a different integer' );
     ok( $testobj->{$id_map{$cl}} != 2397 );
     $testobj->{$id_map{$cl}} = 2397;
     is( $testobj->{$id_map{$cl}}, 2397 );
     my $status = $testobj->update( $faux_context );
     is( $status->level, 'OK' );
-    is( $testobj->{$id_map{$cl}}, 2397 ); # object not restored, even though no records were affected
-                           # in other words, the object is no longer in sync with the database
-                           # but this is our own fault for changing the ID
-    
-    # restore object to pristine state
+    is( $testobj->{$id_map{$cl}}, 2397 ); 
+    note( 'object not restored, even though no records were affected' );
+    note( 'in other words, the object is no longer in sync with the database' );
+    note( 'but this is our own fault for changing the ID' );
+    note( '---------------------------------------------' );
+    note( ' ' );
+    note( 'restore object to pristine state' );
     $testobj->{$id_map{$cl}} = $testclone->{$id_map{$cl}};
     is_deeply( $testobj, $testclone );
     
-    # retrieve test object from database and check that it didn't change
+    note( 'retrieve test object from database and check that it didn\'t change' );
     $status = $d_map{$cl}->( 'retrieve' );
     is_deeply( $testclone, $status->payload );
     
-    # attempt to change ID to a totally bogus value -- note that this cannot
-    # work because the update method plugs the id value into the WHERE clause
-    # of the SQL statement
+    note( 'attempt to change ID to a totally bogus value -- note that this cannot' );
+    note( 'work because the update method plugs the id value into the WHERE clause' );
+    note( 'of the SQL statement' );
     $testobj->{$id_map{$cl}} = '-153jjj*';
     is( $testobj->{$id_map{$cl}}, '-153jjj*' );
     $status = $testobj->update( $faux_context );
@@ -132,25 +127,25 @@ foreach my $cl (
     like( $status->text, qr/invalid input syntax for integer/ );
     is( $testobj->{$id_map{$cl}}, '-153jjj*' );   # EID is set wrong
     
-    # restore object to pristine state
+    note( 'restore object to pristine state' );
     $testobj->{$id_map{$cl}} = $testclone->{$id_map{$cl}};
     is_deeply( $testobj, $testclone );
     
-    # attempt to change ID to 'undef'
+    note( "attempt to change ID to 'undef'" );
     $testobj->{$id_map{$cl}} = undef;
     is( $testobj->{$id_map{$cl}}, undef );
     $status = $testobj->update( $faux_context );
     is( $status->level, 'ERR' );
     is( $status->code, 'DOCHAZKA_MALFORMED_400' );
     
-    # restore object to pristine state
+    note( 'restore object to pristine state' );
     $testobj->{$id_map{$cl}} = $testclone->{$id_map{$cl}};
     is_deeply( $testobj, $testclone );
     
-    # delete the database record
+    note( 'delete the database record' );
     $d_map{$cl}->( 'delete' );
 
-    # gone
+    note( 'gone' );
     $status = $d_map{$cl}->( 'retrieve' );
     is( $status->level, 'NOTICE' );
     is( $status->code, 'DISPATCH_NO_RECORDS_FOUND' );

@@ -403,17 +403,17 @@ is( $status->code, 'DOCHAZKA_CUD_OK' );
 #diag( "Batch 2: " . $status->payload . " deleted" );
 is( $status->payload, 116 );
 
-# 3. delete the privhistory record
+note( 'delete the privhistory record' );
 $status = $mrsched_ph->delete( $faux_context );
 is( $status->level, 'OK' );
 is( $status->code, 'DOCHAZKA_CUD_OK' );
 
-# 4. delete the schedhistory record
+note( 'delete the schedhistory record' );
 $status = $shr->delete( $faux_context );
 is( $status->level, 'OK' );
 is( $status->code, 'DOCHAZKA_CUD_OK' );
 
-# 5. delete the schedule
+note( 'delete the schedule' );
 $status = App::Dochazka::REST::Model::Schedule->load_by_sid( $dbix_conn, $test_sid );
 is( $status->level, 'OK' );
 is( $status->code, 'DISPATCH_RECORDS_FOUND' );
@@ -421,7 +421,7 @@ $status = $status->payload->delete( $faux_context );
 is( $status->level, 'OK' );
 is( $status->code, 'DOCHAZKA_CUD_OK' );
 
-# 6. delete Mr. Sched himself
+note( 'delete Mr. Sched himself' );
 is( noof( $dbix_conn, 'employees' ), 3 );
 $status = $emp->delete( $faux_context );
 ok( $status->ok );
