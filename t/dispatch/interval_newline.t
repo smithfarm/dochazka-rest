@@ -47,14 +47,14 @@ use Test::JSON;
 use Test::More;
 
 
-# initialize, connect to database, and set up a testing plan
+note( "initialize, connect to database, and set up a testing plan" );
 my $status = initialize_unit();
 if ( $status->not_ok ) {
     plan skip_all => "not configured or server not running";
 }
 my $app = $status->payload;
 
-# instantiate Plack::Test object
+note( "instantiate Plack::Test object");
 my $test = Plack::Test->create( $app );
 
 my $res;
