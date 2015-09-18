@@ -76,7 +76,6 @@ t/model/employee.t
 t/model/id.t
 t/model/interval_lock.t
 t/model/privhistory.t
-t/model/reset.t
 t/model/schedintvls.t
 t/model/schedule.t
 t/model/split_tsrange.t
