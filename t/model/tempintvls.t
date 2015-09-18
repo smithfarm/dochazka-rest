@@ -347,7 +347,7 @@ sub _vet_cleanup {
     is( $status->code, 'DOCHAZKA_CUD_OK' ); 
 }
 
-# CLEANUP
+note( 'CLEANUP' );
 isa_ok( $dbix_conn, 'DBIx::Connector' );
 $status = delete_intervals_by_eid_and_tsrange( $tio2->dbix_conn, $tio2->eid, $tio2->tsrange );
 is( $status->level, 'OK' );
