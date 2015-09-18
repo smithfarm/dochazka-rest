@@ -54,69 +54,69 @@ if ( $status->not_ok ) {
     plan skip_all => "not configured or server not running";
 }
 
-# get EID of root employee, the hard way, and sanity-test it
+note( 'get EID of root employee, the hard way, and sanity-test it' );
 my ( $eid_of_root ) = do_select_single( $dbix_conn, $site->DBINIT_SELECT_EID_OF, 'root' );
 is( $eid_of_root, $site->DOCHAZKA_EID_OF_ROOT );
 
-# get root's current privilege level, the hard way
+note( "get root's current privilege level, the hard way" );
 my ( $priv ) = do_select_single( $dbix_conn, "SELECT current_priv(?)", $eid_of_root );
 is( $priv, "admin", "root is admin" );
 
-# insert a new employee
+note( 'insert a new employee' );
 test_sql_success($dbix_conn, 1, <<SQL);
 INSERT INTO employees (nick) VALUES ('bubba')
 SQL
 
-# get bubba EID 
+note( 'get bubba EID' );
 my ( $eid_of_bubba ) = do_select_single( $dbix_conn, "SELECT eid FROM employees WHERE nick=?", 'bubba' );
 ok( $eid_of_bubba > 2 );
 
-# get bubba's current privilege level (will be 'passerby' because none defined yet)
+note( 'get bubba\'s current privilege level (none; defaults to \'passerby\')' );
 ( $priv ) = do_select_single( $dbix_conn, "SELECT current_priv(?)", $eid_of_bubba );
 is( $priv, "passerby", "bubba is a passerby" );
 
-# get priv level of non-existent employee (will be 'passerby')
+note( 'get priv level of non-existent employee (will be \'passerby\')' );
 ( $priv ) = do_select_single( $dbix_conn, "SELECT current_priv(?)", 0 );
 is( $priv, "passerby", "non-existent EID 0 is a passerby" );
 
-# get priv level of another non-existent employee (will be 'passerby')
+note( "get priv level of another non-existent employee (will be 'passerby')" );
 ( $priv ) = do_select_single( $dbix_conn, "SELECT current_priv(?)", 44 );
 is( $priv, "passerby", "non-existent EID 44 is a passerby" );
 
-# make bubba an admin, but not until the year 3000
+note( 'make bubba an admin, but not until the year 3000' );
 test_sql_success($dbix_conn, 1, <<SQL);
 INSERT INTO privhistory (eid, priv, effective) 
 VALUES ($eid_of_bubba, 'admin', '3000-01-01')
 SQL
 
-# test his current priv level - still passerby
+note( 'test his current priv level - still passerby' );
 ( $priv ) = do_select_single( $dbix_conn, "SELECT current_priv(?)", $eid_of_bubba );
 is( $priv, "passerby", "bubba is still a passerby" );
 
-# test his priv level at 2999-12-31 23:59:59
+note( 'test his priv level at 2999-12-31 23:59:59' );
 ( $priv ) = do_select_single( $dbix_conn, "SELECT priv_at_timestamp(?, ?)", $eid_of_bubba, '2999-12-31 23:59:59' );
 is( $priv, "passerby", "bubba still a passerby" );
 
-# test his priv level at 3001-06-30 14:34
+note( 'test his priv level at 3001-06-30 14:34' );
 ( $priv ) = do_select_single( $dbix_conn, "SELECT priv_at_timestamp(?, ?)", $eid_of_bubba, '3001-06-30 14:34' );
 is( $priv, "admin", "bubba finally made admin" );
 
-# attempt to delete his employee record -- FAIL
+note( 'attempt to delete his employee record -- FAIL' );
 test_sql_failure($dbix_conn, qr/violates foreign key constraint/, <<SQL);
 DELETE FROM employees WHERE eid=$eid_of_bubba
 SQL
 
-# attempt to change his EID -- FAIL
+note( 'attempt to change his EID -- FAIL' );
 test_sql_failure($dbix_conn, qr/employees\.eid field is immutable/, <<SQL);
 UPDATE employees SET eid=55 WHERE eid=$eid_of_bubba
 SQL
 
-# delete bubba privhistory
+note( 'delete bubba privhistory' );
 test_sql_success($dbix_conn, 1, <<SQL);
 DELETE FROM privhistory WHERE eid=$eid_of_bubba
 SQL
 
-# delete bubba employee
+note( 'delete bubba employee' );
 test_sql_success($dbix_conn, 1, <<SQL);
 DELETE FROM employees WHERE eid=$eid_of_bubba
 SQL
