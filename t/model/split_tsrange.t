@@ -29,6 +29,8 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 # ************************************************************************* 
+#
+# tests of the split_tsrange() frunction
 
 #!perl
 use 5.012;
@@ -169,7 +171,7 @@ foreach my $non_range ( @non_ranges ) {
     is( $status->code, 'DOCHAZKA_UNBOUNDED_TSRANGE' );
 }
 
-# attempt to split_tsrange bogus tsranges individually
+note( 'attempt to split_tsrange bogus tsranges individually' );
 my $bogus = [
         "[)",
         "(2014-07-34 09:00, 2014-07-14 17:05)",
