@@ -57,12 +57,12 @@ if ( $status->not_ok ) {
     plan skip_all => "not configured or server not running";
 }
 
-# spawn a schedintvls object
+note( 'spawn a schedintvls object' );
 my $sto = App::Dochazka::REST::Model::Schedintvls->spawn;
 isa_ok( $sto, 'App::Dochazka::REST::Model::Schedintvls' );
 ok( $sto->ssid > 0 );
 
-# attempt to insert bogus intervals individually
+note( 'attempt to insert bogus intervals individually' );
 my $bogus_intvls = [
         [ "[)" ],
         [ "[,)" ],
@@ -81,10 +81,10 @@ map {
         is( $status->level, 'ERR' ); 
     } @$bogus_intvls;
 
-# check that no records made it into the database
+note( 'check that no records made it into the database' );
 is( noof( $dbix_conn, 'schedintvls' ), 0 );
 
-# attempt to slip in a bogus interval by hiding it among normal intervals
+note( 'attempt to slip in a bogus interval by hiding it among normal intervals' );
 $bogus_intvls = [
         "[)",
         "[,)",
@@ -112,9 +112,7 @@ map {
         is( noof( $dbix_conn, 'schedintvls' ), 0 );
      } @$bogus_intvls;
 
-#
-# this set of intervals is fine
-#
+note( 'this set of intervals is fine' );
 $sto->{intvls} = [
     "[2014-07-14 10:00, 2014-07-14 10:15)",
     "[2014-07-14 10:15, 2014-07-14 10:30)",
@@ -129,9 +127,7 @@ $status = $sto->delete( $dbix_conn );
 is( $status->level, 'OK' );
 ok( $status->code, 'DOCHAZKA_CUD_OK' );
 
-#
-# oh, but these are not so good
-#
+note( 'these are not so good' );
 $bogus_intvls = [
     "[2014-07-21 00:00, 2014-07-21 10:05)",
     "[2014-07-21 00:00, 2014-07-21 10:10)",
@@ -154,7 +150,5 @@ map {
         #diag( $status->code . ' ' . $status->text );
         is( noof( $dbix_conn, 'schedintvls' ), 0 );
      } @$bogus_intvls;
-
-# CLEANUP: none as this unit test doesn't change the database
 
 done_testing;
