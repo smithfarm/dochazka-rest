@@ -54,25 +54,18 @@ if ( $status->not_ok ) {
 my @acode_to_delete;
 my @scode_to_delete;
 
-#======================
 note( 'insert a row' );
-#======================
-
 test_sql_success( $dbix_conn, 1, <<"SQL" );
 INSERT INTO activities (code) VALUES ('WADA_DADA')
 SQL
 push @acode_to_delete, 'WADA_DADA';
-
 
 test_sql_success( $dbix_conn, 1, <<"SQL" );
 INSERT INTO schedules (scode, schedule) VALUES (999, 'NORMALCY IS BAD, BE DIFFERENT')
 SQL
 push @scode_to_delete, '999';
 
-#=====================
 note( 'select it back, noting that disable is set to zero' );
-#=====================
-
 my ( $aid, $code, $disabled ) = do_select_single( $dbix_conn, 
     "SELECT aid, code, disabled FROM activities WHERE code='WADA_DADA'" );
 is( $code, 'WADA_DADA' );
@@ -83,10 +76,7 @@ my ( $scode, $sdisabled ) = do_select_single( $dbix_conn,
 is( $scode, 999 );
 is( $sdisabled, 0 );
 
-#======================
 note( 'failed attempt to update disabled to NULL' );
-#======================
-
 test_sql_success( $dbix_conn, 1, <<"SQL" );
 UPDATE activities SET disabled=NULL WHERE aid=$aid
 SQL
@@ -95,10 +85,7 @@ test_sql_success( $dbix_conn, 1, <<"SQL" );
 UPDATE schedules SET disabled=NULL WHERE scode='$scode'
 SQL
 
-#=====================
-# select it back, noting that disable is set to a false value
-# (and not undef)
-#=====================
+note( 'select it back, noting that disable is set to a false value (and not undef)' );
 ( $aid, $code, $disabled ) = do_select_single( $dbix_conn, 
     "SELECT aid, code, disabled FROM activities WHERE code='WADA_DADA'" );
 is( $code, 'WADA_DADA' );
@@ -109,7 +96,7 @@ is( $disabled, 0 );
 is( $scode, 999 );
 is( $disabled, 0 );
 
-# cleanup
+note( 'cleanup' );
 foreach my $acode ( @acode_to_delete ) {
     test_sql_success( $dbix_conn, 1, <<"SQL" );
 DELETE FROM activities WHERE code='$acode';
