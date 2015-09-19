@@ -54,10 +54,7 @@ if ( $status->not_ok ) {
 
 my $today_ts = $today . " 00:00:00";
 
-#======================
-# employees.eid field is immutable
-#======================
-
+note( 'employees.eid field is immutable' );
 # get EID of demo
 my ( $eid_of_demo ) = do_select_single( $dbix_conn, "SELECT eid FROM employees WHERE nick = ?", 'demo' );
 #diag( "Found EID of demo $eid_of_demo" ); 
@@ -71,48 +68,43 @@ test_sql_failure( $dbix_conn, qr/employees\.eid field is immutable/, <<"SQL" );
 UPDATE employees SET eid = $new_eid WHERE eid = $eid_of_demo
 SQL
 
-
-#======================
-# schedules.sid field is immutable
-# schedhistory.shid field is immutable
-#======================
-
-# insert a schedule
+note( 'schedules.sid and schedhistory.shid fields are immutable' );
+note( '- insert a schedule' );
 test_sql_success( $dbix_conn, 1, <<"SQL" );
 INSERT INTO schedules (schedule, disabled) VALUES ( 'test schedule', 'f' )
 SQL
 
-# get the sid
+note( '- get the sid' );
 my ( $sid ) = do_select_single( $dbix_conn, "SELECT sid FROM schedules WHERE schedule = ?", 'test schedule' );
 ok( $sid >= 1 ); 
 
-# attempt to change the sid
+note( '- attempt to change the sid' );
 my $dast_sid = 3400;
 ok( $dast_sid != $sid );
 test_sql_failure( $dbix_conn, qr/schedules\.sid field is immutable/, <<"SQL" );
 UPDATE schedules SET sid = $dast_sid WHERE sid = $sid
 SQL
 
-# insert a schedule history row
+note( '- insert a schedule history row' );
 test_sql_success( $dbix_conn, 1, <<"SQL");
 INSERT INTO schedhistory ( eid, sid, effective ) VALUES ( $eid_of_demo, $sid, '$today_ts' )
 SQL
 
-# get the shid
+note( '- get the shid' );
 my ( $shid ) = do_select_single( $dbix_conn,
     "SELECT shid FROM schedhistory WHERE eid = ? AND sid = ? AND effective = ?",
     $eid_of_demo, $sid, $today_ts,
 );
 ok( $shid >= 1 ); 
 
-# dastardly update
+note( '- dastardly update' );
 my $dast_shid = 3400;
 ok( $dast_shid != $shid );
 test_sql_failure( $dbix_conn, qr/schedhistory\.shid field is immutable/, <<"SQL" );
 UPDATE schedhistory SET shid=$dast_shid WHERE shid=$shid
 SQL
 
-# delete the testing rows
+note( '- delete the testing rows' );
 test_sql_success( $dbix_conn, 1, <<"SQL" );
 DELETE FROM schedhistory WHERE shid=$shid
 SQL
@@ -120,53 +112,44 @@ test_sql_success( $dbix_conn, 1, <<"SQL" );
 DELETE FROM schedules WHERE sid=$sid
 SQL
 
-
-#======================
-# privhistory.phid field is immutable
-#======================
-
-# insert a testing privhistory row
+note( 'privhistory.phid field is immutable' );
+note( '- insert a testing privhistory row' );
 test_sql_success( $dbix_conn, 1, <<"SQL" );
 INSERT INTO privhistory (eid, priv, effective) VALUES ($eid_of_demo, 'admin', '$today_ts');
 SQL
 
-# get the phid
+note( '- get the phid' );
 my ( $phid ) = do_select_single( $dbix_conn, 
     "SELECT phid FROM privhistory WHERE eid = ? AND priv = ? AND effective = ?",
     $eid_of_demo, 'admin', $today_ts,
 );
 ok( $phid >= 1 ); 
 
-# attempt dastardly update
+note( '- attempt dastardly update' );
 my $dast_phid = 3400;
 ok( $dast_phid != $phid );
 test_sql_failure( $dbix_conn, qr/privhistory\.phid field is immutable/, <<"SQL" );
 UPDATE privhistory SET phid=$dast_phid WHERE phid=$phid
 SQL
 
-# delete testing row
+note( '- delete testing row' );
 test_sql_success( $dbix_conn, 1, <<"SQL" );
 DELETE FROM privhistory WHERE phid=$phid
 SQL
 
-
-#======================
-# activities.aid field is immutable
-#======================
-
-# get aid of 'WORK'
+note( 'activities.aid field is immutable' );
+note( "get aid of 'WORK' activity");
 my ( $aid ) = do_select_single( $dbix_conn,
     "SELECT aid FROM activities WHERE code = ?", 'WORK'
 );
 ok( $aid >= 1 ); 
 
-# attempt dastardly update
+note( '- attempt dastardly update' );
 my $dast_aid = 3400;
 ok( $dast_aid != $aid );
 test_sql_failure( $dbix_conn, qr/activities\.aid field is immutable/, <<"SQL" );
 UPDATE activities SET aid=$dast_aid WHERE aid=$aid
 SQL
-
 
 ##======================
 ## intervals.iid field is immutable
@@ -200,16 +183,13 @@ SQL
 #SQL
 #
 
-#======================
-# locks.lid field is immutable
-#======================
-
-# insert a testing locks row
+note( 'locks.lid field is immutable' );
+note( '- insert a testing locks row' );
 test_sql_success( $dbix_conn, 1, <<"SQL" );
 INSERT INTO locks (eid, intvl) VALUES ($eid_of_demo, '[ $today 00:00, $today 24:00 )');
 SQL
 
-# get the lid
+note( '- get the lid' );
 my ( $count ) = do_select_single( $dbix_conn,
     "SELECT count(*) FROM locks WHERE eid = ? AND intvl = ?",
     $eid_of_demo, "[ $today 00:00, $today 24:00)",
@@ -221,18 +201,16 @@ my ( $lid ) = do_select_single( $dbix_conn,
 );
 ok( $lid >= 1 ); 
 
-# attempt dastardly update
+note( '- attempt dastardly update' );
 my $dast_lid = 3400;
 ok( $dast_lid != $lid );
 test_sql_failure( $dbix_conn, qr/locks\.lid field is immutable/, <<"SQL" );
 UPDATE locks SET lid=$dast_lid WHERE lid=$lid
 SQL
 
-# delete testing row
+note( '- delete testing row' );
 test_sql_success( $dbix_conn, 1, <<"SQL" );
 DELETE FROM locks WHERE lid=$lid
 SQL
 
-
-# 
 done_testing;
