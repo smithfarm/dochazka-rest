@@ -218,9 +218,6 @@ Takes a C<DBIx::Connector> object and a tsrange.  Checks the tsrange for sanity
 and populates the C<tsrange>, C<lower_canon>, C<lower_ymd>, C<upper_canon>,
 C<upper_ymd> attributes. Returns a status object.
 
-The algorithm for generating fillup intervals takes lower and upper date 
-bounds - it does not know about timestamps or tsranges
-
 =cut
 
 sub _vet_tsrange {
@@ -439,24 +436,24 @@ sub fillup {
 
             # execute SQL_TEMPINTVLS_INSERT for each fillup interval
             my $d = $self->{'lower_canon'};
-            my $canon_upper = Date_to_Days( @{ $self->{upper_ymd} } );
+            my $days_upper = Date_to_Days( @{ $self->{upper_ymd} } );
             WHILE_LOOP: while ( $d ne get_tomorrow( $self->{'upper_canon'} ) ) {
                 if ( _is_holiday( $d, $holidays, $include_holidays ) ) {
                     $d = get_tomorrow( $d );
                     next WHILE_LOOP;
                 }
                 my ( $ly, $lm, $ld ) = canon_to_ymd( $d );
-                my $canon_lower = Date_to_Days( $ly, $lm, $ld );
+                my $days_lower = Date_to_Days( $ly, $lm, $ld );
                 my $ndow = Day_of_Week( $ly, $lm, $ld );
 
-                # get schedule entries starting on that DOW, 
+                # get schedule entries starting on that DOW
                 foreach my $entry ( @{ $rest_sched_hash_lower->{ $ndow } } ) {
-                    my ( $canon_high_dow, $hy, $hm, $hd );
-                    # get canonical representation of "high_dow"
-                    $canon_high_dow = $canon_lower + 
+                    my ( $days_high_dow, $hy, $hm, $hd );
+                    # convert "high_dow" into a number of days
+                    $days_high_dow = $days_lower + 
                         ( $dow_to_num{ $entry->{'high_dow'} } - $dow_to_num{ $entry->{'low_dow'} } );
-                    if ( $canon_high_dow <= $canon_upper ) {
-                        ( $hy, $hm, $hd ) = Days_to_Date( $canon_high_dow );
+                    if ( $days_high_dow <= $days_upper ) {
+                        ( $hy, $hm, $hd ) = Days_to_Date( $days_high_dow );
                         my $payl = "[ " . ymd_to_canon( $ly,$lm,$ld ) . " " . $entry->{'low_time'} . 
                                    ", " . ymd_to_canon( $hy,$hm,$hd ) . " ". $entry->{'high_time'} . " )";
                         $sth->bind_param( 2, $payl );
