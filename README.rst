@@ -23,7 +23,11 @@ Changes file entry: ::
 
     $ sh prerelease.sh
 
-Third, optionally run the release script to push the release to OBS 
+Third, push the changes to GitHub: ::
+
+    $ git push --follow-tags
+
+Fourth, optionally run the release script to push the release to OBS 
 and CPAN: ::
 
     $ sh release.sh
