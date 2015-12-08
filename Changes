@@ -3238,3 +3238,11 @@ SPLIT OFF App::MREST into separate distribution
 - Model/Tempintvls.pm: implement _is_holiday() correctly
 - config/REST_SiteConfig.pm: override MREST_APPNAME
 
+0.499  2016-12-08 15:42 CEST
+- README.rst: start documenting release workflow
+- README.md: rename to README.rst
+- README: remove deprecated README file
+- Model/Tempintvls.pm: make variable names less confusing
+- t/: cleanup
+- LICENSE: work continues in 2015
+
