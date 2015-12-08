@@ -17,12 +17,14 @@ First, make sure you have :code:`perl-reversion` and :code:`cpan-uploader`
 installed. In openSUSE, this means installing the :code:`perl-Perl-Version`
 and :code:`perl-CPAN-Uploader` packages.
 
-Second, run the :code:`prerelease.sh` script to bump the version number:
+Second, run the :code:`prerelease.sh` script to bump the version number,
+commit all outstanding modifications, add a git tag, and append draft
+Changes file entry:
 
     $ sh prerelease.sh
 
-Now check the git status:
+Third, optionally run the release script to push the release to OBS 
+and CPAN:
 
-    $ git status
-    $ git log --oneline
+    $ sh release.sh
 
