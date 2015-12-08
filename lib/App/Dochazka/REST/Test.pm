@@ -648,7 +648,7 @@ sub delete_testing_schedule {
 
 
 #
-# functions to perform class-specific 'create' and 'retrieve' actions
+# functions to perform class-specific 'create', 'retrieve', 'delete', etc. actions
 #
 
 sub gen_activity {
