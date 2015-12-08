@@ -759,7 +759,7 @@ sub _is_holiday {
     my ( $datum, $holidays, $include_holidays ) = @_;
     return exists( $holidays->{ $datum } ) unless $include_holidays;
     return 0;
-}    
+}
 
 
 =head1 AUTHOR
