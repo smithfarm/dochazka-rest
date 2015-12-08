@@ -3246,3 +3246,7 @@ SPLIT OFF App::MREST into separate distribution
 - t/: cleanup
 - LICENSE: work continues in 2015
 
+0.500 2015-24-08 16:24 CET
+- prerelease.sh: automatically update Changes file, add tag
+- README.rst: describe the new release workflow in more detail
+
