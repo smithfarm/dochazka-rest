@@ -19,12 +19,12 @@ and :code:`perl-CPAN-Uploader` packages.
 
 Second, run the :code:`prerelease.sh` script to bump the version number,
 commit all outstanding modifications, add a git tag, and append draft
-Changes file entry:
+Changes file entry: ::
 
     $ sh prerelease.sh
 
 Third, optionally run the release script to push the release to OBS 
-and CPAN:
+and CPAN: ::
 
     $ sh release.sh
 
