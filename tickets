@@ -1,5 +1,12 @@
-docker-test.sh should take an optional argument - the name of
-a git branch to check out.
+docker-test.sh should take an optional argument - the name of a git branch
+to check out.
 
-docker/Dockerfile should use ENTRYPOINT to enable us to specify
-name of git branch as an argument to "docker build"
+docker/Dockerfile should use ENTRYPOINT to enable us to specify name of git
+branch as an argument to "docker build"
+
+remove postgresql-server dependency from perl-App-Dochazka-REST
+
+open up port 5432 in postmaster.conf on dochazka-devel.suse.cz (also check
+pg_hba.conf and firewall) so we can connect to the "production" database
+remotely by changing the value of DOCHAZKA_DBHOST
+
