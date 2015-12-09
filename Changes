@@ -3250,3 +3250,9 @@ SPLIT OFF App::MREST into separate distribution
 - prerelease.sh: automatically update Changes file, add tag
 - README.rst: describe the new release workflow in more detail
 
+0.501 2015-40-09 14:40 CET
+- README.rst: fix literal code blocks
+- README.rst: add reminder to push using --follow-tags
+- implement Dockerized testing environment
+- docker-test.sh: bootstrap script for Dockerized testing env
+
