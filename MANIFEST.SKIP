@@ -1,4 +1,3 @@
-
 #!start included /usr/share/perl/5.14/ExtUtils/MANIFEST.SKIP
 # Avoid version control files.
 \bRCS\b
@@ -75,3 +74,7 @@
 \bCPAN_NAME$
 release.sh$
 \bticket$
+
+# Avoid docker stuff
+\bdocker-test.sh$
+\bdocker/

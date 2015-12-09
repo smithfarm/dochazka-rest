@@ -20,10 +20,6 @@ config/sql/schedhistory_Config.pm
 config/sql/schedintvls_Config.pm
 config/sql/schedule_Config.pm
 config/sql/tempintvls_Config.pm
-docker-test.sh
-docker/Dockerfile
-docker/REST_SiteConfig.pm
-docker/sudoers
 lib/App/Dochazka/REST.pm
 lib/App/Dochazka/REST/ACL.pm
 lib/App/Dochazka/REST/Auth.pm
