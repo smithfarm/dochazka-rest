@@ -10,6 +10,19 @@ Documentation
 
 http://metacpan.org/pod/App::Dochazka::REST
 
+Docker container
+================
+
+This release includes a :code:`Dockerfile` that can be used to create
+a Dockerized testing environment. Cheatsheet follows: ::
+
+    $ cd docker/
+    $ docker build -t dochazka-rest .
+    $ docker run -it dochazka-rest
+
+This should start the container and give you a bash prompt with PostgreSQL
+running in the background.
+
 Release management
 ==================
 
