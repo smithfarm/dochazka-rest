@@ -15,6 +15,7 @@ docker run \
     postgres:9.3
 docker run \
     --user smithfarm \
+    -t \
     --name dr \
     --link dr-postgres:postgres \
     -h dr \

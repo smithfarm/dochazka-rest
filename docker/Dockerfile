@@ -7,6 +7,7 @@ RUN zypper --no-gpg-checks --non-interactive ref
 
 # install packages
 RUN zypper --no-gpg-checks --non-interactive install \
+    aaa_base-extras \
     git \
     iproute2 \ 
     net-tools \
