@@ -5,7 +5,7 @@ MAINTAINER Nathan Cutler <ncutler@suse.com>
 RUN zypper --no-gpg-checks --non-interactive addrepo http://download.opensuse.org/repositories/home:smithfarm/openSUSE_13.2/home:smithfarm.repo
 RUN zypper --no-gpg-checks --non-interactive ref
 
-# install packages
+# install "general utility" packages 
 RUN zypper --no-gpg-checks --non-interactive install \
     aaa_base-extras \
     git \
@@ -13,18 +13,25 @@ RUN zypper --no-gpg-checks --non-interactive install \
     net-tools \
     sudo \
     timezone \
-    vim \
+    vim
+
+# install App::Dochazka::REST dependencies
+RUN zypper --no-gpg-checks --non-interactive install \
+    perl-App-CELL \
+    perl-App-Dochazka-Common \
+    perl-Authen-Passphrase \
+    perl-Date-Holidays-CZ \
+    perl-DBD-Pg \
+    perl-DBIx-Connector \
+    perl-HTTP-Message \
+    perl-Plack-Middleware-Session \
+    perl-Plack \
     perl-Test-JSON \
     perl-Test-Fatal \
-    perl-Module-Build
-
-# install RPM version of App::Dochazka::REST to bring in runtime dependencies
-RUN zypper --no-gpg-checks --non-interactive install \
-    perl-App-Dochazka-REST
-
-# remove RPM version of App::Dochazka::REST because we will install from source later
-RUN zypper --no-gpg-checks --non-interactive remove \
-    perl-App-Dochazka-REST
+    perl-Module-Build \
+    perl-Web-Machine \
+    perl-Web-MREST \
+    perl-Web-MREST-CLI
 
 # add smithfarm user
 RUN useradd -d /home/smithfarm -m -s /bin/bash smithfarm
