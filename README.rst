@@ -18,10 +18,30 @@ a Dockerized testing environment. Cheatsheet follows: ::
 
     $ cd docker/
     $ docker build -t dochazka-rest .
-    $ docker run -it dochazka-rest
 
-This should start the container and give you a bash prompt with PostgreSQL
-running in the background.
+This image, tagged :code:`dochazka-rest`, is designed to work with the 
+`official PostgreSQL Docker images`_. 
+
+.. _`official PostgreSQL Docker images`: https://hub.docker.com/_/postgres/
+
+A script, :code:`docker-test.sh`, is provided in the top-level directory
+to make it easier to run both images and link them together properly: :: 
+
+    $ ./docker-test.sh
+    f4d9677dd59e23527122a4f38c662b4b8ea6bb49a3921a018e7b70dfc7c25c1e
+    51e839db7d66fe5c90edc73e850fe85c35dca5401bd502277d6575fcbbea9f4d
+    $
+
+At this point, :code:`docker ps` should show two containers:
+:code:`dr-postgres` and :code:`dr`. The latter contains the Dockerized
+testing environment. To gain access to it, run this command: ::
+
+    $ docker exec -it dr bash
+    smithfarm@dr:~/dochazka-rest>
+
+At this point, you should be able run the test suite: ::
+
+    smithfarm@dr:~/dochazka-rest> prove -lr t
 
 Release management
 ==================

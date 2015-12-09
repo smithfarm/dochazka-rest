@@ -1,27 +1,50 @@
 FROM opensuse:13.2
 MAINTAINER Nathan Cutler <ncutler@suse.com>
 
-# first, install dependencies
+# configure repo
 RUN zypper --no-gpg-checks --non-interactive addrepo http://download.opensuse.org/repositories/home:smithfarm/openSUSE_13.2/home:smithfarm.repo
 RUN zypper --no-gpg-checks --non-interactive ref
-RUN zypper --no-gpg-checks --non-interactive install perl-App-Dochazka-REST
-RUN zypper --no-gpg-checks --non-interactive install git
-RUN zypper --no-gpg-checks --non-interactive install vim
-RUN zypper --no-gpg-checks --non-interactive remove perl-App-Dochazka-REST
 
-# postresql setup
-RUN su - postgres -c '/usr/bin/initdb --locale=en_US.UTF-8 --auth="ident" /var/lib/pgsql/data &> initlog'
-RUN install -d -o postgres -g postgres -m 700 /var/lib/pgsql/data
-COPY bootstrap.sh /tmp/bootstrap.sh
-RUN install -m 755 /tmp/bootstrap.sh /root/bootstrap.sh
-COPY change_superuser_pwd.sh /tmp/change_superuser_pwd.sh
-RUN install -o postgres -g postgres -m 755 /tmp/change_superuser_pwd.sh /var/lib/pgsql/change_superuser_pwd.sh
-RUN su - postgres -c '/var/lib/pgsql/change_superuser_pwd.sh'
-RUN su - postgres -c "sed -i 's/peer/password/g' /var/lib/pgsql/data/pg_hba.conf"
-CMD /root/bootstrap.sh
-#CMD su - postgres -c '/usr/lib/postgresql93/bin/pg_ctl start -s -w -D /var/lib/pgsql/data -l /var/lib/pgsql/data/postmaster.log -o ""'
-#CMD su - postgres -c '/usr/bin/postgres -D /var/lib/pgsql/data'
-#
-# clone App::Dochazka::REST source code repository to /root
-#WORKDIR /root
-#RUN git clone git://github.com/smithfarm/dochazka-rest
+# install packages
+RUN zypper --no-gpg-checks --non-interactive install \
+    git \
+    iproute2 \ 
+    net-tools \
+    sudo \
+    timezone \
+    vim \
+    perl-Test-JSON \
+    perl-Test-Fatal \
+    perl-Module-Build
+
+# install RPM version of App::Dochazka::REST to bring in runtime dependencies
+RUN zypper --no-gpg-checks --non-interactive install \
+    perl-App-Dochazka-REST
+
+# remove RPM version of App::Dochazka::REST because we will install from source later
+RUN zypper --no-gpg-checks --non-interactive remove \
+    perl-App-Dochazka-REST
+
+# add smithfarm user
+RUN useradd -d /home/smithfarm -m -s /bin/bash smithfarm
+COPY sudoers /tmp/sudoers
+RUN install -o root -g root -m 440 /tmp/sudoers /etc/sudoers
+
+# clone repo
+WORKDIR /home/smithfarm
+RUN su - smithfarm -c 'git clone git://github.com/smithfarm/dochazka-rest'
+WORKDIR /home/smithfarm/dochazka-rest
+RUN perl Build.PL
+RUN ./Build
+RUN ./Build install
+
+# install App::Dochazka::REST site configuration file
+COPY REST_SiteConfig.pm /tmp/REST_SiteConfig.pm
+RUN install -d -o root -g root -m 755 /etc/dochazka-rest
+RUN install -o root -g root -m 644 /tmp/REST_SiteConfig.pm /etc/dochazka-rest/REST_SiteConfig.pm
+
+# set the timezone
+RUN ln -sf /usr/share/zoneinfo/Europe/Prague /etc/localtime
+ENV PGTZ Europe/Prague
+
+CMD sleep infinity
