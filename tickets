@@ -1,0 +1,5 @@
+docker-test.sh should take an optional argument - the name of
+a git branch to check out.
+
+docker/Dockerfile should use ENTRYPOINT to enable us to specify
+name of git branch as an argument to "docker build"
