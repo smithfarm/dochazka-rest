@@ -38,14 +38,6 @@ RUN useradd -d /home/smithfarm -m -s /bin/bash smithfarm
 COPY sudoers /tmp/sudoers
 RUN install -o root -g root -m 440 /tmp/sudoers /etc/sudoers
 
-# clone repo
-WORKDIR /home/smithfarm
-RUN su - smithfarm -c 'git clone git://github.com/smithfarm/dochazka-rest'
-WORKDIR /home/smithfarm/dochazka-rest
-RUN perl Build.PL
-RUN ./Build
-RUN ./Build install
-
 # install App::Dochazka::REST site configuration file
 COPY REST_SiteConfig.pm /tmp/REST_SiteConfig.pm
 RUN install -d -o root -g root -m 755 /etc/dochazka-rest
@@ -54,5 +46,13 @@ RUN install -o root -g root -m 644 /tmp/REST_SiteConfig.pm /etc/dochazka-rest/RE
 # set the timezone
 RUN ln -sf /usr/share/zoneinfo/Europe/Prague /etc/localtime
 ENV PGTZ Europe/Prague
+
+# clone repo
+WORKDIR /home/smithfarm
+RUN su - smithfarm -c 'git clone git://github.com/smithfarm/dochazka-rest'
+WORKDIR /home/smithfarm/dochazka-rest
+RUN perl Build.PL
+RUN ./Build
+RUN ./Build install
 
 CMD sleep infinity
