@@ -10,17 +10,16 @@ Documentation
 
 http://metacpan.org/pod/App::Dochazka::REST
 
-Docker container
-================
+Dockerized testing environment
+==============================
 
-This release includes a :code:`Dockerfile` that can be used to create
-a Dockerized testing environment. Cheatsheet follows: ::
+The git repo includes a :code:`Dockerfile` that can be used to create
+a Dockerized testing environment: ::
 
-    $ cd docker/
-    $ docker build -t dochazka-rest .
+    $ docker build -t dochazka-rest docker/
 
-This image, tagged :code:`dochazka-rest`, is designed to work with the 
-`official PostgreSQL Docker images`_. 
+The resulting image, tagged :code:`dochazka-rest`, is designed to work with
+the `official PostgreSQL Docker images`_. 
 
 .. _`official PostgreSQL Docker images`: https://hub.docker.com/_/postgres/
 
@@ -32,9 +31,11 @@ to make it easier to run both images and link them together properly: ::
     51e839db7d66fe5c90edc73e850fe85c35dca5401bd502277d6575fcbbea9f4d
     $
 
-At this point, :code:`docker ps` should show two containers:
-:code:`dr-postgres` and :code:`dr`. The latter contains the Dockerized
-testing environment. To gain access to it, run this command: ::
+The :code:`docker-test.sh` spawns two Docker containers,
+:code:`dr-postgres` and :code:`dr`, and writes their hashes to stdout.
+These two containers should now be running (use :code:`docker ps` to
+confirm). The Dockerized testing environment is in the container
+:code:`dr`. To gain access to it, run this command: ::
 
     $ docker exec -it dr bash
     smithfarm@dr:~/dochazka-rest>
