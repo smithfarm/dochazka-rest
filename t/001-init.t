@@ -62,6 +62,9 @@ if ( $status->not_ok ) {
     plan skip_all => "Not configured. Please run the test suite manually after initial site configuration";
 }
 
+note( 'DOCHAZKA_TIMEZONE must be set' );
+is( $site->DOCHAZKA_TIMEZONE, 'Europe/Prague' );
+
 note( 'reset the database to "factory state"' ); 
 # * * * WARNING: THIS WIPES THE DATABASE * * *
 # * * * ALL DATA IN IT WILL BE LOST      * * *
