@@ -82,7 +82,7 @@ This module provides helper code for unit tests.
 
 use Exporter qw( import );
 our @EXPORT = qw( 
-    initialize_unit $faux_context
+    initialize_regression_test $faux_context
     req dbi_err docu_check 
     create_testing_employee create_active_employee create_inactive_employee
     delete_testing_employee delete_employee_by_nick
@@ -120,14 +120,23 @@ my %methods = (
 =cut
 
 
-=head2 initialize_unit
+=head2 initialize_regression_test
 
-Perform the boilerplate tasks that have to be done at the beginning of every unit
-that accesses the REST server and/or the database.
+Perform the boilerplate tasks that have to be done at the beginning of every
+test file that communicates with the Web::MREST server and/or the PostgreSQL
+database. Since both Web::MREST and PostgreSQL are external resources,
+tests that make use of them are more than mere unit tests
+
+While some test files do not need *all* of these initialization steps,
+there is no harm in running them.
+
+The t/unit/ subdirectory is reserved for test files that need *none* of
+these initialization steps. Having them in a separate subdirectory enables
+them to be run separately.
 
 =cut
 
-sub initialize_unit {
+sub initialize_regression_test {
 
     require App::Dochazka::REST;
 
@@ -135,7 +144,7 @@ sub initialize_unit {
         distro => 'App-Dochazka-REST', 
         sitedir => '/etc/dochazka-rest', 
     );
-    return $status unless $status->ok;
+    plan skip_all => "Web::MREST::init failed: " . $status->text unless $status->ok;
 
     note( "Set log level" );
     $log->init( 
@@ -161,13 +170,18 @@ sub initialize_unit {
     $faux_context = { 'dbix_conn' => $dbix_conn, 'current' => { 'eid' => 1 } };
     $meta->set( 'META_DOCHAZKA_UNIT_TESTING' => 1 );
 
-    # add Web::Machine object to payload
-    $status->payload( Web::Machine->new( resource => 'App::Dochazka::REST::Dispatch', )->to_app );
+    note( "instantiate Web::Machine object for this application" );
+    my $app = Web::Machine->new( resource => 'App::Dochazka::REST::Dispatch', )->to_app;
+
+    note( "A PSGI application is a Perl code reference. It takes exactly " .
+    "one argument, the environment and returns an array reference of exactly " .
+    "three values." );
+    is( ref($app), 'CODE' );
 
     note( 'initialize App::Dochazka::Common package variables $t, $today, etc.' );
     App::Dochazka::Common::init_timepiece();
 
-    return $status;
+    return $app;
 }
 
 

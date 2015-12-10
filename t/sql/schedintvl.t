@@ -50,22 +50,18 @@ my $illegal = qr/illegal attendance interval/;
 
 
 note( "initialize, connect to database, and set up a testing plan" );
-my $status = initialize_unit();
-if ( $status->not_ok ) {
-    plan skip_all => "not configured or server not running";
-}
+initialize_regression_test();
 
-
-#---- get the next SSID
+note( "get the next SSID" );
 my ( $ssid ) = do_select_single( $dbix_conn, "SELECT nextval('scratch_sid_seq')" );
 ok( $ssid ); # this doesn't tell us much, of course
 
-#---- test NULL tsrange separately because it requires different SQL syntax
+note( "test NULL tsrange separately because it requires different SQL syntax" );
 test_sql_failure( $dbix_conn, $illegal, <<"SQL" );
 INSERT into schedintvls (ssid, intvl) VALUES ( $ssid, NULL::tstzrange )
 SQL
 
-#---- set up our hash where keys are intervals and values are regex quotes
+note( "set up our hash where keys are intervals and values are regex quotes" );
 my %int_map = (
     '[today,today)' => '',  # empty range
     '["1967-09-20 12:25","1967-09-20 12:25")' => '', # another empty range

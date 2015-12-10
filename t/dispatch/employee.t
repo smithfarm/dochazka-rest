@@ -49,9 +49,7 @@ use Test::JSON;
 use Test::More;
 
 note( 'initialize, connect to database, and set up a testing plan' );
-my $status = initialize_unit();
-plan skip_all => "not configured or server not running" unless $status->ok;
-my $app = $status->payload;
+my $app = initialize_regression_test();
 
 note( 'check a random site param' );
 ok( $site->DOCHAZKA_DBUSER );
@@ -71,7 +69,7 @@ docu_check( $test, "$base/?:priv" );
 
 note( "GET $base/?:priv" );
 note( '- fail 403 as demo' );
-$status = req( $test, 403, 'demo', 'GET', $base );
+my $status = req( $test, 403, 'demo', 'GET', $base );
 
 note( 'succeed as root' );
 $status = req( $test, 200, 'root', 'GET', $base );

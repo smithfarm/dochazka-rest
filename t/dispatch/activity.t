@@ -47,9 +47,7 @@ use Test::JSON;
 use Test::More;
 
 note( 'initialize, connect to database, and set up a testing plan' );
-my $status = initialize_unit();
-plan skip_all => "not configured or server not running" unless $status->ok;
-my $app = $status->payload;
+my $app = initialize_regression_test();
 
 note( 'instantiate Plack::Test object' );
 my $test = Plack::Test->create( $app );
@@ -65,7 +63,7 @@ sub disable_testing_activity {
     } elsif ( $PH{code} ) {
         $resource = "activity/code/$PH{code}";
     }
-    $status = req( $test, 200, 'root', 'PUT', $resource, '{ "disabled" : true }' );
+    my $status = req( $test, 200, 'root', 'PUT', $resource, '{ "disabled" : true }' );
     is( $status->level, 'OK', "Disable Testing Activity 2" );
     is( $status->code, 'DOCHAZKA_CUD_OK', "Disable Testing Activity 3" );
     is( ref( $status->payload ), 'HASH', "Disable Testing Activity 4" );
@@ -101,7 +99,7 @@ note( 'test if expected behavior behaves as expected (update)' );
 my $activity_obj = '{ "aid" : ' . $aid_of_foowop . ', "long_desc" : "wop wop ng", "remark" : "puppy" }';
 req( $test, 403, 'demo', 'POST', $base, $activity_obj );
 req( $test, 403, 'active', 'POST', $base, $activity_obj );
-$status = req( $test, 200, 'root', 'POST', $base, $activity_obj );
+my $status = req( $test, 200, 'root', 'POST', $base, $activity_obj );
 is( $status->level, 'OK', "POST $base 4" );
 is( $status->code, 'DOCHAZKA_CUD_OK', "POST $base 5" );
 ok( defined $status->payload );

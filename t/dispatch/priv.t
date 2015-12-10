@@ -50,11 +50,7 @@ use Test::More;
 
 
 note( "initialize, connect to database, and set up a testing plan" );
-my $status = initialize_unit();
-if ( $status->not_ok ) {
-    plan skip_all => "not configured or server not running";
-}
-my $app = $status->payload;
+my $app = initialize_regression_test();
 
 note( "instantiate Plack::Test object");
 my $test = Plack::Test->create( $app );
@@ -63,7 +59,7 @@ note( 'define delete_ph_recs() function after initialization because it uses \$t
 sub delete_ph_recs {
     my ( $set ) = @_;
     foreach my $rec ( @$set ) {
-        $status = req( $test, 200, 'root', 'DELETE', "/priv/history/phid/" . $rec->{phid} );
+        my $status = req( $test, 200, 'root', 'DELETE', "/priv/history/phid/" . $rec->{phid} );
         is( $status->level, 'OK' );
         is( $status->code, 'DOCHAZKA_CUD_OK' );
     }
@@ -81,7 +77,7 @@ docu_check($test, "$base/?:ts");
 note( 'GET' );
 
 note( "GET $base as demo" );
-$status = req( $test, 200, 'demo', 'GET', $base );
+my $status = req( $test, 200, 'demo', 'GET', $base );
 is( $status->level, 'OK' );
 is( $status->code, "DISPATCH_EMPLOYEE_PRIV" );
 ok( defined $status->payload );

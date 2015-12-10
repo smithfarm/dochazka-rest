@@ -51,11 +51,7 @@ my $illegal = qr/illegal attendance interval/;
 
 
 note( "initialize, connect to database, and set up a testing plan" );
-my $status = initialize_unit();
-if ( $status->not_ok ) {
-    plan skip_all => "not configured or server not running";
-}
-my $app = $status->payload;
+my $app = initialize_regression_test();
 
 note( "instantiate Plack::Test object");
 my $test = Plack::Test->create( $app );
@@ -80,7 +76,7 @@ note( $note = 'give \'active\' and \'root\' a schedule as of 1957-01-01 00:00 so
 $log->info( "=== $note" );
 my @shid_for_deletion;
 foreach my $user ( 'active', 'root' ) {
-    $status = req( $test, 201, 'root', 'POST', "schedule/history/nick/$user", <<"EOH" );
+    my $status = req( $test, 201, 'root', 'POST', "schedule/history/nick/$user", <<"EOH" );
 { "sid" : $sid, "effective" : "1957-01-01 00:00" }
 EOH
     is( $status->level, "OK" );
@@ -96,7 +92,7 @@ my $eid_inactive = create_inactive_employee( $test );
 
 note( 'create testing employee \'bubba\' with \'active\' privlevel' );
 my $eid_bubba = create_testing_employee( { nick => 'bubba', password => 'bubba' } )->eid;
-$status = req( $test, 201, 'root', 'POST', 'priv/history/nick/bubba', <<"EOH" );
+my $status = req( $test, 201, 'root', 'POST', 'priv/history/nick/bubba', <<"EOH" );
 { "eid" : $eid_bubba, "priv" : "active", "effective" : "1967-06-17 00:00" }
 EOH
 is( $status->level, "OK" );

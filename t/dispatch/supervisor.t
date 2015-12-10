@@ -50,11 +50,7 @@ use Test::More;
 
 
 note( 'initialize, connect to database, and set up a testing plan' );
-my $status = initialize_unit();
-if ( $status->not_ok ) {
-    plan skip_all => "not configured or server not running";
-}
-my $app = $status->payload;
+my $app = initialize_regression_test();
 
 note( 'instantiate Plack::Test object');
 my $test = Plack::Test->create( $app );
@@ -78,7 +74,7 @@ my $active_eid = create_active_employee( $test );
 
 note( 'give \'peon\' a schedule as of 1957-01-01 00:00 so he can enter some attendance intervals' );
 my @shid_for_deletion;
-$status = req( $test, 201, 'root', 'POST', "schedule/history/nick/peon", <<"EOH" );
+my $status = req( $test, 201, 'root', 'POST', "schedule/history/nick/peon", <<"EOH" );
 { "sid" : $sid, "effective" : "1957-01-01 00:00" }
 EOH
 is( $status->level, "OK" );
