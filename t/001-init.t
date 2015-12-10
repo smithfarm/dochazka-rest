@@ -63,7 +63,7 @@ if ( $status->not_ok ) {
 }
 
 note( 'DOCHAZKA_TIMEZONE must be set' );
-is( $site->DOCHAZKA_TIMEZONE, 'Europe/Prague' );
+ok( $site->DOCHAZKA_TIMEZONE );
 
 note( 'reset the database to "factory state"' ); 
 # * * * WARNING: THIS WIPES THE DATABASE * * *

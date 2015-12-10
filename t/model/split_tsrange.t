@@ -48,10 +48,9 @@ use Test::Fatal;
 use Test::More;
 
 sub test_is_ok {
-    my ( $status, $deep ) = @_;
+    my ( $status ) = @_;
     is( $status->level, 'OK' );
     is( $status->code, 'DISPATCH_RECORDS_FOUND' );
-    is_deeply( $status->payload, $deep );
 }
 
 note( 'initialize, connect to database, and set up a testing plan' );
@@ -62,38 +61,33 @@ if ( $status->not_ok ) {
 
 note( 'split a legal tsrange' );
 $status = split_tsrange( $dbix_conn, '[ 2015-01-1, 2015-02-1 )' );
-test_is_ok( $status, [
-    '2015-01-01 00:00:00+01',
-    '2015-02-01 00:00:00+01'
-] );
+test_is_ok( $status ); 
+like( $status->payload->[0], qr/2015-01-01 00:00:00/ );
+like( $status->payload->[1], qr/2015-02-01 00:00:00/ );
 
 note( 'split boring tsrange' );
 $status = split_tsrange( $dbix_conn, '[ 1957-01-01 00:00, 1957-01-02 00:00 )' );
-test_is_ok( $status, [
-    '1957-01-01 00:00:00+01',
-    '1957-01-02 00:00:00+01'
-] );
+test_is_ok( $status );
+like( $status->payload->[0], qr/1957-01-01 00:00:00/ );
+like( $status->payload->[1], qr/1957-01-02 00:00:00/ );
 
 note( 'split a less boring tsrange' );
 $status = split_tsrange( $dbix_conn, '( 2000-1-9, 2100-12-1 ]' );
-test_is_ok( $status, [
-    '2000-01-09 00:00:00+01',
-    '2100-12-01 00:00:00+01'
-] );
+test_is_ok( $status );
+like( $status->payload->[0], qr/2000-01-09 00:00:00/ );
+like( $status->payload->[1], qr/2100-12-01 00:00:00/ );
 
 note( 'split a seemingly illegal tsrange' );
 $status = split_tsrange( $dbix_conn, '( 1979-4-002 1:1, 1980-4-11 1:2 )' );
-test_is_ok( $status, [
-    '1979-04-02 01:01:00+02',
-    '1980-04-11 01:02:00+02'
-] );
+test_is_ok( $status );
+like( $status->payload->[0], qr/1979-04-02 01:01:00/ );
+like( $status->payload->[1], qr/1980-04-11 01:02:00/ );
 
 note( 'split another borderline legal tsrange' );
 $status = split_tsrange( $dbix_conn, '( "April 2, 1979" 1:1, "April 11, 1980" 1:2 )' );
-test_is_ok( $status, [
-    '1979-04-02 01:01:00+02',
-    '1980-04-11 01:02:00+02'
-] );
+test_is_ok( $status );
+like( $status->payload->[0], qr/1979-04-02 01:01:00/ );
+like( $status->payload->[1], qr/1980-04-11 01:02:00/ );
 
 note( 'split an illegal tsrange' );
 $status = split_tsrange( $dbix_conn, '( "April 002, 1979" 1:1, "April 11th, 1980" 1:2 )' );
