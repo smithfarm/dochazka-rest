@@ -139,13 +139,15 @@ sub get_arbitrary_dbix_conn {
 =head2 init_singleton
 
 Initialize the C<$dbix_conn> singleton using dbname, dbuser, and dbpass values
-from site configuration.
+from site configuration. Also set the PGTZ environment variable to the
+value of the DOCHAZKA_TIMEZONE config param.
 
 Idempotent.
 
 =cut
 
 sub init_singleton {
+    $ENV{'PGTZ'} = $site->DOCHAZKA_TIMEZONE;
     return if ref( $dbix_conn ) and $dbix_conn->can( 'dbh' );
     $dbix_conn = get_arbitrary_dbix_conn( 
         $site->DOCHAZKA_DBNAME,

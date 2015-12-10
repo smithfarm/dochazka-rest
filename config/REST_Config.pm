@@ -80,6 +80,10 @@ set( 'DOCHAZKA_DBPORT', '' );
 #set( 'DOCHAZKA_DBSSLMODE', 'require' );
 set( 'DOCHAZKA_DBSSLMODE', '' );
 
+# DOCHAZKA_TIMEZONE
+#    used to set the PGTZ environment variable
+set( 'DOCHAZKA_TIMEZONE', 'Europe/Prague' );
+
 # DOCHAZKA_AUDITING
 #    enable/disable auditing - note that if this is disabled at the beginning
 #    when the database is initialized, there is no easy way to enable it later

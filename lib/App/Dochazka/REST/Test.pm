@@ -156,6 +156,7 @@ sub initialize_unit {
     is( $status->level, 'OK' );
     ok( $site->DOCHAZKA_EID_OF_ROOT );
     ok( $site->DOCHAZKA_EID_OF_DEMO );
+    ok( $site->DOCHAZKA_TIMEZONE );
 
     $faux_context = { 'dbix_conn' => $dbix_conn, 'current' => { 'eid' => 1 } };
     $meta->set( 'META_DOCHAZKA_UNIT_TESTING' => 1 );
