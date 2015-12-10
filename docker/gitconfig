@@ -1,0 +1,5 @@
+[user]
+	email = ncutler@suse.com
+	name = Nathan Cutler
+[push]
+	default = simple

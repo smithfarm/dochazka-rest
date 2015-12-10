@@ -48,6 +48,8 @@ RUN ln -sf /usr/share/zoneinfo/Europe/Prague /etc/localtime
 ENV PGTZ Europe/Prague
 
 # clone repo
+COPY gitconfig /tmp/gitconfig
+RUN install -o smithfarm -g users -m 644 /tmp/gitconfig /home/smithfarm/.gitconfig
 WORKDIR /home/smithfarm
 USER smithfarm
 RUN git clone git://github.com/smithfarm/dochazka-rest
