@@ -1314,6 +1314,9 @@ sub reset_db {
     my $dbpass = $site->DOCHAZKA_DBPASS;
     $log->debug( "Entering " . __PACKAGE__ . "::reset_db to (re-)initialize database $dbname with superuser credentials $superuser / $superpass" );
 
+    # PGTZ *must* be set
+    $ENV{'PGTZ'} = $site->DOCHAZKA_TIMEZONE;
+
     my $conn = App::Dochazka::REST::ConnBank::get_arbitrary_dbix_conn(
         'postgres', $superuser, $superpass
     );
