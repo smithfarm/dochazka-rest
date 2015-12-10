@@ -173,6 +173,11 @@ sub initialize_regression_test {
     note( "instantiate Web::Machine object for this application" );
     my $app = Web::Machine->new( resource => 'App::Dochazka::REST::Dispatch', )->to_app;
 
+    note( "A PSGI application is a Perl code reference. It takes exactly " .
+    "one argument, the environment and returns an array reference of exactly " .
+    "three values." );
+    is( ref($app), 'CODE' );
+
     note( 'initialize App::Dochazka::Common package variables $t, $today, etc.' );
     App::Dochazka::Common::init_timepiece();
 
