@@ -78,3 +78,6 @@ release.sh$
 # Avoid docker stuff
 \bdocker-test.sh$
 \bdocker/
+
+# Avoid "tickets"
+\btickets$
