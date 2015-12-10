@@ -135,7 +135,8 @@ sub initialize_unit {
         distro => 'App-Dochazka-REST', 
         sitedir => '/etc/dochazka-rest', 
     );
-    return $status unless $status->ok;
+    plan skip_all => "Web::MREST::init failed: " . $status->text unless $status->ok;
+    my $app = $status->payload;
 
     note( "Set log level" );
     $log->init( 
@@ -167,7 +168,7 @@ sub initialize_unit {
     note( 'initialize App::Dochazka::Common package variables $t, $today, etc.' );
     App::Dochazka::Common::init_timepiece();
 
-    return $status;
+    return $app;
 }
 
 
