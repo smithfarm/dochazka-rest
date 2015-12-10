@@ -1,0 +1,5 @@
+alias perlbld="perl Build.PL ; ./Build ; sudo ./Build install"
+alias gs="git status"
+alias gd="git diff"
+alias gl="git log --oneline"
+alias gb="git branch | grep -e '^*'"

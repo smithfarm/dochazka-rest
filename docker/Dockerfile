@@ -58,4 +58,8 @@ RUN perl Build.PL
 RUN ./Build
 RUN sudo ./Build install
 
+# set up some aliases
+COPY alias /tmp/alias
+RUN install -o smithfarm -g users -m 644 /tmp/alias /home/smithfarm/.bashrc
+
 CMD sleep infinity
