@@ -51,7 +51,6 @@ META.json
 META.yml
 README.rst
 t/001-init.t
-t/ACL.t
 t/LDAP.t
 t/dispatch/001-resource.t
 t/dispatch/activity.t
@@ -86,4 +85,5 @@ t/sql/immutable_id.t
 t/sql/privhistory.t
 t/sql/root.t
 t/sql/schedintvl.t
-t/util/holiday.t
+t/unit/ACL.t
+t/unit/holiday.t
