@@ -49,10 +49,11 @@ ENV PGTZ Europe/Prague
 
 # clone repo
 WORKDIR /home/smithfarm
-RUN su - smithfarm -c 'git clone git://github.com/smithfarm/dochazka-rest'
+USER smithfarm
+RUN git clone git://github.com/smithfarm/dochazka-rest
 WORKDIR /home/smithfarm/dochazka-rest
 RUN perl Build.PL
 RUN ./Build
-RUN ./Build install
+RUN sudo ./Build install
 
 CMD sleep infinity
