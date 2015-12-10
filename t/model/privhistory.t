@@ -47,7 +47,7 @@ use App::Dochazka::REST::Test;
 use Test::More;
 
 note( 'initialize, connect to database, and set up a testing plan' );
-initialize_unit();
+initialize_regression_test();
 
 my $today_ts = $today . " 00:00:00";
 my $tomorrow_ts = $tomorrow . " 00:00:00";

@@ -47,7 +47,7 @@ use Test::More;
 
 
 note( "initialize, connect to database, and set up a testing plan" );
-initialize_unit();
+initialize_regression_test();
 
 note( "dispatch map enabling 'gen_...' functions to be called from within the loop" );
 note( '- these functions are imported automatically from App::Dochazka::REST::Test' );

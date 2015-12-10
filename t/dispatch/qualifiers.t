@@ -45,7 +45,7 @@ use Data::Dumper;
 use Test::More;
 
 note( 'initialize unit' );
-initialize_unit();
+initialize_regression_test();
 
 my $status = shared_process_quals( '' );
 is( $status->level, "OK" );

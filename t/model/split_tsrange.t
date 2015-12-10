@@ -54,7 +54,7 @@ sub test_is_ok {
 }
 
 note( 'initialize, connect to database, and set up a testing plan' );
-initialize_unit();
+initialize_regression_test();
 
 note( 'split a legal tsrange' );
 my $status = split_tsrange( $dbix_conn, '[ 2015-01-1, 2015-02-1 )' );

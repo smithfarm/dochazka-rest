@@ -48,7 +48,7 @@ use Test::More;
 
 
 note( 'initialize, connect to database, and set up a testing plan' );
-initialize_unit();
+initialize_regression_test();
 
 note( 'subtract two days from 2015-01-3' );
 my $status = timestamp_delta_minus( $dbix_conn, '2015-01-3', '2 days' );

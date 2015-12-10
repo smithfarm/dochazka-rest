@@ -53,7 +53,7 @@ use Test::JSON;
 use Test::More; 
 
 note('initialize');
-initialize_unit();
+initialize_regression_test();
 
 my $today_ts = $today . " 00:00:00";
 

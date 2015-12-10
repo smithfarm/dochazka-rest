@@ -53,7 +53,7 @@ use Test::More;
 
 
 note( 'initialize, connect to database, and set up a testing plan' );
-initialize_unit();
+initialize_regression_test();
 
 note( 'canonicalize a legal timestamp' );
 my $status = canonicalize_ts( $dbix_conn, '2015-01-1' );

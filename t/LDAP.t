@@ -50,7 +50,7 @@ use Test::More;
 
 
 note( 'initialize, connect to database, and set up a testing plan' );
-my $app = initialize_unit();
+my $app = initialize_regression_test();
 
 note( 'instantiate Plack::Test object' );
 my $test = Plack::Test->create( $app );

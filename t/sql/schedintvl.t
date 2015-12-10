@@ -50,7 +50,7 @@ my $illegal = qr/illegal attendance interval/;
 
 
 note( "initialize, connect to database, and set up a testing plan" );
-initialize_unit();
+initialize_regression_test();
 
 note( "get the next SSID" );
 my ( $ssid ) = do_select_single( $dbix_conn, "SELECT nextval('scratch_sid_seq')" );

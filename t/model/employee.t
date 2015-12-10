@@ -46,7 +46,7 @@ use Test::Fatal;
 use Test::More;
 
 note( 'initialize, connect to database, and set up a testing plan' );
-initialize_unit();
+initialize_regression_test();
 
 note( 'get EID of root employee from DOCHAZKA_EID_OF_ROOT site parameter' );
 # (root employee is created at dbinit time)

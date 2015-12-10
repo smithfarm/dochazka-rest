@@ -54,7 +54,7 @@ use Test::More;
 
 
 note( 'initialize, connect to database, and set up a testing plan' );
-initialize_unit();
+initialize_regression_test();
 
 note( 'tempintvls table should be empty' );
 if ( 0 != noof( $dbix_conn, 'tempintvls') ) {

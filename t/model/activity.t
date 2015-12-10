@@ -49,7 +49,7 @@ use Test::More;
 
 
 note( "initialize, connect to database, and set up a testing plan" );
-initialize_unit();
+initialize_regression_test();
 
 note( 'spawn two activity objects' );
 my $act = App::Dochazka::REST::Model::Activity->spawn;

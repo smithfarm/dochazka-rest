@@ -52,7 +52,7 @@ use Test::More;
 
 
 note( "initialize, connect to database, and set up a testing plan" );
-initialize_unit();
+initialize_regression_test();
 
 note( 'spawn a schedintvls object' );
 my $sto = App::Dochazka::REST::Model::Schedintvls->spawn;

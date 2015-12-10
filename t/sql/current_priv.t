@@ -49,7 +49,7 @@ use Test::More;
 
 
 note( "initialize, connect to database, and set up a testing plan" );
-initialize_unit();
+initialize_regression_test();
 
 note( 'get EID of root employee, the hard way, and sanity-test it' );
 my ( $eid_of_root ) = do_select_single( $dbix_conn, $site->DBINIT_SELECT_EID_OF, 'root' );

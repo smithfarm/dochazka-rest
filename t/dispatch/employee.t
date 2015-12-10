@@ -49,7 +49,7 @@ use Test::JSON;
 use Test::More;
 
 note( 'initialize, connect to database, and set up a testing plan' );
-my $app = initialize_unit();
+my $app = initialize_regression_test();
 
 note( 'check a random site param' );
 ok( $site->DOCHAZKA_DBUSER );

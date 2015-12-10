@@ -53,7 +53,7 @@ use Test::More;
 use Web::MREST::Resource;
 
 note( 'initialize, connect to database, and set up a testing plan' );
-my $app = initialize_unit();
+my $app = initialize_regression_test();
 isnt( $app, undef );
 
 note( 'instantiate Plack::Test object' );
