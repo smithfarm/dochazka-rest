@@ -136,7 +136,6 @@ sub initialize_unit {
         sitedir => '/etc/dochazka-rest', 
     );
     plan skip_all => "Web::MREST::init failed: " . $status->text unless $status->ok;
-    my $app = $status->payload;
 
     note( "Set log level" );
     $log->init( 
@@ -163,7 +162,7 @@ sub initialize_unit {
     $meta->set( 'META_DOCHAZKA_UNIT_TESTING' => 1 );
 
     # add Web::Machine object to payload
-    $status->payload( Web::Machine->new( resource => 'App::Dochazka::REST::Dispatch', )->to_app );
+    my $app = Web::Machine->new( resource => 'App::Dochazka::REST::Dispatch', )->to_app;
 
     note( 'initialize App::Dochazka::Common package variables $t, $today, etc.' );
     App::Dochazka::Common::init_timepiece();
