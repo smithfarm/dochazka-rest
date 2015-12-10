@@ -490,7 +490,9 @@ foreach $base ( "priv/history/phid", "schedule/history/shid" ) {
             '{ "effective":"1977-04-27 15:30", "priv":"inactive" }' );
         is( $status->level, 'OK' );
         is( $status->code, 'DOCHAZKA_CUD_OK' );
-        is( $status->payload->{'effective'}, '1977-04-27 15:30:00+01' );
+        # we use regex comparison in the next test because the exact string
+        # returned depends on the timezone setting
+        like( $status->payload->{'effective'}, qr/1977-04-27 15:30:00/ );
         is( $status->payload->{'priv'}, 'inactive' );
         is( $status->payload->{'remark'}, undef );
         is( $status->payload->{'eid'}, 2 );
@@ -518,13 +520,12 @@ foreach $base ( "priv/history/phid", "schedule/history/shid" ) {
     $status = req( $test, 200, 'root', 'GET', "$base/$tphid" );
     is( $status->level, 'OK' );
     is( $status->code, 'DISPATCH_HISTORY_RECORD_FOUND' );
-    is_deeply( $status->payload, {
-        'remark' => undef,
-        ( ( $base =~ m/^priv/ ) ? 'priv' : 'sid' ) => ( ( $base =~ m/^priv/ ) ? 'inactive' : $ts_sid ),
-        'eid' => 2,
-        $prop => $tphid,
-        'effective' => '1977-04-27 15:30:00+01'
-    } );
+    is( $status->payload->{'remark'}, undef );
+    is( $status->payload->{ ( ( $base =~ m/^priv/ ) ? 'priv' : 'sid' ) },
+        ( ( $base =~ m/^priv/ ) ? 'inactive' : $ts_sid ) );
+    is( $status->payload->{'eid'}, 2 );
+    is( $status->payload->{$prop}, $tphid );
+    like( $status->payload->{'effective'}, qr/1977-04-27 15:30:00/ );
     
     note( 'PUT' );
 
