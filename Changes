@@ -3256,3 +3256,14 @@ SPLIT OFF App::MREST into separate distribution
 - implement Dockerized testing environment
 - docker-test.sh: bootstrap script for Dockerized testing env
 
+0.502 2015-02-10 14:02 CET
+- Dockerfile: clone repo at the end
+- Dockerfile: use USER instead of repeated su
+- Dockerfile: add .gitconfig
+- Dockerfile: add .bashrc file with aliases
+- config/REST_Config.pm: add DOCHAZKA_TIMEZONE config param
+- t/001-init.t: check DOCHAZKA_TIMEZONE sanity
+- Test.pm: check DOCHAZKA_TIMEZONE in every unit
+- Ensure PGTZ environment variable is set
+- t/: be more careful about timezone
+
