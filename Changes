@@ -3257,13 +3257,21 @@ SPLIT OFF App::MREST into separate distribution
 - docker-test.sh: bootstrap script for Dockerized testing env
 
 0.502 2015-02-10 14:02 CET
-- Dockerfile: clone repo at the end
-- Dockerfile: use USER instead of repeated su
-- Dockerfile: add .gitconfig
-- Dockerfile: add .bashrc file with aliases
-- config/REST_Config.pm: add DOCHAZKA_TIMEZONE config param
-- t/001-init.t: check DOCHAZKA_TIMEZONE sanity
-- Test.pm: check DOCHAZKA_TIMEZONE in every unit
-- Ensure PGTZ environment variable is set
-- t/: be more careful about timezone
+- several Dockerfile tweaks
+- Fix https://github.com/smithfarm/dochazka-rest/issues/26
+  - config/REST_Config.pm: add DOCHAZKA_TIMEZONE config param
+  - t/001-init.t: check DOCHAZKA_TIMEZONE sanity
+  - Test.pm: check DOCHAZKA_TIMEZONE in every unit
+  - Ensure PGTZ environment variable is set
+- Fix https://github.com/smithfarm/dochazka-rest/issues/28
+  - t/: be more careful about timezone
+
+0.503 2015-04-10 21:04 CET
+- Fix https://github.com/smithfarm/dochazka-rest/issues/30
+  - t/001-init.t: bail out if DOCHAZKA_TIMEZONE not set
+- Fix https://github.com/smithfarm/dochazka-rest/issues/31
+  - Test.pm: initialize_unit() return PSGI app instead of status obj
+  - t/: move "pure" unit tests to t/unit/
+  - t/: simplify regression test init boilerplate
+  - tests: rename initialize_unit() to initialize_regression_test()
 
