@@ -63,7 +63,7 @@ if ( $status->not_ok ) {
 }
 
 note( 'DOCHAZKA_TIMEZONE must be set' );
-ok( $site->DOCHAZKA_TIMEZONE );
+BAIL_OUT(-1) unless $site->DOCHAZKA_TIMEZONE;
 
 note( 'reset the database to "factory state"' ); 
 # * * * WARNING: THIS WIPES THE DATABASE * * *
