@@ -50,9 +50,7 @@ use Test::More;
 
 
 note( 'initialize, connect to database, and set up a testing plan' );
-my $status = initialize_unit();
-plan skip_all => "not configured or server not running" unless $status->ok;
-my $app = $status->payload;
+my $app = initialize_unit();
 
 note( 'instantiate Plack::Test object' );
 my $test = Plack::Test->create( $app );
@@ -78,7 +76,7 @@ SKIP: {
     $emp->load_by_nick( $dbix_conn, $uid );
 
     note( "Populate $uid employee object from LDAP" );
-    $status = populate_employee( $emp );
+    my $status = populate_employee( $emp );
     is( $status->level, 'OK' );
     diag( Dumper $emp );
 

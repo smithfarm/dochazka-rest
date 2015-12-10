@@ -45,11 +45,9 @@ use Data::Dumper;
 use Test::More;
 
 note( 'initialize unit' );
-my $status = initialize_unit();
-plan skip_all => "not configured or server not running" unless $status->ok;
-my $app = $status->payload;
+initialize_unit();
 
-$status = shared_process_quals( '' );
+my $status = shared_process_quals( '' );
 is( $status->level, "OK" );
 is( $status->payload, undef );
 

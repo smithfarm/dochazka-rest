@@ -47,10 +47,7 @@ use Test::More;
 
 
 note( "initialize, connect to database, and set up a testing plan" );
-my $status = initialize_unit();
-if ( $status->not_ok ) {
-    plan skip_all => "not configured or server not running";
-}
+initialize_unit();
 
 note( "dispatch map enabling 'gen_...' functions to be called from within the loop" );
 note( '- these functions are imported automatically from App::Dochazka::REST::Test' );

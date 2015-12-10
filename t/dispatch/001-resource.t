@@ -53,9 +53,8 @@ use Test::More;
 use Web::MREST::Resource;
 
 note( 'initialize, connect to database, and set up a testing plan' );
-my $status = initialize_unit();
-plan skip_all => "not configured or server not running" unless $status->ok;
-my $app = $status->payload;
+my $app = initialize_unit();
+isnt( $app, undef );
 
 note( 'instantiate Plack::Test object' );
 my $test = Plack::Test->create( $app );

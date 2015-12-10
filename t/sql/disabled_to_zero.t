@@ -46,10 +46,7 @@ use App::Dochazka::REST::Test;
 use Test::More;
 
 note( "initialize, connect to database, and set up a testing plan" );
-my $status = initialize_unit();
-if ( $status->not_ok ) {
-    plan skip_all => "not configured or server not running";
-}
+initialize_unit();
 
 my @acode_to_delete;
 my @scode_to_delete;

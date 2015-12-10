@@ -46,10 +46,7 @@ use Data::Dumper;
 use Test::More;
 
 note( 'initialize, connect to database, and set up a testing plan' );
-my $status = initialize_unit();
-if ( $status->not_ok ) {
-    plan skip_all => "not configured or server not running";
-}
+initialize_unit();
 
 note( 'get EID of root employee' );
 my ( $eid_of_root ) = do_select_single( $dbix_conn, $site->DBINIT_SELECT_EID_OF, 'root' );

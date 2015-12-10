@@ -54,10 +54,7 @@ use Test::More;
 
 
 note( 'initialize, connect to database, and set up a testing plan' );
-my $status = initialize_unit();
-if ( $status->not_ok ) {
-    plan skip_all => "not configured or server not running";
-}
+initialize_unit();
 
 note( 'tempintvls table should be empty' );
 if ( 0 != noof( $dbix_conn, 'tempintvls') ) {
@@ -104,13 +101,13 @@ my $bogus = [
         "[2014-07-14 17:15,infinity)",
     ];
 map {
-        $status = $tio->_vet_tsrange( tsrange => $_ );
+        my $status = $tio->_vet_tsrange( tsrange => $_ );
         #diag( $status->level . ' ' . $status->text );
         is( $status->level, 'ERR', "$_ is a bogus tsrange" ); 
     } @$bogus;
 
 note( 'vet a too-long tsrange' );
-$status = $tio->_vet_tsrange( tsrange => '[ 2015-1-1, 2016-1-2 )' );
+my $status = $tio->_vet_tsrange( tsrange => '[ 2015-1-1, 2016-1-2 )' );
 is( $status->level, 'ERR' );
 is( $status->code, 'DOCHAZKA_TSRANGE_TOO_BIG' );
 

@@ -52,11 +52,7 @@ use Test::More;
 
 
 note( 'initialize, connect to database, and set up a testing plan' );
-my $status = initialize_unit();
-if ( $status->not_ok ) {
-    plan skip_all => "not configured or server not running";
-}
-my $app = $status->payload;
+my $app = initialize_unit();
 
 note( 'instantiate Plack::Test object' );
 my $test = Plack::Test->create( $app );
@@ -89,7 +85,7 @@ note( '=============================' );
 
 note( 'make sure root has some kind of schedule history' );
 my $ts_sid = create_testing_schedule( $test );
-$status = req( $test, 201, 'root', 'POST', 'schedule/history/nick/root',
+my $status = req( $test, 201, 'root', 'POST', 'schedule/history/nick/root',
     '{ "effective":"1892-01-01 00:00", "sid":' . $ts_sid . ' }' );
 is( $status->level, 'OK' );
 is( $status->code, 'DOCHAZKA_CUD_OK' );

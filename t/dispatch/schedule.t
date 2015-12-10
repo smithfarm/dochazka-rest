@@ -52,11 +52,7 @@ use Test::More;
 
 
 note( "initialize, connect to database, and set up a testing plan" );
-my $status = initialize_unit();
-if ( $status->not_ok ) {
-    plan skip_all => "not configured or server not running";
-}
-my $app = $status->payload;
+my $app = initialize_unit();
 
 note( "instantiate Plack::Test object");
 my $test = Plack::Test->create( $app );
@@ -81,7 +77,7 @@ req( $test, 403, 'demo', 'GET', $base );
 
 foreach my $user ( 'inactive', 'active', 'root' ) {
     note( "GET $base as $user user" );
-    $status = req( $test, 200, $user, 'GET', $base );
+    my $status = req( $test, 200, $user, 'GET', $base );
     is( $status->level, 'OK' );
     is( $status->code, "DISPATCH_RECORDS_FOUND" );
     is( $status->{'count'}, 1 );
@@ -118,7 +114,7 @@ note( 'test a non-existent SID' );
 ok( ! sid_exists( $dbix_conn, 53434 ), "non-existent SID" );
 
 note( 'now we have seven active (i.e., non-disabled) schedules' );
-$status = req( $test, 200, 'root', 'GET', $base );
+my $status = req( $test, 200, 'root', 'GET', $base );
 is( $status->level, 'OK' );
 is( $status->code, "DISPATCH_RECORDS_FOUND" );
 is( $status->{'count'}, 7 );

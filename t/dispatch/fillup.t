@@ -48,9 +48,7 @@ use Test::JSON;
 use Test::More;
 
 note( 'initialize, connect to database, and set up a testing plan' );
-my $status = initialize_unit();
-plan skip_all => "not configured or server not running" unless $status->ok;
-my $app = $status->payload;
+my $app = initialize_unit();
 
 note( 'instantiate Plack::Test object' );
 my $test = Plack::Test->create( $app );
@@ -68,7 +66,7 @@ my $eid_active = create_active_employee( $test );
 note( $note = 'give \'active\' a schedule as of 1957-01-01 00:00 so it can enter attendance intervals' );
 $log->info( "=== $note" );
 my @shid_for_deletion;
-$status = req( $test, 201, 'root', 'POST', "schedule/history/nick/active", <<"EOH" );
+my $status = req( $test, 201, 'root', 'POST', "schedule/history/nick/active", <<"EOH" );
 { "sid" : $sid, "effective" : "1957-01-01 00:00" }
 EOH
 is( $status->level, "OK" );

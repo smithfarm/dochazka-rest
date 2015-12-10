@@ -50,9 +50,7 @@ use Test::More;
 
 
 note( 'initialize, connect to database, and set up a testing plan' );
-my $status = initialize_unit();
-plan skip_all => "not configured or server not running" unless $status->ok;
-my $app = $status->payload;
+my $app = initialize_unit();
 
 note( 'instantiate Plack::Test object' );
 my $test = Plack::Test->create( $app );
@@ -73,7 +71,7 @@ my $emp = App::Dochazka::REST::Model::Employee->spawn(
 isa_ok( $emp, 'App::Dochazka::REST::Model::Employee' );
 
 note( 'insert mrfu' );
-$status = $emp->insert( $faux_context );
+my $status = $emp->insert( $faux_context );
 is( $status->level, 'OK', "Mr. Fu inserted" );
 is( noof( $dbix_conn, 'employees' ), 3 );
 

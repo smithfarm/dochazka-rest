@@ -49,10 +49,7 @@ use Test::More;
 
 
 note( "initialize, connect to database, and set up a testing plan" );
-my $status = initialize_unit();
-if ( $status->not_ok ) {
-    plan skip_all => "not configured or server not running";
-}
+initialize_unit();
 
 note( 'spawn two activity objects' );
 my $act = App::Dochazka::REST::Model::Activity->spawn;
@@ -103,7 +100,7 @@ foreach my $actdef ( @{ $site->DOCHAZKA_ACTIVITY_DEFINITIONS } ) {
 }
 
 note( 'test get_all_activities function' );
-$status = get_all_activities( $dbix_conn );
+my $status = get_all_activities( $dbix_conn );
 is( $status->level, 'OK' );
 is( $status->code, 'DISPATCH_RECORDS_FOUND' );
 is( scalar( @{ $status->payload } ), scalar( @{ $site->DOCHAZKA_ACTIVITY_DEFINITIONS } ) );

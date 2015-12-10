@@ -50,11 +50,7 @@ use Test::More;
 
 
 note( "initialize, connect to database, and set up a testing plan" );
-my $status = initialize_unit();
-if ( $status->not_ok ) {
-    plan skip_all => "not configured or server not running";
-}
-my $app = $status->payload;
+my $app = initialize_unit();
 
 note( "instantiate Plack::Test object");
 my $test = Plack::Test->create( $app );
@@ -66,7 +62,7 @@ my $intvls = { "schedule" => [
     "[$today 08:00, $today 12:00)",
 ] };
 my $intvls_json = JSON->new->utf8->canonical(1)->encode( $intvls );
-$status = req( $test, 201, 'root', 'POST', 'schedule/new', $intvls_json );
+my $status = req( $test, 201, 'root', 'POST', 'schedule/new', $intvls_json );
 isnt( $status->code, 'DOCHAZKA_CUD_OK' );
 
 my $pl = $status->payload;

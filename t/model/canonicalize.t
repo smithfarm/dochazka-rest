@@ -53,13 +53,10 @@ use Test::More;
 
 
 note( 'initialize, connect to database, and set up a testing plan' );
-my $status = initialize_unit();
-if ( $status->not_ok ) {
-    plan skip_all => "not configured or server not running";
-}
+initialize_unit();
 
 note( 'canonicalize a legal timestamp' );
-$status = canonicalize_ts( $dbix_conn, '2015-01-1' );
+my $status = canonicalize_ts( $dbix_conn, '2015-01-1' );
 is( $status->level, 'OK' );
 like( $status->payload, qr/^2015-01-01 00:00:00/ );
 

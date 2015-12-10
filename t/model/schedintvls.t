@@ -52,10 +52,7 @@ use Test::More;
 
 
 note( "initialize, connect to database, and set up a testing plan" );
-my $status = initialize_unit();
-if ( $status->not_ok ) {
-    plan skip_all => "not configured or server not running";
-}
+initialize_unit();
 
 note( 'spawn a schedintvls object' );
 my $sto = App::Dochazka::REST::Model::Schedintvls->spawn;
@@ -76,7 +73,7 @@ my $bogus_intvls = [
     ];
 map {
         $sto->{intvls} = $_;
-        $status = $sto->insert( $dbix_conn );
+        my $status = $sto->insert( $dbix_conn );
         #diag( $status->level . ' ' . $status->text );
         is( $status->level, 'ERR' ); 
     } @$bogus_intvls;
@@ -105,7 +102,7 @@ map {
             "[2014-07-14 11:15, 2014-07-14 11:30)",
             "[2014-07-14 11:30, 2014-07-14 11:45)",
         ];
-        $status = $sto->insert( $dbix_conn );
+        my $status = $sto->insert( $dbix_conn );
         is( $status->level, 'ERR' );
         is( $status->code, 'DOCHAZKA_DBI_ERR' );
         #diag( $status->code . ' ' . $status->text );
@@ -120,7 +117,7 @@ $sto->{intvls} = [
     "[2014-07-14 11:30, 2014-07-14 11:45)",
     "[2014-07-21 00:00, 2014-07-21 10:00)",
 ];
-$status = $sto->insert( $dbix_conn );
+my $status = $sto->insert( $dbix_conn );
 is( $status->level, 'OK' );
 ok( $status->code, 'DOCHAZKA_SCHEDINTVLS_INSERT_OK' );
 $status = $sto->delete( $dbix_conn );

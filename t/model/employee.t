@@ -46,8 +46,7 @@ use Test::Fatal;
 use Test::More;
 
 note( 'initialize, connect to database, and set up a testing plan' );
-my $status = initialize_unit();
-plan skip_all => "not configured or server not running" unless $status->ok;
+initialize_unit();
 
 note( 'get EID of root employee from DOCHAZKA_EID_OF_ROOT site parameter' );
 # (root employee is created at dbinit time)
@@ -74,7 +73,7 @@ my $noof_employees = noof( $dbix_conn, 'employees' );
 is( $noof_employees, 2, 'initial number of employees is 2' );
 
 note( 'get initial employee nicks' );
-$status = list_employees_by_priv( $dbix_conn, 'all' );
+my $status = list_employees_by_priv( $dbix_conn, 'all' );
 test_employee_list( $status, [ 'demo', 'root' ] );
 
 note( 'attempt to spawn an employee with an illegal attribute' );

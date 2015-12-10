@@ -49,11 +49,7 @@ use Test::More;
 plan skip_all => "WIP";
 
 note( "initialize, connect to database, and set up a testing plan" );
-my $status = initialize_unit();
-if ( $status->not_ok ) {
-    plan skip_all => "not configured or server not running";
-}
-my $app = $status->payload;
+my $app = initialize_unit();
 
 note( "instantiate Plack::Test object");
 my $test = Plack::Test->create( $app );
@@ -69,7 +65,7 @@ my $eid_active = create_active_employee( $test );
 note( 'give \'active\' and \'root\' a schedule as of 1957-01-01 00:00 so these two employees can enter some attendance intervals' );
 my @shid_for_deletion;
 foreach my $user ( 'active', 'root' ) {
-    $status = req( $test, 201, 'root', 'POST', "schedule/history/nick/$user", <<"EOH" );
+    my $status = req( $test, 201, 'root', 'POST', "schedule/history/nick/$user", <<"EOH" );
 { "sid" : $sid, "effective" : "1957-01-01 00:00" }
 EOH
     is( $status->level, "OK" );
@@ -85,7 +81,7 @@ my $aid_of_work = get_aid_by_code( $test, 'WORK' );
 
 note( 'insert a testing interval' );
 my @iid_for_deletion;
-$status = req( $test, 201, 'root', 'POST', 'interval/new', <<"EOH" );
+my $status = req( $test, 201, 'root', 'POST', 'interval/new', <<"EOH" );
 { "eid" : $eid_active, "aid" : $aid_of_work, "intvl" : "[2014-10-01 08:00, 2014-10-01 12:00)" }
 EOH
 is( $status->level, 'OK' );

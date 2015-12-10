@@ -50,7 +50,7 @@ use Web::MREST;
 ###
 ###
 ### This unit is special in that it resets the database.
-### It should be called at the beginning of the test suite.
+### It should be called at the beginning of the regression test suite.
 ###
 ###
 

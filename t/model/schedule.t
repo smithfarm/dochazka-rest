@@ -53,8 +53,7 @@ use Test::JSON;
 use Test::More; 
 
 note('initialize');
-my $status = initialize_unit();
-plan skip_all => "not configured or server not running" unless $status->ok;
+initialize_unit();
 
 my $today_ts = $today . " 00:00:00";
 
@@ -65,7 +64,7 @@ my $emp = App::Dochazka::REST::Model::Employee->spawn(
     nick => 'mrsched',
     remark => 'SCHEDULE TESTING OBJECT',
 );
-$status = $emp->insert( $faux_context );
+my $status = $emp->insert( $faux_context );
 ok( $status->ok, "Schedule testing object inserted" );
 ok( $emp->eid > 0, "Schedule testing object has an EID" );
 

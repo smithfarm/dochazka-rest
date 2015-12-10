@@ -49,11 +49,7 @@ use Test::More;
 #plan skip_all => "WIP";
 
 note( "initialize, connect to database, and set up a testing plan" );
-my $status = initialize_unit();
-if ( $status->not_ok ) {
-    plan skip_all => "not configured or server not running";
-}
-my $app = $status->payload;
+my $app = initialize_unit();
 
 note( "instantiate Plack::Test object");
 my $test = Plack::Test->create( $app );

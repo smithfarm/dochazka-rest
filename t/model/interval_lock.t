@@ -64,9 +64,7 @@ use Test::More;
 
 
 note( 'initialize unit' );
-my $status = initialize_unit();
-plan skip_all => "not configured or server not running" unless $status->ok;
-my $app = $status->payload;
+my $app = initialize_unit();
 
 note( 'instantiate Plack::Test object' );
 my $test = Plack::Test->create( $app );
@@ -87,7 +85,7 @@ note( 'insert Mr. Sched' );
 my $emp = App::Dochazka::REST::Model::Employee->spawn(
     nick => 'mrsched',
 );
-$status = $emp->insert( $faux_context );
+my $status = $emp->insert( $faux_context );
 diag( $status->text ) unless $status->ok;
 ok( $status->ok );
 ok( $emp->eid > 0 );

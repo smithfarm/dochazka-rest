@@ -54,13 +54,10 @@ sub test_is_ok {
 }
 
 note( 'initialize, connect to database, and set up a testing plan' );
-my $status = initialize_unit();
-if ( $status->not_ok ) {
-    plan skip_all => "not configured or server not running";
-}
+initialize_unit();
 
 note( 'split a legal tsrange' );
-$status = split_tsrange( $dbix_conn, '[ 2015-01-1, 2015-02-1 )' );
+my $status = split_tsrange( $dbix_conn, '[ 2015-01-1, 2015-02-1 )' );
 test_is_ok( $status ); 
 like( $status->payload->[0], qr/2015-01-01 00:00:00/ );
 like( $status->payload->[1], qr/2015-02-01 00:00:00/ );

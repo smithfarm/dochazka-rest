@@ -48,11 +48,7 @@ use Test::More;
 
 
 note( "initialize, connect to database, and set up a testing plan" );
-my $status = initialize_unit();
-if ( $status->not_ok ) {
-    plan skip_all => "not configured or server not running";
-}
-my $app = $status->payload;
+my $app = initialize_unit();
 
 note( "instantiate Plack::Test object");
 my $test = Plack::Test->create( $app );
@@ -69,7 +65,7 @@ docu_check($test, "/");
 
 note( 'GET ""' );
 note( '- as demo' );
-$status = req( $test, 200, 'demo', 'GET', '/' );
+my $status = req( $test, 200, 'demo', 'GET', '/' );
 is( $status->level, 'OK' );
 is( $status->code, 'DISPATCH_NOOP' );
 
