@@ -3277,3 +3277,12 @@ SPLIT OFF App::MREST into separate distribution
   - t/: simplify regression test init boilerplate
   - tests: rename initialize_unit() to initialize_regression_test()
 
+0.504 2015-40-11 21:40 CET
+- Make release and prerelease scripts executable
+- MANIFEST.bak: remove superfluous file
+- Build.PL: require App::Dochazka::Common 0.194
+- docgen_Config.pm: do not convert warnings into errors
+- tests: use Test::Warning to test for unexpected warnings
+  (except in 001-init.t)
+- dbinit_Config.pm: remove spurious warning
+
