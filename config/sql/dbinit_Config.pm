@@ -226,7 +226,6 @@ $body$/,
                 UNION
                 SELECT NEW.ssid, NEW.intvl
             ) AS stlasq INTO min_lower;
-            RAISE NOTICE 'max_upper % min_lower %', max_upper, min_lower;
             IF max_upper - min_lower > '168:0:0' THEN
                 RAISE EXCEPTION 'schedule intervals must fall within a 7-day range';
             END IF;
