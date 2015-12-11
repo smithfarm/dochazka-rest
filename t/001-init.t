@@ -32,12 +32,19 @@
 #
 # - test initialization, among other things, by completely wiping the database
 
+###
+###
+### This unit is special in that it resets the database.
+### It should be called at the beginning of the regression test suite.
+### Under certain circumstances it may generate warnings.
+###
+###
+
 #!perl
 use 5.012;
 use strict;
 use warnings;
 use Test::More;
-use Test::Warnings;
 
 #use App::CELL::Test::LogToFile;
 use App::CELL qw( $CELL $site );
@@ -46,14 +53,6 @@ use App::Dochazka::REST::ConnBank qw( $dbix_conn conn_status );
 use App::Dochazka::REST::Test;
 use Try::Tiny;
 use Web::MREST;
-
-
-###
-###
-### This unit is special in that it resets the database.
-### It should be called at the beginning of the regression test suite.
-###
-###
 
 
 note( 'initialize the REST server' );
