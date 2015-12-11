@@ -45,6 +45,7 @@ use App::Dochazka::REST::ACL qw( check_acl );
 use App::Dochazka::REST::Test;
 use Test::Fatal;
 use Test::More;
+use Test::Warnings;
 
 note( 'check_acl() tests' );
 

@@ -46,6 +46,7 @@ use App::Dochazka::REST::Model::Activity qw( aid_by_code aid_exists code_exists 
 use App::Dochazka::REST::Test;
 use Test::Fatal;
 use Test::More;
+use Test::Warnings;
 
 
 note( "initialize, connect to database, and set up a testing plan" );

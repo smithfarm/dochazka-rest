@@ -46,6 +46,7 @@ use App::Dochazka::REST::Model::Shared qw( split_tsrange );
 use App::Dochazka::REST::Test;
 use Test::Fatal;
 use Test::More;
+use Test::Warnings;
 
 sub test_is_ok {
     my ( $status ) = @_;

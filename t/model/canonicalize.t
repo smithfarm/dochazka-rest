@@ -50,6 +50,7 @@ use App::Dochazka::REST::Model::Shared qw(
 );
 use App::Dochazka::REST::Test;
 use Test::More;
+use Test::Warnings;
 
 
 note( 'initialize, connect to database, and set up a testing plan' );

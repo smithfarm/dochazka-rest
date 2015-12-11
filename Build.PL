@@ -42,6 +42,7 @@ my $builder = Module::Build->new(
         'Plack::Test'    => 0,
         'Test::Fatal'    => 0,
         'Test::JSON'     => 0,
+        'Test::Warnings' => 0,
         'Web::Machine'   => 0.15,
         'Web::MREST'     => 0.279,
         'Web::MREST::CLI'     => 0.276,

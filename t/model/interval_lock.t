@@ -61,6 +61,7 @@ use App::Dochazka::REST::Test;
 use App::Dochazka::REST::Util::Holiday qw( get_tomorrow );
 use Plack::Test;
 use Test::More;
+use Test::Warnings;
 
 
 note( 'initialize unit' );

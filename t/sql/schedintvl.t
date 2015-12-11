@@ -45,6 +45,7 @@ use App::Dochazka::REST::ConnBank qw( $dbix_conn );
 use App::Dochazka::REST::Test;
 use Data::Dumper;
 use Test::More;
+use Test::Warnings;
 
 my $illegal = qr/illegal attendance interval/;
 

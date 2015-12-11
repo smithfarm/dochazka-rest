@@ -47,6 +47,7 @@ use JSON;
 use Plack::Test;
 use Test::JSON;
 use Test::More;
+use Test::Warnings;
 
 note( 'initialize, connect to database, and set up a testing plan' );
 my $app = initialize_regression_test();

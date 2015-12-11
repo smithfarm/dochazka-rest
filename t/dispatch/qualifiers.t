@@ -43,6 +43,7 @@ use App::Dochazka::REST::Shared qw( shared_process_quals );
 use App::Dochazka::REST::Test;
 use Data::Dumper;
 use Test::More;
+use Test::Warnings;
 
 note( 'initialize unit' );
 initialize_regression_test();

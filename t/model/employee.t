@@ -44,6 +44,7 @@ use App::Dochazka::REST::Model::Shared qw( noof );
 use App::Dochazka::REST::Test;
 use Test::Fatal;
 use Test::More;
+use Test::Warnings;
 
 note( 'initialize, connect to database, and set up a testing plan' );
 initialize_regression_test();

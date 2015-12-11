@@ -50,6 +50,7 @@ use Scalar::Util qw( blessed );
 use Test::Fatal;
 use Test::JSON;
 use Test::More;
+use Test::Warnings;
 use Web::MREST::Resource;
 
 note( 'initialize, connect to database, and set up a testing plan' );

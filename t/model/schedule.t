@@ -51,6 +51,7 @@ use App::Dochazka::REST::Model::Shared qw( noof );
 use App::Dochazka::REST::Test;
 use Test::JSON;
 use Test::More; 
+use Test::Warnings;
 
 note('initialize');
 initialize_regression_test();

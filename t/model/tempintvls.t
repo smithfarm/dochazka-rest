@@ -51,6 +51,7 @@ use App::Dochazka::REST::Model::Schedhistory;
 use App::Dochazka::REST::Test;
 use App::Dochazka::REST::Util::Date qw( canon_to_ymd );
 use Test::More;
+use Test::Warnings;
 
 
 note( 'initialize, connect to database, and set up a testing plan' );

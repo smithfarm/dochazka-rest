@@ -45,6 +45,7 @@ use App::Dochazka::REST::ConnBank qw( $dbix_conn );
 use App::Dochazka::REST::Model::Shared qw( timestamp_delta_minus timestamp_delta_plus );
 use App::Dochazka::REST::Test;
 use Test::More;
+use Test::Warnings;
 
 
 note( 'initialize, connect to database, and set up a testing plan' );

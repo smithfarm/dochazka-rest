@@ -46,6 +46,7 @@ use JSON;
 use Plack::Test;
 use Test::JSON;
 use Test::More;
+use Test::Warnings;
 
 my $illegal = qr/illegal attendance interval/;
 

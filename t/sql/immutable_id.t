@@ -45,6 +45,7 @@ use App::Dochazka::Common qw( $today );
 use App::Dochazka::REST::ConnBank qw( $dbix_conn );
 use App::Dochazka::REST::Test;
 use Test::More;
+use Test::Warnings;
 
 note( "initialize, connect to database, and set up a testing plan" );
 initialize_regression_test();

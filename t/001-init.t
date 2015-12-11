@@ -37,6 +37,7 @@ use 5.012;
 use strict;
 use warnings;
 use Test::More;
+use Test::Warnings;
 
 #use App::CELL::Test::LogToFile;
 use App::CELL qw( $CELL $site );

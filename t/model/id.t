@@ -44,6 +44,7 @@ use App::CELL qw( $meta $site );
 use App::Dochazka::REST::Model::Activity;
 use App::Dochazka::REST::Test;
 use Test::More;
+use Test::Warnings;
 
 
 note( "initialize, connect to database, and set up a testing plan" );

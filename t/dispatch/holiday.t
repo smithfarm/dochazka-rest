@@ -45,6 +45,7 @@ use JSON;
 use Plack::Test;
 use Test::JSON;
 use Test::More;
+use Test::Warnings;
 
 #plan skip_all => "WIP";
 

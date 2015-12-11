@@ -49,6 +49,7 @@ use App::Dochazka::REST::Util::Holiday qw(
     is_weekend 
 );
 use Test::More;
+use Test::Warnings;
 
 my ( %dr, $res, $d );
 

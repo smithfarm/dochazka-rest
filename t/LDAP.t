@@ -47,6 +47,7 @@ use App::Dochazka::REST::Model::Employee qw( nick_exists );
 use App::Dochazka::REST::Test;
 use Plack::Test;
 use Test::More;
+use Test::Warnings;
 
 
 note( 'initialize, connect to database, and set up a testing plan' );
