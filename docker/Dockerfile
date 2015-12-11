@@ -28,6 +28,7 @@ RUN zypper --no-gpg-checks --non-interactive install \
     perl-Plack \
     perl-Test-JSON \
     perl-Test-Fatal \
+    perl-Test-Warnings \
     perl-Module-Build \
     perl-Web-Machine \
     perl-Web-MREST \
