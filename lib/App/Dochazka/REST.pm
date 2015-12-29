@@ -911,8 +911,8 @@ For details, see L<App::Dochazka::REST::Model::Lock>.
 
 =head2 Unbounded intervals
 
-Be careful when entering unbounded intervals: PostgreSQL is picky about how
-they are formatted. This, for example, is syntactically correct:
+Be careful when entering unbounded intervals: PostgreSQL 9.3 is picky about
+how they are formatted. This, for example, is syntactically correct:
 
     select * from intervals where intvl && '[,)';
 
