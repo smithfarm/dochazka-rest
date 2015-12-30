@@ -906,60 +906,6 @@ For details, see L<App::Dochazka::REST::Model::Lock>.
 
 
 
-=head1 CAVEATS
-
-
-=head2 Unbounded intervals
-
-Be careful when entering unbounded intervals: PostgreSQL 9.3 is picky about
-how they are formatted. This, for example, is syntactically correct:
-
-    select * from intervals where intvl && '[,)';
-
-But this will generate a syntax error:
-
-    select * from intervals where intvl && '[, )';
-
-Even though this is OK:
-
-    select * from intervals where intvl && '[, infinity)';
-
-
-=head2 Weekly schedules only
-
-Unfortunately, the weekly scheduling period is hard-coded at this time.
-Dochazka does not care what dates are used to define the intervals -- only
-that they fall within a contiguous 168-hour period. Consider the following
-contrived example. If the scheduling intervals for EID 1 were defined like
-this:
-
-    "[1964-12-30 22:05, 1964-12-31 04:35)"
-    "[1964-12-31 23:15, 1965-01-01 03:10)"
-
-for Dochazka that would mean that the employee with EID 1 has a weekly schedule
-of "WED/22:05-THU/04:35" and "THU/23:15-FRI/03:10", because the dates in the
-ranges fall on a Wednesday (1964-12-30), a Thursday (1964-12-31), and a
-Friday (1964-01-01), respectively.
-
-
-
-=head2 When history changes take effect
-
-The C<effective> field of the C<privhistory> and C<schedhistory> tables
-contains the effective date/time of the history change. This field takes a
-timestamp, and a trigger ensures that the value is evenly divisible by five
-minutes (by rounding). In other words,
-
-    '1964-06-13 14:45'
-
-is a valid C<effective> timestamp, while
-
-    '2014-01-01 00:00:01'
-
-will be rounded to '2014-01-01 00:00'.
-
-
-
 =head1 INSTALLATION
 
 Installation is the process of creating (setting up, bootstrapping) a new
@@ -1098,13 +1044,151 @@ Point your browser to L<http://localhost:5000/>
 
 
 
+=head1 REPORT GENERATION
+
+Generation of reports is a core function of any ATT system. This section
+describes the infrastructure Dochazka provides for this purpose. This
+infrastructure is built around the L<Mason|https://metacpan.org/pod/Mason>
+templating system.
+
+The templates for L<a sample report|/"A typical report"> are provided with
+the Dochazka distribution. The idea is that site administrators will
+develop and add more templates to meet their particular reporting needs.
+
+
+=head2 Infrastructure
+
+The Dochazka report generation infrastructure has three parts: a template
+management API, a report population API, and the report generation
+resource.
+
+=head3 Template management API
+
+The template management API is a set of REST resources for creating,
+reading, updating, and deleting L<Mason|https://metacpan.org/pod/Mason>
+components. It is built around a "Component" class, instances of which
+correspond to individual Mason components.
+
+=head3 Report population API
+
+The report population API is, basically, the Dochazka data model itself.
+Since L<Mason|https://metacpan.org/pod/Mason> enables Perl code to be
+embedded in templates, and since the templates are processed by the
+Dochazka server, template authors have the entire Dochazka data model at
+their disposal.
+
+=head3 Report generation resource
+
+A REST resource that takes the path of the Mason component to be run and a
+hash of arguments to pass to it. The Mason component is run with the
+provided arguments and the result (a string of characters that can be
+interpreted as, e.g., an HTML page) is returned in the response content
+body.
+
+=back
+
+
+=head2 Component class
+
+The C<Component> class is used to work with Mason components. Each instance
+has the following three attributes:
+
+=over
+
+=item Relative path
+
+The relative path to the component in the Mason component directory tree.
+
+=item Source code
+
+The source code of the component, e.g. a mixture of HTML with Mason
+directives.
+
+=item ACL profile
+
+The ACL profile of the component, determining who can use it. As usual,
+supervisors can generate reports pertaining to employees who report
+directly to them.
+
+=back
+
+For the time being, the C<Component> class does not implement any argument
+validation. It is up to the caller to provide valid arguments when the
+component is called.
+
+
+=head2 A typical report
+
+Let us examine a typical reporting requirement: a summary of one employee's
+activity over the course of a time interval.
+
+In addition to the employee's name, etc., this will require a data set
+consisting of the days of the month and the total number of hours of each
+activity logged by (or for) the employee on each day.
+
+
+
+=head1 CAVEATS
+
+
+=head2 Unbounded intervals
+
+Be careful when entering unbounded intervals: PostgreSQL 9.3 is picky about
+how they are formatted. This, for example, is syntactically correct:
+
+    select * from intervals where intvl && '[,)';
+
+But this will generate a syntax error:
+
+    select * from intervals where intvl && '[, )';
+
+Even though this is OK:
+
+    select * from intervals where intvl && '[, infinity)';
+
+
+=head2 Weekly schedules only
+
+Unfortunately, the weekly scheduling period is hard-coded at this time.
+Dochazka does not care what dates are used to define the intervals -- only
+that they fall within a contiguous 168-hour period. Consider the following
+contrived example. If the scheduling intervals for EID 1 were defined like
+this:
+
+    "[1964-12-30 22:05, 1964-12-31 04:35)"
+    "[1964-12-31 23:15, 1965-01-01 03:10)"
+
+for Dochazka that would mean that the employee with EID 1 has a weekly schedule
+of "WED/22:05-THU/04:35" and "THU/23:15-FRI/03:10", because the dates in the
+ranges fall on a Wednesday (1964-12-30), a Thursday (1964-12-31), and a
+Friday (1964-01-01), respectively.
+
+
+
+=head2 When history changes take effect
+
+The C<effective> field of the C<privhistory> and C<schedhistory> tables
+contains the effective date/time of the history change. This field takes a
+timestamp, and a trigger ensures that the value is evenly divisible by five
+minutes (by rounding). In other words,
+
+    '1964-06-13 14:45'
+
+is a valid C<effective> timestamp, while
+
+    '2014-01-01 00:00:01'
+
+will be rounded to '2014-01-01 00:00'.
+
+
+
 =head1 AUTHENTICATION AND SESSION MANAGEMENT
 
 Employees do not access the database directly, but only via HTTP requests.
-For authorization and auditing purposes, L<App::Dochazka::REST> needs to tie
-all incoming requests to an EID. 
+For authorization and auditing purposes, L<App::Dochazka::REST> needs to
+associate each incoming request to an EID. 
 
-When an incoming request comes in, the headers and cookies are examined.
+When a request comes in, the headers and cookies are examined.
 Requests that belong to an existing session have a cookie that looks like:
 
     Session ID: xdfke34irsdfslajoasdja;sldkf
@@ -1145,8 +1229,9 @@ L<App::Dochazka::REST::Resource>.
 =head2 New session
 
 Requests for a new session are subject to HTTP Basic Authentication. To protect
-user credentials from network sniffing attacks, it is essential that the HTTP
-connection be encrypted using SSL.
+employee credentials from network sniffing attacks, the HTTP traffic
+must be encrypted. This can be accomplished using an SSL-capable HTTP
+server or transparent proxy such as L<nginx|http://nginx.org/en/>.
 
 If the C<DOCHAZKA_LDAP> site parameter is set to a true value, the
 C<_authenticate> routine of L<App::Dochazka::REST::Resource> will attempt to 
