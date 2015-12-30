@@ -2,6 +2,7 @@ bin/dochazka-dbinit
 bin/dochazka-rest
 Build.PL
 Changes
+config/Component_Config.pm
 config/dispatch_Message_en.conf
 config/docgen_Config.pm
 config/README
@@ -11,6 +12,7 @@ config/REST_MetaConfig.pm
 config/REST_SiteConfig.pm
 config/sql/activity_Config.pm
 config/sql/audit_Config.pm
+config/sql/component_Config.pm
 config/sql/dbinit_Config.pm
 config/sql/employee_Config.pm
 config/sql/interval_Config.pm
@@ -29,6 +31,7 @@ lib/App/Dochazka/REST/Docs/Resources.pm
 lib/App/Dochazka/REST/Docs/Workflow.pm
 lib/App/Dochazka/REST/LDAP.pm
 lib/App/Dochazka/REST/Model/Activity.pm
+lib/App/Dochazka/REST/Model/Component.pm
 lib/App/Dochazka/REST/Model/Employee.pm
 lib/App/Dochazka/REST/Model/Interval.pm
 lib/App/Dochazka/REST/Model/Lock.pm
@@ -69,6 +72,7 @@ t/dispatch/supervisor.t
 t/dispatch/top.t
 t/model/activity.t
 t/model/canonicalize.t
+t/model/component.t
 t/model/during_range.t
 t/model/employee.t
 t/model/id.t

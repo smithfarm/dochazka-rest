@@ -1467,7 +1467,7 @@ sub reset_db {
     );
     return $status unless $status->ok;
 
-    # a third round of SQL statements to insert initial set of activities
+    # insert initial set of activities
     try {
         $conn->txn( fixup => sub {
             my $sth = $_->prepare( $site->SQL_ACTIVITY_INSERT );
@@ -1475,6 +1475,22 @@ sub reset_db {
                 $sth->bind_param( 1, $actdef->{code} );
                 $sth->bind_param( 2, $actdef->{long_desc} );
                 $sth->bind_param( 3, 'dbinit' );
+                $sth->execute;
+            }
+        } );
+    } catch {
+        $status = $CELL->status_err( 'DOCHAZKA_DBI_ERR', args => [ $_ ] );
+    };
+    return $status unless $status->ok;
+    
+    # insert initial set of components
+    try {
+        $conn->txn( fixup => sub {
+            my $sth = $_->prepare( $site->SQL_COMPONENT_INSERT );
+            foreach my $actdef ( @{ $site->DOCHAZKA_COMPONENT_DEFINITIONS } ) {
+                $sth->bind_param( 1, $actdef->{path} );
+                $sth->bind_param( 2, $actdef->{source} );
+                $sth->bind_param( 3, $actdef->{acl} );
                 $sth->execute;
             }
         } );

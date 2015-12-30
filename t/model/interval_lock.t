@@ -308,7 +308,7 @@ is( $status->code, 'DOCHAZKA_CUD_OK' );
 # payload contains number of records deleted
 is( $status->payload, 1 );
 
-note( 'create a 80 intervals' );
+note( 'create 80 intervals' );
 my $d = $today;
 my ( $by, $bm, $bd ) = $d =~ m/(\d+)-(\d+)-(\d+)/;
 my ( $ey, $em, $ed ) = Add_Delta_Days( $by, $bm, $bd, 40 );
@@ -339,7 +339,7 @@ is( $status->code, 'DOCHAZKA_CUD_OK' );
 # payload contains number of records deleted
 is( $status->payload, 80 );
 
-note( 'create a 260 intervals' );
+note( 'create 260 intervals' );
 $d = $today;
 ( $by, $bm, $bd ) = $d =~ m/(\d+)-(\d+)-(\d+)/;
 ( $ey, $em, $ed ) = Add_Delta_Days( $by, $bm, $bd, 65 );

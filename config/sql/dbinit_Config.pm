@@ -589,6 +589,30 @@ $body$#,
     q/CREATE TRIGGER disabled_to_zero BEFORE INSERT OR UPDATE ON activities
         FOR EACH ROW EXECUTE PROCEDURE disabled_to_zero()/,
 
+    # the 'components' table
+
+    q/-- components
+      CREATE TABLE components (
+          cid        serial PRIMARY KEY,
+          path       varchar(2048) UNIQUE NOT NULL,
+          source     text NOT NULL,
+          acl        varchar(16) NOT NULL
+      )/,
+  
+    q/-- trigger function to make 'cid' field immutable
+    CREATE OR REPLACE FUNCTION cid_immutable() RETURNS trigger AS $IMM$
+      BEGIN
+          IF OLD.cid <> NEW.cid THEN
+              RAISE EXCEPTION 'components.cid field is immutable'; 
+          END IF;
+          RETURN NEW;
+      END;
+    $IMM$ LANGUAGE plpgsql/,
+    
+    q/-- trigger the trigger
+    CREATE TRIGGER no_cid_update BEFORE UPDATE ON components
+      FOR EACH ROW EXECUTE PROCEDURE cid_immutable()/,
+    
     # the 'intervals' table
 
     q/-- intervals
@@ -684,7 +708,7 @@ $body$#,
             --
             -- does the interval extend too far into the future?
             --
-            SELECT date_trunc('MONTH', (now() + interval '3 months'))::TIMESTAMPTZ INTO limit_ts;
+            SELECT date_trunc('MONTH', (now() + interval '4 months'))::TIMESTAMPTZ INTO limit_ts;
             IF upper(NEW.intvl) >= limit_ts THEN 
                 RAISE EXCEPTION 'interval extends too far into the future';
             END IF;
