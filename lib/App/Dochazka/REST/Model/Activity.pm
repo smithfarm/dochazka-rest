@@ -125,7 +125,7 @@ functions:
 =back
 
 For basic C<activity> object workflow, see the unit tests in
-C<t/109-activity.t>.
+C<t/model/activity.t>.
 
 
 

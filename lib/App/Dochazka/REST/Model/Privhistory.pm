@@ -145,7 +145,7 @@ methods are:
 
 =back
 
-For basic C<privhistory> workflow, see C<t/005-privhistory.t>.
+For basic C<privhistory> workflow, see C<t/model/privhistory.t>.
 
 
 

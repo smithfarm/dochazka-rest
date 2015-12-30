@@ -208,7 +208,7 @@ functions:
 =back
 
 For basic C<employee> object workflow, see the unit tests in
-C<t/004-employee.t>.
+C<t/model/employee.t>.
 
 
 

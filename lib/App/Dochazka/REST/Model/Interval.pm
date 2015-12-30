@@ -119,7 +119,7 @@ state)
 
 =back
 
-For basic activity interval workflow, see C<t/010-interval.t>.
+For basic activity interval workflow, see C<t/model/interval.t>.
 
 
 
