@@ -667,6 +667,28 @@ sub shared_update_activity {
 }
 
 
+=head2 shared_update_component
+
+Takes three arguments:
+
+  - $d_obj is the dispatch object
+  - $comp is a component object (blessed hashref)
+  - $over is a hashref with zero or more component properties and new values
+
+The values from $over replace those in $comp
+
+=cut
+
+sub shared_update_component {
+    my ( $d_obj, $comp, $over ) = @_;
+    $log->debug("Entering " . __PACKAGE__ . "::shared_update_component" );
+    delete $over->{'cid'} if exists $over->{'cid'};
+    return $comp->update( $d_obj->context ) if pre_update_comparison( $comp, $over );
+    $d_obj->mrest_declare_status( code => 400, explanation => "DISPATCH_ILLEGAL_ENTITY" );
+    return $fail;
+}
+
+
 =head2 shared_update_history
 
 Takes three arguments:
@@ -716,6 +738,36 @@ sub shared_insert_activity {
 
     # execute the INSERT db operation
     return $act->insert( $d_obj->context );
+}
+
+
+=head2 shared_insert_component
+
+Takes two arguments: the dispatch object and the properties that are supposed
+to be a component object to be inserted.
+
+=cut
+
+sub shared_insert_component {
+    my ( $d_obj, $path, $props ) = validate_pos( @_,
+        { isa => 'App::Dochazka::REST::Dispatch' },
+        { type => SCALAR },
+        { type => HASHREF },
+    );
+    $log->debug("Reached " . __PACKAGE__ . "::shared_insert_component" );
+
+    my %proplist_before = %$props;
+    $proplist_before{'path'} = $path; # overwrite whatever might have been there
+    $log->debug( "Properties before filter: " . join( ' ', keys %proplist_before ) );
+
+    # spawn an object, filtering the properties first
+    my @filtered_args = App::Dochazka::Common::Model::Component::filter( %proplist_before );
+    my %proplist_after = @filtered_args;
+    $log->debug( "Properties after filter: " . join( ' ', keys %proplist_after ) );
+    my $comp = App::Dochazka::REST::Model::Component->spawn( @filtered_args );
+
+    # execute the INSERT db operation
+    return $comp->insert( $d_obj->context );
 }
 
 

@@ -585,6 +585,161 @@ EOH
 
 };
 
+
+=head2 Component resources
+
+=cut
+
+$defs->{'component'} = {
+
+    # /component
+    'component' =>
+    {
+        parent => '/',
+        handler => 'handler_noop',
+        acl_profile => 'passerby',
+        cli => 'component',
+        description => 'Parent for component resources',
+        documentation => <<'EOH',
+=pod
+
+Parent for component resources
+EOH
+    },
+
+    # /component/cid
+    'component/cid' => 
+    {
+        parent => 'component',
+        handler => {
+            POST => 'handler_post_component_cid',
+        },
+        acl_profile => 'admin', 
+        cli => 'component cid',
+        description => 'Update an existing component object via POST request (cid must be included in request body)',
+        documentation => <<'EOH',
+=pod
+
+Enables existing component objects to be updated by sending a POST request to
+the REST server. Along with the properties to be modified, the request body
+must include an 'cid' property, the value of which specifies the cid to be
+updated.
+EOH
+    },
+
+    # /component/cid/:cid
+    'component/cid/:cid' => 
+    {
+        parent => 'component',
+        handler => {
+            GET => 'handler_component_cid',
+            PUT => 'handler_component_cid',
+            DELETE => 'handler_component_cid',
+        },
+        acl_profile => 'admin', 
+        cli => 'component cid $cid',
+        validations => {
+            'cid' => 'Int',
+        },
+        description => 'GET, PUT, or DELETE an component object by its cid',
+        documentation => <<'EOH',
+=pod
+
+This resource allows the user to GET, PUT, or DELETE an component object by its
+cid.
+
+=over
+
+=item * GET
+
+Retrieves an component object by its cid.
+
+=item * PUT
+
+Updates the component object whose cid is specified by the ':cid' URI parameter.
+The fields to be updated and their new values should be sent in the request
+body, e.g., like this:
+
+    { "long_desc" : "new description", "disabled" : "f" }
+
+=item * DELETE
+
+Deletes the component object whose cid is specified by the ':cid' URI parameter.
+This will work only if nothing in the database refers to this component.
+
+=back
+EOH
+    },
+
+    # /component/path
+    'component/path' => 
+    {
+        parent => 'component',
+        handler => {
+            POST => 'handler_post_component_path',
+        },
+        acl_profile => 'admin', 
+        cli => 'component cid',
+        description => 'Update an existing component object via POST request (component path must be included in request body)',
+        documentation => <<'EOH',
+=pod
+
+This resource enables existing component objects to be updated, and new
+component objects to be inserted, by sending a POST request to the REST server.
+Along with the properties to be modified/inserted, the request body must
+include an 'path' property, the value of which specifies the component to be
+updated.  
+EOH
+    },
+
+    # /component/path/:path
+    'component/path/:path' => 
+    {
+        parent => 'component',
+        handler => {
+            GET => 'handler_get_component_path',
+            PUT => 'handler_put_component_path',
+            DELETE => 'handler_delete_component_path',
+        },
+        acl_profile => 'admin',
+        cli => 'component path $path',
+        validations => {
+            'path' => qr/^[[:alnum:]_][[:alnum:]_-]+$/,
+        },
+        description => 'GET, PUT, or DELETE an component object by its path',
+        documentation => <<'EOH',
+=pod
+
+With this resource, a user can GET, PUT, or DELETE an component object by its
+path.
+
+=over
+
+=item * GET
+
+Retrieves an component object by its path.
+
+=item * PUT
+
+Inserts new or updates existing component object whose path is specified by the
+':path' URI parameter.  The fields to be updated and their new values should be
+sent in the request body, e.g., like this:
+
+    { "long_desc" : "new description", "disabled" : "f" }
+
+=item * DELETE
+
+Deletes an component object by its path whose path is specified by the ':path'
+URI parameter.  This will work only if nothing in the database refers to this
+component.
+
+=back
+EOH
+    },
+
+};
+
+
 =head2 Employee resources
 
 =cut

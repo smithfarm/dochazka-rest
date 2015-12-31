@@ -150,6 +150,7 @@ sub init_router {
 
 These are largely (but not entirely) copy-pasted from L<Web::MREST::Dispatch>.
 
+
 =head3 handler_bugreport
 
 Handler for the C<bugreport> resource.
@@ -236,7 +237,6 @@ sub handler_dbstatus {
 
     return $status;
 }
-
 
 
 =head3 handler_docu
@@ -700,6 +700,7 @@ sub handler_get_activity_code {
     );
 }
 
+
 =head3 handler_delete_activity_code
 
 Handler for the 'DELETE activity/code/:code' resource.
@@ -747,7 +748,7 @@ sub handler_put_activity_code {
     my $entity = $context->{'request_entity'};
     my $act = shared_first_pass_lookup( $self, 'code', $code );
     $self->nullify_declared_status;
-    
+
     # - perform insert/update operation
     if ( $act ) {
         return shared_update_activity( $self, $act, $entity );
@@ -755,6 +756,198 @@ sub handler_put_activity_code {
         return shared_insert_activity( $self, $code, $entity );
     }
 }
+
+
+
+=head2 Component handlers
+
+
+=head3 handler_post_component_cid
+
+Handler for 'POST component/cid' resource.
+
+=cut
+
+sub handler_post_component_cid {
+    my ( $self, $pass ) = @_;
+    $log->debug( "Entering " . __PACKAGE__ . "::handler_post_component_cid" );
+
+    # first pass
+    return 1 if $pass == 1;
+
+    # second pass
+    # - check that entity is kosher
+    my $status = shared_entity_check( $self, 'cid' );
+    return $status unless $status->ok;
+    my $context = $self->context;
+    my $entity = $context->{'request_entity'};
+
+    # - get cid and look it up
+    my $cid = $entity->{'cid'};
+    my $comp = shared_first_pass_lookup( $self, 'CID', $cid );
+    return $fail unless $cid;
+
+    # - perform the update
+    return shared_update_component( $self, $comp, $entity );
+}
+
+
+=head3 handler_post_component_path
+
+Handler for 'POST component/path' resource. This is a little more complicated
+because it can be either create or modify.
+
+=cut
+
+sub handler_post_component_path {
+    my ( $self, $pass ) = @_;
+    $log->debug( "Entering " . __PACKAGE__ . "::handler_post_component_path" );
+
+    # first pass
+    return 1 if $pass == 1;
+
+    # second pass
+    # - check that entity is kosher
+    my $status = shared_entity_check( $self, 'path' );
+    return $status unless $status->ok;
+    my $context = $self->context;
+    my $entity = $context->{'request_entity'};
+
+    # - create or modify?
+    my $path = $entity->{'path'};
+    my $comp = shared_first_pass_lookup( $self, 'path', $path );
+    $self->nullify_declared_status;
+
+    # - perform the insert/update
+    if ( $comp ) {
+        return shared_update_component( $self, $comp, $entity );
+    } else {
+        return shared_insert_component( $self, $path, $entity );
+    }
+}
+
+
+=head3 handler_component_cid
+
+Handler for the 'component/cid/:cid' resource.
+
+=cut
+
+sub handler_component_cid {
+    my ( $self, $pass ) = @_;
+    $log->debug( "Entering " . __PACKAGE__ . "::handler_component_cid" ); 
+
+    my $context = $self->context;
+
+    # first pass
+    if ( $pass == 1 ) {
+        my $comp = shared_first_pass_lookup( $self, 'cid', $context->{'mapping'}->{'cid'} );
+        return 0 unless $comp;
+        $context->{'stashed_component_object'} = $comp;
+        return 1;
+    }
+
+    # second pass
+    if ( $context->{'method'} eq 'GET' ) {
+        return $CELL->status_ok( 'DISPATCH_COMPONENT_FOUND', 
+            payload => $context->{'stashed_component_object'}
+        );
+    } elsif ( $context->{'method'} eq 'PUT' ) {
+        return shared_update_component( 
+            $self, 
+            $context->{'stashed_component_object'}, 
+            $context->{'request_entity'} 
+        );
+    } elsif ( $context->{'method'} eq 'DELETE' ) {
+        return $context->{'stashed_component_object'}->delete( $context );
+    }
+    return $CELL->status_crit("Aaaabllaaaaaaahhh Component! Swallowed by the abyss" );
+}
+
+
+=head3 handler_get_component_path
+
+Handler for the 'GET component/path/:path' resource.
+
+=cut
+
+sub handler_get_component_path {
+    my ( $self, $pass ) = @_;
+    $log->debug( "Entering " . __PACKAGE__ . "::handler_get_component_path" ); 
+
+    my $context = $self->context;
+
+    # first pass
+    if ( $pass == 1 ) {
+        my $comp = shared_first_pass_lookup( $self, 'path', $context->{'mapping'}->{'path'} );
+        return 0 unless $comp;
+        $context->{'stashed_component_object'} = $comp;
+        return 1;
+    }
+
+    # second pass
+    return $CELL->status_ok( 'DISPATCH_COMPONENT_FOUND', 
+        payload => $context->{'stashed_component_object'}
+    );
+}
+
+
+=head3 handler_delete_component_path
+
+Handler for the 'DELETE component/path/:path' resource.
+
+=cut
+
+sub handler_delete_component_path {
+    my ( $self, $pass ) = @_;
+    $log->debug( "Entering " . __PACKAGE__ . "::handler_delete_component_path" ); 
+
+    my $context = $self->context;
+
+    # first pass
+    if ( $pass == 1 ) {
+        my $comp = shared_first_pass_lookup( $self, 'path', $context->{'mapping'}->{'path'} );
+        return 0 unless $comp;
+        $context->{'stashed_component_object'} = $comp;
+        return 1;
+    }
+
+    # second pass
+    return $context->{'stashed_component_object'}->delete( $context );
+}
+
+
+=head3 handler_put_component_path
+
+Handler for the 'PUT component/path/:path' resource.
+
+=cut
+
+sub handler_put_component_path {
+    my ( $self, $pass ) = @_;
+    $log->debug( "Entering " . __PACKAGE__ . "::handler_put_component_path" ); 
+
+    my $context = $self->context;
+
+    # first pass
+    return 1 if ( $pass == 1 );
+
+    # second pass
+
+    # - create or modify?
+    my $path = $context->{'mapping'}->{'path'};
+    my $entity = $context->{'request_entity'};
+    my $comp = shared_first_pass_lookup( $self, 'path', $path );
+    $self->nullify_declared_status;
+
+    # - perform insert/update operation
+    if ( $comp ) {
+        return shared_update_component( $self, $comp, $entity );
+    } else {
+        return shared_insert_component( $self, $path, $entity );
+    }
+}
+
 
 
 =head2 Employee handlers
@@ -1107,6 +1300,7 @@ sub handler_delete_employee_eid {
     return $context->{'stashed_employee_object'}->delete( $context );
 }
 
+
 =head3 handler_get_employee_eid
 
 Handler for 'GET employee/eid/:eid'
@@ -1270,6 +1464,7 @@ sub handler_get_employee_eid_team {
     return $context->{'stashed_employee_object'}->team_nicks( $dbix_conn );
 }
 
+
 =head3 handler_get_employee_nick_team
 
 Handler for 'GET employee/nick/:nick/team'
@@ -1288,6 +1483,7 @@ sub handler_get_employee_nick_team {
     my $dbix_conn = $context->{'dbix_conn'};
     return $context->{'stashed_employee_object'}->team_nicks( $dbix_conn );
 }
+
 
 =head3 handler_delete_employee_nick
 
@@ -1308,6 +1504,7 @@ sub handler_delete_employee_nick {
     my $context = $self->context;
     return $context->{'stashed_employee_object'}->delete( $context );
 }
+
 
 =head3 handler_get_employee_nick
 
@@ -1378,6 +1575,7 @@ sub handler_get_employee_search_nick {
 
 =head2 History handlers
 
+
 =head3 handler_history_self
 
 Handler method for the '{priv,schedule}/history/self/?:tsrange' resource.
@@ -1408,6 +1606,7 @@ sub handler_history_self {
         return get_schedhistory( $context, %ARGS );
     }
 }
+
 
 =head3 handler_history_get
 
@@ -1450,6 +1649,7 @@ sub handler_history_get {
     }
     return $status;
 }
+
 
 =head3 handler_history_post
 
@@ -1534,6 +1734,7 @@ sub handler_history_get_phid {
     );
 }
 
+
 =head3 handler_history_post_phid
 
 Handler for 'POST priv/history/phid/:phid'
@@ -1598,6 +1799,7 @@ sub handler_history_get_shid {
     );
 }
 
+
 =head3 handler_history_post_shid
 
 Handler for 'POST priv/history/shid/:shid'
@@ -1623,6 +1825,7 @@ sub handler_history_post_shid {
         $self->context->{'request_entity'} 
     );
 }
+
 
 =head3 handler_history_delete_shid
 
