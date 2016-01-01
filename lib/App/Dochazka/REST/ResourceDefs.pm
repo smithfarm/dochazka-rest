@@ -704,7 +704,7 @@ EOH
         acl_profile => 'admin',
         cli => 'component path $path',
         validations => {
-            'path' => qr/^[[:alnum:]_][[:alnum:]_-]+$/,
+            'path' => qr#^[[:alnum:]_.][[:alnum:]_/.-]+$#,
         },
         description => 'GET, PUT, or DELETE an component object by its path',
         documentation => <<'EOH',
@@ -2781,7 +2781,7 @@ Load all the resource definitions into the L<Path::Router> instance.
 =cut
 
 sub load {
-    foreach my $prop ( qw( top activity employee history interval lock priv schedule ) ) {
+    foreach my $prop ( qw( top activity component employee history interval lock priv schedule ) ) {
         Web::MREST::InitRouter::load_resource_defs( $defs->{$prop} ) if $defs->{$prop};
     }
 }

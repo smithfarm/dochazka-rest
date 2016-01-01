@@ -91,8 +91,10 @@ our @EXPORT_OK = qw(
     shared_employee_acl_part1
     shared_employee_acl_part2
     shared_update_activity
+    shared_update_component
     shared_update_history
     shared_insert_activity
+    shared_insert_component
     shared_insert_interval
     shared_insert_lock
     shared_update_intlock
@@ -144,6 +146,12 @@ sub shared_first_pass_lookup {
     } elsif ( $key eq 'code' ) {
         $thing = 'activity';
         $status = App::Dochazka::REST::Model::Activity->load_by_code( $conn, $value );
+    } elsif ( uc($key) eq 'CID' ) {
+        $thing = 'component';
+        $status = App::Dochazka::REST::Model::Component->load_by_cid( $conn, $value );
+    } elsif ( $key eq 'path' ) {
+        $thing = 'component';
+        $status = App::Dochazka::REST::Model::Component->load_by_path( $conn, $value );
     } elsif ( uc($key) eq 'EID' ) {
         $thing = 'employee';
         $status = App::Dochazka::REST::Model::Employee->load_by_eid( $conn, $value );
