@@ -56,6 +56,25 @@ my $test = Plack::Test->create( $app );
 
 my $res;
 
+sub path_exists {
+    my $path = shift;
+    my $status = req( $test, 200, 'root', 'GET', 'component/all' );
+    is( $status->level, 'OK' );
+    is( $status->code, 'DISPATCH_RECORDS_FOUND' );
+    is( ref( $status->payload ), 'ARRAY' );
+    my $result = 0;
+    LOOP: foreach my $element ( @{ $status->payload } ) {
+        if ( $element->{'path'} eq $path ) {
+            $result = 1;
+            last LOOP;
+        }
+    }
+    return $result;
+}
+
+note( 'test path_exists() helper function' );
+ok( path_exists( 'sample/local_time.mc' ) );
+
 
 note( '=============================' );
 note( '"component/all" resource' );
@@ -259,7 +278,7 @@ req( $test, 405, 'root', 'PUT', $base );
 note( "POST on $base" );
 
 note( "insert: expected behavior" );
-$component_obj = '{ "path" : "FOOWANG", "source" : "wang wang wazoo", "acl" : "passerby" }';
+$component_obj = '{ "path" : "library/foowang.mc", "source" : "wang wang wazoo", "acl" : "passerby" }';
 req( $test, 403, 'demo', 'POST', $base, $component_obj );
 $status = req( $test, 200, 'root', 'POST', $base, $component_obj );
 is( $status->level, 'OK', "POST $base 4" );
@@ -267,7 +286,7 @@ is( $status->code, 'DOCHAZKA_CUD_OK', "POST $base 5" );
 my $cid_of_foowang = $status->payload->{'cid'};
 
 note( "update: expected behavior" );
-$component_obj = '{ "path" : "FOOWANG", "source" : "this is only a test", "acl" : "inactive" }';
+$component_obj = '{ "path" : "library/foowang.mc", "source" : "this is only a test", "acl" : "inactive" }';
 req( $test, 403, 'demo', 'POST', $base, $component_obj );
 $status = req( $test, 200, 'root', 'POST', $base, $component_obj );
 is( $status->level, 'OK', "POST $base 4" );
