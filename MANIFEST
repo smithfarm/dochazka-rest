@@ -57,6 +57,7 @@ t/001-init.t
 t/LDAP.t
 t/dispatch/001-resource.t
 t/dispatch/activity.t
+t/dispatch/component.t
 t/dispatch/employee.t
 t/dispatch/fillup.t
 t/dispatch/history-bug.t
