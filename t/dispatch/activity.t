@@ -38,6 +38,7 @@ use 5.012;
 use strict;
 use warnings;
 
+use App::CELL::Test::LogToFile;
 use App::CELL qw( $log $meta $site );
 use App::Dochazka::REST::Test;
 use Data::Dumper;
@@ -79,9 +80,9 @@ create_active_employee( $test );
 create_inactive_employee( $test );
 
 
-note( '=============================' );
-note('"activity/aid" resource' );
-note( '=============================' );
+note( '=======================' );
+note( '"activity/aid" resource' );
+note( '=======================' );
 my $base = 'activity/aid';
 docu_check($test, "$base");
 
@@ -432,7 +433,7 @@ foreach my $invalid_code (
     '/ninety/nine/luftbalons//',
 ) {
     foreach my $user ( qw( root demo ) ) {
-        req( $test, 400, $user, 'GET', "$base/!!! !134@@" );
+        req( $test, 400, $user, 'GET', "$base/$invalid_code" );
     }
 }
 
@@ -456,6 +457,7 @@ req( $test, 403, 'active', 'PUT', "$base/FOOBAR" );
 
 note( 'root: no content body' );
 req( $test, 400, 'root', 'PUT', "$base/FOOBAR" );
+req( $test, 400, 'root', 'PUT', "$base/FOOBAR_NEW" );
 
 note( 'root: invalid JSON' );
 req( $test, 400, 'root', 'PUT', "$base/FOOBAR", '{ asdf' );
@@ -465,6 +467,7 @@ req( $test, 400, 'root', 'PUT', "$base/!!!!", '{ "legal":"json" }' );
 
 note( 'root: valid JSON that is not what we are expecting' );
 req( $test, 400, 'root', 'PUT', "$base/FOOBAR", '0' );
+req( $test, 400, 'root', 'PUT', "$base/FOOBAR_NEW", '0' );
 
 note( 'root: update with combination of valid and invalid properties' );
 $status = req( $test, 200, 'root', 'PUT', "$base/FOOBAR", 

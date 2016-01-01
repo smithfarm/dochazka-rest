@@ -258,7 +258,7 @@ sub handler_docu {
         $log->debug( "handler_docu: request body is ->$docu_resource<-" );
     } else {
         $self->mrest_declare_status( 'code' => 400, 'explanation' => 'Missing request entity' );
-        return $CELL->status_not_ok;
+        return $fail;
     }
 
     # the resource should be defined - if not, return 404
@@ -268,7 +268,7 @@ sub handler_docu {
         $self->mrest_declare_status( 'code' => 404, 
             'explanation' => "Could not find resource definition for $docu_resource" 
         );
-        return $CELL->status_not_ok;
+        return $fail;
     }
 
     # all green - assemble the requested documentation
@@ -430,7 +430,7 @@ sub handler_param {
     if ( $type ne 'meta' and $method =~ m/^(PUT)|(DELETE)$/ ) {
         $self->mrest_declare_status( code => 400, explanation => 
             'PUT and DELETE can be used with meta parameters only' );
-        return $CELL->status_not_ok;
+        return $fail;
     }
     if ( $method eq 'GET' ) {
         return $CELL->status_ok( 'MREST_PARAMETER_VALUE', payload => {
@@ -746,6 +746,10 @@ sub handler_put_activity_code {
     # - create or modify?
     my $code = $context->{'mapping'}->{'code'};
     my $entity = $context->{'request_entity'};
+    if ( ! defined($entity) ) {
+        $self->mrest_declare_status( 'code' => 400, 'explanation' => 'Missing request entity' );
+        return $fail;
+    }
     my $act = shared_first_pass_lookup( $self, 'code', $code );
     $self->nullify_declared_status;
 
@@ -808,7 +812,7 @@ sub handler_post_component_path {
 
     # second pass
     # - check that entity is kosher
-    my $status = shared_entity_check( $self, 'path' );
+    my $status = shared_entity_check( $self, 'path', 'source', 'acl' );
     return $status unless $status->ok;
     my $context = $self->context;
     my $entity = $context->{'request_entity'};
@@ -937,6 +941,10 @@ sub handler_put_component_path {
     # - create or modify?
     my $path = $context->{'mapping'}->{'path'};
     my $entity = $context->{'request_entity'};
+    if ( ! defined($entity) ) {
+        $self->mrest_declare_status( 'code' => 400, 'explanation' => 'Missing request entity' );
+        return $fail;
+    }
     my $comp = shared_first_pass_lookup( $self, 'path', $path );
     $self->nullify_declared_status;
 
@@ -1372,7 +1380,7 @@ sub handler_put_employee_ldap {
     my $emp = $context->{'stashed_employee_object'};
     if ( ! $emp ) {
         $self->mrest_declare_status( 'code' => 404, 'explanation' => "Nick ->$nick<- not found in LDAP" );
-        return $CELL->status_not_ok;
+        return $fail;
     }
 
     my $status = $emp->load_by_nick( $context->{'dbix_conn'}, $emp->nick );
