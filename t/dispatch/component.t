@@ -89,6 +89,7 @@ my $foobar = create_testing_component(
     acl => 'passerby' 
 );
 my $cid_of_foobar = $foobar->cid;
+ok( path_exists( "FOOBAR" ) );
 
 note( "GET on $base" );
 req( $test, 403, 'demo', 'GET', $base );
@@ -104,20 +105,14 @@ ok( scalar( grep { $_->{path} eq 'FOOBAR'; } @{ $status->payload } ), "GET $base
 
 note( 'delete the testing component' );
 delete_testing_component( $cid_of_foobar );
+ok( ! path_exists( "FOOBAR" ) );
 
 note( "PUT, POST, DELETE on $base" );
-req( $test, 405, 'demo', 'PUT', $base );
-req( $test, 405, 'active', 'PUT', $base );
-req( $test, 405, 'piggy', 'PUT', $base );
-req( $test, 405, 'root', 'PUT', $base );
-req( $test, 405, 'demo', 'POST', $base );
-req( $test, 405, 'active', 'POST', $base );
-req( $test, 405, 'piggy', 'PUT', $base );
-req( $test, 405, 'root', 'POST', $base );
-req( $test, 405, 'demo', 'DELETE', $base );
-req( $test, 405, 'active', 'DELETE', $base );
-req( $test, 405, 'piggy', 'PUT', $base );
-req( $test, 405, 'root', 'DELETE', $base );
+foreach my $method ( 'PUT', 'POST', 'DELETE' ) {
+    foreach my $user ( 'demo', 'active', 'piggy', 'root' ) {
+        req( $test, 405, $user, $method, $base );
+    }
+}
 
 
 note( '========================' );
@@ -266,14 +261,11 @@ $base = 'component/path';
 docu_check($test, "$base");
 
 note( "GET, PUT on $base" );
-req( $test, 405, 'demo', 'GET', $base );
-req( $test, 405, 'active', 'GET', $base );
-req( $test, 405, 'puppy', 'GET', $base );
-req( $test, 405, 'root', 'GET', $base );
-req( $test, 405, 'demo', 'PUT', $base );
-req( $test, 405, 'active', 'PUT', $base );
-req( $test, 405, 'puppy', 'GET', $base );
-req( $test, 405, 'root', 'PUT', $base );
+foreach my $method ( 'GET', 'PUT' ) {
+    foreach my $user ( 'demo', 'active', 'puppy', 'root' ) {
+        req( $test, 405, $user, $method, $base );
+    }
+}
 
 note( "POST on $base" );
 
@@ -284,6 +276,7 @@ $status = req( $test, 200, 'root', 'POST', $base, $component_obj );
 is( $status->level, 'OK', "POST $base 4" );
 is( $status->code, 'DOCHAZKA_CUD_OK', "POST $base 5" );
 my $cid_of_foowang = $status->payload->{'cid'};
+ok( path_exists( 'library/foowang.mc' ) );
 
 note( "update: expected behavior" );
 $component_obj = '{ "path" : "library/foowang.mc", "source" : "this is only a test", "acl" : "inactive" }';
@@ -306,6 +299,7 @@ dbi_err( $test, 500, 'root', 'POST', $base, $weirded_object, qr/check constraint
 
 note( "delete the testing component" );
 delete_testing_component( $cid_of_foowang );
+ok( ! path_exists( 'library/foowang.mc' ) );
 
 note( "DELETE on $base" );
 foreach my $user ( qw( demo active puppy root ) ) {
