@@ -144,6 +144,14 @@ sub insert {
     my $self = shift;
     my ( $context ) = validate_pos( @_, { type => HASHREF } );
 
+    return $CELL->status_err( 'DOCHAZKA_MALFORMED_400' ) unless
+        ( 
+          $self->{'path'} and $self->{'source'} and $self->{'acl'} and
+          scalar( 
+              grep { $self->{'acl'} eq $_ } ( 'admin', 'active', 'inactive', 'passerby' ) 
+          ) 
+        );
+
     my $status = cud(
         conn => $context->{'dbix_conn'},
         eid => $context->{'current'}->{'eid'},
@@ -171,7 +179,20 @@ sub update {
     my $self = shift;
     my ( $context ) = validate_pos( @_, { type => HASHREF } );
 
-    return $CELL->status_err( 'DOCHAZKA_MALFORMED_400' ) unless $self->{'cid'};
+    return $CELL->status_err( 'DOCHAZKA_MALFORMED_400' ) unless
+        ( 
+          $self->{'cid'} and 
+          ( 
+              $self->{'path'} or $self->{'source'} or $self->{'acl'}
+          )
+        );
+
+    return $CELL->status_err( 'DOCHAZKA_MALFORMED_400' ) if
+        (
+          $self->{'acl'} and not scalar( 
+              grep { $self->{'acl'} eq $_ } ( 'admin', 'active', 'inactive', 'passerby' ) 
+          ) 
+        );
 
     my $status = cud(
         conn => $context->{'dbix_conn'},

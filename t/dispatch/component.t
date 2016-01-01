@@ -165,6 +165,9 @@ req( $test, 400, 'root', 'POST', $base, $no_closing_bracket );
 $weirded_object = '{ "cid" : "!!!!!", "source" : "down it goes" }';
 dbi_err( $test, 500, 'root', 'POST', $base, $weirded_object, qr/invalid input syntax for integer/ );
 
+my $illegal_acl = '{ "cid" : ' . $cid_of_foowop . ', "path" : "library/machinations.mc", "source" : "wang wang wazoo", "acl" : "puppy" }';
+req( $test, 400, 'root', 'POST', $base, $illegal_acl );
+
 note( 'delete the testing component' );
 delete_testing_component( $cid_of_foowop );
 
@@ -211,16 +214,31 @@ $component_obj = '{ "path" : "FOOBAR", "source" : "The bar of foo", "acl" : "ina
 # - test with demo fail 403
 req( $test, 403, 'demo', 'PUT', "$base/$cid_of_foobar", $component_obj );
 
-note( 'test with root success' );
+note( 'test with root (successful update)' );
 $status = req( $test, 200, 'root', 'PUT', "$base/$cid_of_foobar", $component_obj );
 is( $status->level, 'OK', "PUT $base/:cid 3" );
 is( $status->code, 'DOCHAZKA_CUD_OK', "PUT $base/:cid 4" );
 is( ref( $status->payload ), 'HASH', "PUT $base/:cid 5" );
+is( $status->payload->{path}, 'FOOBAR' );
+is( $status->payload->{source}, 'The bar of foo' );
+is( $status->payload->{acl}, 'inactive' );
+
+note( 'change ACL to active' );
+$status = req( $test, 200, 'root', 'PUT', "$base/$cid_of_foobar", '{ "acl":"active" }' );
+is( $status->level, 'OK' );
+is( $status->code, 'DOCHAZKA_CUD_OK' );
+is( ref( $status->payload ), 'HASH' );
+is( $status->payload->{path}, 'FOOBAR' );
+is( $status->payload->{source}, 'The bar of foo' );
+is( $status->payload->{acl}, 'active' );
+
+note( 'attempt ot change ACL to an illegal value' );
+req( $test, 400, 'root', 'PUT', "$base/$cid_of_foobar", '{ "acl":"puppy" }' );
 
 note( 'make an component object out of the payload' );
 $foobar = App::Dochazka::REST::Model::Component->spawn( $status->payload );
 is( $foobar->source, "The bar of foo", "PUT $base/:cid 5" );
-is( $foobar->acl, "inactive", "PUT $base/:cid 6" );
+is( $foobar->acl, "active", "PUT $base/:cid 6" );
 
 note( 'test with root no request body' );
 req( $test, 400, 'root', 'PUT', "$base/$cid_of_foobar" );
@@ -236,6 +254,7 @@ req( $test, 400, 'root', 'PUT', "$base/$cid_of_foobar", '0' );
 
 note( 'with valid JSON that has some bogus properties' );
 req( $test, 400, 'root', 'PUT', "$base/$cid_of_foobar", '{ "legal":"json" }' );
+req( $test, 400, 'root', 'PUT', "$base/$cid_of_foobar", '{ "aid":"json" }' );
 
 note( "POST on $base/:cid" );
 req( $test, 405, 'demo', 'POST', "$base/$cid_of_foobar" );
@@ -294,14 +313,19 @@ is( $status->payload->{'source'}, 'this is only a test', "POST $base 6" );
 is( $status->payload->{'acl'}, 'inactive', "POST $base 7" );
 
 note( "throw a couple curve balls" );
-$weirded_object = '{ "copious_turds" : 555, "source" : "wang wang wazoo", "disabled" : "f" }';
+$weirded_object = '{ "copious_turds" : 555, "source" : "wang wang wazoo", "acl" : "admin" }';
 req( $test, 400, 'root', 'POST', $base, $weirded_object );
 
-$no_closing_bracket = '{ "copious_turds" : 555, "source" : "wang wang wazoo", "disabled" : "f"';
+$no_closing_bracket = '{ "path" : "library/machinations.mc", "source" : "wang wang wazoo", "acl" : "admin"';
 req( $test, 400, 'root', 'POST', $base, $no_closing_bracket );
 
 $weirded_object = '{ "path" : "!!!!!", "source" : "down it goes", "acl" : "inactive" }';
+#$status = req( $test, 400, 'root', 'POST', $base, $weirded_object );
+#like( $status->text, qr/check constraint "kosher_path"/ );
 dbi_err( $test, 500, 'root', 'POST', $base, $weirded_object, qr/check constraint "kosher_path"/ );
+
+$illegal_acl = '{ "path" : "library/machinations.mc", "source" : "wang wang wazoo", "acl" : "puppy" }';
+req( $test, 400, 'root', 'POST', $base, $illegal_acl );
 
 note( "delete the testing component" );
 delete_testing_component( $cid_of_foowang );

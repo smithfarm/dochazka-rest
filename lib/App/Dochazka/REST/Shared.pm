@@ -691,7 +691,10 @@ sub shared_update_component {
     my ( $d_obj, $comp, $over ) = @_;
     $log->debug("Entering " . __PACKAGE__ . "::shared_update_component" );
     delete $over->{'cid'} if exists $over->{'cid'};
-    return $comp->update( $d_obj->context ) if pre_update_comparison( $comp, $over );
+    if ( pre_update_comparison( $comp, $over ) ) {
+        my $status = $comp->update( $d_obj->context );
+        return $status unless $status->level eq 'ERR' and $status->code eq 'DOCHAZKA_MALFORMED_400';
+    }
     $d_obj->mrest_declare_status( code => 400, explanation => "DISPATCH_ILLEGAL_ENTITY" );
     return $fail;
 }
@@ -775,7 +778,10 @@ sub shared_insert_component {
     my $comp = App::Dochazka::REST::Model::Component->spawn( @filtered_args );
 
     # execute the INSERT db operation
-    return $comp->insert( $d_obj->context );
+    my $status = $comp->insert( $d_obj->context );
+    return $status unless $status->level eq 'ERR' and $status->code eq 'DOCHAZKA_MALFORMED_400';
+    $d_obj->mrest_declare_status( code => 400, explanation => 'DISPATCH_ILLEGAL_ENTITY' );
+    return $fail;
 }
 
 
