@@ -591,13 +591,14 @@ $body$#,
 
     # the 'components' table
 
-    q/-- components
+    q#-- components
       CREATE TABLE components (
           cid        serial PRIMARY KEY,
           path       varchar(2048) UNIQUE NOT NULL,
           source     text NOT NULL,
-          acl        varchar(16) NOT NULL
-      )/,
+          acl        varchar(16) NOT NULL,
+          CONSTRAINT kosher_path CHECK (path ~* '^[[:alnum:]_.][[:alnum:]_/.-]+$')
+      )#,
   
     q/-- trigger function to make 'cid' field immutable
     CREATE OR REPLACE FUNCTION cid_immutable() RETURNS trigger AS $IMM$
