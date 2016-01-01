@@ -1079,10 +1079,10 @@ their disposal.
 
 =head3 Report generation resource
 
-A REST resource that takes the path of the Mason component to be run and a
-hash of arguments to pass to it. The Mason component is run with the
-provided arguments and the result (a string of characters that can be
-interpreted as, e.g., an HTML page) is returned in the response content
+A REST resource, C<GET genreport>, that takes the path of the Mason component
+to be run and a hash of arguments to pass to it. The Mason component is run
+with the provided arguments and the result (a string of characters that can
+be interpreted as, e.g., an HTML page) is returned in the response content
 body.
 
 =back
