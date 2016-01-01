@@ -114,6 +114,8 @@ functions:
 
 =item * L<cid_by_path> (given a path, returns CID)
 
+=item * L<get_all_components> (self-explanatory)
+
 =back
 
 For basic C<component> object workflow, see the unit tests in
@@ -122,7 +124,7 @@ C<t/model/component.t>.
 =cut
 
 use Exporter qw( import );
-our @EXPORT_OK = qw( cid_exists path_exists cid_by_path );
+our @EXPORT_OK = qw( cid_exists path_exists cid_by_path get_all_components );
 
 
 
@@ -300,6 +302,28 @@ sub cid_by_path {
     return $status->payload->{'cid'} if $status->code eq 'DISPATCH_RECORDS_FOUND';
     return;
 }
+
+
+
+=head2 get_all_components
+
+Returns a reference to a hash of hashes, where each hash is one component object.
+
+=cut
+
+sub get_all_components {
+    my $conn = shift;
+    
+    my $sql = $site->SQL_COMPONENT_SELECT_ALL;
+
+    return load_multiple(
+        conn => $conn,
+        class => __PACKAGE__,
+        sql => $sql,
+        keys => [],
+    );
+}
+
 
 
 

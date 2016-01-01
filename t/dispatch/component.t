@@ -57,10 +57,54 @@ my $test = Plack::Test->create( $app );
 my $res;
 
 
+note( '=============================' );
+note( '"component/all" resource' );
+note( '=============================' );
+my $base = 'component/all';
+docu_check($test, $base);
+
+note( 'insert an component' );
+my $foobar = create_testing_component( 
+    path => 'FOOBAR', 
+    source => 'source code of FOOBAR', 
+    acl => 'passerby' 
+);
+my $cid_of_foobar = $foobar->cid;
+
+note( "GET on $base" );
+req( $test, 403, 'demo', 'GET', $base );
+my $status = req( $test, 200, 'root', 'GET', $base );
+is( $status->level, 'OK', "GET $base 2" );
+is( $status->code, 'DISPATCH_RECORDS_FOUND', "GET $base 3" );
+is( $status->{count}, 2, "GET $base 4" );
+ok( exists $status->{payload}, "GET $base 5" );
+is( scalar @{ $status->payload }, 2, "GET $base 6" );
+
+note( 'testing component is present' );
+ok( scalar( grep { $_->{path} eq 'FOOBAR'; } @{ $status->payload } ), "GET $base 7" );
+
+note( 'delete the testing component' );
+delete_testing_component( $cid_of_foobar );
+
+note( "PUT, POST, DELETE on $base" );
+req( $test, 405, 'demo', 'PUT', $base );
+req( $test, 405, 'active', 'PUT', $base );
+req( $test, 405, 'piggy', 'PUT', $base );
+req( $test, 405, 'root', 'PUT', $base );
+req( $test, 405, 'demo', 'POST', $base );
+req( $test, 405, 'active', 'POST', $base );
+req( $test, 405, 'piggy', 'PUT', $base );
+req( $test, 405, 'root', 'POST', $base );
+req( $test, 405, 'demo', 'DELETE', $base );
+req( $test, 405, 'active', 'DELETE', $base );
+req( $test, 405, 'piggy', 'PUT', $base );
+req( $test, 405, 'root', 'DELETE', $base );
+
+
 note( '========================' );
 note( '"component/cid" resource' );
 note( '========================' );
-my $base = 'component/cid';
+$base = 'component/cid';
 docu_check($test, "$base");
 
 note( "GET, PUT on $base" );
@@ -77,7 +121,7 @@ my $cid_of_foowop = $foowop->cid;
 note( 'test if expected behavior behaves as expected (update)' );
 my $component_obj = '{ "cid" : ' . $cid_of_foowop . ', "source" : "wop wop ng", "acl" : "inactive" }';
 req( $test, 403, 'demo', 'POST', $base, $component_obj );
-my $status = req( $test, 200, 'root', 'POST', $base, $component_obj );
+$status = req( $test, 200, 'root', 'POST', $base, $component_obj );
 is( $status->level, 'OK', "POST $base 4" );
 is( $status->code, 'DOCHAZKA_CUD_OK', "POST $base 5" );
 ok( defined $status->payload );
@@ -118,8 +162,8 @@ $base = 'component/cid';
 docu_check($test, "$base/:cid");
 
 note( 'insert an component and disable it here' );
-my $foobar = create_testing_component( path => 'FOOBAR', source => 'wombat', acl => 'passerby' );
-my $cid_of_foobar = $foobar->cid;
+$foobar = create_testing_component( path => 'FOOBAR', source => 'wombat', acl => 'passerby' );
+$cid_of_foobar = $foobar->cid;
 
 note( "GET on $base/:cid" );
 
@@ -248,139 +292,5 @@ note( "DELETE on $base" );
 foreach my $user ( qw( demo active puppy root ) ) {
     req( $test, 405, $user, 'DELETE', $base ); 
 }
-
-
-note( "=============================" );
-note( "'component/path/:path' resource" );
-note( "=============================" );
-$base = 'component/path';
-docu_check($test, "$base/:path");
-
-note( 'insert an component' );
-$foobar = create_testing_component( path => 'FOOBAR', source => 'bazblat', acl => 'passerby' );
-$cid_of_foobar = $foobar->cid;
-
-note( "GET on $base/:path" );
-
-note( 'insufficient privlevel' );
-req( $test, 403, 'demo', 'GET', "$base/FOOBAR" );
-
-note( 'positive test for FOOBAR component' );
-$status = req( $test, 200, 'root', 'GET', "$base/FOOBAR" );
-is( $status->level, "OK", "GET $base/:path 2" );
-is( $status->code, 'DISPATCH_COMPONENT_FOUND', "GET $base/:path 3" );
-is_deeply( $status->payload, {
-    cid => $cid_of_foobar,
-    path => 'FOOBAR',
-    source => 'bazblat',
-    acl => 'passerby',
-}, "GET $base/:path 4" );
-
-note( 'non-existent path' );
-req( $test, 404, 'root', 'GET', "$base/jj" );
-
-note( 'invalid path' );
-foreach my $invalid_path ( 
-    '!!!! !134@@',
-    'whiner*44',
-    '@=1337',
-    '/ninety/nine/luftbalons//',
-) {
-    foreach my $user ( qw( root demo ) ) {
-        req( $test, 400, $user, 'GET', "$base/$invalid_path" );
-    }
-}
-
-note( "PUT on $base/:path" );
-$component_obj = '{ "path" : "FOOBAR", "source" : "Full of it", "acl" : "inactive" }';
-
-note( 'demo fail 403' );
-req( $test, 403, 'demo', 'PUT', "$base/FOOBAR", $component_obj );
-
-note( 'root success' );
-$status = req( $test, 200, 'root', 'PUT', "$base/FOOBAR", $component_obj );
-is( $status->level, "OK", "PUT $base/:path 3" );
-is( $status->code, 'DOCHAZKA_CUD_OK', "PUT $base/:path 4" );
-
-note( 'positive test for FOOBAR component' );
-$status = req( $test, 200, 'root', 'GET', "$base/FOOBAR" );
-is( $status->level, "OK", "GET $base/:path 2" );
-is( $status->code, 'DISPATCH_COMPONENT_FOUND', "GET $base/:path 3" );
-is_deeply( $status->payload, {
-    cid => $cid_of_foobar,
-    path => 'FOOBAR',
-    source => 'Full of it',
-    acl => 'inactive',
-}, "GET $base/:path 4" );
-
-note( 'demo: no content body' );
-req( $test, 403, 'demo', 'PUT', "$base/FOOBAR" );
-req( $test, 403, 'demo', 'PUT', "$base/FOOBAR_NEW" );
-
-note( 'root: no content body' );
-req( $test, 400, 'root', 'PUT', "$base/FOOBAR" );
-
-note( 'root: invalid JSON' );
-req( $test, 400, 'root', 'PUT', "$base/FOOBAR", '{ asdf' );
-
-note( 'root: invalid path' );
-req( $test, 400, 'root', 'PUT', "$base/!!!!", '{ "legal":"json" }' );
-
-note( 'root: valid JSON that is not what we are expecting' );
-req( $test, 400, 'root', 'PUT', "$base/FOOBAR", '0' );
-req( $test, 403, 'demo', 'PUT', "$base/FOOBAR_NEW", '0' );
-
-note( 'root: update with combination of valid and invalid properties' );
-$status = req( $test, 200, 'root', 'PUT', "$base/FOOBAR", 
-    '{ "source":"Nothing much", "nick":"FOOBAR", "sister":123 }' );
-is( $status->level, 'OK', "PUT $base/FOOBAR 21" );
-is( $status->code, 'DOCHAZKA_CUD_OK', "PUT $base/FOOBAR 22" );
-is( $status->payload->{'source'}, "Nothing much", "PUT $base/FOOBAR 23" );
-ok( ! exists( $status->payload->{'nick'} ), "PUT $base/FOOBAR 24" );
-ok( ! exists( $status->payload->{'sister'} ), "PUT $base/FOOBAR 25" );
-
-note( 'root: insert with combination of valid and invalid properties' );
-$status = req( $test, 200, 'root', 'PUT', "$base/FOOBARPUS", 
-    '{ "nick":"FOOBAR", "source":"Nothing much", "sister":"willy\'s", "acl":"inactive" }' );
-is( $status->level, 'OK', "PUT $base/FOOBAR 27" );
-is( $status->code, 'DOCHAZKA_CUD_OK', "PUT $base/FOOBAR 28" );
-is( $status->payload->{'path'}, "FOOBARPUS", "PUT $base/FOOBAR 29" );
-is( $status->payload->{'source'}, "Nothing much", "PUT $base/FOOBAR 30" );
-is( $status->payload->{'acl'}, "inactive", "PUT $base/FOOBAR 31" );
-ok( ! exists( $status->payload->{'nick'} ), "PUT $base/FOOBAR 32" );
-ok( ! exists( $status->payload->{'sister'} ), "PUT $base/FOOBAR 33" );
-
-note( "POST on $base/:path" );
-req( $test, 405, 'demo', 'POST', "$base/FOOBAR" );
-req( $test, 405, 'active', 'POST', "$base/FOOBAR" );
-req( $test, 405, 'puppy', 'POST', "$base/FOOBAR" );
-req( $test, 405, 'root', 'POST', "$base/FOOBAR" );
-
-note( "DELETE on $base/:path" );
-
-note( 'demo fail 403 once' );
-req( $test, 403, 'demo', 'DELETE', "$base/FOOBAR1" );
-
-note( 'root fail 404' );
-req( $test, 404, 'root', 'DELETE', "$base/FOOBAR1" );
-
-note( 'demo fail 403 a second time' );
-req( $test, 403, 'demo', 'DELETE', "$base/FOOBAR" );
-
-note( "root success: DELETE $base/FOOBAR" );
-$status = req( $test, 200, 'root', 'DELETE', "$base/FOOBAR" );
-is( $status->level, 'OK', "DELETE $base/FOOBAR 3" );
-is( $status->code, 'DOCHAZKA_CUD_OK', "DELETE $base/FOOBAR 4" );
-
-note( "really gone" );
-req( $test, 404, 'root', 'GET', "$base/FOOBAR" );
-
-note( "root: fail invalid path" );
-req( $test, 400, 'root', 'DELETE', "$base/!!!" );
-
-note( "delete FOOBARPUS, too" );
-$status = req( $test, 200, 'root', 'DELETE', "$base/FOOBARPUS" );
-is( $status->level, 'OK', "DELETE $base/FOOBARPUS 2" );
-is( $status->code, 'DOCHAZKA_CUD_OK', "DELETE $base/FOOBARPUS 3" );
 
 done_testing;

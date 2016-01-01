@@ -766,6 +766,26 @@ sub handler_put_activity_code {
 =head2 Component handlers
 
 
+=head3 handler_get_component_all
+
+Handler for 'GET component/all'
+
+=cut
+
+sub handler_get_component_all {
+    my ( $self, $pass ) = @_;
+    $log->debug( "Entering " . __PACKAGE__ . "::handler_get_component_all" );
+
+    # first pass
+    return 1 if $pass == 1 ;
+
+    # second pass
+    return App::Dochazka::REST::Model::Component::get_all_components( 
+        $self->context->{'dbix_conn'}, 
+    );
+}
+
+
 =head3 handler_post_component_cid
 
 Handler for 'POST component/cid' resource.
@@ -866,94 +886,6 @@ sub handler_component_cid {
         return $context->{'stashed_component_object'}->delete( $context );
     }
     return $CELL->status_crit("Aaaabllaaaaaaahhh Component! Swallowed by the abyss" );
-}
-
-
-=head3 handler_get_component_path
-
-Handler for the 'GET component/path/:path' resource.
-
-=cut
-
-sub handler_get_component_path {
-    my ( $self, $pass ) = @_;
-    $log->debug( "Entering " . __PACKAGE__ . "::handler_get_component_path" ); 
-
-    my $context = $self->context;
-
-    # first pass
-    if ( $pass == 1 ) {
-        my $comp = shared_first_pass_lookup( $self, 'path', $context->{'mapping'}->{'path'} );
-        return 0 unless $comp;
-        $context->{'stashed_component_object'} = $comp;
-        return 1;
-    }
-
-    # second pass
-    return $CELL->status_ok( 'DISPATCH_COMPONENT_FOUND', 
-        payload => $context->{'stashed_component_object'}
-    );
-}
-
-
-=head3 handler_delete_component_path
-
-Handler for the 'DELETE component/path/:path' resource.
-
-=cut
-
-sub handler_delete_component_path {
-    my ( $self, $pass ) = @_;
-    $log->debug( "Entering " . __PACKAGE__ . "::handler_delete_component_path" ); 
-
-    my $context = $self->context;
-
-    # first pass
-    if ( $pass == 1 ) {
-        my $comp = shared_first_pass_lookup( $self, 'path', $context->{'mapping'}->{'path'} );
-        return 0 unless $comp;
-        $context->{'stashed_component_object'} = $comp;
-        return 1;
-    }
-
-    # second pass
-    return $context->{'stashed_component_object'}->delete( $context );
-}
-
-
-=head3 handler_put_component_path
-
-Handler for the 'PUT component/path/:path' resource.
-
-=cut
-
-sub handler_put_component_path {
-    my ( $self, $pass ) = @_;
-    $log->debug( "Entering " . __PACKAGE__ . "::handler_put_component_path" ); 
-
-    my $context = $self->context;
-
-    # first pass
-    return 1 if ( $pass == 1 );
-
-    # second pass
-
-    # - create or modify?
-    my $path = $context->{'mapping'}->{'path'};
-    my $entity = $context->{'request_entity'};
-    if ( ! defined($entity) ) {
-        $self->mrest_declare_status( 'code' => 400, 'explanation' => 'Missing request entity' );
-        return $fail;
-    }
-    my $comp = shared_first_pass_lookup( $self, 'path', $path );
-    $self->nullify_declared_status;
-
-    # - perform insert/update operation
-    if ( $comp ) {
-        return shared_update_component( $self, $comp, $entity );
-    } else {
-        return shared_insert_component( $self, $path, $entity );
-    }
 }
 
 

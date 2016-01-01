@@ -34,6 +34,18 @@
 #
 # SQL statements related to components
 
+#
+set( 'SQL_COMPONENT_SELECT_ALL', q/
+      SELECT cid, path, source, acl
+      FROM components
+      / );
+
+#
+set( 'SQL_COMPONENT_SELECT_ALL_NO_SOURCE', q/
+      SELECT cid, path, acl
+      FROM components
+      / );
+
 # 
 set( 'SQL_COMPONENT_SELECT_BY_CID', q/
       SELECT cid, path, source, acl

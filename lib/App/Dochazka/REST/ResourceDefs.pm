@@ -607,6 +607,23 @@ Parent for component resources
 EOH
     },
 
+    # /component/all
+    'component/all' =>
+    {
+        parent => 'component',
+        handler => {
+            GET => 'handler_get_component_all',
+        },
+        acl_profile => 'admin', 
+        cli => 'component all',
+        description => 'Retrieve all component objects',
+        documentation => <<'EOH',
+=pod
+
+Retrieves all component objects in the database.
+EOH
+    },
+
     # /component/cid
     'component/cid' => 
     {
@@ -689,51 +706,6 @@ component objects to be inserted, by sending a POST request to the REST server.
 Along with the properties to be modified/inserted, the request body must
 include an 'path' property, the value of which specifies the component to be
 updated.  
-EOH
-    },
-
-    # /component/path/:path
-    'component/path/:path' => 
-    {
-        parent => 'component',
-        handler => {
-            GET => 'handler_get_component_path',
-            PUT => 'handler_put_component_path',
-            DELETE => 'handler_delete_component_path',
-        },
-        acl_profile => 'admin',
-        cli => 'component path $path',
-        validations => {
-            'path' => qr#^[[:alnum:]_.][[:alnum:]_/.-]+$#,
-        },
-        description => 'GET, PUT, or DELETE an component object by its path',
-        documentation => <<'EOH',
-=pod
-
-With this resource, a user can GET, PUT, or DELETE an component object by its
-path.
-
-=over
-
-=item * GET
-
-Retrieves an component object by its path.
-
-=item * PUT
-
-Inserts new or updates existing component object whose path is specified by the
-':path' URI parameter.  The fields to be updated and their new values should be
-sent in the request body, e.g., like this:
-
-    { "long_desc" : "new description", "disabled" : "f" }
-
-=item * DELETE
-
-Deletes an component object by its path whose path is specified by the ':path'
-URI parameter.  This will work only if nothing in the database refers to this
-component.
-
-=back
 EOH
     },
 
