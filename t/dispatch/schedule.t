@@ -38,6 +38,7 @@ use 5.012;
 use strict;
 use warnings;
 
+#use App::CELL::Test::LogToFile;
 use App::CELL qw( $meta $site );
 use App::Dochazka::Common qw( $today $yesterday $tomorrow );
 use App::Dochazka::REST::ConnBank qw( $dbix_conn );

@@ -38,6 +38,7 @@ use 5.012;
 use strict;
 use warnings;
 
+#use App::CELL::Test::LogToFile;
 use App::CELL qw( $log $meta $site );
 use App::Dochazka::REST::Test;
 use Data::Dumper;
