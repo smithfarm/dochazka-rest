@@ -22,7 +22,7 @@
       "build" : {
          "requires" : {
             "App::CELL" : "0.215",
-            "App::Dochazka::Common" : "0.194",
+            "App::Dochazka::Common" : "0.195",
             "Authen::Passphrase::SaltedDigest" : "0.008",
             "DBIx::Connector" : "0.47",
             "Date::Holidays::CZ" : "0.08",
@@ -45,7 +45,7 @@
       "runtime" : {
          "requires" : {
             "App::CELL" : "0.215",
-            "App::Dochazka::Common" : "0.194",
+            "App::Dochazka::Common" : "0.195",
             "Authen::Passphrase::SaltedDigest" : "0.008",
             "DBD::Pg" : "0",
             "DBI" : "0",
@@ -73,7 +73,7 @@
    "provides" : {
       "App::Dochazka::REST" : {
          "file" : "lib/App/Dochazka/REST.pm",
-         "version" : "0.504"
+         "version" : "0.505"
       },
       "App::Dochazka::REST::ACL" : {
          "file" : "lib/App/Dochazka/REST/ACL.pm"
@@ -98,6 +98,9 @@
       },
       "App::Dochazka::REST::Model::Activity" : {
          "file" : "lib/App/Dochazka/REST/Model/Activity.pm"
+      },
+      "App::Dochazka::REST::Model::Component" : {
+         "file" : "lib/App/Dochazka/REST/Model/Component.pm"
       },
       "App::Dochazka::REST::Model::Employee" : {
          "file" : "lib/App/Dochazka/REST/Model/Employee.pm"
@@ -157,6 +160,6 @@
          "url" : "https://github.com/smithfarm/dochazka-rest"
       }
    },
-   "version" : "0.504",
+   "version" : "0.505",
    "x_serialization_backend" : "JSON::PP version 2.27203"
 }

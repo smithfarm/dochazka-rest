@@ -3286,3 +3286,11 @@ SPLIT OFF App::MREST into separate distribution
   (except in 001-init.t)
 - dbinit_Config.pm: remove spurious warning
 
+0.505 2016-42-01 15:42 CET
+- doc: minor clarifications
+- REST.pm: add Report Generation section to POD
+- Build.PL: require 0.195 for Component class
+- Add Component class, resources, handlers, basic tests
+- t/dispatch/: add missing LogToFile lines
+- Dispatch.pm: improve error checking
+
