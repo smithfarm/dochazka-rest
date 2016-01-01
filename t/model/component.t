@@ -132,38 +132,38 @@ like ( exception { $sample_component_cid = cid_by_path( $dbix_conn, ( 1..6 ) ); 
 is( cid_by_path( $dbix_conn, 'orneryFooBarred' ), undef, 'cid_by_path returns undef if path does not exist' );
 
 note( 'insert a component (success)' );
-my $bogus_component = App::Dochazka::REST::Model::Component->spawn(
-    path => 'boguS',
+my $non_bogus_component = App::Dochazka::REST::Model::Component->spawn(
+    path => 'non/bogus',
     source => 'An componnennt',
     acl => 'passerby',
 );
 
-note( "About to insert bogus_component" );
-$status = $bogus_component->insert( $faux_context );
+note( "About to insert non_bogus_component" );
+$status = $non_bogus_component->insert( $faux_context );
 if ( $status->not_ok ) {
     diag( Dumper $status );
     BAIL_OUT(0);
 }
-is( $status->level, 'OK', "Insert component with path 'bogus'" );
-ok( defined( $bogus_component->cid ) );
-ok( $bogus_component->cid > 0 );
-is( $bogus_component->path, 'boguS' );
-is( $bogus_component->source, "An componnennt" );
-is( $bogus_component->acl, 'passerby' );
+is( $status->level, 'OK' );
+ok( defined( $non_bogus_component->cid ) );
+ok( $non_bogus_component->cid > 0 );
+is( $non_bogus_component->path, 'non/bogus' );
+is( $non_bogus_component->source, "An componnennt" );
+is( $non_bogus_component->acl, 'passerby' );
 
 note( 'try to insert the same component again (fail with DOCHAZKA_DBI_ERR)' );
-$status = $bogus_component->insert( $faux_context );
+$status = $non_bogus_component->insert( $faux_context );
 ok( $status->not_ok );
 is( $status->level, 'ERR' );
 is( $status->code, 'DOCHAZKA_DBI_ERR' );
-like( $status->text, qr/Key \(path\)\=\(boguS\) already exists/ );
+like( $status->text, qr#Key \(path\)\=\(non/bogus\) already exists# );
 
 note( 'update the component (success)' );
-$bogus_component->{path} = "bogosITYVille";
-$bogus_component->{source} = "A bogus component that doesn't belong here";
-$bogus_component->{acl} = 'inactive';
-#diag( "About to update bogus_component" );
-$status = $bogus_component->update( $faux_context );
+$non_bogus_component->{path} = "bogosITYVille";
+$non_bogus_component->{source} = "A bogus component that doesn't belong here";
+$non_bogus_component->{acl} = 'inactive';
+#diag( "About to update non_bogus_component" );
+$status = $non_bogus_component->update( $faux_context );
 if ( $status->not_ok ) {
     diag( Dumper $status );
     BAIL_OUT(0);
@@ -171,46 +171,46 @@ if ( $status->not_ok ) {
 is( $status->level, 'OK' );
 
 note( 'test accessors' );
-is( $bogus_component->path, 'bogosITYVille' );
-is( $bogus_component->source, "A bogus component that doesn't belong here" );
-is( $bogus_component->acl, 'inactive' );
+is( $non_bogus_component->path, 'bogosITYVille' );
+is( $non_bogus_component->source, "A bogus component that doesn't belong here" );
+is( $non_bogus_component->acl, 'inactive' );
 
 note( 'update without affecting any records' );
-$status = $bogus_component->update( $faux_context );
+$status = $non_bogus_component->update( $faux_context );
 is( $status->level, 'OK' );
 is( $status->code, 'DOCHAZKA_CUD_OK' );
 
 note( 'load it and compare it' );
-$status = App::Dochazka::REST::Model::Component->load_by_path( $dbix_conn, $bogus_component->path );
+$status = App::Dochazka::REST::Model::Component->load_by_path( $dbix_conn, $non_bogus_component->path );
 is( $status->code, 'DISPATCH_RECORDS_FOUND' );
 my $bc2 = $status->payload;
 is( $bc2->path, 'bogosITYVille' );
 is( $bc2->source, "A bogus component that doesn't belong here" );
 is( $bc2->acl, 'inactive' );
 
-my $cid_of_bogus_component = $bogus_component->cid; 
-my $path_of_bogus_component = $bogus_component->path; 
+my $cid_of_non_bogus_component = $non_bogus_component->cid; 
+my $path_of_non_bogus_component = $non_bogus_component->path; 
 
-ok( cid_exists( $dbix_conn, $cid_of_bogus_component ) );
-ok( path_exists( $dbix_conn, $path_of_bogus_component ) );
+ok( cid_exists( $dbix_conn, $cid_of_non_bogus_component ) );
+ok( path_exists( $dbix_conn, $path_of_non_bogus_component ) );
 
 note( 'CLEANUP: delete the bogus component' );
-#diag( "About to delete bogus_component" );
-$status = $bogus_component->delete( $faux_context );
+#diag( "About to delete non_bogus_component" );
+$status = $non_bogus_component->delete( $faux_context );
 if ( $status->not_ok ) {
     diag( Dumper $status );
     BAIL_OUT(0);
 }
 is( $status->level, 'OK' );
 
-ok( ! cid_exists( $dbix_conn, $cid_of_bogus_component ) );
-ok( ! path_exists( $dbix_conn, $path_of_bogus_component ) );
+ok( ! cid_exists( $dbix_conn, $cid_of_non_bogus_component ) );
+ok( ! path_exists( $dbix_conn, $path_of_non_bogus_component ) );
 
 note( 'attempt to load the bogus component - no longer there' );
-$status = App::Dochazka::REST::Model::Component->load_by_cid( $dbix_conn, $cid_of_bogus_component );
+$status = App::Dochazka::REST::Model::Component->load_by_cid( $dbix_conn, $cid_of_non_bogus_component );
 is( $status->level, 'NOTICE' );
 is( $status->code, 'DISPATCH_NO_RECORDS_FOUND' );
-$status = App::Dochazka::REST::Model::Component->load_by_path( $dbix_conn, $path_of_bogus_component );
+$status = App::Dochazka::REST::Model::Component->load_by_path( $dbix_conn, $path_of_non_bogus_component );
 is( $status->level, 'NOTICE' );
 is( $status->code, 'DISPATCH_NO_RECORDS_FOUND' );
 $status = App::Dochazka::REST::Model::Component->load_by_path( $dbix_conn, 'boguS' );

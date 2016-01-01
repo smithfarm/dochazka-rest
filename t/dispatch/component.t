@@ -40,6 +40,8 @@ use warnings;
 
 #use App::CELL::Test::LogToFile;
 use App::CELL qw( $log $meta $site );
+use App::Dochazka::REST::ConnBank qw( $dbix_conn );
+use App::Dochazka::REST::Model::Component qw( path_exists );
 use App::Dochazka::REST::Test;
 use Data::Dumper;
 use JSON;
@@ -56,7 +58,7 @@ my $test = Plack::Test->create( $app );
 
 my $res;
 
-sub path_exists {
+sub path_exists_by_dispatch {
     my $path = shift;
     my $status = req( $test, 200, 'root', 'GET', 'component/all' );
     is( $status->level, 'OK' );
@@ -72,8 +74,9 @@ sub path_exists {
     return $result;
 }
 
-note( 'test path_exists() helper function' );
-ok( path_exists( 'sample/local_time.mc' ) );
+note( 'test path_exists_by_dispatch() helper function' );
+ok( path_exists_by_dispatch( 'sample/local_time.mc' ) );
+ok( path_exists( $dbix_conn, 'sample/local_time.mc' ) );
 
 
 note( '=============================' );
@@ -89,7 +92,8 @@ my $foobar = create_testing_component(
     acl => 'passerby' 
 );
 my $cid_of_foobar = $foobar->cid;
-ok( path_exists( "FOOBAR" ) );
+ok( path_exists_by_dispatch( "FOOBAR" ) );
+ok( path_exists( $dbix_conn, "FOOBAR" ) );
 
 note( "GET on $base" );
 req( $test, 403, 'demo', 'GET', $base );
@@ -105,7 +109,8 @@ ok( scalar( grep { $_->{path} eq 'FOOBAR'; } @{ $status->payload } ), "GET $base
 
 note( 'delete the testing component' );
 delete_testing_component( $cid_of_foobar );
-ok( ! path_exists( "FOOBAR" ) );
+ok( ! path_exists_by_dispatch( "FOOBAR" ) );
+ok( ! path_exists( $dbix_conn, "FOOBAR" ) );
 
 note( "PUT, POST, DELETE on $base" );
 foreach my $method ( 'PUT', 'POST', 'DELETE' ) {
@@ -276,7 +281,8 @@ $status = req( $test, 200, 'root', 'POST', $base, $component_obj );
 is( $status->level, 'OK', "POST $base 4" );
 is( $status->code, 'DOCHAZKA_CUD_OK', "POST $base 5" );
 my $cid_of_foowang = $status->payload->{'cid'};
-ok( path_exists( 'library/foowang.mc' ) );
+ok( path_exists_by_dispatch( 'library/foowang.mc' ) );
+ok( path_exists( $dbix_conn, 'library/foowang.mc' ) );
 
 note( "update: expected behavior" );
 $component_obj = '{ "path" : "library/foowang.mc", "source" : "this is only a test", "acl" : "inactive" }';
@@ -299,7 +305,8 @@ dbi_err( $test, 500, 'root', 'POST', $base, $weirded_object, qr/check constraint
 
 note( "delete the testing component" );
 delete_testing_component( $cid_of_foowang );
-ok( ! path_exists( 'library/foowang.mc' ) );
+ok( ! path_exists_by_dispatch( 'library/foowang.mc' ) );
+ok( ! path_exists( $dbix_conn, 'library/foowang.mc' ) );
 
 note( "DELETE on $base" );
 foreach my $user ( qw( demo active puppy root ) ) {
