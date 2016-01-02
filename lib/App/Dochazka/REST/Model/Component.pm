@@ -36,8 +36,11 @@ use 5.012;
 use strict;
 use warnings;
 use App::CELL qw( $CELL $log $meta $site );
+use App::Dochazka::REST::Mason qw( $comp_root );
 use App::Dochazka::REST::Model::Shared qw( cud load load_multiple priv_by_eid );
 use DBI;
+use File::Path;
+use File::Spec;
 use Params::Validate qw{:all};
 use Try::Tiny;
 
@@ -281,6 +284,22 @@ sub load_by_path {
 }
 
 
+=head2 create_file
+
+Create Mason component file under $comp_root
+
+=cut
+
+sub create_file {
+    my $self = shift;
+    my ( undef, $dirspec, $filespec ) = File::Spec->splitpath( $self->path );
+    my $full_path = File::Spec->catfile( $comp_root, $dirspec );
+    mkpath( $full_path, 0, 0750 );
+    $full_path = File::Spec->catfile( $full_path, $filespec );
+    open(my $fh, '>', $full_path) or die "Could not open file '$full_path' $!";
+    print $fh $self->source;
+    close $fh
+}
 
 
 =head1 FUNCTIONS

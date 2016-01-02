@@ -144,14 +144,7 @@ sub init {
     my $status = get_all_components( $dbix_conn );
     if ( $status->ok and $status->code eq 'DISPATCH_RECORDS_FOUND' ) {
         foreach my $comp ( @{ $status->payload } ) {
-            my $base = $comp_root;
-            my ( undef, $dirspec, $filespec ) = File::Spec->splitpath( $comp->path );
-            my $base = File::Spec->catfile( $base, $dirspec );
-            mkpath( $base, 0, 0750 );
-            my $filespec = File::Spec->catfile( $base, $filespec );
-            open(my $fh, '>', $filespec) or die "Could not open file '$filespec' $!";
-            print $fh $comp->source;
-            close $fh
+            $comp->create_file;
         }
     }
 }
