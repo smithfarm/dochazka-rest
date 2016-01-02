@@ -3329,3 +3329,8 @@ SPLIT OFF App::MREST into separate distribution
 - docker: add Mason dependency
 - t/mason.t: skip tests if state directory inaccessible
 
+0.509 2016-01-02 21:56 CET
+- docker: add new dependencies and create state directory
+- ResourceDefs.pm: add genreport resource definition
+- Implement basic "POST genreport" operation
+
