@@ -23,6 +23,7 @@ RUN zypper --no-gpg-checks --non-interactive install \
     perl-Date-Holidays-CZ \
     perl-DBD-Pg \
     perl-DBIx-Connector \
+    perl-File-Slurp \
     perl-HTTP-Message \
     perl-Mason \
     perl-Module-Build \
@@ -44,6 +45,9 @@ RUN install -o root -g root -m 440 /tmp/sudoers /etc/sudoers
 COPY REST_SiteConfig.pm /tmp/REST_SiteConfig.pm
 RUN install -d -o root -g root -m 755 /etc/dochazka-rest
 RUN install -o root -g root -m 644 /tmp/REST_SiteConfig.pm /etc/dochazka-rest/REST_SiteConfig.pm
+
+# create Docker state directory
+RUN install -d -o root -g root -m 777 /var/lib/dochazka
 
 # set the timezone
 RUN ln -sf /usr/share/zoneinfo/Europe/Prague /etc/localtime
