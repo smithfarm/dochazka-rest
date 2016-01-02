@@ -3334,3 +3334,11 @@ SPLIT OFF App::MREST into separate distribution
 - ResourceDefs.pm: add genreport resource definition
 - Implement basic "POST genreport" operation
 
+0.510 2016-01-02 23:24 CET
+- Model/Component.pm: improve error handling in generate method
+- Add sample/site_param.mc Mason template
+- Mason.pm: add basic class_header parameter
+- t/dispatch/component.t: do not complain when we add sample templates
+- Dispatch.pm->handler_genreport: pass arguments to generate method
+- Model/Component.pm->generate: accept and process template arguments
+
