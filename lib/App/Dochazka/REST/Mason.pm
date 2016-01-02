@@ -71,7 +71,7 @@ Mason interpreter singleton.
 =cut
 
 use Exporter qw( import );
-our @EXPORT_OK = qw( $interp );
+our @EXPORT_OK = qw( $comp_root $interp );
 
 
 
@@ -81,7 +81,7 @@ This module stores and initializes the L<Mason> interpreter singleton object.
 
 =cut
 
-our $interp;
+our ( $comp_root, $interp );
 
 
 
@@ -126,6 +126,7 @@ sub init_singleton {
             comp_root => $ARGS{comp_root},
             data_dir  => $ARGS{data_dir},
         );
+        $comp_root = $ARGS{comp_root};
     } catch {
         $status = $CELL->status_crit( 'DOCHAZKA_MASON_INIT_FAIL', args => [ $_ ] );
     };
