@@ -1386,7 +1386,9 @@ sub delete_audit_triggers {
 
 =head2 reset_mason_dir
 
-Wipe out and re-create the Mason state directory.
+Wipe out and re-create the Mason state directory. Returns status object.
+Upon success, level will be 'OK' and payload will contain the full path
+to the Mason component root.
 
 =cut
 
@@ -1413,8 +1415,8 @@ sub reset_mason_dir {
         comp_root => $comp_root, 
         data_dir => $data_dir 
     );
+    return $status unless $status->ok;
     $status->payload( $comp_root );
-
     return $status;
 }
 
