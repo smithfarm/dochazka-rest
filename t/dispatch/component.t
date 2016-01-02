@@ -56,7 +56,7 @@ note( 'initialize, connect to database, and set up a testing plan' );
 my $app = initialize_regression_test();
 
 note( 'test that Mason directory was created' );
-my $dirspec = File::Spec->catfile( $site->DOCHAZKA_STATE_DIR, 'Mason' );
+my $dirspec = File::Spec->catfile( $site->DOCHAZKA_STATE_DIR, 'Mason', 'comp_root' );
 ok( -o $dirspec );
 
 note( 'test that sample/local_time.mc was created' );

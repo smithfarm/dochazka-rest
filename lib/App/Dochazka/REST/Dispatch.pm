@@ -138,15 +138,17 @@ sub init {
 
     my $status = App::Dochazka::REST::reset_mason_dir();
     return $status unless $status->ok;
+    my $comp_root = $status->payload;
 
     # get Mason components from database and write them to filesystem
     my $status = get_all_components( $dbix_conn );
     if ( $status->ok and $status->code eq 'DISPATCH_RECORDS_FOUND' ) {
         foreach my $comp ( @{ $status->payload } ) {
+            my $base = $comp_root;
             my ( undef, $dirspec, $filespec ) = File::Spec->splitpath( $comp->path );
-            my $dirspec = File::Spec->catfile( $masondir, $dirspec );
-            mkpath( $dirspec, 0, 0750 );
-            my $filespec = File::Spec->catfile( $dirspec, $filespec );
+            my $base = File::Spec->catfile( $base, $dirspec );
+            mkpath( $base, 0, 0750 );
+            my $filespec = File::Spec->catfile( $base, $filespec );
             open(my $fh, '>', $filespec) or die "Could not open file '$filespec' $!";
             print $fh $comp->source;
             close $fh

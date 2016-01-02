@@ -1413,6 +1413,7 @@ sub reset_mason_dir {
         comp_root => $comp_root, 
         data_dir => $data_dir 
     );
+    $status->payload( $comp_root );
 
     return $status;
 }
