@@ -3310,3 +3310,17 @@ SPLIT OFF App::MREST into separate distribution
   - Test.pm: call Dispatch.pm->init() in initialize_regression_test()
   - t/dispatch/component.t: test the sample component
 
+0.507 2016-01-02 19:39 CET
+- Mason.pm: add module for Mason interpreter singleton
+- Mason.pm->init_singleton(): improve error-checking
+- Mason.pm: add $comp_root package variable
+- Util/Date.pm: drop unused dependency
+- REST/Test.pm: skip tests if Mason initialization fails
+- Implement Feature #39:
+  - REST.pm: implement, use, test reset_mason_dir() routine
+  - REST.pm->reset_mason_dir(): return comp_root in payload
+  - REST.pm->reset_mason_dir(): return payload only on success
+  - Model/Component.pm: add create_file method
+  - Model/Component.pm: call create_file on successful insert and update
+  - Model/Component.pm: add delete_file method
+
