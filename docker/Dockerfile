@@ -24,12 +24,13 @@ RUN zypper --no-gpg-checks --non-interactive install \
     perl-DBD-Pg \
     perl-DBIx-Connector \
     perl-HTTP-Message \
+    perl-Mason \
+    perl-Module-Build \
     perl-Plack-Middleware-Session \
     perl-Plack \
     perl-Test-JSON \
     perl-Test-Fatal \
     perl-Test-Warnings \
-    perl-Module-Build \
     perl-Web-Machine \
     perl-Web-MREST \
     perl-Web-MREST-CLI
