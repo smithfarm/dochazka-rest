@@ -339,6 +339,7 @@ Generate output
 
 sub generate {
     my $self = shift;
+    my %ARGS = @_;
     my $path = $self->path;
 
     # the path in the Component object may or may not start with a '/'
@@ -356,7 +357,7 @@ sub generate {
     return $self->path . " is not a top-level component" unless $path =~ m/\.m[cp]$/;
     $path =~ s/\.m[cp]$//;
 
-    return $interp->run($path)->output;
+    return $interp->run($path, %ARGS)->output;
 }
 
 
