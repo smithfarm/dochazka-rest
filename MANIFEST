@@ -55,7 +55,6 @@ META.json
 META.yml
 README.rst
 t/001-init.t
-t/mason.t
 t/LDAP.t
 t/dispatch/001-resource.t
 t/dispatch/activity.t
@@ -73,6 +72,7 @@ t/dispatch/schedule-bug.t
 t/dispatch/schedule.t
 t/dispatch/supervisor.t
 t/dispatch/top.t
+t/mason.t
 t/model/activity.t
 t/model/canonicalize.t
 t/model/component.t
