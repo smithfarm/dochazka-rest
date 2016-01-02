@@ -172,11 +172,11 @@ sub acl_check_is_me {
 
     if ( my $eid = $pl{'eid'} ) {
         $log->debug( "acl_check_is_me: I am EID " . $ce->eid . " - checking against $eid" );
-        return ( defined($eid) and $eid == $ce->eid );
+        return ( defined($eid) and defined($ce->eid) and $eid == $ce->eid );
     } elsif ( my $nick = $pl{'nick'} ) {
-        return ( defined($nick) and $nick eq $ce->nick );
+        return ( defined($nick) and defined($ce->nick) and $nick eq $ce->nick );
     } elsif ( my $sec_id = $pl{'sec_id'} ) {
-        return ( defined($sec_id) and $sec_id eq $ce->sec_id );
+        return ( defined($sec_id) and defined($ce->sec_id) and $sec_id eq $ce->sec_id );
     }
 
     die "AAAAGAGAGAHHHHAHAHAAJJAJAJAJAAHAHAHA! " . Dumper( \%pl );
@@ -225,7 +225,7 @@ sub acl_check_is_my_report {
 
     $emp = $status->payload;
     
-    if ( $emp->supervisor eq $ce->eid ) {
+    if ( defined($emp->supervisor) and defined($ce->eid) and $emp->supervisor eq $ce->eid ) {
         $log->debug( "acl_check_is_my_report: I am the supervisor of ->" . $emp->nick . "<-" );
         return 1;
     }
