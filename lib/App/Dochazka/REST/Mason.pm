@@ -125,6 +125,9 @@ sub init_singleton {
         $interp = Mason->new(
             comp_root => $ARGS{comp_root},
             data_dir  => $ARGS{data_dir},
+            class_header => q(
+                use App::CELL qw( $CELL $log $meta $site );
+            ),
         );
         $comp_root = $ARGS{comp_root};
     } catch {
