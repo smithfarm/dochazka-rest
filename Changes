@@ -3294,3 +3294,19 @@ SPLIT OFF App::MREST into separate distribution
 - t/dispatch/: add missing LogToFile lines
 - Dispatch.pm: improve error checking
 
+0.506 2016-01-02 02:36 CET
+- MANIFEST: add t/dispatch/component.t
+- REST.pm: name the genreport resource
+- Remove component/path/:path, add component/all
+- t/dispatch/component.t: add path_exists() helper function
+- t/dispatch/component.t: use path_exists() to test
+- component.t: rename path_exists() -> path_exists_by_dispatch()
+- prerelease.sh: fix timestamp
+- Component: check for invalid ACL profile
+- ACL.pm: fix uninitialized value in string eq warnings
+- t/dispatch/employee.t: fix "Wide char in print" warning
+- Implement Feature #37:
+  - Dispatch.pm: add init() function that populates Mason directory
+  - Test.pm: call Dispatch.pm->init() in initialize_regression_test()
+  - t/dispatch/component.t: test the sample component
+
