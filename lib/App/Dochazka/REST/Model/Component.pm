@@ -163,6 +163,8 @@ sub insert {
         attrs => [ 'path', 'source', 'acl' ],
     );
 
+    $self->create_file if $status->ok;
+
     return $status;
 }
 
@@ -204,6 +206,8 @@ sub update {
         sql => $site->SQL_COMPONENT_UPDATE,
         attrs => [ 'path', 'source', 'acl', 'cid' ],
     );
+
+    $self->create_file if $status->ok;
 
     return $status;
 }

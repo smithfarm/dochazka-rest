@@ -41,6 +41,7 @@ use warnings;
 #use App::CELL::Test::LogToFile;
 use App::CELL qw( $log $meta $site );
 use App::Dochazka::REST::ConnBank qw( $dbix_conn );
+use App::Dochazka::REST::Mason qw( $comp_root );
 use App::Dochazka::REST::Model::Component qw( path_exists );
 use App::Dochazka::REST::Test;
 use Data::Dumper;
@@ -58,6 +59,7 @@ my $app = initialize_regression_test();
 note( 'test that Mason directory was created' );
 my $dirspec = File::Spec->catfile( $site->DOCHAZKA_STATE_DIR, 'Mason', 'comp_root' );
 ok( -o $dirspec );
+is( $dirspec, $comp_root );
 
 note( 'test that sample/local_time.mc was created' );
 my $filespec = File::Spec->catfile( $dirspec, 'sample', 'local_time.mc' );
@@ -105,6 +107,7 @@ my $foobar = create_testing_component(
 my $cid_of_foobar = $foobar->cid;
 ok( path_exists_by_dispatch( "FOOBAR" ) );
 ok( path_exists( $dbix_conn, "FOOBAR" ) );
+ok( -o File::Spec->catfile( $comp_root, $foobar->path ) );
 
 note( "GET on $base" );
 req( $test, 403, 'demo', 'GET', $base );
@@ -147,6 +150,9 @@ foreach my $method ( 'GET', 'PUT' ) {
 note( "POST on $base" );
 my $foowop = create_testing_component( path => 'FOOWOP', source => 'nada', acl => 'passerby' );
 my $cid_of_foowop = $foowop->cid;
+my $full_path_of_foowop = File::Spec->catfile( $comp_root, $foowop->path );
+ok( -o $full_path_of_foowop );
+is( "nada", read_file( $full_path_of_foowop ) );
 
 note( 'test if expected behavior behaves as expected (update)' );
 my $component_obj = '{ "cid" : ' . $cid_of_foowop . ', "source" : "wop wop ng", "acl" : "inactive" }';
@@ -157,6 +163,9 @@ is( $status->code, 'DOCHAZKA_CUD_OK', "POST $base 5" );
 ok( defined $status->payload );
 is( $status->payload->{'acl'}, 'inactive', "POST $base 6" );
 is( $status->payload->{'source'}, 'wop wop ng', "POST $base 7" );
+ok( -o File::Spec->catfile( $comp_root, $status->payload->{path} ) );
+is( $full_path_of_foowop, File::Spec->catfile( $comp_root, $status->payload->{path} ) );
+is( "wop wop ng", read_file( $full_path_of_foowop ) );
 
 note( 'non-existent cid and also out of range' );
 $component_obj = '{ "cid" : 3434342342342, "source" : 3434341, "acl" : "passerby" }';
@@ -197,6 +206,9 @@ docu_check($test, "$base/:cid");
 note( 'insert an component and disable it here' );
 $foobar = create_testing_component( path => 'FOOBAR', source => 'wombat', acl => 'passerby' );
 $cid_of_foobar = $foobar->cid;
+my $full_path_of_foobar = File::Spec->catfile( $comp_root, $foobar->path );
+ok( -o $full_path_of_foobar );
+is( "wombat", read_file( $full_path_of_foobar ) );
 
 note( "GET on $base/:cid" );
 
@@ -233,6 +245,7 @@ is( ref( $status->payload ), 'HASH', "PUT $base/:cid 5" );
 is( $status->payload->{path}, 'FOOBAR' );
 is( $status->payload->{source}, 'The bar of foo' );
 is( $status->payload->{acl}, 'inactive' );
+is( "The bar of foo", read_file( $full_path_of_foobar ) );
 
 note( 'change ACL to active' );
 $status = req( $test, 200, 'root', 'PUT', "$base/$cid_of_foobar", '{ "acl":"active" }' );
@@ -242,6 +255,7 @@ is( ref( $status->payload ), 'HASH' );
 is( $status->payload->{path}, 'FOOBAR' );
 is( $status->payload->{source}, 'The bar of foo' );
 is( $status->payload->{acl}, 'active' );
+is( "The bar of foo", read_file( $full_path_of_foobar ) );
 
 note( 'attempt ot change ACL to an illegal value' );
 req( $test, 400, 'root', 'PUT', "$base/$cid_of_foobar", '{ "acl":"puppy" }' );
@@ -313,6 +327,9 @@ is( $status->code, 'DOCHAZKA_CUD_OK', "POST $base 5" );
 my $cid_of_foowang = $status->payload->{'cid'};
 ok( path_exists_by_dispatch( 'library/foowang.mc' ) );
 ok( path_exists( $dbix_conn, 'library/foowang.mc' ) );
+my $full_path_of_foowang = File::Spec->catfile( $comp_root, $status->payload->{path} );
+ok( -o $full_path_of_foowang );
+is( "wang wang wazoo", read_file( $full_path_of_foowang ) );
 
 note( "update: expected behavior" );
 $component_obj = '{ "path" : "library/foowang.mc", "source" : "this is only a test", "acl" : "inactive" }';
@@ -322,6 +339,7 @@ is( $status->level, 'OK', "POST $base 4" );
 is( $status->code, 'DOCHAZKA_CUD_OK', "POST $base 5" );
 is( $status->payload->{'source'}, 'this is only a test', "POST $base 6" );
 is( $status->payload->{'acl'}, 'inactive', "POST $base 7" );
+is( "this is only a test", read_file( $full_path_of_foowang ) );
 
 note( "throw a couple curve balls" );
 $weirded_object = '{ "copious_turds" : 555, "source" : "wang wang wazoo", "acl" : "admin" }';
