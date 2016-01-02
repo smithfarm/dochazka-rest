@@ -1537,6 +1537,38 @@ sub handler_get_employee_search_nick {
 }
 
 
+=head2 Genreport handlers
+
+=head3 handler_genreport
+
+Handler for the 'POST genreport' resource.
+
+=cut
+
+sub handler_genreport {
+    my ( $self, $pass ) = @_;
+    $log->debug( "Entering " . __PACKAGE__ . "::handler_genreport" ); 
+
+    # first pass
+    return 1 if $pass == 1;
+
+    # second pass
+    # - check that entity is kosher
+    my $status = shared_entity_check( $self, 'path' );
+    return $status unless $status->ok;
+    my $context = $self->context;
+    my $entity = $context->{'request_entity'};
+
+    # - get path and look it up
+    my $path = $entity->{'path'};
+    my $comp = shared_first_pass_lookup( $self, 'path', $path );
+    return $fail unless $path;
+
+    # - generate report
+    return $CELL->status_ok( 'DISPATCH_GENERATED_REPORT', payload => $comp->generate );
+}
+
+
 =head2 History handlers
 
 

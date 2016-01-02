@@ -36,7 +36,7 @@ use 5.012;
 use strict;
 use warnings;
 use App::CELL qw( $CELL $log $meta $site );
-use App::Dochazka::REST::Mason qw( $comp_root );
+use App::Dochazka::REST::Mason qw( $comp_root $interp );
 use App::Dochazka::REST::Model::Shared qw( cud load load_multiple priv_by_eid );
 use DBI;
 use File::Path;
@@ -326,6 +326,21 @@ sub delete_file {
         $log->error( "Component.pm->delete_file: deleted $count files" );
     }
     return;
+}
+
+
+=head2 generate
+
+Generate output
+
+=cut
+
+sub generate {
+    my $self = shift;
+    my $rel_path = $self->path;
+    $rel_path =~ s/\.m[cp]$//;
+    $rel_path = '/' . $rel_path;
+    return $interp->run($rel_path)->output;
 }
 
 

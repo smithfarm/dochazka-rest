@@ -61,6 +61,7 @@ t/dispatch/activity.t
 t/dispatch/component.t
 t/dispatch/employee.t
 t/dispatch/fillup.t
+t/dispatch/genreport.t
 t/dispatch/history-bug.t
 t/dispatch/history.t
 t/dispatch/holiday.t

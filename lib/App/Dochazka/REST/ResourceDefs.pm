@@ -2783,7 +2783,8 @@ Load all the resource definitions into the L<Path::Router> instance.
 =cut
 
 sub load {
-    foreach my $prop ( qw( top activity component employee history interval lock priv schedule ) ) {
+    foreach my $prop ( qw( top activity component employee genreport
+                           history interval lock priv schedule ) ) {
         Web::MREST::InitRouter::load_resource_defs( $defs->{$prop} ) if $defs->{$prop};
     }
 }
