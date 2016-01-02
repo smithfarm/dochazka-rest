@@ -1563,9 +1563,10 @@ sub handler_genreport {
     my $path = $entity->{'path'};
     my $comp = shared_first_pass_lookup( $self, 'path', $path );
     return $fail unless $path;
+    delete $entity->{'path'};
 
     # - generate report
-    return $CELL->status_ok( 'DISPATCH_GENERATED_REPORT', payload => $comp->generate );
+    return $CELL->status_ok( 'DISPATCH_GENERATED_REPORT', payload => $comp->generate( %$entity ) );
 }
 
 
