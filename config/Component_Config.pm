@@ -36,17 +36,25 @@
 # DOCHAZKA_COMPONENT_DEFINITIONS
 #    Initial set of component definitions - sample only - can be overridden
 set( 'DOCHAZKA_COMPONENT_DEFINITIONS', [
-  { path => 'sample/local_time.mc', 
+  {
+    path => 'sample/local_time.mc',
     source => 'Hello! The local time is <% scalar(localtime) %>.',
-    acl => 'passerby'
+    acl => 'passerby',
   },
-#  { path => '', 
-#    source => '' },
-#    acl => 'passerby'
-#  },
-#  { path => '', 
-#    source => '' },
-#    acl => 'passerby'
+  {
+    path => 'sample/site_param.mc',
+    source => <<'EOS',
+<%class>
+has 'param' => (isa => 'Str', required => 1);
+</%class>
+The value of site param <% $.param %> is <% $site->get($.param) %>.
+EOS
+    acl => 'admin',
+  },
+#  {
+#    path => '',
+#    source => '',
+#    acl => 'passerby',
 #  },
 ] );   
 

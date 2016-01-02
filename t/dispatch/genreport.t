@@ -74,4 +74,10 @@ $status = req( $test, 200, 'root', 'POST', $base, '{ "path":"/sample/local_time.
 is( $status->level, 'OK' );
 like( $status->payload, qr/Hello! The local time is / );
 
+note( "sample/site_param.mc" );
+$status = req( $test, 200, 'root', 'POST', $base, 
+    '{ "path":"/sample/site_param.mc", "param":"DOCHAZKA_STATE_DIR" }' );
+is( $status->level, 'OK' );
+like( $status->payload, qr/The value of site param DOCHAZKA_STATE_DIR is / );
+
 done_testing;
