@@ -136,14 +136,15 @@ sub init {
     App::Dochazka::REST::ConnBank::init_singleton();
 
     # reset Mason state directory
-    my $masondir = File::Spec->catfile( $site->DOCHAZKA_STATE_DIR, 'Mason' );
-    die "OUCH!!! DOCHAZKA_STATE_DIR site parameter not defined!" unless $masondir;
-    die "OUCH!!! Mason directory $masondir is not readable by me!" unless -R $masondir;
-    die "OUCH!!! Mason directory $masondir is not writable by me!" unless -W $masondir;
-    die "OUCH!!! Mason directory $masondir is not executable by me!" unless -X $masondir;
+    my $statedir = $site->DOCHAZKA_STATE_DIR;
+    die "OUCH!!! DOCHAZKA_STATE_DIR site parameter not defined!" unless $statedir;
+    die "OUCH!!! DOCHAZKA_STATE_DIR is not readable by me!" unless -R $statedir;
+    die "OUCH!!! DOCHAZKA_STATE_DIR is not writable by me!" unless -W $statedir;
+    die "OUCH!!! DOCHAZKA_STATE_DIR is not executable by me!" unless -X $statedir;
+    my $masondir = File::Spec->catfile( $statedir, 'Mason' );
     $log->debug( "Mason directory is $masondir" );
     rmtree( $masondir );
-    mkdir( $masondir, '0750' );
+    mkpath( $masondir, 0, 0750 );
 
     # get Mason components from database and write them to filesystem
     my $status = get_all_components( $dbix_conn );
