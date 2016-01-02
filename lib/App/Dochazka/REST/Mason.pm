@@ -39,8 +39,9 @@ package App::Dochazka::REST::Mason;
 use strict;
 use warnings;
 
-use App::CELL qw( $log $site );
+use App::CELL qw( $CELL $log $site );
 use Mason;
+use Params::Validate qw( :all );
 use Try::Tiny;
 
 
@@ -99,18 +100,35 @@ FIXME: Add parameters to the Mason->new() call as needed.
 =cut
 
 sub init_singleton {
-    my ( $comp_root, $data_dir ) = @_;
+    my @ARGS = @_;
+    my %ARGS;
     my $status = $CELL->status_ok;
-
     try {
+        %ARGS = validate(
+            @ARGS, {
+                comp_root => { type => SCALAR },
+                data_dir => { type => SCALAR },
+            }
+        );
+        die "Mason comp_root $ARGS{comp_root} has a problem" unless
+            (
+                -r $ARGS{comp_root} and
+                -w $ARGS{comp_root} and
+                -x $ARGS{comp_root}
+            );
+        die "Mason comp_root $ARGS{data_dir} has a problem" unless
+            (
+                -r $ARGS{comp_root} and
+                -w $ARGS{comp_root} and
+                -x $ARGS{comp_root}
+            );
         $interp = Mason->new(
-            comp_root => $comp_root,
-            data_dir  => $data_dir,
+            comp_root => $ARGS{comp_root},
+            data_dir  => $ARGS{data_dir},
         );
     } catch {
         $status = $CELL->status_crit( 'DOCHAZKA_MASON_INIT_FAIL', args => [ $_ ] );
     };
-
     return $status;
 }
 
