@@ -29,97 +29,56 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 # ************************************************************************* 
+#
+# Mason tests
+#
 
-package App::Dochazka::REST::Util::Date;
-
+#!perl
 use 5.012;
 use strict;
 use warnings;
 
-use Date::Calc qw(
-    Date_to_Days
+#use App::CELL::Test::LogToFile;
+use App::CELL qw( $CELL $site );
+use App::Dochazka::REST;
+use App::Dochazka::REST::Mason qw( $interp );
+use Data::Dumper;
+use Test::More;
+use Test::Warnings;
+use Web::MREST;
+
+
+my $status;
+
+note( 'initialize' );
+$status = Web::MREST::init( 
+    distro => 'App-Dochazka-REST', 
+    sitedir => '/etc/dochazka-rest', 
 );
+plan skip_all => "Web::MREST::init failed: " . $status->text unless $status->ok;
 
+note( 'DOCHAZKA_STATE_DIR is readable, writable, executable by us' );
+ok( $site->DOCHAZKA_STATE_DIR );
+ok( -r $site->DOCHAZKA_STATE_DIR );
+ok( -w $site->DOCHAZKA_STATE_DIR );
+ok( -x $site->DOCHAZKA_STATE_DIR );
 
+note( 'attempt to initialize Mason singleton with invalid arguments' );
+$status = App::Dochazka::REST::Mason::init_singleton();
+is( $status->level, 'CRIT' );
+$status = App::Dochazka::REST::Mason::init_singleton( 1, 2 );
+is( $status->level, 'CRIT' );
+$status = App::Dochazka::REST::Mason::init_singleton( data_dir => 'bubba' );
+is( $status->level, 'CRIT' );
 
+note( 'attempt to initialize Mason singleton with nominally valid, but non-existent arguments' );
+$status = App::Dochazka::REST::Mason::init_singleton( comp_root => 'bubba', data_dir => 'bubba' );
+is( $status->level, 'CRIT' );
 
-=head1 NAME
+note( 'prepare real comp_root and data_dir' );
+ok( ! defined( $interp ) );
+$status = App::Dochazka::REST::reset_mason_dir();
+is( $status->level, 'OK' );
+is( ref( $interp ), 'Mason::Interp' );
 
-App::Dochazka::REST::Util::Date - module containing miscellaneous date routines
-
-
-
-
-=head1 SYNOPSIS
-
-    use App::Dochazka::REST::Util::Date;
-
-    ...
-
-
-
-
-=head1 EXPORTS
-
-=cut 
-
-use Exporter qw( import );
-our @EXPORT_OK = qw( 
-    canon_date_diff
-    canon_to_ymd
-    ymd_to_canon
-);
-
-
-
-
-=head1 FUNCTIONS
-
-
-=head2 canon_date_diff
-
-Compute difference (in days) between two canonical dates
-
-=cut
-
-sub canon_date_diff {
-    my ( $date, $date1 ) = @_;
-    my ( $date_days, $date1_days ) = (
-        Date_to_Days( canon_to_ymd( $date ) ),
-        Date_to_Days( canon_to_ymd( $date1 ) ),
-    );
-    return abs( $date_days - $date1_days );
-}
-
-
-=head2 canon_to_ymd
-
-Takes canonical date YYYY-MM-DD and returns $y, $m, $d
-
-=cut
-
-sub canon_to_ymd {
-    my ( $date ) = @_;
-    return unless $date;
-
-    return ( $date =~ m/(\d+)-(\d+)-(\d+)/ );
-}
-
-
-=head2 ymd_to_canon
-
-Takes $y, $m, $d and returns canonical date YYYY-MM-DD
-
-=cut
-
-sub ymd_to_canon {
-    my ( $y, $m, $d ) = @_;
-
-    if ( $y < 1 or $y > 9999 or $m < 1 or $m > 99 or $d < 1 or $d > 99 ) {
-        die "AUCKLANDERS! ymd out of range!!";
-    }
-
-    return sprintf( "%04d-%02d-%02d", $y, $m, $d );
-}
-
-1;
+done_testing;

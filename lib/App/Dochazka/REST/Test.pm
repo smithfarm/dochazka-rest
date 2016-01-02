@@ -157,7 +157,12 @@ sub initialize_regression_test {
     );
 
     note( "Initialize" );
-    App::Dochazka::REST::Dispatch::init();
+    try {
+        App::Dochazka::REST::Dispatch::init();
+    } catch {
+        $status = $CELL->status_crit( 'DOCHAZKA_MASON_INIT_FAIL', args => [ $_ ] );
+    };
+    plan skip_all => $status->text unless $status->ok;
 
     note( "Check status of database server connection" );
     plan skip_all => "PostgreSQL server is unreachable" unless conn_up();

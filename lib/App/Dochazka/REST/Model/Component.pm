@@ -36,8 +36,11 @@ use 5.012;
 use strict;
 use warnings;
 use App::CELL qw( $CELL $log $meta $site );
+use App::Dochazka::REST::Mason qw( $comp_root );
 use App::Dochazka::REST::Model::Shared qw( cud load load_multiple priv_by_eid );
 use DBI;
+use File::Path;
+use File::Spec;
 use Params::Validate qw{:all};
 use Try::Tiny;
 
@@ -160,6 +163,8 @@ sub insert {
         attrs => [ 'path', 'source', 'acl' ],
     );
 
+    $self->create_file if $status->ok;
+
     return $status;
 }
 
@@ -202,6 +207,8 @@ sub update {
         attrs => [ 'path', 'source', 'acl', 'cid' ],
     );
 
+    $self->create_file if $status->ok;
+
     return $status;
 }
 
@@ -226,7 +233,10 @@ sub delete {
         sql => $site->SQL_COMPONENT_DELETE,
         attrs => [ 'cid' ],
     );
-    $self->reset( cid => $self->{cid} ) if $status->ok;
+    if ( $status->ok ) {
+        $self->delete_file;
+        $self->reset( cid => $self->{cid} );
+    }
 
     return $status;
 }
@@ -280,6 +290,43 @@ sub load_by_path {
     );
 }
 
+
+=head2 create_file
+
+Create Mason component file under $comp_root
+
+=cut
+
+sub create_file {
+    my $self = shift;
+    my ( undef, $dirspec, $filespec ) = File::Spec->splitpath( $self->path );
+    my $full_path = File::Spec->catfile( $comp_root, $dirspec );
+    mkpath( $full_path, 0, 0750 );
+    $full_path = File::Spec->catfile( $full_path, $filespec );
+    open(my $fh, '>', $full_path) or die "Could not open file '$full_path' $!";
+    print $fh $self->source;
+    close $fh;
+    return;
+}
+
+
+=head2 delete_file
+
+Delete Mason component file under $comp_root
+
+=cut
+
+sub delete_file {
+    my $self = shift;
+    my $full_path = File::Spec->catfile( $comp_root, $self->path );
+    my $count = unlink $full_path;
+    if ( $count == 1 ) {
+        $log->info( "Component.pm->delete_file: deleted 1 file $full_path" );
+    } else {
+        $log->error( "Component.pm->delete_file: deleted $count files" );
+    }
+    return;
+}
 
 
 

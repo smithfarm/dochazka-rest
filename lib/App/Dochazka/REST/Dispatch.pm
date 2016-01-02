@@ -41,6 +41,7 @@ use warnings;
 
 use App::CELL qw( $CELL $log $core $meta $site );
 use App::Dochazka::Common qw( $today init_timepiece );
+use App::Dochazka::REST;
 use App::Dochazka::REST::ACL qw( 
     check_acl_context 
     acl_check_is_me 
@@ -135,28 +136,15 @@ sub init {
     $log->debug("Entering " . __PACKAGE__. "::init");
     App::Dochazka::REST::ConnBank::init_singleton();
 
-    # reset Mason state directory
-    my $statedir = $site->DOCHAZKA_STATE_DIR;
-    die "OUCH!!! DOCHAZKA_STATE_DIR site parameter not defined!" unless $statedir;
-    die "OUCH!!! DOCHAZKA_STATE_DIR is not readable by me!" unless -R $statedir;
-    die "OUCH!!! DOCHAZKA_STATE_DIR is not writable by me!" unless -W $statedir;
-    die "OUCH!!! DOCHAZKA_STATE_DIR is not executable by me!" unless -X $statedir;
-    my $masondir = File::Spec->catfile( $statedir, 'Mason' );
-    $log->debug( "Mason directory is $masondir" );
-    rmtree( $masondir );
-    mkpath( $masondir, 0, 0750 );
+    my $status = App::Dochazka::REST::reset_mason_dir();
+    return $status unless $status->ok;
+    my $comp_root = $status->payload;
 
     # get Mason components from database and write them to filesystem
     my $status = get_all_components( $dbix_conn );
     if ( $status->ok and $status->code eq 'DISPATCH_RECORDS_FOUND' ) {
         foreach my $comp ( @{ $status->payload } ) {
-            my ( undef, $dirspec, $filespec ) = File::Spec->splitpath( $comp->path );
-            my $dirspec = File::Spec->catfile( $masondir, $dirspec );
-            mkpath( $dirspec, 0, 0750 );
-            my $filespec = File::Spec->catfile( $dirspec, $filespec );
-            open(my $fh, '>', $filespec) or die "Could not open file '$filespec' $!";
-            print $fh $comp->source;
-            close $fh
+            $comp->create_file;
         }
     }
 }

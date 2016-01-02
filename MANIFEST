@@ -30,6 +30,7 @@ lib/App/Dochazka/REST/Dispatch.pm
 lib/App/Dochazka/REST/Docs/Resources.pm
 lib/App/Dochazka/REST/Docs/Workflow.pm
 lib/App/Dochazka/REST/LDAP.pm
+lib/App/Dochazka/REST/Mason.pm
 lib/App/Dochazka/REST/Model/Activity.pm
 lib/App/Dochazka/REST/Model/Component.pm
 lib/App/Dochazka/REST/Model/Employee.pm
@@ -71,6 +72,7 @@ t/dispatch/schedule-bug.t
 t/dispatch/schedule.t
 t/dispatch/supervisor.t
 t/dispatch/top.t
+t/mason.t
 t/model/activity.t
 t/model/canonicalize.t
 t/model/component.t
