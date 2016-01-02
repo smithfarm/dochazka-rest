@@ -28,6 +28,7 @@
             "Date::Holidays::CZ" : "0.08",
             "File::Slurp" : "0",
             "HTTP::Request" : "0",
+            "Mason" : "0",
             "Plack::Session" : "0",
             "Plack::Test" : "0",
             "Test::Fatal" : "0",
@@ -55,6 +56,7 @@
             "Date::Holidays::CZ" : "0.08",
             "File::ShareDir" : "1.00",
             "JSON" : "0",
+            "Mason" : "0",
             "Params::Validate" : "1.06",
             "Path::Router" : "0.12",
             "Plack::Middleware::Session" : "0",
@@ -74,7 +76,7 @@
    "provides" : {
       "App::Dochazka::REST" : {
          "file" : "lib/App/Dochazka/REST.pm",
-         "version" : "0.507"
+         "version" : "0.508"
       },
       "App::Dochazka::REST::ACL" : {
          "file" : "lib/App/Dochazka/REST/ACL.pm"
@@ -164,6 +166,6 @@
          "url" : "https://github.com/smithfarm/dochazka-rest"
       }
    },
-   "version" : "0.507",
+   "version" : "0.508",
    "x_serialization_backend" : "JSON::PP version 2.27203"
 }

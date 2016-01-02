@@ -3324,3 +3324,8 @@ SPLIT OFF App::MREST into separate distribution
   - Model/Component.pm: call create_file on successful insert and update
   - Model/Component.pm: add delete_file method
 
+0.508 2016-01-02 20:24 CET
+- Build.PL: add Mason dependency
+- docker: add Mason dependency
+- t/mason.t: skip tests if state directory inaccessible
+
