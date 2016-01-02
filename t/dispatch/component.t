@@ -114,9 +114,9 @@ req( $test, 403, 'demo', 'GET', $base );
 my $status = req( $test, 200, 'root', 'GET', $base );
 is( $status->level, 'OK', "GET $base 2" );
 is( $status->code, 'DISPATCH_RECORDS_FOUND', "GET $base 3" );
-is( $status->{count}, 2, "GET $base 4" );
+ok( $status->{count} );
 ok( exists $status->{payload}, "GET $base 5" );
-is( scalar @{ $status->payload }, 2, "GET $base 6" );
+ok( scalar @{ $status->payload } );
 
 note( 'testing component is present' );
 ok( scalar( grep { $_->{path} eq 'FOOBAR'; } @{ $status->payload } ), "GET $base 7" );
