@@ -58,10 +58,10 @@ $status = Web::MREST::init(
 plan skip_all => "Web::MREST::init failed: " . $status->text unless $status->ok;
 
 note( 'DOCHAZKA_STATE_DIR is readable, writable, executable by us' );
-ok( $site->DOCHAZKA_STATE_DIR );
-ok( -r $site->DOCHAZKA_STATE_DIR );
-ok( -w $site->DOCHAZKA_STATE_DIR );
-ok( -x $site->DOCHAZKA_STATE_DIR );
+plan skip_all => "State directory is missing" unless -e $site->DOCHAZKA_STATE_DIR;
+plan skip_all => "State directory not readable" unless -r $site->DOCHAZKA_STATE_DIR;
+plan skip_all => "State directory not writable" unless -w $site->DOCHAZKA_STATE_DIR;
+plan skip_all => "State directory not executable" unless -x $site->DOCHAZKA_STATE_DIR;
 
 note( 'attempt to initialize Mason singleton with invalid arguments' );
 $status = App::Dochazka::REST::Mason::init_singleton();
