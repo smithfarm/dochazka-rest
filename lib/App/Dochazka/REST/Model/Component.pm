@@ -282,6 +282,8 @@ sub load_by_path {
         { type => SCALAR },
     );
 
+    $path =~ s{^/}{};
+
     return load( 
         conn => $conn,
         class => __PACKAGE__, 
@@ -337,12 +339,25 @@ Generate output
 
 sub generate {
     my $self = shift;
-    my $rel_path = $self->path;
-    $rel_path =~ s/\.m[cp]$//;
-    $rel_path = '/' . $rel_path;
-    return $interp->run($rel_path)->output;
-}
+    my $path = $self->path;
 
+    # the path in the Component object may or may not start with a '/'
+    # Mason requires that it start with an '/', even though it's relative
+    $path = '/' . $path unless $path =~ m{^/};
+
+    # the path should exist and be readable
+    my $full_path = File::Spec->catfile( $comp_root, $self->path );
+    return "$full_path does not exist" unless -e $full_path;
+    return "$full_path is not readable" unless -r $full_path;
+
+    # only top-level components can be used to produce output
+    # top-level components must end in '.mc' or '.mp', but Mason 
+    # expects the component name to be specified without the extension
+    return $self->path . " is not a top-level component" unless $path =~ m/\.m[cp]$/;
+    $path =~ s/\.m[cp]$//;
+
+    return $interp->run($path)->output;
+}
 
 
 =head1 FUNCTIONS

@@ -220,4 +220,18 @@ $status = App::Dochazka::REST::Model::Component->load_by_path( $dbix_conn, 'bogo
 is( $status->level, 'NOTICE' );
 is( $status->code, 'DISPATCH_NO_RECORDS_FOUND' );
 
+note( 'generate method on invalid components' );
+$comp = App::Dochazka::REST::Model::Component->spawn(
+    path => 'blabular_tells',
+    source => 'oike mldfield',
+    acl => 'passerby',
+);
+like( $comp->generate, qr/blabular_tells does not exist/ );
+
+$status = $comp->insert( $faux_context );
+is( $status->level, 'OK' );
+is( $status->code, 'DOCHAZKA_CUD_OK' );
+
+like( $comp->generate, qr/blabular_tells is not a top-level component/ );
+
 done_testing;

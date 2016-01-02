@@ -62,8 +62,15 @@ my $base = 'genreport';
 docu_check($test, $base);
 
 note( "POST on $base" );
+
+note( "sample/local_time.mc" );
 req( $test, 403, 'demo', 'POST', $base, '{ "path":"sample/local_time.mc" }' );
 my $status = req( $test, 200, 'root', 'POST', $base, '{ "path":"sample/local_time.mc" }' );
+is( $status->level, 'OK' );
+like( $status->payload, qr/Hello! The local time is / );
+
+note( "/sample/local_time.mc" );
+$status = req( $test, 200, 'root', 'POST', $base, '{ "path":"/sample/local_time.mc" }' );
 is( $status->level, 'OK' );
 like( $status->payload, qr/Hello! The local time is / );
 
