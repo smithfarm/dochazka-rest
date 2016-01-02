@@ -46,9 +46,10 @@ use App::Dochazka::REST::ACL qw(
     acl_check_is_me 
     acl_check_is_my_report 
 );
-use App::Dochazka::REST::ConnBank qw( conn_status );
+use App::Dochazka::REST::ConnBank qw( $dbix_conn conn_status );
 use App::Dochazka::REST::LDAP qw( populate_employee );
 use App::Dochazka::REST::Model::Activity;
+use App::Dochazka::REST::Model::Component qw( get_all_components );
 use App::Dochazka::REST::Model::Employee qw( 
     list_employees_by_priv 
     noof_employees_by_priv 
@@ -79,6 +80,7 @@ use App::Dochazka::REST::ResourceDefs;
 use App::Dochazka::REST::Shared qw( :ALL );  # all the shared_* functions
 use App::Dochazka::REST::Util::Holiday qw( holidays_in_daterange );
 use Data::Dumper;
+use File::Path qw( mkpath rmtree );
 use Module::Runtime qw( use_module );
 use Params::Validate qw( :all );
 use Try::Tiny;
@@ -123,16 +125,49 @@ my %iue_dispatch = (
 
 =cut
 
-=head2 Router initialization method
+=head2 init
+
+This function is called by C<bin/mrest>.
+
+=cut
+
+sub init {
+    $log->debug("Entering " . __PACKAGE__. "::init");
+    App::Dochazka::REST::ConnBank::init_singleton();
+
+    # reset Mason state directory
+    my $masondir = File::Spec->catfile( $site->DOCHAZKA_STATE_DIR, 'Mason' );
+    die "OUCH!!! DOCHAZKA_STATE_DIR site parameter not defined!" unless $masondir;
+    die "OUCH!!! Mason directory $masondir is not readable by me!" unless -R $masondir;
+    die "OUCH!!! Mason directory $masondir is not writable by me!" unless -W $masondir;
+    die "OUCH!!! Mason directory $masondir is not executable by me!" unless -X $masondir;
+    $log->debug( "Mason directory is $masondir" );
+    rmtree( $masondir );
+    mkdir( $masondir, '0750' );
+
+    # get Mason components from database and write them to filesystem
+    my $status = get_all_components( $dbix_conn );
+    if ( $status->ok and $status->code eq 'DISPATCH_RECORDS_FOUND' ) {
+        foreach my $comp ( @{ $status->payload } ) {
+            my ( undef, $dirspec, $filespec ) = File::Spec->splitpath( $comp->path );
+            my $dirspec = File::Spec->catfile( $masondir, $dirspec );
+            mkpath( $dirspec, 0, 0750 );
+            my $filespec = File::Spec->catfile( $dirspec, $filespec );
+            open(my $fh, '>', $filespec) or die "Could not open file '$filespec' $!";
+            print $fh $comp->source;
+            close $fh
+        }
+    }
+}
+
+
+=head2 init_router
 
 The "router" (i.e., L<Path::Router> instance) is initialized when the first
 request comes in, as a first step before any processing of the request takes
 place.
 
 This happens when L<Web::MREST::Resource> calls the C<init_router> method.
-
-
-=head3 init_router
 
 L<App::Dochazka::REST> implements its own C<init_router> method, overriding the
 default one in L<Web::MREST::InitRouter>.
