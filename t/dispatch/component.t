@@ -44,6 +44,8 @@ use App::Dochazka::REST::ConnBank qw( $dbix_conn );
 use App::Dochazka::REST::Model::Component qw( path_exists );
 use App::Dochazka::REST::Test;
 use Data::Dumper;
+use File::Slurp;
+use File::Spec;
 use JSON;
 use Plack::Test;
 use Test::JSON;
@@ -52,6 +54,15 @@ use Test::Warnings;
 
 note( 'initialize, connect to database, and set up a testing plan' );
 my $app = initialize_regression_test();
+
+note( 'test that Mason directory was created' );
+my $dirspec = File::Spec->catfile( $site->DOCHAZKA_STATE_DIR, 'Mason' );
+ok( -o $dirspec );
+
+note( 'test that sample/local_time.mc was created' );
+my $filespec = File::Spec->catfile( $dirspec, 'sample', 'local_time.mc' );
+ok( -r $filespec );
+is( read_file( $filespec ), 'Hello! The local time is <% scalar(localtime) %>.' );
 
 note( 'instantiate Plack::Test object' );
 my $test = Plack::Test->create( $app );

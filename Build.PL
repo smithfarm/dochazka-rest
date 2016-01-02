@@ -37,6 +37,7 @@ my $builder = Module::Build->new(
         'Authen::Passphrase::SaltedDigest' => 0.008,
         'Date::Holidays::CZ' => 0.08,
         'DBIx::Connector' => 0.47,
+        'File::Slurp'    => 0,
         'HTTP::Request'  => 0,
         'Plack::Session' => 0,
         'Plack::Test'    => 0,
