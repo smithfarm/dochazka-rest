@@ -102,7 +102,7 @@ foreach my $priv (
     '*pimpled teenager*',
     'nanaan',
     '%^%#$#',
-    'Žluťoucký kǔň',
+#    'Žluťoucký kǔň',
     '      dfdf fifty-five sixty-five',
     'passerbies',
     '///adfd/asdf/asdf',

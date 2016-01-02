@@ -42,6 +42,7 @@ use warnings;
 use App::CELL qw( $CELL $log $meta $site );
 use App::Dochazka::Common;
 use App::Dochazka::REST;
+use App::Dochazka::REST::Dispatch;
 use App::Dochazka::REST::ConnBank qw( $dbix_conn conn_up );
 use App::Dochazka::REST::Util qw( hash_the_password );
 use App::Dochazka::REST::Model::Activity;
@@ -155,8 +156,8 @@ sub initialize_regression_test {
         debug_mode => 1,
     );
 
-    note( "Connect to PostgreSQL server" );
-    App::Dochazka::REST::ConnBank::init_singleton();
+    note( "Initialize" );
+    App::Dochazka::REST::Dispatch::init();
 
     note( "Check status of database server connection" );
     plan skip_all => "PostgreSQL server is unreachable" unless conn_up();
