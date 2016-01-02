@@ -189,7 +189,9 @@ my $illegal_acl = '{ "cid" : ' . $cid_of_foowop . ', "path" : "library/machinati
 req( $test, 400, 'root', 'POST', $base, $illegal_acl );
 
 note( 'delete the testing component' );
+ok( -e $full_path_of_foowop );
 delete_testing_component( $cid_of_foowop );
+ok( ! -e $full_path_of_foowop );
 
 note( "DELETE on $base" );
 req( $test, 405, 'demo', 'DELETE', $base );
@@ -292,12 +294,14 @@ req( $test, 403, 'demo', 'DELETE', "$base/$cid_of_foobar" );
 
 note( 'root success' );
 note( "DELETE $base/$cid_of_foobar" );
+ok( -e $full_path_of_foobar );
 $status = req( $test, 200, 'root', 'DELETE', "$base/$cid_of_foobar" );
 is( $status->level, 'OK', "DELETE $base/:cid 3" );
 is( $status->code, 'DOCHAZKA_CUD_OK', "DELETE $base/:cid 4" );
 
 note( 'really gone' );
 req( $test, 404, 'root', 'GET', "$base/$cid_of_foobar" );
+ok( ! -e $full_path_of_foobar );
 
 note( 'root fail invalid cid' );
 req( $test, 400, 'root', 'DELETE', "$base/asd" );
@@ -357,9 +361,11 @@ $illegal_acl = '{ "path" : "library/machinations.mc", "source" : "wang wang wazo
 req( $test, 400, 'root', 'POST', $base, $illegal_acl );
 
 note( "delete the testing component" );
+ok( -e $full_path_of_foowang );
 delete_testing_component( $cid_of_foowang );
 ok( ! path_exists_by_dispatch( 'library/foowang.mc' ) );
 ok( ! path_exists( $dbix_conn, 'library/foowang.mc' ) );
+ok( ! -e $full_path_of_foowang );
 
 note( "DELETE on $base" );
 foreach my $user ( qw( demo active puppy root ) ) {

@@ -233,7 +233,10 @@ sub delete {
         sql => $site->SQL_COMPONENT_DELETE,
         attrs => [ 'cid' ],
     );
-    $self->reset( cid => $self->{cid} ) if $status->ok;
+    if ( $status->ok ) {
+        $self->delete_file;
+        $self->reset( cid => $self->{cid} );
+    }
 
     return $status;
 }
@@ -302,8 +305,29 @@ sub create_file {
     $full_path = File::Spec->catfile( $full_path, $filespec );
     open(my $fh, '>', $full_path) or die "Could not open file '$full_path' $!";
     print $fh $self->source;
-    close $fh
+    close $fh;
+    return;
 }
+
+
+=head2 delete_file
+
+Delete Mason component file under $comp_root
+
+=cut
+
+sub delete_file {
+    my $self = shift;
+    my $full_path = File::Spec->catfile( $comp_root, $self->path );
+    my $count = unlink $full_path;
+    if ( $count == 1 ) {
+        $log->info( "Component.pm->delete_file: deleted 1 file $full_path" );
+    } else {
+        $log->error( "Component.pm->delete_file: deleted $count files" );
+    }
+    return;
+}
+
 
 
 =head1 FUNCTIONS
