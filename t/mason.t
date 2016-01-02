@@ -40,13 +40,45 @@ use warnings;
 
 #use App::CELL::Test::LogToFile;
 use App::CELL qw( $CELL $site );
-use Data::Dumper;
+use App::Dochazka::REST;
 use App::Dochazka::REST::Mason qw( $interp );
+use Data::Dumper;
 use Test::More;
 use Test::Warnings;
+use Web::MREST;
 
+
+my $status;
+
+note( 'initialize' );
+$status = Web::MREST::init( 
+    distro => 'App-Dochazka-REST', 
+    sitedir => '/etc/dochazka-rest', 
+);
+plan skip_all => "Web::MREST::init failed: " . $status->text unless $status->ok;
+
+note( 'DOCHAZKA_STATE_DIR is readable, writable, executable by us' );
+ok( $site->DOCHAZKA_STATE_DIR );
+ok( -r $site->DOCHAZKA_STATE_DIR );
+ok( -w $site->DOCHAZKA_STATE_DIR );
+ok( -x $site->DOCHAZKA_STATE_DIR );
 
 note( 'attempt to initialize Mason singleton with invalid arguments' );
-my $status = App::Dochazka::REST::Mason::init_singleton();
+$status = App::Dochazka::REST::Mason::init_singleton();
+is( $status->level, 'CRIT' );
+$status = App::Dochazka::REST::Mason::init_singleton( 1, 2 );
+is( $status->level, 'CRIT' );
+$status = App::Dochazka::REST::Mason::init_singleton( data_dir => 'bubba' );
+is( $status->level, 'CRIT' );
+
+note( 'attempt to initialize Mason singleton with nominally valid, but non-existent arguments' );
+$status = App::Dochazka::REST::Mason::init_singleton( comp_root => 'bubba', data_dir => 'bubba' );
+is( $status->level, 'CRIT' );
+
+note( 'prepare real comp_root and data_dir' );
+ok( ! defined( $interp ) );
+$status = App::Dochazka::REST::reset_mason_dir();
+is( $status->level, 'OK' );
+is( ref( $interp ), 'Mason::Interp' );
 
 done_testing;

@@ -38,8 +38,11 @@ use warnings;
 
 use App::CELL qw( $CELL $log $meta $core $site );
 use App::Dochazka::REST::ConnBank qw( $dbix_conn );
+use App::Dochazka::REST::Mason;
 use Data::Dumper;
+use File::Path;
 use File::ShareDir;
+use File::Spec;
 use Log::Any::Adapter;
 use Params::Validate qw( :all );
 use Try::Tiny;
@@ -1380,6 +1383,40 @@ sub delete_audit_triggers {
     return _do_audit_triggers( 'delete', $conn );
 }
     
+
+=head2 reset_mason_dir
+
+Wipe out and re-create the Mason state directory.
+
+=cut
+
+sub reset_mason_dir {
+    my $status;
+
+    # wipe out
+    my $statedir = $site->DOCHAZKA_STATE_DIR;
+    die "OUCH!!! DOCHAZKA_STATE_DIR site parameter not defined!" unless $statedir;
+    die "OUCH!!! DOCHAZKA_STATE_DIR is not readable by me!" unless -r $statedir;
+    die "OUCH!!! DOCHAZKA_STATE_DIR is not writable by me!" unless -w $statedir;
+    die "OUCH!!! DOCHAZKA_STATE_DIR is not executable by me!" unless -x $statedir;
+    my $masondir = File::Spec->catfile( $statedir, 'Mason' );
+    $log->debug( "Mason directory is $masondir" );
+    rmtree( $masondir );
+    mkpath( $masondir, 0, 0750 );
+
+    # re-create
+    my $comp_root = File::Spec->catfile( $masondir, 'comp_root' );
+    mkpath( $comp_root, 0, 0750 );
+    my $data_dir = File::Spec->catfile( $masondir, 'data_dir' );
+    mkpath( $data_dir, 0, 0750 );
+    $status = App::Dochazka::REST::Mason::init_singleton( 
+        comp_root => $comp_root, 
+        data_dir => $data_dir 
+    );
+
+    return $status;
+}
+
 
 =head2 reset_db
 
