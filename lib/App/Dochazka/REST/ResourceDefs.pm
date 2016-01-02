@@ -1295,6 +1295,36 @@ EOH
 };
 
 
+=head2 Genreport resources
+
+=cut
+
+$defs->{'genreport'} = {
+
+    # /genreport
+    'genreport' => 
+    {
+        parent => '/',
+        handler => {
+            GET => 'handler_noop',
+            POST => 'handler_genreport',
+        },
+        acl_profile => {
+            GET => 'passerby',
+            POST => 'admin',
+        },
+        cli => 'genreport',
+        description => 'Generate reports',
+        documentation => <<'EOH',
+=pod
+
+Generate reports.
+EOH
+    },
+
+};
+
+
 =head2 History resources
 
 =cut
