@@ -1322,7 +1322,10 @@ debug messages will be logged.
 
 =back
 
-=head1 METHODS
+
+
+
+=head1 FUNCTIONS
 
 
 =head2 run_sql
