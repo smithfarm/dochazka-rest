@@ -106,6 +106,12 @@ Using C<GET /priv/self/?:ts> and C<GET /schedule/self/?:ts>, any employee
 can retrieve her own current privlevel and schedule. By including a timestamp
 she can also retrieve her privlevel and schedule as of any arbitrary date/time.
 
+=head3 Generate reports
+
+Passerby employees can use the C<POST genreport> operation to generate
+reports from any report templates (Mason components) with ACL profile
+'passerby'.
+
 
 =head2 inactive
 
@@ -148,6 +154,12 @@ parameter.
 Although inactive employees are not authorized to enter new attendance/lock
 intervals, they can retrieve their own past intervals, for example by browsing
 in the web client, etc.
+
+=head3 Generate reports
+
+Inactive employees can use the C<POST genreport> operation to generate
+reports from any report templates (Mason components) with ACL profile
+'inactive' or below.
 
 
 =head2 active
@@ -218,6 +230,12 @@ Depending on the exact setting of the DOCHAZKA_PROFILE_EDITABLE_FIELDS site
 parameter, active employees may be authorized to edit more fields than inactive
 employees.
 
+=head3 Generate reports
+
+Active employees can use the C<POST genreport> operation to generate
+reports from any report templates (Mason components) with ACL profile
+'active' or below.
+
 
 =head2 admin
 
@@ -226,7 +244,18 @@ employees.
 Administrators can edit any employee's profile. The only limitation is that the
 EID cannot be changed.
 
-=head3 
+=head3 Create, read, update, and delete Mason components
+
+Mason components are stored in the database and written out to the
+filesystem every time the server starts. Since these components pose a
+security risk, only administrators can work with them.
+
+Non-administrator employees cannot view component source code, but they can
+generate reports using the C<POST genreport> operation, which takes a
+top-level component path, provided they have sufficient privileges to use
+the component in question.
+
+
 
 =head1 AUTHOR
 
