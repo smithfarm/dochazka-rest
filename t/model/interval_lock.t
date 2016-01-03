@@ -47,6 +47,7 @@ use App::Dochazka::REST::ConnBank qw( $dbix_conn );
 use App::Dochazka::REST::Model::Activity;
 use App::Dochazka::REST::Model::Employee;
 use App::Dochazka::REST::Model::Interval qw( 
+    fetch_intervals_by_eid_and_tsrange
     delete_intervals_by_eid_and_tsrange
     iid_exists 
 );
@@ -158,6 +159,22 @@ is( $status->level, 'OK' );
 is( $status->code, 'DOCHAZKA_CUD_OK' );
 ok( $int->iid > 0 );
 my $saved_iid = $int->iid;
+
+note( 'see that we can fetch it' );
+$status = fetch_intervals_by_eid_and_tsrange( 
+    $dbix_conn, 
+    $emp->eid, 
+    "[ $today 09:00, $today 11:00 )" 
+);
+is( $status->level, 'OK' );
+is( $status->code, 'DISPATCH_RECORDS_FOUND' );
+is( $status->{count}, 1 );
+my $found_interval = $status->payload->[0];
+is( ref( $found_interval ), 'App::Dochazka::REST::Model::Interval' );
+
+note( 'see that it is a partial interval' );
+ok( $found_interval->partial, "Found interval is a partial interval" );
+BAIL_OUT(0);
 
 note( 'test accessors' );
 ok( $int->iid > 0 );
