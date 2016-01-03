@@ -3248,17 +3248,17 @@ SPLIT OFF App::MREST into separate distribution
 - t/: cleanup
 - LICENSE: work continues in 2015
 
-0.500 2015-24-08 16:24 CET
+0.500 2015-12-08 16:24 CET
 - prerelease.sh: automatically update Changes file, add tag
 - README.rst: describe the new release workflow in more detail
 
-0.501 2015-40-09 14:40 CET
+0.501 2015-12-09 14:40 CET
 - README.rst: fix literal code blocks
 - README.rst: add reminder to push using --follow-tags
 - implement Dockerized testing environment
 - docker-test.sh: bootstrap script for Dockerized testing env
 
-0.502 2015-02-10 14:02 CET
+0.502 2015-12-10 14:02 CET
 - several Dockerfile tweaks
 - Fix https://github.com/smithfarm/dochazka-rest/issues/26
   - config/REST_Config.pm: add DOCHAZKA_TIMEZONE config param
@@ -3268,7 +3268,7 @@ SPLIT OFF App::MREST into separate distribution
 - Fix https://github.com/smithfarm/dochazka-rest/issues/28
   - t/: be more careful about timezone
 
-0.503 2015-04-10 21:04 CET
+0.503 2015-12-10 21:04 CET
 - Fix https://github.com/smithfarm/dochazka-rest/issues/30
   - t/001-init.t: bail out if DOCHAZKA_TIMEZONE not set
 - Fix https://github.com/smithfarm/dochazka-rest/issues/31
@@ -3277,7 +3277,7 @@ SPLIT OFF App::MREST into separate distribution
   - t/: simplify regression test init boilerplate
   - tests: rename initialize_unit() to initialize_regression_test()
 
-0.504 2015-40-11 21:40 CET
+0.504 2015-12-11 21:40 CET
 - Make release and prerelease scripts executable
 - MANIFEST.bak: remove superfluous file
 - Build.PL: require App::Dochazka::Common 0.194
@@ -3286,7 +3286,7 @@ SPLIT OFF App::MREST into separate distribution
   (except in 001-init.t)
 - dbinit_Config.pm: remove spurious warning
 
-0.505 2016-42-01 15:42 CET
+0.505 2016-01-01 15:42 CET
 - doc: minor clarifications
 - REST.pm: add Report Generation section to POD
 - Build.PL: require 0.195 for Component class
