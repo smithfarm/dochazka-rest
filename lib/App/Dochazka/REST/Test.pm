@@ -395,7 +395,7 @@ Create testing employee with 'active' privilege
 sub create_active_employee {
     my ( $test ) = @_;
     note('create active employee');
-    my $eid_of_active = create_testing_employee( { nick => 'active', password => 'active' } )->{'eid'};
+    my $eid_of_active = create_testing_employee( { nick => 'active', password => 'active' } )->eid;
     my $status = req( $test, 201, 'root', 'POST', "priv/history/eid/$eid_of_active", 
         '{ "effective":"1892-01-01", "priv":"active" }' );
     ok( $status->ok, "Create active employee 2" );
@@ -413,7 +413,7 @@ Create testing employee with 'active' privilege
 sub create_inactive_employee {
     my ( $test ) = @_;
     note( 'create inactive employee' );
-    my $eid_of_inactive = create_testing_employee( { nick => 'inactive', password => 'inactive' } )->{'eid'};
+    my $eid_of_inactive = create_testing_employee( { nick => 'inactive', password => 'inactive' } )->eid;
     my $status = req( $test, 201, 'root', 'POST', "priv/history/eid/$eid_of_inactive", 
         '{ "effective":"1892-01-01", "priv":"inactive" }' );
     ok( $status->ok, "Create inactive employee 2" );
