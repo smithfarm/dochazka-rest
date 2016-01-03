@@ -963,7 +963,7 @@ sub tsrange_equal {
         keys => [ $tr1, $tr2 ],
     );
     die "$status->text" unless $status->ok;
-    return $status->payload;
+    return $status->payload->[0];
 }
 
 
