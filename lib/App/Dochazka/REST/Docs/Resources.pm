@@ -277,7 +277,7 @@ Updates the component object whose cid is specified by the ':cid' URI parameter.
 The fields to be updated and their new values should be sent in the request
 body, e.g., like this:
 
-    { "long_desc" : "new description", "disabled" : "f" }
+    { "path" : "new/path", "source" : "new source", "acl" : "inactive" }
 
 =item * DELETE
 
