@@ -4,7 +4,7 @@ author:
   - 'Nathan Cutler <ncutler@suse.com>'
 build_requires:
   App::CELL: '0.215'
-  App::Dochazka::Common: '0.195'
+  App::Dochazka::Common: '0.196'
   Authen::Passphrase::SaltedDigest: '0.008'
   DBIx::Connector: '0.47'
   Date::Holidays::CZ: '0.08'
@@ -34,7 +34,7 @@ no_index:
 provides:
   App::Dochazka::REST:
     file: lib/App/Dochazka/REST.pm
-    version: '0.510'
+    version: '0.511'
   App::Dochazka::REST::ACL:
     file: lib/App/Dochazka/REST/ACL.pm
   App::Dochazka::REST::Auth:
@@ -87,7 +87,7 @@ provides:
     file: lib/App/Dochazka/REST/Util/Holiday.pm
 requires:
   App::CELL: '0.215'
-  App::Dochazka::Common: '0.195'
+  App::Dochazka::Common: '0.196'
   Authen::Passphrase::SaltedDigest: '0.008'
   DBD::Pg: '0'
   DBI: '0'
@@ -114,5 +114,5 @@ resources:
   bugtracker: https://github.com/smithfarm/dochazka-rest/issues
   license: http://opensource.org/licenses/bsd-license.php
   repository: https://github.com/smithfarm/dochazka-rest
-version: '0.510'
+version: '0.511'
 x_serialization_backend: 'CPAN::Meta::YAML version 0.012'

@@ -3342,3 +3342,21 @@ SPLIT OFF App::MREST into separate distribution
 - Dispatch.pm->handler_genreport: pass arguments to generate method
 - Model/Component.pm->generate: accept and process template arguments
 
+0.511 2016-01-04 00:43 CET
+- various documentation fixes
+- bin/docgen.plx: reinstate resource POD generation script (lost in
+  migration from SourceForge to GitHub)
+- REST/Test.pm: use accessors to get employee EID
+- Docs/Workflow.pm: cover report generation and Mason components
+- Model/Shared.pm->tsrange_equal(): return true or false
+- Model/Shared.pm: implement tsrange_intersection()
+- Partial intervals feature (#43)
+  - Build.PL: require Common 0.196 for partial intervals
+  - interval_Config.pm: use overlap instead of contained by
+  - sql: define SQL_INTERVAL_SELECT_BY_EID_AND_TSRANGE_PARTIAL_INTERVALS
+  - sql: make SQL_INTERVAL_SELECT_BY_EID_AND_TSRANGE ignore partial intervals
+  - config/sql/interval_Config.pm: fix syntax error
+  - Model/Interval.pm: get whole and partial intervals
+  - Model/Interval.pm: use tsrange_intersection() to create partial intervals
+  - t/model/interval_lock.t: add partial interval tests
+
