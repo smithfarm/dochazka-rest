@@ -160,7 +160,9 @@ is( $status->code, 'DOCHAZKA_CUD_OK' );
 ok( $int->iid > 0 );
 my $saved_iid = $int->iid;
 
-note( 'see that we can fetch it' );
+note( 'fetch three partial intervals' );
+
+note( 'partial interval #1 - fully contained' );
 my $search_interval = "[ $today 09:00, $today 11:00 )";
 $status = fetch_intervals_by_eid_and_tsrange( 
     $dbix_conn, 
@@ -172,15 +174,41 @@ is( $status->code, 'DISPATCH_RECORDS_FOUND' );
 is( $status->{count}, 1 );
 my $found_interval = $status->payload->[0];
 is( ref( $found_interval ), 'App::Dochazka::REST::Model::Interval' );
-
-note( 'see that it is a partial interval' );
 ok( $found_interval->partial, "Found interval is a partial interval" );
+ok( tsrange_equal( $dbix_conn, $search_interval, $found_interval->intvl ),
+    'the partial interval found is the same as the one we searched for' );
 
-note( 'see that the partial interval found is the same as the one we searched for' );
-diag( "Search interval: $search_interval" );
-diag( "Found interval: " . $found_interval->intvl );
-ok( tsrange_equal( $dbix_conn, $search_interval, $found_interval->intvl ) );
-BAIL_OUT(0);
+note( 'partial interval #2 - overlaps start' );
+$search_interval = "[ $today 07:00, $today 11:00 )";
+$status = fetch_intervals_by_eid_and_tsrange( 
+    $dbix_conn, 
+    $emp->eid, 
+    $search_interval,
+);
+is( $status->level, 'OK' );
+is( $status->code, 'DISPATCH_RECORDS_FOUND' );
+is( $status->{count}, 1 );
+$found_interval = $status->payload->[0];
+is( ref( $found_interval ), 'App::Dochazka::REST::Model::Interval' );
+ok( $found_interval->partial, "Found interval is a partial interval" );
+ok( tsrange_equal( $dbix_conn, "[ $today 08:00, $today 11:00 )", $found_interval->intvl ),
+    'the partial interval found is the same as the one we searched for' );
+
+note( 'partial interval #3 - overlaps end' );
+$search_interval = "[ $today 11:00, $today 13:00 )";
+$status = fetch_intervals_by_eid_and_tsrange( 
+    $dbix_conn, 
+    $emp->eid, 
+    $search_interval,
+);
+is( $status->level, 'OK' );
+is( $status->code, 'DISPATCH_RECORDS_FOUND' );
+is( $status->{count}, 1 );
+$found_interval = $status->payload->[0];
+is( ref( $found_interval ), 'App::Dochazka::REST::Model::Interval' );
+ok( $found_interval->partial, "Found interval is a partial interval" );
+ok( tsrange_equal( $dbix_conn, "[ $today 11:00, $today 12:00 )", $found_interval->intvl ),
+    'the partial interval found is the same as the one we searched for' );
 
 note( 'test accessors' );
 ok( $int->iid > 0 );
