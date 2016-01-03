@@ -1,3 +1,4 @@
+bin/docgen.plx
 bin/dochazka-dbinit
 bin/dochazka-rest
 Build.PL
