@@ -684,8 +684,8 @@ Dochazka data can be seen to exist in the following classes of objects:
 
 =over
 
-=item * Policy (parameters set when database is first created)
-
+##=item * Policy (parameters set when database is first created)
+##
 =item * Employee (an individual employee)
 
 =item * Privhistory (history of changes in an employee's privilege level)
@@ -699,6 +699,8 @@ Dochazka data can be seen to exist in the following classes of objects:
 =item * Intervals (the "work", or "attendance", itself)
 
 =item * Locks (determining whether a reporting period is locked or not)
+
+=item * Components (Mason components, i.e. report templates)
 
 =back
 
@@ -906,6 +908,22 @@ Clients can of course make it easy for the employee to lock entire blocks
 of time (weeks, months, years . . .) at once, if that is deemed expedient.
 
 For details, see L<App::Dochazka::REST::Model::Lock>.
+
+
+=head2 Component
+
+L<Reports are generated/"REPORT GENERATION"> from
+L<Mason|https://metacpan.org/pod/Mason> templates which consist of
+components. Mason expects these components to be stored in text files under
+a directory called the "component root". For the purposes of Dochazka, the
+component root is created under the Dochazka state directory, which is
+determined from the C<DOCHAZKA_STATE_DIR> site parameter (defaults to
+C</var/lib/dochazka>). When the server starts, this Mason state in the
+filesystem is wiped and re-created from the database. The C<Component>
+class is used to manipulate Mason components.
+
+This rather complicated setup is designed to enable administrators to
+develop their own report templates.
 
 
 
