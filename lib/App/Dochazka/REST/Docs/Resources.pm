@@ -36,7 +36,6 @@ use 5.012;
 use strict;
 use warnings;
 
-
 1;
 __END__
 
@@ -213,6 +212,95 @@ activity.
 Allowed methods: GET
 
 Returns a JSON structure containing instructions for reporting bugs.
+
+
+=back
+
+=head2 C<< component >>
+
+
+=over
+
+Allowed methods: CONNECT, DELETE, GET, OPTIONS, POST, PUT, TRACE
+
+Parent for component resources
+
+
+=back
+
+=head2 C<< component/all >>
+
+
+=over
+
+Allowed methods: GET
+
+Retrieves all component objects in the database.
+
+
+=back
+
+=head2 C<< component/cid >>
+
+
+=over
+
+Allowed methods: POST
+
+Enables existing component objects to be updated by sending a POST request to
+the REST server. Along with the properties to be modified, the request body
+must include an 'cid' property, the value of which specifies the cid to be
+updated.
+
+
+=back
+
+=head2 C<< component/cid/:cid >>
+
+
+=over
+
+Allowed methods: DELETE, GET, PUT
+
+This resource allows the user to GET, PUT, or DELETE an component object by its
+cid.
+
+=over
+
+=item * GET
+
+Retrieves an component object by its cid.
+
+=item * PUT
+
+Updates the component object whose cid is specified by the ':cid' URI parameter.
+The fields to be updated and their new values should be sent in the request
+body, e.g., like this:
+
+    { "long_desc" : "new description", "disabled" : "f" }
+
+=item * DELETE
+
+Deletes the component object whose cid is specified by the ':cid' URI parameter.
+This will work only if nothing in the database refers to this component.
+
+=back
+
+
+=back
+
+=head2 C<< component/path >>
+
+
+=over
+
+Allowed methods: POST
+
+This resource enables existing component objects to be updated, and new
+component objects to be inserted, by sending a POST request to the REST server.
+Along with the properties to be modified/inserted, the request body must
+include an 'path' property, the value of which specifies the component to be
+updated.  
 
 
 =back
@@ -474,6 +562,20 @@ exists and nothing in the database refers to it).
 
 =back
 
+=head2 C<< employee/eid/:eid/minimal >>
+
+
+=over
+
+Allowed methods: GET
+
+This resource enables any employee to get minimal information
+on any other employee. Useful for EID to nick conversion or to
+look up another employee's email address or name.
+
+
+=back
+
 =head2 C<< employee/eid/:eid/team >>
 
 
@@ -568,6 +670,33 @@ in question.
 
 =back
 
+=head2 C<< employee/nick/:nick/ldap >>
+
+
+=over
+
+Allowed methods: GET, PUT
+
+This resource enables any employee to perform an LDAP lookup on
+any other employee.
+
+
+=back
+
+=head2 C<< employee/nick/:nick/minimal >>
+
+
+=over
+
+Allowed methods: GET
+
+This resource enables any employee to get minimal information
+on any other employee. Useful for nick to EID conversion or to
+look up another employee's email address or name.
+
+
+=back
+
 =head2 C<< employee/nick/:nick/team >>
 
 
@@ -622,6 +751,20 @@ implicitly be added. Example: a search for 'foo' would be converted to
 Allowed methods: GET
 
 Retrieves an employee object by the secondary ID (must be an exact match)
+
+
+=back
+
+=head2 C<< employee/sec_id/:sec_id/minimal >>
+
+
+=over
+
+Allowed methods: GET
+
+This resource enables any employee to get minimal information
+on any other employee. Useful for sec_id to EID conversion or to
+look up another employee's email address or name.
 
 
 =back
@@ -697,6 +840,31 @@ property with the value 'undef' or any unrecognized privilege level string (like
 
 =back
 
+=head2 C<< genreport >>
+
+
+=over
+
+Allowed methods: GET, POST
+
+Generate reports.
+
+
+=back
+
+=head2 C<< holiday/:tsrange >>
+
+
+=over
+
+Allowed methods: GET
+
+This resource takes a tsrange and returns a list of holidays (dates) that 
+fall within that tsrange.
+
+
+=back
+
 =head2 C<< interval >>
 
 
@@ -709,12 +877,38 @@ Parent for interval resources
 
 =back
 
+=head2 C<< interval/:self/:ts/:psqlint >>
+
+
+=over
+
+Allowed methods: DELETE, GET
+
+This is just like 'interval/self/:tsrange' except that the time range is
+specified by giving a timestamp and a PostgreSQL time interval, e.g "1 week 3 days".
+
+
+=back
+
+=head2 C<< interval/eid/:eid/:ts/:psqlint >>
+
+
+=over
+
+Allowed methods: DELETE, GET
+
+This is just like 'interval/eid/:eid/:tsrange' except that the time range is
+specified by giving a timestamp and a PostgreSQL time interval, e.g "1 week 3 days".
+
+
+=back
+
 =head2 C<< interval/eid/:eid/:tsrange >>
 
 
 =over
 
-Allowed methods: GET
+Allowed methods: DELETE, GET
 
 With this resource, administrators can retrieve any employee's intervals 
 over a given tsrange, and active employees can do the same with their own intervals. 
@@ -801,12 +995,25 @@ administrators can also specify C<eid> and C<remark>.
 
 =back
 
+=head2 C<< interval/nick/:nick/:ts/:psqlint >>
+
+
+=over
+
+Allowed methods: DELETE, GET
+
+This is just like 'interval/nick/:nick/:tsrange' except that the time range is
+specified by giving a timestamp and a PostgreSQL time interval, e.g "1 week 3 days".
+
+
+=back
+
 =head2 C<< interval/nick/:nick/:tsrange >>
 
 
 =over
 
-Allowed methods: GET
+Allowed methods: DELETE, GET
 
 With this resource, administrators can retrieve any employee's intervals 
 over a given tsrange, and active employees can do the same with their own intervals. 
@@ -827,7 +1034,7 @@ parameter (set to 'undef' for no limit).
 
 =over
 
-Allowed methods: GET
+Allowed methods: DELETE, GET
 
 With this resource, employees can retrieve their own attendance intervals 
 over a given tsrange. 
@@ -883,40 +1090,48 @@ Parent for interval fillup resources
 
 =back
 
-=head2 C<< interval/fillup/eid/:eid/:lower/:upper >>
+=head2 C<< interval/fillup/eid/:eid/:tsrange >>
 
 
 =over
 
-Allowed methods: GET
-
-=over
-
-=item * GET
-
-Return set of scheduled attendance intervals (tsranges) for the given employee
-over the given tsrange.  The result set includes only those scheduled intervals
-that fall _fully_ within the given tsrange.
-
-=back
-
-
-=back
-
-=head2 C<< interval/fillup/nick/:nick/:lower/:upper >>
-
-
-=over
-
-Allowed methods: GET
+Allowed methods: GET, POST
 
 =over
 
 =item * GET
 
 Return set of scheduled attendance intervals (tsranges) for the given employee
-over the given tsrange.  The result set includes only those scheduled intervals
-that fall _fully_ within the given tsrange.
+over the given tsrange. Does not add any attendance data to the database.
+
+=item * POST
+
+Post scheduled attendance intervals (tsranges) for the given employee
+over the given tsrange.
+
+=back
+
+
+=back
+
+=head2 C<< interval/fillup/nick/:nick/:tsrange >>
+
+
+=over
+
+Allowed methods: GET, POST
+
+=over
+
+=item * GET
+
+Return set of scheduled attendance intervals (tsranges) for the given employee
+over the given tsrange. Does not add any attendance data to the database.
+
+=item * POST
+
+Post scheduled attendance intervals (tsranges) for the given employee
+over the given tsrange.
 
 =back
 
@@ -1310,20 +1525,24 @@ are related to schedules.
 
 =back
 
-=head2 C<< interval/fillup/self/:lower/:upper >>
+=head2 C<< interval/fillup/self/:tsrange >>
 
 
 =over
 
-Allowed methods: GET
+Allowed methods: GET, POST
 
 =over
 
 =item * GET
 
 Return set of scheduled attendance intervals (tsranges) for the given employee
-over the given tsrange.  The result set includes only those scheduled intervals
-that fall _fully_ within the given tsrange.
+over the given tsrange. Does not add any attendance data to the database.
+
+=item * POST
+
+Post scheduled attendance intervals (tsranges) for the given employee
+over the given tsrange.
 
 =back
 
