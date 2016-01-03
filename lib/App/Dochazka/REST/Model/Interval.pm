@@ -45,6 +45,7 @@ use App::Dochazka::REST::Model::Shared qw(
     load 
     load_multiple 
     select_single
+    tsrange_intersection
 );
 use Params::Validate qw( :all );
 
@@ -294,12 +295,43 @@ sub fetch_intervals_by_eid_and_tsrange {
         return $CELL->status_err( 'DOCHAZKA_EMPLOYEE_SCHEDULE_CHANGED' );
     }
 
-    return load_multiple(
+    $status = load_multiple(
         conn => $conn,
         class => __PACKAGE__,
         sql => $site->SQL_INTERVAL_SELECT_BY_EID_AND_TSRANGE,
         keys => [ $eid, $tsrange, $site->DOCHAZKA_INTERVAL_SELECT_LIMIT ],
     );
+    return $status unless 
+        ( $status->ok and $status->code eq 'DISPATCH_RECORDS_FOUND' ) or
+        ( $status->level eq 'NOTICE' and $status->code eq 'DISPATCH_NO_RECORDS_FOUND' );
+    my $whole_intervals = $status->payload;
+
+    $status = load_multiple(
+        conn => $conn,
+        class => __PACKAGE__,
+        sql => $site->SQL_INTERVAL_SELECT_BY_EID_AND_TSRANGE_PARTIAL_INTERVALS,
+        keys => [ $eid, $tsrange,
+                  $eid, $tsrange, $site->DOCHAZKA_INTERVAL_SELECT_LIMIT ],
+    );
+    return $status unless 
+        ( $status->ok and $status->code eq 'DISPATCH_RECORDS_FOUND' ) or
+        ( $status->level eq 'NOTICE' and $status->code eq 'DISPATCH_NO_RECORDS_FOUND' );
+    my $partial_intervals = $status->payload;
+
+    map { $_->partial( 0 ) } ( @$whole_intervals );
+    foreach my $int ( @$partial_intervals ) {
+        $int->partial( 1 );
+        $int->intvl( tsrange_intersection( $conn, $tsrange, $int->intvl ) );
+    }
+    
+    my $result_set = $whole_intervals;
+    push @$result_set, @$partial_intervals;
+
+    if ( my $count = scalar @$result_set ) {
+        return $CELL->status_ok( 'DISPATCH_RECORDS_FOUND', 
+            payload => $result_set, count => $count, args => [ $count ] );
+    }
+    return $CELL->status_notice( 'DISPATCH_NO_RECORDS_FOUND' );
 }
 
 

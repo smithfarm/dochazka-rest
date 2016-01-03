@@ -85,6 +85,7 @@ our @EXPORT_OK = qw(
     split_tsrange
     timestamp_delta_minus
     timestamp_delta_plus
+    tsrange_intersection
     tsrange_equal
 );
 
@@ -947,6 +948,26 @@ sub timestamp_delta_plus {
 }
 
 
+=head2 tsrange_intersection
+
+Given two strings that might be tsranges, consult the database and return
+the result of tsrange1 * tsrange2 (also a tsrange).
+
+=cut
+
+sub tsrange_intersection {
+    my ( $conn, $tr1, $tr2 ) = @_;
+
+    my $status = select_single(
+        conn => $conn,
+        sql => 'SELECT CAST( ? AS tsrange) * CAST( ? AS tsrange )',
+        keys => [ $tr1, $tr2 ],
+    );
+    die $status->text unless $status->ok;
+    return $status->payload->[0];
+}
+
+
 =head2 tsrange_equal
 
 Given two strings that might be equal tsranges, consult the database and return
@@ -962,8 +983,8 @@ sub tsrange_equal {
         sql => 'SELECT CAST( ? AS tsrange) = CAST( ? AS tsrange )',
         keys => [ $tr1, $tr2 ],
     );
-    die "$status->text" unless $status->ok;
-    return $status->payload;
+    die $status->text unless $status->ok;
+    return $status->payload->[0];
 }
 
 
