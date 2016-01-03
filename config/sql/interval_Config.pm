@@ -43,7 +43,7 @@ set( 'SQL_INTERVAL_SELECT_BY_IID', q/
 #
 set( 'SQL_INTERVAL_SELECT_BY_EID_AND_TSRANGE', q/
       SELECT i.iid, i.eid, i.aid, a.code, i.intvl, i.long_desc, i.remark
-      FROM intervals i, activities a WHERE i.eid = ? AND i.intvl <@ ? AND i.aid = a.aid
+      FROM intervals i, activities a WHERE i.eid = ? AND i.intvl && ? AND i.aid = a.aid
       ORDER BY intvl
       LIMIT ?
       / );
