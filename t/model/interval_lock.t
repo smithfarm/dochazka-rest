@@ -161,10 +161,11 @@ ok( $int->iid > 0 );
 my $saved_iid = $int->iid;
 
 note( 'see that we can fetch it' );
+my $search_interval = "[ $today 09:00, $today 11:00 )";
 $status = fetch_intervals_by_eid_and_tsrange( 
     $dbix_conn, 
     $emp->eid, 
-    "[ $today 09:00, $today 11:00 )" 
+    $search_interval,
 );
 is( $status->level, 'OK' );
 is( $status->code, 'DISPATCH_RECORDS_FOUND' );
@@ -174,6 +175,11 @@ is( ref( $found_interval ), 'App::Dochazka::REST::Model::Interval' );
 
 note( 'see that it is a partial interval' );
 ok( $found_interval->partial, "Found interval is a partial interval" );
+
+note( 'see that the partial interval found is the same as the one we searched for' );
+diag( "Search interval: $search_interval" );
+diag( "Found interval: " . $found_interval->intvl );
+ok( tsrange_equal( $dbix_conn, $search_interval, $found_interval->intvl ) );
 BAIL_OUT(0);
 
 note( 'test accessors' );
