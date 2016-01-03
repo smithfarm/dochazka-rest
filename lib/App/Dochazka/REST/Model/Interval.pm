@@ -45,6 +45,7 @@ use App::Dochazka::REST::Model::Shared qw(
     load 
     load_multiple 
     select_single
+    tsrange_intersection
 );
 use Params::Validate qw( :all );
 
@@ -318,7 +319,10 @@ sub fetch_intervals_by_eid_and_tsrange {
     my $partial_intervals = $status->payload;
 
     map { $_->partial( 0 ) } ( @$whole_intervals );
-    map { $_->partial( 1 ) } ( @$partial_intervals );
+    foreach my $int ( @$partial_intervals ) {
+        $int->partial( 1 );
+        $int->intvl( tsrange_intersection( $conn, $tsrange, $int->intvl ) );
+    }
     
     my $result_set = $whole_intervals;
     push @$result_set, @$partial_intervals;
