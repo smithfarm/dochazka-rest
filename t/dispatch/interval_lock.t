@@ -983,6 +983,10 @@ foreach my $method ( qw( PUT POST DELETE ) ) {
 note( "GET: WIP" );
 # FIXME: tests are missing
 
+
+
+note( 'TEAR-DOWN' );
+
 note( 'delete the testing employees' );
 delete_employee_by_nick( $test, 'active' );
 delete_employee_by_nick( $test, 'inactive' );
