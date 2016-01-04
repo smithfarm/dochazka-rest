@@ -244,6 +244,19 @@ is( $status->payload->[0]->iid, $dozing_off->iid );
 is( $status->payload->[1]->partial, 1 );
 is( $status->payload->[1]->iid, $int->iid );
 
+note( 'test DOCHAZKA_PARTIAL_INTERVAL_ILLEGAL_OPERATION' );
+note( '(no database operations allowed on partial intervals' );
+my $partial_int = $status->payload->[1];
+$status = $partial_int->insert( $faux_context );
+is( $status->level, 'ERR' );
+is( $status->code, 'DOCHAZKA_PARTIAL_INTERVAL_ILLEGAL_OPERATION' );
+$status = $partial_int->update( $faux_context );
+is( $status->level, 'ERR' );
+is( $status->code, 'DOCHAZKA_PARTIAL_INTERVAL_ILLEGAL_OPERATION' );
+$status = $partial_int->delete( $faux_context );
+is( $status->level, 'ERR' );
+is( $status->code, 'DOCHAZKA_PARTIAL_INTERVAL_ILLEGAL_OPERATION' );
+
 note( 'delete the "Dozing off" interval' );
 $status = $dozing_off->delete( $faux_context );
 is( $status->level, 'OK' );
