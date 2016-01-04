@@ -166,7 +166,8 @@ $log->info( "=== $note" );
 $status = req( $test, 200, 'active', 'DELETE',
     "interval/eid/$eid_active/[2014-01-01 00:00, 2014-12-31 24:00)" );
 is( $status->code, 'DOCHAZKA_CUD_OK' );
-is( $status->payload, 1 );
+is( $status->{'count'}, 1 );
+is( $status->{'DBI_return_value'}, 1 );
 
 note( $note = "PUT, DELETE $base/:eid/:tsrange" );
 $log->info( "=== $note" );

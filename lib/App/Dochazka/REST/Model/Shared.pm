@@ -219,7 +219,7 @@ sub cud {
         attrs => { type => ARRAYREF }, # order of attrs must match SQL statement
     } );
 
-    my ( $status, $rv );
+    my ( $status, $rv, $count );
 
     try {
         local $SIG{__WARN__} = sub {
@@ -254,9 +254,13 @@ sub cud {
                 # populate object with all RETURNING fields 
                 map { $ARGS{'object'}->{$_} = $rh->{$_}; } ( keys %$rh );
 
+                # count number of rows affected
+                $count = $sth->rows;
+
             } elsif ( $rv eq '0E0' ) {
 
                 # no error, but no record returned either
+                $count = $sth->rows;
 
             } elsif ( $rv > 1 ) {
                 $status = $CELL->status_crit( 
@@ -279,12 +283,21 @@ sub cud {
             $errmsg = '<NONE>';
         }
         if ( not defined( $status ) ) {
-            $status = $CELL->status_err( 'DOCHAZKA_DBI_ERR', args => [ $errmsg ] );
+            $status = $CELL->status_err( 'DOCHAZKA_DBI_ERR', 
+                args => [ $errmsg ],
+                DBI_return_value => $rv,
+            );
         }
     };
 
-    $status = $CELL->status_ok( 'DOCHAZKA_CUD_OK', DBI_return_value => $rv, payload => $ARGS{'object'} ) 
-        unless $status;
+    if ( not defined( $status ) ) {
+        $status = $CELL->status_ok( 'DOCHAZKA_CUD_OK', 
+            DBI_return_value => $rv,
+            payload => $ARGS{'object'}, 
+            count => $count,
+        );
+    }
+
     return $status;
 }
 
@@ -333,7 +346,7 @@ sub cud_generic {
     $log->info( "sql: $ARGS{sql}" );
     $log->info( "bind_param: " . Dumper( $ARGS{bind_params} ) );
 
-    my ( $status, $rv );
+    my ( $status, $rv, $count );
 
     try {
         local $SIG{__WARN__} = sub {
@@ -362,11 +375,13 @@ sub cud_generic {
             $log->debug( "cud_generic: DBI execute returned " . Dumper( $rv ) );
             if ( $rv >= 1 ) {
 
-                # one or more records returned
+                # count number of rows affected
+                $count = $sth->rows;
 
             } elsif ( $rv eq '0E0' ) {
 
                 # no error, but no record returned either
+                $count = $sth->rows;
 
             } elsif ( $rv == -1 ) {
                 $status = $CELL->status_err( 
@@ -384,12 +399,20 @@ sub cud_generic {
             $errmsg = '<NONE>';
         }
         if ( not defined( $status ) ) {
-            $status = $CELL->status_err( 'DOCHAZKA_DBI_ERR', args => [ $errmsg ] );
+            $status = $CELL->status_err( 'DOCHAZKA_DBI_ERR', 
+                args => [ $errmsg ],
+                DBI_return_value => $rv,
+            );
         }
     };
 
-    $status = $CELL->status_ok( 'DOCHAZKA_CUD_OK', payload => $rv ) 
-        unless $status;
+    if ( not defined( $status ) ) {
+        $status = $CELL->status_ok( 'DOCHAZKA_CUD_OK', 
+            DBI_return_value => $rv, 
+            count => $count,
+        );
+    }
+
     return $status;
 }
 
