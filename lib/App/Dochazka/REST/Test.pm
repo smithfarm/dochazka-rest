@@ -714,6 +714,11 @@ sub delete_testing_schedule {
 Wipe out all attendance data by deleting all rows from all tables (in the correct
 order).
 
+To be called like this:
+
+    $status = delete_all_attendance_data();
+    BAIL_OUT(0) unless $status->ok;
+
 =cut
 
 sub delete_all_attendance_data {
@@ -726,39 +731,44 @@ sub delete_all_attendance_data {
     );
     is( $status->level, 'OK' );
     is( $status->code, 'DOCHAZKA_CUD_OK' );
+    return $status unless $status->ok;
 
     note( 'delete intervals' );
-    my $status = cud_generic(
+    $status = cud_generic(
         conn => $dbix_conn, 
         eid => $site->DOCHAZKA_EID_OF_ROOT,
         sql => 'DELETE FROM intervals',
     );
     is( $status->level, 'OK' );
     is( $status->code, 'DOCHAZKA_CUD_OK' );
+    return $status unless $status->ok;
 
     note( 'delete activities' );
-    my $status = cud_generic(
+    $status = cud_generic(
         conn => $dbix_conn, 
         eid => $site->DOCHAZKA_EID_OF_ROOT,
         sql => 'DELETE FROM activities',
     );
     is( $status->level, 'OK' );
     is( $status->code, 'DOCHAZKA_CUD_OK' );
+    return $status unless $status->ok;
 
     note( 're-initialize activities table' );
     $status = App::Dochazka::REST::initialize_activities_table( $dbix_conn );
+    return $status unless $status->ok;
 
     note( 'delete schedhistory' );
-    my $status = cud_generic(
+    $status = cud_generic(
         conn => $dbix_conn, 
         eid => $site->DOCHAZKA_EID_OF_ROOT,
         sql => 'DELETE FROM schedhistory',
     );
     is( $status->level, 'OK' );
     is( $status->code, 'DOCHAZKA_CUD_OK' );
+    return $status unless $status->ok;
 
     note( 'delete privhistory' );
-    my $status = cud_generic(
+    $status = cud_generic(
         conn => $dbix_conn, 
         eid => $site->DOCHAZKA_EID_OF_ROOT,
         sql => 'DELETE FROM privhistory WHERE eid != ?',
@@ -766,24 +776,27 @@ sub delete_all_attendance_data {
     );
     is( $status->level, 'OK' );
     is( $status->code, 'DOCHAZKA_CUD_OK' );
+    return $status unless $status->ok;
 
     note( 'delete schedules' );
-    my $status = cud_generic(
+    $status = cud_generic(
         conn => $dbix_conn, 
         eid => $site->DOCHAZKA_EID_OF_ROOT,
         sql => 'DELETE FROM schedules',
     );
     is( $status->level, 'OK' );
     is( $status->code, 'DOCHAZKA_CUD_OK' );
+    return $status unless $status->ok;
 
     note( 'delete tempintvls' );
-    my $status = cud_generic(
+    $status = cud_generic(
         conn => $dbix_conn, 
         eid => $site->DOCHAZKA_EID_OF_ROOT,
         sql => 'DELETE FROM tempintvls',
     );
     is( $status->level, 'OK' );
     is( $status->code, 'DOCHAZKA_CUD_OK' );
+    return $status unless $status->ok;
 
     note( 'delete employees' );
     $status = cud_generic(
@@ -794,6 +807,8 @@ sub delete_all_attendance_data {
     );
     is( $status->level, 'OK' );
     is( $status->code, 'DOCHAZKA_CUD_OK' );
+
+    return $status;
 }
 
 
