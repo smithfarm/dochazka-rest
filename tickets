@@ -22,22 +22,3 @@ remotely by changing the value of DOCHAZKA_DBHOST
 
 -*-
 
-CLI BUG: intervals not shown in temporal order. When there is an interval
-that straddles the day boundary, e.g. [ 2016-01-03 23:00, 2016-01-04 01:00 )
-the "interval fetch" command for 2016-01-04 fails to list the day's intervals
-in order:
-
-Dochazka(2016-01-04) active ACTIVE> interval fetch 2016-01-04
-Attendance intervals of active (EID 44)
-in the range [ 2016-01-04 00:00, 2016-01-04 24:00 )
-
-IID Begin            End              Code Description
-431 2016-01-04 08:00 2016-01-04 12:00 WORK Riding on the Metro
-432 2016-01-04 00:00 2016-01-04 01:00 WORK Dozing off
-
-I think this is because we are relying on "ORDER BY" in the SELECT
-statement to do the ordering. This worked fine before, but now we are
-using two SELECTs and concatenating the results. This places the partial
-intervals at the end. This will have to be fixed on the server side by
-adding logic to sort the intervals.
-
