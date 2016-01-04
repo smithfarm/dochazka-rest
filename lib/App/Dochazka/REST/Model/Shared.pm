@@ -960,7 +960,7 @@ sub tsrange_intersection {
 
     my $status = select_single(
         conn => $conn,
-        sql => 'SELECT CAST( ? AS tsrange) * CAST( ? AS tsrange )',
+        sql => 'SELECT CAST( ? AS tstzrange) * CAST( ? AS tstzrange )',
         keys => [ $tr1, $tr2 ],
     );
     die $status->text unless $status->ok;
@@ -980,7 +980,7 @@ sub tsrange_equal {
 
     my $status = select_single(
         conn => $conn,
-        sql => 'SELECT CAST( ? AS tsrange) = CAST( ? AS tsrange )',
+        sql => 'SELECT CAST( ? AS tstzrange) = CAST( ? AS tstzrange )',
         keys => [ $tr1, $tr2 ],
     );
     die $status->text unless $status->ok;
