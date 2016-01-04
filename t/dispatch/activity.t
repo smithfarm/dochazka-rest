@@ -520,7 +520,7 @@ is( $status->level, 'OK', "DELETE $base/foobarpus 2" );
 is( $status->code, 'DOCHAZKA_CUD_OK', "DELETE $base/foobarpus 3" );
 
 note( "teardown" );
-delete_employee_by_nick( $test, 'active' );
-delete_employee_by_nick( $test, 'inactive' );
+$status = delete_all_attendance_data();
+BAIL_OUT(0) unless $status->ok;
 
 done_testing;

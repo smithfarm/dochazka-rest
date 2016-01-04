@@ -249,12 +249,8 @@ $status = req( $test, 200, 'active', 'DELETE', "interval/eid/$eid_active/[ 1958-
 is( $status->level, 'OK' );
 is( $status->code, 'DOCHAZKA_CUD_OK' );
 
-note( 'delete the testing employees' );
-delete_employee_by_nick( $test, 'active' );
-delete_employee_by_nick( $test, 'inactive' );
-delete_employee_by_nick( $test, 'bubba' );
+note( 'tear down' );
+$status = delete_all_attendance_data();
+BAIL_OUT(0) unless $status->ok;
 
-note( 'delete the testing schedule' );
-delete_testing_schedule( $sid );
-    
 done_testing;

@@ -90,8 +90,8 @@ is( $status->code, 'DISPATCH_SCHEDULE_EXISTS' );
 is( $status->payload->{'scode'}, 'FURRY' );
 is( $status->payload->{'sid'}, $furry->sid );
 
-note( "delete the testing schedule so it doesn't trip us up later" );
-$status = req( $test, 200, 'root', 'DELETE', "schedule/sid/" . $furry->sid );
-ok( $status->ok );
+note( "tear down" );
+$status = delete_all_attendance_data();
+BAIL_OUT(0) unless $status->ok;
 
 done_testing;

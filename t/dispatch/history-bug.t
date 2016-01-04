@@ -90,9 +90,8 @@ dbi_err( $test, 500, 'root', 'POST', "schedule/history/eid/$eid", $entity,
 
 note( 'realize that there is no November 31' );
 
-note( 'delete the testing schedule' );
-$status = req( $test, 200, 'root', 'DELETE', 'schedule/scode/FURRY' );
-ok( $status->ok );
-is( $status->code, 'DOCHAZKA_CUD_OK' );
+note( 'tear down' );
+$status = delete_all_attendance_data();
+BAIL_OUT(0) unless $status->ok;
 
 done_testing;

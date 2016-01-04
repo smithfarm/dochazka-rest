@@ -149,4 +149,8 @@ foreach my $cl (
     is( $status->code, 'DISPATCH_NO_RECORDS_FOUND' );
 }
 
+note( 'tear down' );
+my $status = delete_all_attendance_data();
+BAIL_OUT(0) unless $status->ok;
+
 done_testing;

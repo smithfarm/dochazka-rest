@@ -256,4 +256,8 @@ $status = $emp->delete( $faux_context );
 ok( $status->ok, "delete method returned ok status" );
 is( noof( $dbix_conn, 'employees' ), 2, "number of employees == 2" );
 
+note( 'tear down' );
+$status = delete_all_attendance_data();
+BAIL_OUT(0) unless $status->ok;
+
 done_testing;

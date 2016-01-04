@@ -358,4 +358,8 @@ map {
     _vet_cleanup( App::Dochazka::REST::Model::Employee->load_by_eid( $dbix_conn, $_ ) );
 } @eids_to_delete;
 
+note( 'tear down' );
+$status = delete_all_attendance_data();
+BAIL_OUT(0) unless $status->ok;
+
 done_testing;

@@ -1228,8 +1228,8 @@ docu_check($test, "$base");
 
 note( 'FIXME: NO TESTS!!!' );
 
-note( 'tear down testing employees' );
-delete_employee_by_nick( $test, 'inactive' );
-delete_employee_by_nick( $test, 'active' );
+note( 'tear down' );
+$status = delete_all_attendance_data();
+BAIL_OUT(0) unless $status->ok;
 
 done_testing;

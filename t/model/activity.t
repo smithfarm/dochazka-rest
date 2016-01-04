@@ -254,4 +254,8 @@ is( $status->{'count'}, $initial_noof_act );
 note( 'gone' );
 ok( ! scalar( grep { $_->{'code'} eq 'BOGOSITYVILLE'; } @{ $status->payload } ) );
 
+note( 'tear down' );
+$status = delete_all_attendance_data();
+BAIL_OUT(0) unless $status->ok;
+
 done_testing;

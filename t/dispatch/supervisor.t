@@ -99,10 +99,6 @@ is( $status->code, 'DISPATCH_KEEP_TO_YOURSELF' );
 note( 'get AID of work' );
 my $aid_of_work = get_aid_by_code( $test, 'WORK' );
 
-note( 'declare @iids_to_delete and @lids_to_delete' );
-my @iids_to_delete;
-my @lids_to_delete;
-
 note( 'peon does some work' );
 $status = req( $test, 201, 'peon', 'POST', 'interval/new', <<"EOH" );
 { "aid" : $aid_of_work, "intvl" : "[1957-01-02 08:00, 1957-01-03 08:00)" }
@@ -112,7 +108,6 @@ is( $status->code, 'DOCHAZKA_CUD_OK' );
 ok( $status->{'payload'} );
 ok( $status->{'payload'}->{'iid'} );
 my $iid = $status->payload->{'iid'};
-push @iids_to_delete, $iid;
 
 note( 'peon can see his work using GET interval/iid/:iid' );
 $status = req( $test, 200, 'peon', 'GET', "interval/iid/$iid" );
@@ -212,7 +207,6 @@ is( $status->code, "DOCHAZKA_CUD_OK" );
 is( $status->payload->{'eid'}, $peon_eid );
 my $lid = $status->payload->{'lid'};
 ok( $lid );
-push @lids_to_delete, $lid;
 like( $status->payload->{'intvl'}, qr/1957/ );
 
 note( 'peon can see his own lock using GET lock/lid/:lid' );
@@ -305,34 +299,8 @@ for my $variant ( @variants ) {
     is( $status->code, 'DISPATCH_KEEP_TO_YOURSELF' );
 }
 
-note( 'tear down locks' );
-for my $lid ( @lids_to_delete ) {
-    req( $test, 200, 'root', 'DELETE', "lock/lid/$lid" );
-}
-
-note( 'tear down intervals' );
-for my $iid ( @iids_to_delete ) {
-    req( $test, 200, 'root', 'DELETE', "interval/iid/$iid" );
-}
-
-note( 'tear down schedhistory records' );
-foreach my $shid ( @shid_for_deletion ) {
-    $status = req( $test, 200, 'root', 'DELETE', "schedule/history/shid/$shid" );
-    is( $status->level, 'OK' );
-    is( $status->code, 'DOCHAZKA_CUD_OK' );
-    req( $test, 404, 'root', 'GET', "schedule/history/shid/$shid" );
-}
-
-note( 'tear down the testing schedule' );
-delete_testing_schedule( $sid );
-    
-note( 'tear down testing user active' );
-delete_employee_by_nick( $test, 'active' );
-
-note( 'tear down testing user peon' );
-delete_employee_by_nick( $test, 'peon' );
-
-note( 'tear down testing user boss' );
-delete_employee_by_nick( $test, 'boss' );
+note( 'tear down' );
+$status = delete_all_attendance_data();
+BAIL_OUT(0) unless $status->ok;
 
 done_testing;

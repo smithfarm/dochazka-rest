@@ -233,4 +233,8 @@ foreach my $user ( qw( demo root ) ) {
     }
 }
 
+note( 'tear down' );
+$status = delete_all_attendance_data();
+BAIL_OUT(0) unless $status->ok;
+
 done_testing;

@@ -565,11 +565,8 @@ EOS
     is( $status->payload->{'priv'}, "passerby" );
 } 
 
-note( 'delete the testing root shid and the testing schedule itself' );
-$status = req( $test, 200, 'root', 'DELETE', "/schedule/history/shid/$root_shid" );
-is( $status->level, 'OK' );
-is( $status->code, 'DOCHAZKA_CUD_OK' );
-
-delete_testing_schedule( $ts_sid );
+note( 'tear down' );
+$status = delete_all_attendance_data();
+BAIL_OUT(0) unless $status->ok;
 
 done_testing;
