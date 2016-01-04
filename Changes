@@ -3360,3 +3360,11 @@ SPLIT OFF App::MREST into separate distribution
   - Model/Interval.pm: use tsrange_intersection() to create partial intervals
   - t/model/interval_lock.t: add partial interval tests
 
+0.512 2016-01-04 11:43 CET
+- Fix "Partial intervals not shown in temporal order" (#46)
+  - bin/create_active_employee.t: script to create employee in empty database
+  - sql/interval_Config.pm: refrain from sorting intervals
+  - Model/Interval.pm: sort concatenated set of intervals
+  - Model/Shared.pm: use tstzrange instead of tsrange
+  - t/model/interval_lock.t: test case for #46
+
