@@ -176,6 +176,10 @@ sub insert {
     my $self = shift;
     my ( $context ) = validate_pos( @_, { type => HASHREF } );
 
+    return $CELL->status_err( 
+        "DOCHAZKA_PARTIAL_INTERVAL_ILLEGAL_OPERATION" 
+    ) if $self->partial;
+
     my $status = cud( 
         conn => $context->{'dbix_conn'},
         eid => $context->{'current'}->{'eid'},
@@ -201,6 +205,10 @@ sub update {
 
     return $CELL->status_err( 'DOCHAZKA_MALFORMED_400' ) unless $self->{'iid'};
 
+    return $CELL->status_err( 
+        "DOCHAZKA_PARTIAL_INTERVAL_ILLEGAL_OPERATION" 
+    ) if $self->partial;
+
     my $status = cud( 
         conn => $context->{'dbix_conn'},
         eid => $context->{'current'}->{'eid'},
@@ -223,6 +231,10 @@ Field values are taken from the object. Returns a status object.
 sub delete {
     my $self = shift;
     my ( $context ) = validate_pos( @_, { type => HASHREF } );
+
+    return $CELL->status_err( 
+        "DOCHAZKA_PARTIAL_INTERVAL_ILLEGAL_OPERATION" 
+    ) if $self->partial;
 
     my $status = cud( 
         conn => $context->{'dbix_conn'},
