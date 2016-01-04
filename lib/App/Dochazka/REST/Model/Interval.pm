@@ -326,6 +326,8 @@ sub fetch_intervals_by_eid_and_tsrange {
     
     my $result_set = $whole_intervals;
     push @$result_set, @$partial_intervals;
+    # But now the intervals are out of order
+    #$result_set = sort_intervals( $result_set );
 
     if ( my $count = scalar @$result_set ) {
         return $CELL->status_ok( 'DISPATCH_RECORDS_FOUND', 
