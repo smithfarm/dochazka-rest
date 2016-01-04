@@ -1442,6 +1442,33 @@ sub reset_mason_dir {
 }
 
 
+=head2 initialize_activities_table
+
+Create the activities defined in the site parameter
+DOCHAZKA_ACTIVITY_DEFINITIONS
+
+=cut
+
+sub initialize_activities_table {
+    my $conn = shift;
+    my $status = $CELL->status_ok;
+    try {
+        $conn->txn( fixup => sub {
+            my $sth = $_->prepare( $site->SQL_ACTIVITY_INSERT );
+            foreach my $actdef ( @{ $site->DOCHAZKA_ACTIVITY_DEFINITIONS } ) {
+                $sth->bind_param( 1, $actdef->{code} );
+                $sth->bind_param( 2, $actdef->{long_desc} );
+                $sth->bind_param( 3, 'dbinit' );
+                $sth->execute;
+            }
+        } );
+    } catch {
+        $status = $CELL->status_err( 'DOCHAZKA_DBI_ERR', args => [ $_ ] );
+    };
+    return $status;
+}
+
+
 =head2 reset_db
 
 Drop and re-create a Dochazka database. Takes superuser credentials as
@@ -1529,20 +1556,7 @@ sub reset_db {
     return $status unless $status->ok;
 
     # insert initial set of activities
-    try {
-        $conn->txn( fixup => sub {
-            my $sth = $_->prepare( $site->SQL_ACTIVITY_INSERT );
-            foreach my $actdef ( @{ $site->DOCHAZKA_ACTIVITY_DEFINITIONS } ) {
-                $sth->bind_param( 1, $actdef->{code} );
-                $sth->bind_param( 2, $actdef->{long_desc} );
-                $sth->bind_param( 3, 'dbinit' );
-                $sth->execute;
-            }
-        } );
-    } catch {
-        $status = $CELL->status_err( 'DOCHAZKA_DBI_ERR', args => [ $_ ] );
-    };
-    return $status unless $status->ok;
+    $status = initialize_activities_table( $conn );
     
     # insert initial set of components
     try {
