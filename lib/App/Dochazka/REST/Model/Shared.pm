@@ -327,7 +327,7 @@ sub cud_generic {
         conn => { isa => 'DBIx::Connector' },
         eid => { type => SCALAR },
         sql => { type => SCALAR }, 
-        bind_params => { type => ARRAYREF }, # order must match SQL statement
+        bind_params => { type => ARRAYREF, optional => 1 }, # order must match SQL statement
     } );
     $log->info( "Entering " . __PACKAGE__ . "::cud_generic with" );
     $log->info( "sql: $ARGS{sql}" );
