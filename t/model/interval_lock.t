@@ -218,6 +218,37 @@ ok( tsrange_equal( $dbix_conn, $int->intvl, $intvl ) );
 is( $int->long_desc, 'Pencil pushing' );
 is( $int->remark, 'TEST INTERVAL' );
 
+note( 'spawn another interval object (Dozing off)' );
+my $dozing_off = App::Dochazka::REST::Model::Interval->spawn(
+    eid => $emp->eid,
+    aid => $work->aid, 
+    intvl => "[ $today 05:00, $today 06:00 )",
+    long_desc => "Dozing off",
+);
+isa_ok( $dozing_off, 'App::Dochazka::REST::Model::Interval' );
+$status = $dozing_off->insert( $faux_context);
+is( $status->level, 'OK' );
+is( $status->code, 'DOCHAZKA_CUD_OK' );
+
+note( 'retrieve intervals and verify they are in temporal order' );
+$status = fetch_intervals_by_eid_and_tsrange( 
+    $dbix_conn, 
+    $emp->eid, 
+    "[ $today 05:00, $today 10:00 )",
+);
+is( $status->level, 'OK' );
+is( $status->code, 'DISPATCH_RECORDS_FOUND' );
+is( $status->{count}, 2 );
+is( $status->payload->[0]->partial, 0 );
+is( $status->payload->[0]->iid, $dozing_off->iid );
+is( $status->payload->[1]->partial, 1 );
+is( $status->payload->[1]->iid, $int->iid );
+
+note( 'delete the "Dozing off" interval' );
+$status = $dozing_off->delete( $faux_context );
+is( $status->level, 'OK' );
+is( $status->code, 'DOCHAZKA_CUD_OK' );
+
 note( 'load_by_iid' );
 $status = App::Dochazka::REST::Model::Interval->load_by_iid( $dbix_conn, $saved_iid );
 diag( $status->text ) unless $status->ok;
