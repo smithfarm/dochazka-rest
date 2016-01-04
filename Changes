@@ -3368,3 +3368,13 @@ SPLIT OFF App::MREST into separate distribution
   - Model/Shared.pm: use tstzrange instead of tsrange
   - t/model/interval_lock.t: test case for #46
 
+0.513 2016-01-04 20:39 CET
+- Implement feature "No database operations on partial intervals" (#47)
+  - config/: add DOCHAZKA_PARTIAL_INTERVAL_ILLEGAL_OPERATION message
+  - Model/Interval.pm: no database operations on partial intervals
+- Implement "Test function to delete all attendance data" (#49)
+  - REST.pm: split insert initial set of activities code into separate function
+  - Model/Shared.pm->cud_generic(): make bind_params parameter optional
+  - REST/Test.pm: delete_all_attendance_data() function
+  - t/{dispatch,model}: use delete_all_attendance_data()
+
