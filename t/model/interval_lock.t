@@ -400,8 +400,8 @@ $status = delete_intervals_by_eid_and_tsrange(
 );
 is( $status->level, 'OK' );
 is( $status->code, 'DOCHAZKA_CUD_OK' );
-# payload contains number of records deleted
-is( $status->payload, 1 );
+is( $status->{'count'}, 1 );
+is( $status->{'DBI_return_value'}, 1 );
 
 note( 'create 80 intervals' );
 my $d = $today;
@@ -431,8 +431,8 @@ $status = delete_intervals_by_eid_and_tsrange(
 );
 is( $status->level, 'OK' );
 is( $status->code, 'DOCHAZKA_CUD_OK' );
-# payload contains number of records deleted
-is( $status->payload, 80 );
+is( $status->{'count'}, 80 );
+is( $status->{'DBI_return_value'}, 80 );
 
 note( 'create 260 intervals' );
 $d = $today;
@@ -481,9 +481,8 @@ $status = delete_intervals_by_eid_and_tsrange(
 );
 is( $status->level, 'OK' );
 is( $status->code, 'DOCHAZKA_CUD_OK' );
-## payload contains number of records deleted
-#diag( "Batch 1: " . $status->payload . " deleted" );
-is( $status->payload, 144 );
+is( $status->{'count'}, 144 );
+is( $status->{'DBI_return_value'}, 144 );
 
 note( 'second batch' );
 $status = delete_intervals_by_eid_and_tsrange( 
@@ -493,9 +492,8 @@ $status = delete_intervals_by_eid_and_tsrange(
 );
 is( $status->level, 'OK' );
 is( $status->code, 'DOCHAZKA_CUD_OK' );
-## payload contains number of records deleted
-#diag( "Batch 2: " . $status->payload . " deleted" );
-is( $status->payload, 116 );
+is( $status->{'count'}, 116 );
+is( $status->{'DBI_return_value'}, 116 );
 
 note( 'delete the privhistory record' );
 $status = $mrsched_ph->delete( $faux_context );
