@@ -49,7 +49,7 @@ use App::Dochazka::REST::Model::Activity;
 use App::Dochazka::REST::Model::Component;
 use App::Dochazka::REST::Model::Privhistory qw( get_privhistory );
 use App::Dochazka::REST::Model::Schedhistory qw( get_schedhistory );
-use App::Dochazka::REST::Model::Shared qw( noof select_single );
+use App::Dochazka::REST::Model::Shared qw( cud_generic noof select_single );
 use Authen::Passphrase::SaltedDigest;
 use Data::Dumper;
 use HTTP::Request::Common qw( GET PUT POST DELETE );
@@ -91,7 +91,7 @@ our @EXPORT = qw(
     delete_testing_employee delete_employee_by_nick
     create_testing_activity delete_testing_activity
     create_testing_component delete_testing_component
-    create_testing_schedule delete_testing_schedule 
+    create_testing_schedule delete_testing_schedule delete_all_attendance_data
     gen_activity gen_employee gen_interval gen_lock
     gen_privhistory gen_schedhistory gen_schedule
     test_sql_success test_sql_failure do_select_single
@@ -706,6 +706,94 @@ sub delete_testing_schedule {
         BAIL_OUT(0);
     }
     return;
+}
+
+
+=head2 delete_all_attendance_data
+
+Wipe out all attendance data by deleting all rows from all tables (in the correct
+order).
+
+=cut
+
+sub delete_all_attendance_data {
+
+    note( 'delete locks' );
+    my $status = cud_generic(
+        conn => $dbix_conn, 
+        eid => $site->DOCHAZKA_EID_OF_ROOT,
+        sql => 'DELETE FROM locks',
+    );
+    is( $status->level, 'OK' );
+    is( $status->code, 'DOCHAZKA_CUD_OK' );
+
+    note( 'delete intervals' );
+    my $status = cud_generic(
+        conn => $dbix_conn, 
+        eid => $site->DOCHAZKA_EID_OF_ROOT,
+        sql => 'DELETE FROM intervals',
+    );
+    is( $status->level, 'OK' );
+    is( $status->code, 'DOCHAZKA_CUD_OK' );
+
+    note( 'delete activities' );
+    my $status = cud_generic(
+        conn => $dbix_conn, 
+        eid => $site->DOCHAZKA_EID_OF_ROOT,
+        sql => 'DELETE FROM activities',
+    );
+    is( $status->level, 'OK' );
+    is( $status->code, 'DOCHAZKA_CUD_OK' );
+
+    note( 're-initialize activities table' );
+    $status = App::Dochazka::REST::initialize_activities_table( $dbix_conn );
+
+    note( 'delete schedhistory' );
+    my $status = cud_generic(
+        conn => $dbix_conn, 
+        eid => $site->DOCHAZKA_EID_OF_ROOT,
+        sql => 'DELETE FROM schedhistory',
+    );
+    is( $status->level, 'OK' );
+    is( $status->code, 'DOCHAZKA_CUD_OK' );
+
+    note( 'delete privhistory' );
+    my $status = cud_generic(
+        conn => $dbix_conn, 
+        eid => $site->DOCHAZKA_EID_OF_ROOT,
+        sql => 'DELETE FROM privhistory WHERE eid != ?',
+        bind_params => [ $site->DOCHAZKA_EID_OF_ROOT ],
+    );
+    is( $status->level, 'OK' );
+    is( $status->code, 'DOCHAZKA_CUD_OK' );
+
+    note( 'delete schedules' );
+    my $status = cud_generic(
+        conn => $dbix_conn, 
+        eid => $site->DOCHAZKA_EID_OF_ROOT,
+        sql => 'DELETE FROM schedules',
+    );
+    is( $status->level, 'OK' );
+    is( $status->code, 'DOCHAZKA_CUD_OK' );
+
+    note( 'delete tempintvls' );
+    my $status = cud_generic(
+        conn => $dbix_conn, 
+        eid => $site->DOCHAZKA_EID_OF_ROOT,
+        sql => 'DELETE FROM tempintvls',
+    );
+    is( $status->level, 'OK' );
+    is( $status->code, 'DOCHAZKA_CUD_OK' );
+
+    note( 'delete employees' );
+    $status = cud_generic(
+        conn => $dbix_conn, 
+        eid => $site->DOCHAZKA_EID_OF_ROOT,
+        sql => 'DELETE FROM employees WHERE eid != ? AND eid != ?',
+        bind_params => [ $site->DOCHAZKA_EID_OF_ROOT, $site->DOCHAZKA_EID_OF_DEMO ],
+    );
+    is( $status->level, 'OK' );
+    is( $status->code, 'DOCHAZKA_CUD_OK' );
 }
 
 

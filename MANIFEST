@@ -79,6 +79,7 @@ t/mason.t
 t/model/activity.t
 t/model/canonicalize.t
 t/model/component.t
+t/model/delete_all.t
 t/model/during_range.t
 t/model/employee.t
 t/model/id.t
