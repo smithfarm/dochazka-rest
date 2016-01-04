@@ -327,11 +327,11 @@ sub fetch_intervals_by_eid_and_tsrange {
     my $result_set = $whole_intervals;
     push @$result_set, @$partial_intervals;
     # But now the intervals are out of order
-    #$result_set = sort_intervals( $result_set );
+    my @sorted_results = sort { $a->intvl cmp $b->intvl } @$result_set;
 
     if ( my $count = scalar @$result_set ) {
         return $CELL->status_ok( 'DISPATCH_RECORDS_FOUND', 
-            payload => $result_set, count => $count, args => [ $count ] );
+            payload => \@sorted_results, count => $count, args => [ $count ] );
     }
     return $CELL->status_notice( 'DISPATCH_NO_RECORDS_FOUND' );
 }
@@ -408,6 +408,7 @@ sub delete_intervals_by_eid_and_tsrange {
         bind_params => [ $eid, $tsrange ],
     );
 }
+
 
 =head1 AUTHOR
 
