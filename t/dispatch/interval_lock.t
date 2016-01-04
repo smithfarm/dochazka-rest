@@ -249,6 +249,37 @@ note( 'delete the testing interval so it doesn\'t cause trouble later' );
 $status = req( $test, 200, 'root', 'DELETE', "interval/iid/$iae_iid" );
 ok( $status->ok );
 
+note( 'create intervals for testing https://github.com/smithfarm/dochazka-rest/issues/50' );
+$status = req( $test, 201, 'active', 'POST', 'interval/new', <<"EOH" );
+{ "aid" : $aid_of_work, "intvl" : "[1980-01-02 23:00, 1980-01-03 01:00)", "long_desc" : "straddle 1" }
+EOH
+is( $status->level, 'OK' );
+is( $status->code, 'DOCHAZKA_CUD_OK' );
+$status = req( $test, 201, 'active', 'POST', 'interval/new', <<"EOH" );
+{ "aid" : $aid_of_work, "intvl" : "[1980-01-03 08:00, 1980-01-03 12:00)", "long_desc" : "straddle 1" }
+EOH
+is( $status->level, 'OK' );
+is( $status->code, 'DOCHAZKA_CUD_OK' );
+$status = req( $test, 201, 'active', 'POST', 'interval/new', <<"EOH" );
+{ "aid" : $aid_of_work, "intvl" : "[1980-01-03 23:00, 1980-01-04 01:00)", "long_desc" : "straddle 1" }
+EOH
+is( $status->level, 'OK' );
+is( $status->code, 'DOCHAZKA_CUD_OK' );
+
+note( 'delete all intervals in tsrange [1980-01-03 00:00, 1980-01-03 24:00)' );
+note( 'only the one whole interval is deleted; two partial intervals are unaffected' );
+$status = req( $test, 200, 'active', 'DELETE', 'interval/self/[1980-01-03 00:00, 1980-01-03 24:00)' );
+is( $status->level, 'OK' );
+is( $status->code, 'DOCHAZKA_CUD_OK' );
+is( $status->{'count'}, 1 );
+is( $status->{'DBI_return_value'}, 1 );
+
+note( 'delete all intervals in tsrange [1980-01-02 00:00, 1980-01-05 24:00)' );
+$status = req( $test, 200, 'active', 'DELETE', 'interval/self/[1980-01-02 00:00, 1980-01-05 24:00)' );
+is( $status->level, 'OK' );
+is( $status->code, 'DOCHAZKA_CUD_OK' );
+is( $status->{'count'}, 2 );
+is( $status->{'DBI_return_value'}, 2 );
 
 note( '=============================' );
 note( 'interval/iid" resource' );

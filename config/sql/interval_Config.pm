@@ -65,7 +65,7 @@ set( 'SQL_INTERVAL_SELECT_COUNT_BY_EID_AND_TSRANGE', q/
 
 #
 set( 'SQL_INTERVAL_DELETE_BY_EID_AND_TSRANGE', q/
-      DELETE FROM intervals WHERE eid = ? AND intvl && ? 
+      DELETE FROM intervals WHERE eid = ? AND intvl <@ ? 
       / );
 
 #
