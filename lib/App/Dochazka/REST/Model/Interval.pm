@@ -322,8 +322,7 @@ sub fetch_intervals_by_eid_and_tsrange {
         conn => $conn,
         class => __PACKAGE__,
         sql => $site->SQL_INTERVAL_SELECT_BY_EID_AND_TSRANGE_PARTIAL_INTERVALS,
-        keys => [ $eid, $tsrange,
-                  $eid, $tsrange, $site->DOCHAZKA_INTERVAL_SELECT_LIMIT ],
+        keys => [ $eid, $tsrange, $eid, $tsrange ],
     );
     return $status unless 
         ( $status->ok and $status->code eq 'DISPATCH_RECORDS_FOUND' ) or
@@ -408,9 +407,9 @@ sub delete_intervals_by_eid_and_tsrange {
     # $status->payload contains [ $count ]
     my $count = $status->payload->[0];
 
-    # if it's more than the limit, no go
+    # if it's greater than or equal to the limit, no go
     return $CELL->status_err( 'DOCHAZKA_INTERVAL_DELETE_LIMIT_EXCEEDED', args => [ $count ] )
-        unless $count <= $site->DOCHAZKA_INTERVAL_DELETE_LIMIT;
+        if $count >= $site->DOCHAZKA_INTERVAL_DELETE_LIMIT;
     
     # hmm, can we use select_single with a DELETE statement?
     return cud_generic(

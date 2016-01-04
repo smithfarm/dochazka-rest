@@ -54,7 +54,6 @@ set( 'SQL_INTERVAL_SELECT_BY_EID_AND_TSRANGE_PARTIAL_INTERVALS', q/
       EXCEPT
       SELECT i.iid, i.eid, i.aid, a.code, i.intvl, i.long_desc, i.remark
       FROM intervals i, activities a WHERE i.eid = ? AND i.intvl <@ ? AND i.aid = a.aid
-      LIMIT ?
       / );
 
 #
