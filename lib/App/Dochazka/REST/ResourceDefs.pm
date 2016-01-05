@@ -2165,7 +2165,7 @@ EOH
         handler => {
             GET => 'handler_get_interval_summary',
         },
-        acl_profile => 'active', 
+        acl_profile => 'inactive', 
         cli => 'interval summary',
         description => 'Retrieve summary of an employee\'s intervals over a time period',
         documentation => <<'EOH',

@@ -998,21 +998,21 @@ foreach my $shid ( @shid_for_deletion ) {
 
 
 note( '=============================' );
-note( '"interval/summary/?:qualifiers" resource' );
+note( '"interval/summary/eid/:eid/:tsrange" resource' );
 note( '=============================' );
 
-$base = "interval/summary";
-docu_check($test, "$base/?:qualifiers");
+$base = "interval/summary/eid";
+docu_check($test, "$base/:eid/:tsrange");
 
 note( 'PUT, POST, DELETE -> 405' );
 foreach my $method ( qw( PUT POST DELETE ) ) {
     foreach my $user ( qw( demo inactive active root ) ) {
-        req( $test, 405, $user, $method, $base );
+        req( $test, 405, $user, $method, "$base/1/[,)" );
     }
 }
 
-note( "GET: WIP" );
-# FIXME: tests are missing
+note( "GET empty interval summary" );
+req( $test, 404, 'root', 'GET', "$base/" .  $site->DOCHAZKA_EID_OF_ROOT . "/[1980-01-01,1980-12-31)" );
 
 
 note( 'tear down' );

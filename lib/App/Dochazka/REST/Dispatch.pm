@@ -2167,7 +2167,7 @@ sub handler_interval_iid {
 
 =head3 handler_get_interval_summary
 
-Handler for  "GET interval/summary/?:qualifiers"
+Handler for  "GET interval/summary/eid/:eid/:tsrange"
 
 =cut
 
@@ -2179,76 +2179,11 @@ sub handler_get_interval_summary {
 
     # first pass
     if ( $pass == 1 ) {
-        my $status = shared_process_quals( $context->{'mapping'}->{'qualifiers'} );
-        if ( $status->not_ok ) {
-            $self->mrest_declare_status( code => 400, 
-                explanation => "Could not process qualifiers - check syntax" 
-            );
-            return 0;
-        }
-        my %pl = ( ref( $status->payload ) eq 'HASH' ) 
-            ? %{ $status->payload }
-            : ();
-
-        # - declare local variable to hold the EID, and assign appropriate value to it
-        my $eid;
-        if ( $pl{'eid'} ) {
-            $status = App::Dochazka::REST::Model::Employee->load_by_eid( $context->{'dbix_conn'}, $pl{'eid'} );
-            if ( $status->level eq 'NOTICE' and $status->code eq 'DISPATCH_NO_RECORDS_FOUND' ) {
-                $self->mrest_declare_status( code => 404, 
-                    explanation => 'Could not find employee by EID'
-                );
-                return 0;
-            }
-            if ( $status->not_ok ) {
-                $self->mrest_declare_status( code => 404, explanation => $self->text );
-                return 0;
-            }
-            $eid = $pl{'eid'};
-        } else {
-            if ( $pl{'nick'} ) {
-                $status = App::Dochazka::REST::Model::Employee->load_by_nick( $context->{'dbix_conn'}, $pl{'nick'} );
-                if ( $status->level eq 'NOTICE' and $status->code eq 'DISPATCH_NO_RECORDS_FOUND' ) {
-                    $self->mrest_declare_status( code => 404, 
-                        explanation => 'Could not find employee by nick'
-                    );
-                    return $fail;
-                }
-                return $status unless $status->ok;
-                $eid = $status->payload->{'eid'};
-            } else {
-                $eid = $context->{'current'}->{'eid'};
-            }
-        }
-        $context->{'stashed_values'}->[0] = $eid;
-
-        # process the 'month' qualifier, so it at least has six digits
-        my ( $this_year, $this_month ) = $today =~ m/^(\d{4})-(\d{2})/;
-        $log->debug( "year $this_year, month $this_month" );
-        my $month;
-        if ( $pl{'month'} ) {
-            $month = sprintf( "%06d", $pl{'month'} );
-        } else {
-            # use the current month
-            my $month_str = sprintf( "%02d", $this_month );
-            my $year_str = sprintf( "%04d", $this_year );
-            $month = $year_str . $month_str;
-        }
-
-        # apply range checks
-        my $year_part = substr( $month, 0, 4 );
-        my $month_part = substr( $month, 4, 2 );
-        if ( $year_part < 1000 or $year_part > 3000 or $month_part == 0 or $month_part > 12 ) {
-            $self->mrest_declare_status( code => 400, explanation => 'Dates out of range' );
-            return 0;
-        }
-        $context->{'stashed_values'}->[1] = $year_part;
-        $context->{'stashed_values'}->[2] = $month_part;
-        return 1;
+        my $rv = $self->_handler_intlock( 'Interval', 'eid', $pass );
+        return 0 unless $rv;
     }
 
-    my ( $eid, $year, $month ) = @{ $context->{'stashed_values'} };
-    return $CELL->status_ok( "EID is $eid, year is $year, month is $month" );
+    return $context->{'stashed_attendance_status'};
 }
 
 
