@@ -141,7 +141,7 @@ sub init {
     my $comp_root = $status->payload;
 
     # get Mason components from database and write them to filesystem
-    my $status = get_all_components( $dbix_conn );
+    $status = get_all_components( $dbix_conn );
     if ( $status->ok and $status->code eq 'DISPATCH_RECORDS_FOUND' ) {
         foreach my $comp ( @{ $status->payload } ) {
             $comp->create_file;
