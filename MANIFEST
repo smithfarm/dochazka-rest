@@ -31,6 +31,7 @@ lib/App/Dochazka/REST/ConnBank.pm
 lib/App/Dochazka/REST/Dispatch.pm
 lib/App/Dochazka/REST/Docs/Resources.pm
 lib/App/Dochazka/REST/Docs/Workflow.pm
+lib/App/Dochazka/REST/Guide.pm
 lib/App/Dochazka/REST/LDAP.pm
 lib/App/Dochazka/REST/Mason.pm
 lib/App/Dochazka/REST/Model/Activity.pm
