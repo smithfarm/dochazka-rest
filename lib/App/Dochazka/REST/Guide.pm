@@ -1297,7 +1297,7 @@ Nathan Cutler, C<< <ncutler@suse.cz> >>
 =head1 BUGS
 
 To report bugs or request features, use the GitHub issue tracker at
-L<https://github.com/smithfarm/dochazka-rest>.
+L<https://github.com/smithfarm/dochazka-rest/issues>.
 
 
 
