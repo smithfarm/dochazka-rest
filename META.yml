@@ -34,7 +34,7 @@ no_index:
 provides:
   App::Dochazka::REST:
     file: lib/App/Dochazka/REST.pm
-    version: '0.513'
+    version: '0.514'
   App::Dochazka::REST::ACL:
     file: lib/App/Dochazka/REST/ACL.pm
   App::Dochazka::REST::Auth:
@@ -47,6 +47,8 @@ provides:
     file: lib/App/Dochazka/REST/Docs/Resources.pm
   App::Dochazka::REST::Docs::Workflow:
     file: lib/App/Dochazka/REST/Docs/Workflow.pm
+  App::Dochazka::REST::Guide:
+    file: lib/App/Dochazka/REST/Guide.pm
   App::Dochazka::REST::LDAP:
     file: lib/App/Dochazka/REST/LDAP.pm
   App::Dochazka::REST::Mason:
@@ -114,5 +116,5 @@ resources:
   bugtracker: https://github.com/smithfarm/dochazka-rest/issues
   license: http://opensource.org/licenses/bsd-license.php
   repository: https://github.com/smithfarm/dochazka-rest
-version: '0.513'
+version: '0.514'
 x_serialization_backend: 'CPAN::Meta::YAML version 0.012'

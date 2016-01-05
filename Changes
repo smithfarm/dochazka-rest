@@ -3378,3 +3378,13 @@ SPLIT OFF App::MREST into separate distribution
   - REST/Test.pm: delete_all_attendance_data() function
   - t/{dispatch,model}: use delete_all_attendance_data()
 
+0.514 2016-01-05 11:41 CET
+- Fix "INTERVAL DELETE operations clobber partial intervals" (#50)
+  - Model/Shared.pm: improve cud() and cud_generic() return status
+  - t/: adapt tests to current state
+  - config: SQL_INTERVAL_DELETE_BY_EID_AND_TSRANGE ignore partial intervals
+- sql/interval_Config.pm: do not apply LIMIT when selecting partial intervals
+- Dispatch.pm: fix a double my
+- REST.pm: rearrange sections; new high-level content; move details to
+  REST/Guide.pm
+
