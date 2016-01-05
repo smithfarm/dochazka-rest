@@ -411,7 +411,6 @@ sub delete_intervals_by_eid_and_tsrange {
     return $CELL->status_err( 'DOCHAZKA_INTERVAL_DELETE_LIMIT_EXCEEDED', args => [ $count ] )
         if $count >= $site->DOCHAZKA_INTERVAL_DELETE_LIMIT;
     
-    # hmm, can we use select_single with a DELETE statement?
     return cud_generic(
         conn => $conn,
         eid => $eid,
