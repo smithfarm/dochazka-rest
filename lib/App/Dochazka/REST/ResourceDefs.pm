@@ -2159,34 +2159,20 @@ specified by giving a timestamp and a PostgreSQL time interval, e.g "1 week 3 da
 EOH
     },
 
-    # /interval/summary/?:qualifiers
-    'interval/summary/?:qualifiers' => {
+    # /interval/summary/eid/:eid/:tsrange
+    'interval/summary/eid/:eid/:tsrange' => {
         parent => 'interval',
         handler => {
             GET => 'handler_get_interval_summary',
         },
         acl_profile => 'active', 
-        cli => 'interval summary $MODIFIERS',
+        cli => 'interval summary',
         description => 'Retrieve summary of an employee\'s intervals over a time period',
         documentation => <<'EOH',
 =pod
 
 With this resource, employees can generate summaries of their attendance intervals
 over a given period. 
-
-If no qualifiers are provided, the summary defaults to the current employee and month.
-
-If an 'eid=..' or 'nick=...' qualifier is given, the summary will be generated
-for that employee.
-
-If a 'month=..' qualifer is given, the summary will be generated for the given
-month. If the month is given as an integer between 1 and 12, the summary will 
-be given for the corresponding month of the current year. If the month is given
-as, e.g., 188706, the summary will be given for June of the year 1887.
-
-Qualifiers can be combined, e.g.:
-
-    GET interval/summary/eid=83,month=6
 
 EOH
     },
