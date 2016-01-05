@@ -51,11 +51,9 @@ use Web::MREST::CLI qw( normalize_filespec );
 
 
 
-
 =head1 NAME
 
 App::Dochazka::REST - Dochazka REST server
-
 
 
 
@@ -74,7 +72,6 @@ Alpha.
 
 
 
-
 =head1 SYNOPSIS
 
 Start the server with default settings:
@@ -90,6 +87,7 @@ Use L<App::Dochazka::CLI> command-line interface to access full functionality:
     $ dochazka-cli
 
 
+
 =head1 DESCRIPTION
 
 This distribution, L<App::Dochazka::REST>, including all the modules in C<lib/>,
@@ -98,6 +96,7 @@ the REST server component of Dochazka, the open-source Attendance/Time Tracking
 (ATT) system. 
 
 Dochazka as a whole aims to be a convenient, open-source ATT solution.
+
 
 
 =head2 Architecture
@@ -139,278 +138,6 @@ clients or just plain C<curl>.
 =back
 
 
-=head2 Client-server communication
-
-As stated above, communication between the server and its clients takes place
-using the HTTP protocol. More abstractly, the communication takes the form of
-requests (from client to server) and responses (from server back to client) to
-those requests. In other words, communication is never initiated by the server,
-but always by the clients.
-
-=head3 HTTP request
-
-An HTTP request has the following basic components:
-
-=over
-
-=item * Method 
-
-Dochazka supports GET, PUT, POST, and DELETE
-
-=item * URI 
-
-Universal Resource Indicator specifying a Dochazka resource
-
-=item * Headers
-
-More on these below
-
-=item * Request entity
-
-Data accompanying the request - may or may not be present
-
-=back
-
-
-=head4 Method
-
-The Dochazka REST server accepts the following HTTP methods:  
-C<GET>, C<PUT>, C<POST>, and C<DELETE>.
-
-=over
-
-=item C<GET>
-
-A C<GET> request on a resource is a request for information - in other words,
-it is "read-only": C<GET> requests never change the underlying data. In
-Dochazka, C<GET> requests frequently map to C<SELECT> statements.
-
-=item C<PUT>
-
-C<PUT> requests always refer to a concrete data entity, or chunk of data.
-In simple cases, this will be a single record in the underlying database. If
-the record already exists, the C<PUT> request is interpreted to mean
-modification (or C<UPDATE> in SQL). If the record does not exist, then the
-request will map to an C<INSERT> statement to create the resource. In both
-cases, upon success the response status will be C<200 OK>.
-
-=item C<POST>
-
-Sometimes, especially for create operations, the exact specification of the
-resource is not known beforehand. To address these cases, some resources accept
-C<POST> requests. If the request causes a new resource to be created, the HTTP
-response status will be C<201 Created> and there will be a C<Location> header
-specifying the URI of the newly created resource.
-
-=item C<DELETE>
-
-As their name would suggest, C<DELETE> requests are issued when we want to
-dissolve (destroy) a resource. Whether or not this actually happens is
-determined by two factors: (1) whether the user issuing the request has the
-requisite authorization and, (2), whether the underlying data record is
-referred to by other records - in which case typically the C<DELETE> request
-will fail with a C<500 Internal Server Error> status.
-
-=back
-
-
-
-=head4 URI
-
-The purpose of the Universal Resource Indicator (URI, sometimes also known as
-an URL) is to uniquely identify a resource.
-
-URIs consist of several syntactical elements. An exhaustive description can be
-found in RFC ..., but for Dochazka purposes we can present them as follows:
-
-=over
-
-=item C<https://>
-
-This part of the URI says that we are using the HTTPS protocol (or SSL-encrypted
-HTTP) to communicate. It is separated from the next component by two forward
-slashes.
-
-=item C<dochazka.site>
-
-After the protocol, the next URI component is the REST server's domain name.
-Obviously, this will differ from site to site. It is separated from the next
-component (i.e. the resource specification) by a single forward slash.
-
-=item Dochazka resource
-
-As stated above, the domain name is terminated by a single forward slash.
-Everything after that is interpreted as a resource specification. 
-
-A single forward slash C<'/'> specifies the root resource.
-
-=back
-
-Of these three components, the first two are site-specific. It is possible, 
-for example, to run the Dochazka server without SSL encryption, in which case
-the protocol would be C<http://> instead of C<https://>.
-
-Once the application's implementation at a given site has stabilized, these two
-URI components will change very seldomly, if at all.
-
-Dochazka resources are much more ephemeral. Different resources present
-different ways that users can access and modify the data (in this case,
-attendance data) in the underlying database. 
-
-Some resources, such as C<employee/nick/simona>, refer directly to a unit of
-information that may or may not exist in the database information. Other
-resources, like C<interval/new>, are not linked to a specific database record.
-
-Also, in programming terms the resources are generalized, so we think about,
-e.g., C<employee/nick/simona> and C<employee/nick/wanda> as two instances of a
-more generalized C<employee/nick/:nick> resource, where C<:nick> is like an
-argument to a function call.
-
-And, indeed, internally all resources resolve to function calls. The function
-in this case is referred to as the "resource handler".
-
-Some resources accept all four HTTP methods listed above, others accept two or
-three, and still others accept only one.
-
-
-=head4 Headers
-
-HTTP headers are somewhat obscure because they are often hidden by the 
-client. Nevertheless, they are an important part of the HTTP protocol. The
-Dochazka REST server only accepts certain headers in the request.
-
-#FIXME: describe the more common response headers
-
-
-=head4 Body
-
-C<PUT> and C<POST> requests may take a request body. If a request body is
-expected or accepted, it must be a valid JSON string. (JSON is a simple way of
-"stringifying" a data structure.)
-
-
-=head3 HTTP response
-
-The HTTP response returned by the REST server consists of:
-
-=over
-
-=item * Status code (e.g. 200, 400, 404, etc.)
-
-=item * Headers
-
-=item * Content body (or "response entity")
-
-=back
-
-
-=head4 Status
-
-The HTTP standard stipulates a number of status codes. The server listens for
-incoming requests. Under normal operation, the server processes each request.
-The result of such processing is a "response", which is sent back to the client
-that originated the request. Each response will contain one and only one status
-code. The meanings of the various status codes are explained in the HTTP
-standard. Some of the more common ones are as follows:
-
-=over
-
-=item C<200> (OK)
-
-The request was accepted and processed. Refer to the response body for the
-result.
-
-=item C<204> ()
-
-This code is returned on C<DELETE> requests when either the record was
-successfully deleted or the resource did not exist in the first place.
-
-=item C<404> (Not Found)
-
-The resource specification given in the URI could not be associated with a
-known resource.
-
-=item C<405> (Method Not Allowed)
-
-The resource was recognized but it is not defined for this method.
-
-=item C<401> (Not authorized)
-
-A valid method+resource combination was specified, but the user failed to
-authenticate herself to the REST server.
-
-=item C<403> (Forbidden)
-
-A valid method+resource combination was specified and the user was successfully
-authenticated, but the user is not authorized to perform the operation she is
-requesting.
-
-=item C<400> (Malformed)
-
-A valid method+resource combination was specified and the user passed
-authentication and authorization. However, the information provided by the user
-in the resource specification or in the request body could not be parsed.
-
-=back
-
-
-=head4 Headers
-
-HTTP responses are always accompanied by headers, which qualify the response in
-various ways. For example, the C<Content-Encoding> header indicates how the
-bytes in the response body string should be interpreted. In Dochazka's case, the 
-response body will always be in JSON, which implies the C<UTF-8> encoding.
-
-#FIXME: describe the more common response headers
-
-
-=head4 Body
-
-The response body holds the information returned by a "successful" request. Be
-aware that "success" in this context only means that, from the perspective of
-the REST server, the request was fully processed. It does I<not> means that 
-that whatever the user was requesting was actually done. For example, if a
-C<GET> request for a resource is sent and the reponse code is 200, the client
-programmer can assume that a response body will be present, and that it will
-be an L<App::CELL::Status> object, but that is all she can assume.
-Particularly, she cannot assume that the payload of that status object 
-contains the object requested.
-
-As stated above, the response body will always be a JSON string. This string
-can either be displayed to the user as-is, or it can be interpreted and further
-processed by the client.
-
-A body may be included in the response, provided the status code is C<200> (OK).
-For the client, an HTTP response of 200 is a signal to look into the response
-body for further information. For the purposes of Dochazka, a 200 status does
-not provide any information beyond this imperative: "look into the response
-body". 
-
-Since looking into the response body is fundamental to the operation of
-Dochazka clients, the REST server emits response bodies in a strictly defined
-format detailed in L<App::CELL::Status>. Client developers, then, can count 
-on the truthfulness of the following statements:
-
-=over
-
-=item "A response body will be sent if, and only if, the HTTP status code is 200"
-
-=item "The response body will always be a JSON string"
-
-=item "That JSON string will always be an App::CELL::Status object"
-
-=back
-
-
-
-While the HTTP protocol provides a range of general status codes, some of which
-make sense for and are used by Dochazka, in some cases Dochazka needs to return
-status codes that are not provided for by the standard. For this reason, the
-information returned by Dochazka is further encapsulated in a Dochazka-specific
-status structure, and this is what is returned in the response body.
-
-
-
 =head2 Basic parameters
 
 =head3 UTF-8
@@ -429,30 +156,15 @@ requests only.
 Another implication of REST is that the server provides "resources" and that
 those resources are, to some extent at least, self-documenting.
 
-L<App::Dochazka::REST> provides 'help' resources whose only purpose is to 
-provide information about the resources available to the client at a 
-particular base level. For example, the top-level help resource provides
-a list of resources available at that level, some of which are lower-level
-'help' resources.
-
-For each resource, the 'help' resource provides a 'link' attribute with the
-full URI of the resource and a 'description' attribute with a terse
-description of what the resource is good for.
-
-The definition of each resource includes an HTML string containing the
-resource's documentation. This string can be accessed via POST request for
-the C<docu> resource (provide the resource name in double quotes in the
-request body).
-
 
 =head2 Exploring the server
 
 =head3 With a web browser
 
-Only some of L<App::Dochazka::REST>'s resources (i.e, those that use the GET
-method) are accessible using a web browser. That said, if we are only
-interested in displaying information from the database, GET requests are all we
-need and using a web browser can be convenient.  
+Some resources (those that use the GET method) are accessible using a web
+browser. That said, if we are only interested in displaying information
+from the database, GET requests are all we need and using a web browser can
+be convenient.  
 
 To start exploring, fire up a standard web browser and point it to the base URI
 of your L<App::Dochazka::REST> installation:
@@ -460,7 +172,6 @@ of your L<App::Dochazka::REST> installation:
     http://dochazka.site
 
 and entering one's credentials in the Basic Authentication dialog.
-
 
 =head3 With a command-line HTTP client
 
@@ -500,7 +211,6 @@ privileges, but all the privhistory resources require at least 'active'. To
 see all the available resources, we can authenticate as 'root':
 
     $ curl http://root:immutable@dochazka.site/employee -H 'Accept: application/json' 
-
 
 =item * POST resources
 
@@ -550,13 +260,17 @@ deleted as long as they are not subject to a lock.
 
 =head2 Documentation of REST resources
 
-In order to be "self-documenting", the definition of each REST resource
-contains a "short" description and a "long" POD string. At each build, the
-entire resource tree is walked to generate L<App::Dochazka::REST::Docs::Resources>.
+The definition of each resource includes an HTML string containing the
+resource's documentation. This string can be accessed via POST request for
+the C<docu> resource (provide the resource name in double quotes in the
+request body).
 
-Thus, besides directly accessing resources on the REST server itself, there
-is also the option of perusing the documentation of all resources together in a
-single POD module.
+In order to be "self-documenting", the definition of each REST resource
+contains a "short" description and a "long" POD string. From time to time, the
+entire resource tree is walked to generate a module,
+L<App::Dochazka::REST::Docs::Resources>, containing all the resource
+documentation.
+
 
 
 =head2 Request-response cycle
@@ -912,7 +626,7 @@ For details, see L<App::Dochazka::REST::Model::Lock>.
 
 =head2 Component
 
-L<Reports are generated/"REPORT GENERATION"> from
+L<Reports are generated|"REPORT GENERATION"> from
 L<Mason|https://metacpan.org/pod/Mason> templates which consist of
 components. Mason expects these components to be stored in text files under
 a directory called the "component root". For the purposes of Dochazka, the
@@ -1291,6 +1005,268 @@ stored in a cookie.
 
 
 =head1 AUTHORIZATION
+
+
+
+=head1 CLIENT-SERVER COMMUNICATION
+
+As stated above, communication between the server and its clients takes place
+using the HTTP protocol. More abstractly, the communication takes the form of
+requests (from client to server) and responses (from server back to client) to
+those requests. In other words, communication is never initiated by the server,
+but always by the clients.
+
+
+=head2 HTTP request
+
+An HTTP request has the following basic components:
+
+=over
+
+=item * Method 
+
+Dochazka supports GET, PUT, POST, and DELETE
+
+=item * URI 
+
+Universal Resource Indicator specifying a Dochazka resource
+
+=item * Headers
+
+More on these below
+
+=item * Request entity
+
+Data accompanying the request - may or may not be present
+
+=back
+
+=head3 Method
+
+The Dochazka REST server accepts the following HTTP methods:  
+C<GET>, C<PUT>, C<POST>, and C<DELETE>.
+
+=over
+
+=item C<GET>
+
+A C<GET> request on a resource is a request for information - in other words,
+it is "read-only": C<GET> requests never change the underlying data. In
+Dochazka, C<GET> requests frequently map to C<SELECT> statements.
+
+=item C<PUT>
+
+C<PUT> requests always refer to a concrete data entity, or chunk of data.
+In simple cases, this will be a single record in the underlying database. If
+the record already exists, the C<PUT> request is interpreted to mean
+modification (or C<UPDATE> in SQL). If the record does not exist, then the
+request will map to an C<INSERT> statement to create the resource. In both
+cases, upon success the response status will be C<200 OK>.
+
+=item C<POST>
+
+Sometimes, especially for create operations, the exact specification of the
+resource is not known beforehand. To address these cases, some resources accept
+C<POST> requests. If the request causes a new resource to be created, the HTTP
+response status will be C<201 Created> and there will be a C<Location> header
+specifying the URI of the newly created resource.
+
+=item C<DELETE>
+
+As their name would suggest, C<DELETE> requests are issued when we want to
+dissolve (destroy) a resource. Whether or not this actually happens is
+determined by two factors: (1) whether the user issuing the request has the
+requisite authorization and, (2), whether the underlying data record is
+referred to by other records - in which case typically the C<DELETE> request
+will fail with a C<500 Internal Server Error> status.
+
+=back
+
+=head3 URI
+
+The purpose of the Universal Resource Indicator (URI, sometimes also known as
+an URL) is to uniquely identify a resource.
+
+URIs consist of several syntactical elements. An exhaustive description can be
+found in RFC ..., but for Dochazka purposes we can present them as follows:
+
+=over
+
+=item C<https://>
+
+This part of the URI says that we are using the HTTPS protocol (or SSL-encrypted
+HTTP) to communicate. It is separated from the next component by two forward
+slashes.
+
+=item C<dochazka.site>
+
+After the protocol, the next URI component is the REST server's domain name.
+Obviously, this will differ from site to site. It is separated from the next
+component (i.e. the resource specification) by a single forward slash.
+
+=item Dochazka resource
+
+As stated above, the domain name is terminated by a single forward slash.
+Everything after that is interpreted as a resource specification. 
+
+A single forward slash C<'/'> specifies the root resource.
+
+=back
+
+Of these three components, the first two are site-specific. It is possible, 
+for example, to run the Dochazka server without SSL encryption, in which case
+the protocol would be C<http://> instead of C<https://>.
+
+Once the application's implementation at a given site has stabilized, these two
+URI components will change very seldomly, if at all.
+
+Dochazka resources are much more ephemeral. Different resources present
+different ways that users can access and modify the data (in this case,
+attendance data) in the underlying database. 
+
+Some resources, such as C<employee/nick/simona>, refer directly to a unit of
+information that may or may not exist in the database information. Other
+resources, like C<interval/new>, are not linked to a specific database record.
+
+Also, in programming terms the resources are generalized, so we think about,
+e.g., C<employee/nick/simona> and C<employee/nick/wanda> as two instances of a
+more generalized C<employee/nick/:nick> resource, where C<:nick> is like an
+argument to a function call.
+
+And, indeed, internally all resources resolve to function calls. The function
+in this case is referred to as the "resource handler".
+
+Some resources accept all four HTTP methods listed above, others accept two or
+three, and still others accept only one.
+
+=head3 Headers
+
+HTTP headers are somewhat obscure because they are often hidden by the 
+client. Nevertheless, they are an important part of the HTTP protocol. The
+Dochazka REST server only accepts certain headers in the request.
+
+#FIXME: describe the more common response headers
+
+=head3 Body
+
+C<PUT> and C<POST> requests may take a request body. If a request body is
+expected or accepted, it must be a valid JSON string. (JSON is a simple way of
+"stringifying" a data structure.)
+
+=head2 HTTP response
+
+The HTTP response returned by the REST server consists of:
+
+=over
+
+=item * Status code (e.g. 200, 400, 404, etc.)
+
+=item * Headers
+
+=item * Content body (or "response entity")
+
+=back
+
+=head3 Status
+
+The HTTP standard stipulates a number of status codes. The server listens for
+incoming requests. Under normal operation, the server processes each request.
+The result of such processing is a "response", which is sent back to the client
+that originated the request. Each response will contain one and only one status
+code. The meanings of the various status codes are explained in the HTTP
+standard. Some of the more common ones are as follows:
+
+=over
+
+=item C<200> (OK)
+
+The request was accepted and processed. Refer to the response body for the
+result.
+
+=item C<204> ()
+
+This code is returned on C<DELETE> requests when either the record was
+successfully deleted or the resource did not exist in the first place.
+
+=item C<404> (Not Found)
+
+The resource specification given in the URI could not be associated with a
+known resource.
+
+=item C<405> (Method Not Allowed)
+
+The resource was recognized but it is not defined for this method.
+
+=item C<401> (Not authorized)
+
+A valid method+resource combination was specified, but the user failed to
+authenticate herself to the REST server.
+
+=item C<403> (Forbidden)
+
+A valid method+resource combination was specified and the user was successfully
+authenticated, but the user is not authorized to perform the operation she is
+requesting.
+
+=item C<400> (Malformed)
+
+A valid method+resource combination was specified and the user passed
+authentication and authorization. However, the information provided by the user
+in the resource specification or in the request body could not be parsed.
+
+=back
+
+=head3 Headers
+
+HTTP responses are always accompanied by headers, which qualify the response in
+various ways. For example, the C<Content-Encoding> header indicates how the
+bytes in the response body string should be interpreted. In Dochazka's case, the 
+response body will always be in JSON, which implies the C<UTF-8> encoding.
+
+#FIXME: describe the more common response headers
+
+=head3 Body
+
+The response body holds the information returned by a "successful" request. Be
+aware that "success" in this context only means that, from the perspective of
+the REST server, the request was fully processed. It does I<not> means that 
+that whatever the user was requesting was actually done. For example, if a
+C<GET> request for a resource is sent and the reponse code is 200, the client
+programmer can assume that a response body will be present, and that it will
+be an L<App::CELL::Status> object, but that is all she can assume.
+Particularly, she cannot assume that the payload of that status object 
+contains the object requested.
+
+As stated above, the response body will always be a JSON string. This string
+can either be displayed to the user as-is, or it can be interpreted and further
+processed by the client.
+
+A body may be included in the response, provided the status code is C<200> (OK).
+For the client, an HTTP response of 200 is a signal to look into the response
+body for further information. For the purposes of Dochazka, a 200 status does
+not provide any information beyond this imperative: "look into the response
+body". 
+
+Since looking into the response body is fundamental to the operation of
+Dochazka clients, the REST server emits response bodies in a strictly defined
+format detailed in L<App::CELL::Status>. Client developers, then, can count 
+on the truthfulness of the following statements:
+
+=over
+
+=item "A response body will be sent if, and only if, the HTTP status code is 200"
+
+=item "The response body will always be a JSON string"
+
+=item "That JSON string will always be an App::CELL::Status object"
+
+=back
+
+While the HTTP protocol provides a range of general status codes, some of which
+make sense for and are used by Dochazka, in some cases Dochazka needs to return
+status codes that are not provided for by the standard. For this reason, the
+information returned by Dochazka is further encapsulated in a Dochazka-specific
+status structure, and this is what is returned in the response body.
 
 
 
