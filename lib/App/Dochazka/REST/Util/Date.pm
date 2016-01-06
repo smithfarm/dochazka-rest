@@ -67,6 +67,7 @@ App::Dochazka::REST::Util::Date - module containing miscellaneous date routines
 
 use Exporter qw( import );
 our @EXPORT_OK = qw( 
+    calculate_hours
     canon_date_diff
     canon_to_ymd
     tsrange_to_dates
@@ -77,6 +78,49 @@ our @EXPORT_OK = qw(
 
 
 =head1 FUNCTIONS
+
+
+=head2 calculate_hours
+
+Given a canonicalized tsrange, return the number of hours. For example, if
+the range is [ 2016-01-06 08:00, 2016-01-06 09:00 ), the return value will
+be 1. If the range is [ 2016-01-06 08:00, 2016-01-07 09:00 ), the return
+value will 25.
+
+=cut
+
+sub calculate_hours {
+    my $tsr = shift;
+
+    my ( $begin_date, $begin_time, $end_date, $end_time ) = 
+        $tsr =~ m/(\d{4}-\d{2}-\d{2}).+(\d{2}:\d{2}):\d{2}.+(\d{4}-\d{2}-\d{2}).+(\d{2}:\d{2}):\d{2}/a;
+
+    my $days = canon_date_diff( $begin_date, $end_date );
+
+    if ( $days == 0 ) {
+        return single_day_hours( $begin_time, $end_time )
+    }
+    
+    return single_day_hours( $begin_time, '24:00' ) +
+           ( ( $days - 1 ) * 24 ) +
+           single_day_hours( '00:00', $end_time );
+}
+
+=head3 single_day_hours
+
+Given two strings in the format HH:MM representing a starting and an ending
+time, calculate and return the number of hours.
+
+=cut
+
+sub single_day_hours {
+    my ( $begin, $end ) = @_;
+    my ( $bh, $begin_minutes ) = $begin =~ m/(\d+):(\d+)/a;
+    my $begin_hours = $bh + $begin_minutes / 60;
+    my ( $eh, $end_minutes ) = $end =~ m/(\d+):(\d+)/a;
+    my $end_hours = $eh + $end_minutes / 60;
+    return $end_hours - $begin_hours;
+}
 
 
 =head2 canon_date_diff

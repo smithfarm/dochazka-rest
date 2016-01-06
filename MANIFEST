@@ -98,4 +98,5 @@ t/sql/privhistory.t
 t/sql/root.t
 t/sql/schedintvl.t
 t/unit/ACL.t
+t/unit/date.t
 t/unit/holiday.t
