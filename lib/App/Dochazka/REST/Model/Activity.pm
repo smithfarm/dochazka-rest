@@ -120,6 +120,8 @@ functions:
 
 =item * L<aid_by_code> (given a code, returns AID)
 
+=item * L<code_by_aid> (given an AID, return a code)
+
 =item * L<get_all_activities>
 
 =back
@@ -142,7 +144,13 @@ This module provides the following exports:
 =cut
 
 use Exporter qw( import );
-our @EXPORT_OK = qw( aid_by_code aid_exists code_exists get_all_activities );
+our @EXPORT_OK = qw( 
+    aid_by_code 
+    aid_exists 
+    code_by_aid
+    code_exists 
+    get_all_activities 
+);
 
 
 
@@ -318,6 +326,25 @@ sub aid_by_code {
 
     my $status = __PACKAGE__->load_by_code( $conn, $code );
     return $status->payload->{'aid'} if $status->code eq 'DISPATCH_RECORDS_FOUND';
+    return;
+}
+
+
+=head2 code_by_aid
+
+Given an AID, attempt to retrieve the corresponding code.
+Returns code or undef on failure.
+
+=cut
+
+sub code_by_aid {
+    my ( $conn, $aid ) = validate_pos( @_,
+        { isa => 'DBIx::Connector' },
+        { type => SCALAR },
+    );
+
+    my $status = __PACKAGE__->load_by_aid( $conn, $aid );
+    return $status->payload->{'code'} if $status->code eq 'DISPATCH_RECORDS_FOUND';
     return;
 }
 
