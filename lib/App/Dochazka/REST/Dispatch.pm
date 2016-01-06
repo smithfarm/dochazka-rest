@@ -58,6 +58,7 @@ use App::Dochazka::REST::Model::Employee qw(
 use App::Dochazka::REST::Model::Interval qw(
     delete_intervals_by_eid_and_tsrange
     fetch_intervals_by_eid_and_tsrange
+    generate_interval_summary
 );
 use App::Dochazka::REST::Model::Lock qw(
     fetch_locks_by_eid_and_tsrange
@@ -1982,10 +1983,14 @@ sub _handler_intlock {
             $tsr,
         );
         my $method = $self->context->{'method'};
+        my $resource = $self->context->{'resource_name'};
+        $log->debug( "_handler_intlock: resource is $resource" );
         if ( $method eq 'GET' and $intlock eq 'Interval' ) {
             $status = fetch_intervals_by_eid_and_tsrange( @ARGS );
         } elsif ( $method eq 'GET' and $intlock eq 'Lock' ) {
             $status = fetch_locks_by_eid_and_tsrange( @ARGS );
+        } elsif ( $method eq 'GET' and $intlock eq 'Summary' ) {
+            $status = generate_interval_summary( @ARGS );
         } elsif ( $method eq 'DELETE' and $intlock eq 'Interval' ) {
             $status = delete_intervals_by_eid_and_tsrange( @ARGS );
         } else {
@@ -2179,7 +2184,7 @@ sub handler_get_interval_summary {
 
     # first pass
     if ( $pass == 1 ) {
-        my $rv = $self->_handler_intlock( 'Interval', 'eid', $pass );
+        my $rv = $self->_handler_intlock( 'Summary', 'eid', $pass );
         return 0 unless $rv;
     }
 
