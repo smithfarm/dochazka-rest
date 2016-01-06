@@ -36,6 +36,7 @@ use 5.012;
 use strict;
 use warnings;
 
+use App::CELL qw( $CELL $log );
 use Date::Calc qw( Add_Delta_Days Day_of_Week );
 use Date::Holidays::CZ qw( holidays );
 use Params::Validate qw( :all );
@@ -162,7 +163,7 @@ indicating whether or not the date falls on a weekend.
 
 sub is_weekend {
     my $cdate = shift;  # cdate == Canonicalized Date String YYYY-MM-DD
-    my ( $year, $month, $day ) = $cdate =~ m/^(\d{4})-(\d{2})-(\d{2})$/;
+    my ( $year, $month, $day ) = $cdate =~ m/(\d{4})-(\d{2})-(\d{2})/;
     my $dow = Day_of_Week( $year, $month, $day );
     return ( $dow == 6 or $dow == 7 )
         ? 1
@@ -179,7 +180,7 @@ the next date (i.e. "tomorrow" from the perspective of the given date).
 
 sub get_tomorrow {
     my $cdate = shift;  # cdate == Canonicalized Date String YYYY-MM-DD
-    my ( $year, $month, $day ) = $cdate =~ m/^(\d{4})-(\d{2})-(\d{2})$/;
+    my ( $year, $month, $day ) = $cdate =~ m/(\d{4})-(\d{2})-(\d{2})/;
     my ( $tyear, $tmonth, $tday ) = Add_Delta_Days( $year, $month, $day, 1 );
     return "$tyear-" . sprintf( "%02d", $tmonth ) . "-" . sprintf( "%02d", $tday );
 }
@@ -212,6 +213,7 @@ sub holidays_and_weekends {
     my $holidays = holidays_in_daterange( %ARGS );
     my $res = {};
     my $d = $ARGS{begin};
+    $log->debug( "holidays_and_weekends \$d == $d" );
     while ( $d ne get_tomorrow( $ARGS{end} ) ) {
         $res->{ $d } = {};
         if ( is_weekend( $d ) ) {

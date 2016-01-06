@@ -36,7 +36,9 @@ use 5.012;
 use strict;
 use warnings;
 
+use App::CELL qw( $CELL $log );
 use Date::Calc qw(
+    Add_Delta_Days
     Date_to_Days
 );
 
@@ -67,6 +69,7 @@ use Exporter qw( import );
 our @EXPORT_OK = qw( 
     canon_date_diff
     canon_to_ymd
+    tsrange_to_dates
     ymd_to_canon
 );
 
@@ -106,6 +109,41 @@ sub canon_to_ymd {
 }
 
 
+=head2 tsrange_to_dates
+
+Takes a string that might be a canonicalized tsrange. Attempts to extract
+beginning and ending dates (YYYY-MM-DD) from it. If this succeeds, an OK status
+object is returned, the payload of which is a hash suitable for passing to
+holidays_and_weekends().
+
+=cut
+
+sub tsrange_to_dates {
+    my ( $tsrange ) = @_;
+
+    my ( $begin_date, $begin_time, $end_date, $end_time ) = 
+        $tsrange =~ m/(\d{4}-\d{2}-\d{2}).+(\d{2}:\d{2}):\d{2}.+(\d{4}-\d{2}-\d{2}).+(\d{2}:\d{2}):\d{2}/a;
+
+    # if begin_time is 24:00 convert it to 00:00
+    if ( $begin_time eq '24:00' ) {
+        my ( $y, $m, $d ) = canon_to_ymd( $begin_date );
+        $log->debug( "Before Add_Delta_Days $y $m $d" );
+        ( $y, $m, $d ) = Add_Delta_Days( $y, $m, $d, 1 );
+        $begin_date = ymd_to_canon( $y, $m, $d );
+    }
+    # if end_time is 00:00 convert it to 24:00
+    if ( $end_time eq '00:00' ) {
+        my ( $y, $m, $d ) = canon_to_ymd( $end_date );
+        $log->debug( "Before Add_Delta_Days $y-$m-$d" );
+        ( $y, $m, $d ) = Add_Delta_Days( $y, $m, $d, -1 );
+        $end_date = ymd_to_canon( $y, $m, $d );
+    }
+
+    return $CELL->status_ok( 'DOCHAZKA_NORMAL_COMPLETION',
+        payload => { begin => $begin_date, end => $end_date } );
+}
+
+
 =head2 ymd_to_canon
 
 Takes $y, $m, $d and returns canonical date YYYY-MM-DD
@@ -121,5 +159,6 @@ sub ymd_to_canon {
 
     return sprintf( "%04d-%02d-%02d", $y, $m, $d );
 }
+
 
 1;

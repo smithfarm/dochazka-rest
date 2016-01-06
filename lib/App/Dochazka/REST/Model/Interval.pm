@@ -47,6 +47,12 @@ use App::Dochazka::REST::Model::Shared qw(
     select_single
     tsrange_intersection
 );
+use App::Dochazka::REST::Util::Date qw(
+    tsrange_to_dates
+);
+use App::Dochazka::REST::Util::Holiday qw(
+    holidays_and_weekends
+);
 use Params::Validate qw( :all );
 
 # we get 'spawn', 'reset', and accessors from parent
@@ -135,6 +141,7 @@ use Exporter qw( import );
 our @EXPORT_OK = qw( 
     delete_intervals_by_eid_and_tsrange
     fetch_intervals_by_eid_and_tsrange
+    generate_interval_summary
     iid_exists 
 );
 
@@ -418,6 +425,43 @@ sub delete_intervals_by_eid_and_tsrange {
         bind_params => [ $eid, $tsrange ],
     );
 }
+
+
+=head2 generate_interval_summary
+
+Given DBIx::Connector object, EID, and tsrange, generate a hash keyed on
+dates (YYYY-MM-DD) in the range. The value of each key/date is another 
+hash keyed on activity codes. For each activity code the value is the
+total number of hours spent by the employee doing that activity on the day
+in question.
+
+The interval must start and end on a day boundary (i.e. 00:00 or 24:00)
+and partial intervals are treated the same as whole intervals.
+
+=cut
+
+sub generate_interval_summary {
+    my ( $conn, $eid, $tsrange ) = validate_pos( @_,
+        { isa => 'DBIx::Connector' },
+        { type => SCALAR },
+        { type => SCALAR },
+    );
+
+    my $status = canonicalize_tsrange( $conn, $tsrange );
+    return $status unless $status->ok;
+    my $canon_tsrange = $status->payload;
+    $log->debug( "generate_interval_summary: $canon_tsrange" );
+
+    $status = tsrange_to_dates( $canon_tsrange );
+    return $status unless $status->ok;
+    my $ARGS = $status->payload;
+
+    # get list of dates in range
+    return $CELL->status_ok( 'DOCHAZKA_OK', 
+        payload => holidays_and_weekends( %$ARGS )
+    );
+}
+
 
 
 =head1 AUTHOR

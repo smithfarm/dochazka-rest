@@ -1011,9 +1011,10 @@ foreach my $method ( qw( PUT POST DELETE ) ) {
     }
 }
 
-note( "GET empty interval summary" );
-req( $test, 404, 'root', 'GET', "$base/" .  $site->DOCHAZKA_EID_OF_ROOT . "/[1980-01-01,1980-12-31)" );
-
+note( "GET interval summary" );
+$status = req( $test, 200, 'root', 'GET', 
+               "$base/" .  $site->DOCHAZKA_EID_OF_ROOT . "/[1980-01-01,1980-1-31)" );
+is( $status->level, 'OK' );
 
 note( 'tear down' );
 $status = delete_all_attendance_data();
