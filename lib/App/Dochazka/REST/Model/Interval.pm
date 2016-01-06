@@ -37,6 +37,7 @@ use strict;
 use warnings;
 use App::CELL qw( $CELL $log $meta $site );
 use Data::Dumper;
+use App::Dochazka::REST::Model::Activity qw( code_by_aid );
 use App::Dochazka::REST::Model::Lock qw( count_locks_in_tsrange );
 use App::Dochazka::REST::Model::Shared qw( 
     canonicalize_tsrange 
@@ -48,7 +49,8 @@ use App::Dochazka::REST::Model::Shared qw(
     tsrange_intersection
 );
 use App::Dochazka::REST::Util::Date qw(
-    tsrange_to_dates
+    calculate_hours
+    tsrange_to_dates_and_times
 );
 use App::Dochazka::REST::Util::Holiday qw(
     holidays_and_weekends
@@ -452,14 +454,43 @@ sub generate_interval_summary {
     my $canon_tsrange = $status->payload;
     $log->debug( "generate_interval_summary: $canon_tsrange" );
 
-    $status = tsrange_to_dates( $canon_tsrange );
+    # convert canonicalized tsrange into begin, end dates
+    $status = tsrange_to_dates_and_times( $canon_tsrange );
     return $status unless $status->ok;
-    my $ARGS = $status->payload;
+
+    # extract the beginning/ending dates/times
+    my $pl = $status->payload;
+    my $begin_date = $pl->{begin}->[0];
+    my $begin_time = $pl->{begin}->[1];
+    my $end_date = $pl->{end}->[0];
+    my $end_time = $pl->{end}->[1];
+
+    # interval must begin and end at 00:00/24:00,
+    # otherwise no game
+    return $CELL->status_err( 'DISPATCH_SUMMARY_ILLEGAL_TSRANGE' ) unless
+        ( $begin_time eq '00:00' or $begin_time eq '24:00' ) and 
+        ( $end_time eq '00:00' or $end_time eq '24:00' );
 
     # get list of dates in range
-    return $CELL->status_ok( 'DOCHAZKA_OK', 
-        payload => holidays_and_weekends( %$ARGS )
-    );
+    my $date_hash = holidays_and_weekends( begin => $begin_date, end => $end_date );
+
+    # get intervals for each date
+    foreach my $date ( keys %$date_hash ) {
+        my $status = fetch_intervals_by_eid_and_tsrange( 
+            $conn, 
+            $eid, 
+            "[ $date 00:00, $date 24:00 )",
+        );
+        if ( $status->ok and $status->code eq 'DISPATCH_RECORDS_FOUND' ) {
+            map { $date_hash
+                      ->{ $date }
+                      ->{ code_by_aid( $conn, $_->aid ) }
+                      ->{hours} += calculate_hours( $_->intvl ) } 
+                ( @{ $status->payload } );
+        }
+    }
+
+    return $CELL->status_ok( 'DOCHAZKA_INTERVAL_SUMMARY_OK', payload => $date_hash );
 }
 
 

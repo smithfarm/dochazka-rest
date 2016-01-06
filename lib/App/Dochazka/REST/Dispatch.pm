@@ -1991,6 +1991,12 @@ sub _handler_intlock {
             $status = fetch_locks_by_eid_and_tsrange( @ARGS );
         } elsif ( $method eq 'GET' and $intlock eq 'Summary' ) {
             $status = generate_interval_summary( @ARGS );
+            if ( $status->level eq 'ERR' and 
+                 $status->code eq 'DISPATCH_SUMMARY_ILLEGAL_TSRANGE' ) {
+                $self->mrest_declare_status( 'code' => 400, 
+                    'explanation' => $status->text );
+                return 0;
+            }
         } elsif ( $method eq 'DELETE' and $intlock eq 'Interval' ) {
             $status = delete_intervals_by_eid_and_tsrange( @ARGS );
         } else {

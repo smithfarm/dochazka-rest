@@ -70,7 +70,7 @@ our @EXPORT_OK = qw(
     calculate_hours
     canon_date_diff
     canon_to_ymd
-    tsrange_to_dates
+    tsrange_to_dates_and_times
     ymd_to_canon
 );
 
@@ -153,7 +153,7 @@ sub canon_to_ymd {
 }
 
 
-=head2 tsrange_to_dates
+=head2 tsrange_to_dates_and_times
 
 Takes a string that might be a canonicalized tsrange. Attempts to extract
 beginning and ending dates (YYYY-MM-DD) from it. If this succeeds, an OK status
@@ -162,7 +162,7 @@ holidays_and_weekends().
 
 =cut
 
-sub tsrange_to_dates {
+sub tsrange_to_dates_and_times {
     my ( $tsrange ) = @_;
 
     my ( $begin_date, $begin_time, $end_date, $end_time ) = 
@@ -184,7 +184,8 @@ sub tsrange_to_dates {
     }
 
     return $CELL->status_ok( 'DOCHAZKA_NORMAL_COMPLETION',
-        payload => { begin => $begin_date, end => $end_date } );
+        payload => { begin => [ $begin_date, $begin_time ], 
+                     end => [ $end_date, $end_time ] } );
 }
 
 
