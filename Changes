@@ -3388,3 +3388,14 @@ SPLIT OFF App::MREST into separate distribution
 - REST.pm: rearrange sections; new high-level content; move details to
   REST/Guide.pm
 
+0.515 2016-01-06 21:15 CET
+- doc: fix GitHub issue tracker URL
+- Model/Interval.pm: drop obsolete comment
+- ResourceDefs.pm: rethink interval/summary/...
+- interval/summary/eid/:eid/:tsrange skeleton implementation
+- Dispatch.pm: make _handler_intlock aware of interval/summary
+- Implement handler for interval/summary/eid/:eid/:tsrange
+- Util/Date.pm: implement calculate_hours() function
+- Model/Activity.pm: implement code_by_aid() function
+- Improve interval/summary/eid/:eid/:tsrange handling
+
