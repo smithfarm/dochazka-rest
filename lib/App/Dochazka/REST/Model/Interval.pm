@@ -481,10 +481,9 @@ sub generate_interval_summary {
         );
         if ( $status->ok and $status->code eq 'DISPATCH_RECORDS_FOUND' ) {
             map { $date_hash
-                      ->{ $date }
-                      ->{ code_by_aid( $conn, $_->aid ) }
-                      ->{hours} += calculate_hours( $_->intvl ) } 
-                ( @{ $status->payload } );
+                  ->{ $date }
+                  ->{ code_by_aid( $conn, $_->aid ) } += calculate_hours( $_->intvl ) 
+                } ( @{ $status->payload } );
         } elsif ( $status->level eq 'NOTICE' and $status->code eq 'DISPATCH_NO_RECORDS_FOUND' ) {
             # do nothing
         } else {
