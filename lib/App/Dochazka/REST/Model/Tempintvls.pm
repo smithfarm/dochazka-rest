@@ -44,14 +44,12 @@ use App::Dochazka::REST::Model::Shared qw(
     select_single
     split_tsrange
 );
-use App::Dochazka::REST::Util::Date qw(
+use App::Dochazka::REST::Util::Holiday qw(
     canon_date_diff
     canon_to_ymd
-    ymd_to_canon
-);
-use App::Dochazka::REST::Util::Holiday qw(
     get_tomorrow
     holidays_in_daterange
+    ymd_to_canon
 );
 use Data::Dumper;
 use Date::Calc qw(

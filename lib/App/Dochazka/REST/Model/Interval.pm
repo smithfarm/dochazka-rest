@@ -48,12 +48,10 @@ use App::Dochazka::REST::Model::Shared qw(
     select_single
     tsrange_intersection
 );
-use App::Dochazka::REST::Util::Date qw(
-    calculate_hours
-    tsrange_to_dates_and_times
-);
 use App::Dochazka::REST::Util::Holiday qw(
+    calculate_hours
     holidays_and_weekends
+    tsrange_to_dates_and_times
 );
 use Params::Validate qw( :all );
 
@@ -487,10 +485,17 @@ sub generate_interval_summary {
                       ->{ code_by_aid( $conn, $_->aid ) }
                       ->{hours} += calculate_hours( $_->intvl ) } 
                 ( @{ $status->payload } );
+        } elsif ( $status->level eq 'NOTICE' and $status->code eq 'DISPATCH_NO_RECORDS_FOUND' ) {
+            # do nothing
+        } else {
+            return $CELL->status_crit( 
+                'DISPATCH_SUMMARY_UNEXPECTED_FAILURE', 
+                payload => $status->text
+            );
         }
     }
 
-    return $CELL->status_ok( 'DOCHAZKA_INTERVAL_SUMMARY_OK', payload => $date_hash );
+    return $CELL->status_ok( 'DISPATCH_SUMMARY_OK', payload => $date_hash );
 }
 
 

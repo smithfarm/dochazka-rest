@@ -49,7 +49,6 @@ lib/App/Dochazka/REST/ResourceDefs.pm
 lib/App/Dochazka/REST/Shared.pm
 lib/App/Dochazka/REST/Test.pm
 lib/App/Dochazka/REST/Util.pm
-lib/App/Dochazka/REST/Util/Date.pm
 lib/App/Dochazka/REST/Util/Holiday.pm
 LICENSE
 Makefile.PL
@@ -98,5 +97,4 @@ t/sql/privhistory.t
 t/sql/root.t
 t/sql/schedintvl.t
 t/unit/ACL.t
-t/unit/date.t
 t/unit/holiday.t
