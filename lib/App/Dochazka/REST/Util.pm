@@ -91,10 +91,10 @@ our @EXPORT_OK = qw(
 
 =head2 hash_the_password
 
-Takes a request entity (hashref) - looks for a 'password' property.
-if it is present, hashes the password with a random salt - in effect,
-this replaces the password property with passhash+salt. If there is
-no password property, the function does nothing.
+Takes a request entity (hashref) - looks for a 'password' property.  If it
+is present, adds a random salt to the request entity and hashes the
+password with it.  If there is no password property, the function does
+nothing.
 
 =cut
 
