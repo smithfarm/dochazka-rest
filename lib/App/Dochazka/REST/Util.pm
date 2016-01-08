@@ -154,16 +154,9 @@ sub pre_update_comparison {
     foreach my $prop (keys %$over) {
         if ( exists $obj->{$prop} ) {
             next if not defined $obj->{$prop} and not defined $over->{$prop};
-#            next if ( defined $obj->{$prop} and defined $over->{$prop} ) and ( $obj->{$prop} eq $over->{$prop} );
-#            if (
-#                 ( defined $obj->{$prop} and not defined $over->{$prop} ) or
-#                 ( not defined $obj->{$prop} and defined $over->{$prop} ) or
-#                 ( $obj->{$prop} ne $over->{$prop} ) 
-#               ) {
-                $log->debug( "pre_update_comparison: detected changed property $prop" );
-                $obj->{$prop} = $over->{$prop};
-                $c += 1;
-#            }
+            $log->debug( "pre_update_comparison: detected changed property $prop" );
+            $obj->{$prop} = $over->{$prop};
+            $c += 1;
         }
     }
     return $c;
