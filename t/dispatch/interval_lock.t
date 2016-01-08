@@ -75,7 +75,6 @@ my $eid_active = create_active_employee( $test );
 
 note( $note = 'give \'active\' and \'root\' a schedule as of 1957-01-01 00:00 so these two employees can enter some attendance intervals' );
 $log->info( "=== $note" );
-my @shid_for_deletion;
 foreach my $user ( 'active', 'root' ) {
     my $status = req( $test, 201, 'root', 'POST', "schedule/history/nick/$user", <<"EOH" );
 { "sid" : $sid, "effective" : "1957-01-01 00:00" }
@@ -84,7 +83,6 @@ EOH
     is( $status->code, "DOCHAZKA_CUD_OK" );
     ok( $status->{'payload'} );
     ok( $status->{'payload'}->{'shid'} );
-    push @shid_for_deletion, $status->{'payload'}->{'shid'};
     #ok( $status->{'payload'}->{'schedule'} );
 }
 
@@ -988,14 +986,6 @@ $status = req( $test, 200, 'root', 'DELETE', "/lock/lid/$test_lid" );
 is( $status->level, 'OK' );
 is( $status->code, 'DOCHAZKA_CUD_OK' );
 
-note( 'delete the testing schedhistory records' );
-foreach my $shid ( @shid_for_deletion ) {
-    $status = req( $test, 200, 'root', 'DELETE', "schedule/history/shid/$shid" );
-    is( $status->level, 'OK' );
-    is( $status->code, 'DOCHAZKA_CUD_OK' );
-    req( $test, 404, 'root', 'GET', "schedule/history/shid/$shid" );
-}
-
 
 note( '=============================' );
 note( '"interval/summary/eid/:eid/:tsrange" resource' );
@@ -1012,9 +1002,118 @@ foreach my $method ( qw( PUT POST DELETE ) ) {
 }
 
 note( "GET interval summary" );
-$status = req( $test, 200, 'root', 'GET', 
-               "$base/" .  $site->DOCHAZKA_EID_OF_ROOT . "/[1980-01-01,1980-1-31)" );
+$status = req( $test, 200, 'active', 'GET', "$base/$eid_active/[1980-01-01,1980-1-31)" );
 is( $status->level, 'OK' );
+is_deeply( $status->payload, {
+           '1980-01-15' => {},
+           '1980-01-11' => {},
+           '1980-01-30' => {},
+           '1980-01-08' => {},
+           '1980-01-22' => {},
+           '1980-01-02' => {},
+           '1980-01-17' => {},
+           '1980-01-26' => {
+                             'weekend' => 1
+                           },
+           '1980-01-19' => {
+                             'weekend' => 1
+                           },
+           '1980-01-18' => {},
+           '1980-01-09' => {},
+           '1980-01-13' => {
+                             'weekend' => 1
+                           },
+           '1980-01-25' => {},
+           '1980-01-27' => {
+                             'weekend' => 1
+                           },
+           '1980-01-01' => {
+                             'holiday' => 1
+                           },
+           '1980-01-29' => {},
+           '1980-01-04' => {},
+           '1980-01-21' => {},
+           '1980-01-06' => {
+                             'weekend' => 1
+                           },
+           '1980-01-05' => {
+                             'weekend' => 1
+                           },
+           '1980-01-03' => {},
+           '1980-01-14' => {},
+           '1980-01-07' => {},
+           '1980-01-10' => {},
+           '1980-01-20' => {
+                             'weekend' => 1
+                           },
+           '1980-01-12' => {
+                             'weekend' => 1
+                           },
+           '1980-01-16' => {},
+           '1980-01-24' => {},
+           '1980-01-23' => {},
+           '1980-01-28' => {}
+        } );
+
+$status = req( $test, 201, 'root', 'POST', 'interval/new', <<"EOH" );
+{ "eid" : $eid_active, "aid" : $aid_of_work, "intvl" : "[1980-1-1 08:00, 1980-1-1 12:00)" }
+EOH
+ok( $status->ok );
+is( $status->code, 'DOCHAZKA_CUD_OK' );
+is( $status->{count}, 1 );
+diag( Dumper $status->payload );
+BAIL_OUT(0);
+is_deeply( $status->payload, {
+           '1980-01-15' => {},
+           '1980-01-11' => {},
+           '1980-01-30' => {},
+           '1980-01-08' => {},
+           '1980-01-22' => {},
+           '1980-01-02' => {},
+           '1980-01-17' => {},
+           '1980-01-26' => {
+                             'weekend' => 1
+                           },
+           '1980-01-19' => {
+                             'weekend' => 1
+                           },
+           '1980-01-18' => {},
+           '1980-01-09' => {},
+           '1980-01-13' => {
+                             'weekend' => 1
+                           },
+           '1980-01-25' => {},
+           '1980-01-27' => {
+                             'weekend' => 1
+                           },
+           '1980-01-01' => {
+                             'WORK' => 4,
+                             'holiday' => 1
+                           },
+           '1980-01-29' => {},
+           '1980-01-04' => {},
+           '1980-01-21' => {},
+           '1980-01-06' => {
+                             'weekend' => 1
+                           },
+           '1980-01-05' => {
+                             'weekend' => 1
+                           },
+           '1980-01-03' => {},
+           '1980-01-14' => {},
+           '1980-01-07' => {},
+           '1980-01-10' => {},
+           '1980-01-20' => {
+                             'weekend' => 1
+                           },
+           '1980-01-12' => {
+                             'weekend' => 1
+                           },
+           '1980-01-16' => {},
+           '1980-01-24' => {},
+           '1980-01-23' => {},
+           '1980-01-28' => {}
+        } );
 
 note( 'tear down' );
 $status = delete_all_attendance_data();
