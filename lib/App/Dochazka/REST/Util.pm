@@ -155,6 +155,7 @@ sub pre_update_comparison {
         if ( exists $obj->{$prop} ) {
             next if not defined $obj->{$prop} and not defined $over->{$prop};
             $log->debug( "pre_update_comparison: detected changed property $prop" );
+            # FIXME: how to test equality when we don't know the type?
             $obj->{$prop} = $over->{$prop};
             $c += 1;
         }
