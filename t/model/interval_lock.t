@@ -59,7 +59,7 @@ use App::Dochazka::REST::Model::Schedule;
 use App::Dochazka::REST::Model::Schedhistory;
 use App::Dochazka::REST::Model::Shared qw( noof tsrange_equal );
 use App::Dochazka::REST::Test;
-use App::Dochazka::REST::Util::Holiday qw( get_tomorrow );
+use App::Dochazka::REST::Holiday qw( get_tomorrow );
 use Plack::Test;
 use Test::More;
 use Test::Warnings;

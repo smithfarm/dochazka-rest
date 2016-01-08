@@ -48,7 +48,7 @@ use App::Dochazka::REST::Model::Shared qw(
     select_single
     tsrange_intersection
 );
-use App::Dochazka::REST::Util::Holiday qw(
+use App::Dochazka::REST::Holiday qw(
     calculate_hours
     holidays_and_weekends
     tsrange_to_dates_and_times

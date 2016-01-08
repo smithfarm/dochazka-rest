@@ -42,7 +42,7 @@ use warnings;
 #use App::CELL::Test::LogToFile;
 use App::CELL qw( $meta $site );
 use Data::Dumper;
-use App::Dochazka::REST::Util::Holiday qw( 
+use App::Dochazka::REST::Holiday qw( 
     calculate_hours
     get_tomorrow 
     holidays_and_weekends

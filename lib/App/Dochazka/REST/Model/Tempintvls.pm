@@ -44,7 +44,7 @@ use App::Dochazka::REST::Model::Shared qw(
     select_single
     split_tsrange
 );
-use App::Dochazka::REST::Util::Holiday qw(
+use App::Dochazka::REST::Holiday qw(
     canon_date_diff
     canon_to_ymd
     get_tomorrow

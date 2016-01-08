@@ -80,7 +80,7 @@ use App::Dochazka::REST::Model::Shared qw(
 use App::Dochazka::REST::Model::Tempintvls;
 use App::Dochazka::REST::ResourceDefs;
 use App::Dochazka::REST::Shared qw( :ALL );  # all the shared_* functions
-use App::Dochazka::REST::Util::Holiday qw( holidays_in_daterange );
+use App::Dochazka::REST::Holiday qw( holidays_in_daterange );
 use Data::Dumper;
 use File::Path qw( mkpath rmtree );
 use Module::Runtime qw( use_module );

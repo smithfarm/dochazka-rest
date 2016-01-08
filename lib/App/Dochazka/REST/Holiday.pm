@@ -30,7 +30,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 # ************************************************************************* 
 
-package App::Dochazka::REST::Util::Holiday;
+package App::Dochazka::REST::Holiday;
 
 use 5.012;
 use strict;
@@ -50,14 +50,14 @@ use Params::Validate qw( :all );
 
 =head1 NAME
 
-App::Dochazka::REST::Util::Holiday - non-database holiday and date routines
+App::Dochazka::REST::Holiday - non-database holiday and date routines
 
 
 
 
 =head1 SYNOPSIS
 
-    use App::Dochazka::REST::Util::Holiday qw( holidays_in_daterange );
+    use App::Dochazka::REST::Holiday qw( holidays_in_daterange );
 
     my $holidays1 = holidays_in_daterange( 
         begin => '2001-01-02',
