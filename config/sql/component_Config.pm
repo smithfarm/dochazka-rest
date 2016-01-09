@@ -36,47 +36,47 @@
 
 #
 set( 'SQL_COMPONENT_SELECT_ALL', q/
-      SELECT cid, path, source, acl
+      SELECT cid, path, source, acl, validations
       FROM components
       / );
 
 #
 set( 'SQL_COMPONENT_SELECT_ALL_NO_SOURCE', q/
-      SELECT cid, path, acl
+      SELECT cid, path, acl, validations
       FROM components
       / );
 
 # 
 set( 'SQL_COMPONENT_SELECT_BY_CID', q/
-      SELECT cid, path, source, acl
+      SELECT cid, path, source, acl, validations
       FROM components WHERE cid = ?
       / );
 
 # 
 set( 'SQL_COMPONENT_SELECT_BY_PATH', q/
-      SELECT cid, path, source, acl
+      SELECT cid, path, source, acl, validations
       FROM components WHERE path = ?
       / );
 
 #
 set( 'SQL_COMPONENT_INSERT', q/
       INSERT INTO components 
-                (path, source, acl)
-      VALUES    (?, ?, ?) 
-      RETURNING  cid, path, source, acl
+                (path, source, acl, validations)
+      VALUES    (?, ?, ?, ?) 
+      RETURNING  cid, path, source, acl, validations
       / );
 
 set( 'SQL_COMPONENT_UPDATE', q/
       UPDATE components 
-      SET path = ?, source = ?, acl = ?
+      SET path = ?, source = ?, acl = ?, validations = ?
       WHERE cid = ?
-      RETURNING  cid, path, source, acl
+      RETURNING  cid, path, source, acl, validations
       / );
 
 set( 'SQL_COMPONENT_DELETE', q/
       DELETE FROM components
       WHERE cid = ?
-      RETURNING  cid, path, source, acl
+      RETURNING  cid, path, source, acl, validations
       / );
       
 
