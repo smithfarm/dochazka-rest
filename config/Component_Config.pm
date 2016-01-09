@@ -47,7 +47,17 @@ set( 'DOCHAZKA_COMPONENT_DEFINITIONS', [
 <%class>
 has 'param' => (isa => 'Str', required => 1);
 </%class>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN"
+    "http://www.w3.org/TR/html4/strict.dtd">
+<html lang="en">
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <title>Dochazka Site Param</title>
+  </head>
+  <body>
 The value of site param <% $.param %> is <% $site->get($.param) %>.
+  </body>
+</html>
 EOS
     acl => 'admin',
   },
