@@ -543,7 +543,6 @@ $body$#,
       $$ LANGUAGE sql IMMUTABLE#,
 
     q#-- wrapper function to get schedule as of current timestamp
-      -- this function will return 'jsonb' after PostgreSQL 9.4 comes out!!!
       CREATE OR REPLACE FUNCTION current_schedule (INTEGER)
       RETURNS integer AS $$
           SELECT sid_at_timestamp($1, current_timestamp)
@@ -593,10 +592,11 @@ $body$#,
 
     q#-- components
       CREATE TABLE components (
-          cid        serial PRIMARY KEY,
-          path       varchar(2048) UNIQUE NOT NULL,
-          source     text NOT NULL,
-          acl        varchar(16) NOT NULL,
+          cid         serial PRIMARY KEY,
+          path        varchar(2048) UNIQUE NOT NULL,
+          source      text NOT NULL,
+          acl         varchar(16) NOT NULL,
+          validations text,
           CONSTRAINT kosher_path CHECK (path ~* '^[[:alnum:]_.][[:alnum:]_/.-]+$')
       )#,
   
