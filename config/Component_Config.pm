@@ -60,6 +60,7 @@ The value of site param <% $.param %> is <% $site->get($.param) %>.
 </html>
 EOS
     acl => 'admin',
+    validations => q/{ 'param' => { 'type' => SCALAR } }/,
   },
 #  {
 #    path => '',

@@ -38,7 +38,7 @@ use 5.012;
 use strict;
 use warnings;
 
-#use App::CELL::Test::LogToFile;
+use App::CELL::Test::LogToFile;
 use App::CELL qw( $log $meta $site );
 use App::Dochazka::REST::ConnBank qw( $dbix_conn );
 use App::Dochazka::REST::Test;
@@ -74,10 +74,20 @@ $status = req( $test, 200, 'root', 'POST', $base, '{ "path":"/sample/local_time.
 is( $status->level, 'OK' );
 like( $status->payload, qr/Hello! The local time is / );
 
-note( "sample/site_param.mc" );
+note( "sample/site_param.mc expected use" );
 $status = req( $test, 200, 'root', 'POST', $base, 
     '{ "path":"/sample/site_param.mc", "param":"DOCHAZKA_STATE_DIR" }' );
 is( $status->level, 'OK' );
 like( $status->payload, qr/The value of site param DOCHAZKA_STATE_DIR is / );
+
+note( "sample/site_param.mc error path missing mandatory parameter" );
+$status = req( $test, 400, 'root', 'POST', $base, '{ "path":"/sample/site_param.mc" }' );
+like( $status->text, qr/Mandatory parameter 'param' missing in call to App::Dochazka::REST::Dispatch::handler_genreport/ );
+
+note( "sample/site_param.mc error path with additional (illegal) parameter" );
+$status = req( $test, 400, 'root', 'POST', $base, <<'EOS' );
+{ "path" : "/sample/site_param.mc", "param" : "DOCHAZKA_STATE_DIR", "hooligan" : "Not supposed to be here" }
+EOS
+like( $status->text, qr/The following parameter was passed in the call to App::Dochazka::REST::Dispatch::handler_genreport but was not listed in the validation options: hooligan/ );
 
 done_testing;

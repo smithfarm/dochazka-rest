@@ -1568,6 +1568,40 @@ sub handler_genreport {
     return $fail unless $path;
     delete $entity->{'path'};
 
+    # - convert $entity hashref into @entity array for validation
+    my $count = 0;
+    my @entity;
+    foreach my $key ( keys %$entity ) {
+        $entity[$count] = $key;
+        $count += 1;
+        $entity[$count] = $entity->{$key};
+        $count += 1;
+    }
+
+    # - if there is a validations property, convert it into a hashref
+    if ( my $validations = $comp->{validations} ) { 
+        $comp->{validations} = eval $comp->{validations};
+        die "AGAAKH! validations is not a HASHREF: " . Dumper $comp->{validations}
+            unless ref( $comp->{validations} ) eq 'HASH';
+    }
+
+    # - if there is a parameters property in the component, 
+    #   check the entity against it
+    if ( $comp->{'validations'} ) {
+        my $success = 1;
+        $log->debug( "About to validate entity: " . Dumper \@entity );
+        validate_with( 
+            params => \@entity, 
+            spec => $comp->{'validations'},
+            on_fail => sub {
+                my $errmsg = shift;
+                $self->mrest_declare_status( code => 400, explanation => $errmsg );
+                $success = 0;
+            },
+        );
+        return $fail unless $success;
+    }
+
     # - generate report
     return $CELL->status_ok( 'DISPATCH_GENERATED_REPORT', payload => $comp->generate( %$entity ) );
 }
