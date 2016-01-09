@@ -3399,3 +3399,24 @@ SPLIT OFF App::MREST into separate distribution
 - Model/Activity.pm: implement code_by_aid() function
 - Improve interval/summary/eid/:eid/:tsrange handling
 
+0.516 2016-01-09 20:42 CET
+- cleanup: merge Utils::Date into Utils::Holiday
+- cleanup: move REST::Util::Holiday to REST::Holiday
+- cleanup: refrain from using the /a modifier
+- Component_Config.pm: enclose siteparam template in HTML 4.0
+- doc: improve comments in Util.pm
+- doc: expand documentation of genreport resource
+- Model/Interval.pm: simplify interval summary data structure
+- Dispatch.pm: require 'source', 'acl' properties for insert only
+- t/dispatch/interval_lock.t: add interval/summary tests
+- Implement feature "Component class: add validations property" (#54)
+  - sql/component_Config.pm: add validations to SQL statements
+  - sql/dbinit_Config.pm: add validations to components table
+  - REST.pm->reset_db: add validations to SQL_COMPONENT_INSERT
+  - Model/Component.pm: add validations property
+  - t/dispatch/component.t: add validations property
+  - Build.PL: require App::Dochazka::Common 0.199 for component validations
+- Fix bug "genreport resource does not validate parameters" (#53)
+  - genreport resource: apply validations, if any
+  - REST/Dispatch.pm->handler_genreport(): vet parameters more carefully
+
