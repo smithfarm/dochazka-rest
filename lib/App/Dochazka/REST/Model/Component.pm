@@ -41,6 +41,7 @@ use App::Dochazka::REST::Model::Shared qw( cud load load_multiple priv_by_eid );
 use DBI;
 use File::Path;
 use File::Spec;
+use JSON;
 use Params::Validate qw{:all};
 use Try::Tiny;
 
@@ -70,10 +71,11 @@ App::Dochazka::REST::Model::Component - component class
 
 
    CREATE TABLE components (
-       cid        serial PRIMARY KEY,
-       path       varchar(2048) UNIQUE NOT NULL,
-       source     text NOT NULL,
-       acl        varchar(16) NOT NULL
+       cid         serial PRIMARY KEY,
+       path        varchar(2048) UNIQUE NOT NULL,
+       source      text NOT NULL,
+       acl         varchar(16) NOT NULL,
+       validations textj
    )
 
 
@@ -84,7 +86,7 @@ App::Dochazka::REST::Model::Component - component class
 
 =item * constructor (L<spawn>)
 
-=item * basic accessors (L<cid>, L<path>, L<source>, L<acl>)
+=item * basic accessors (L<cid>, L<path>, L<source>, L<acl>, L<validations>)
 
 =item * L<reset> (recycles an existing object by setting it to desired state)
 
@@ -160,7 +162,7 @@ sub insert {
         eid => $context->{'current'}->{'eid'},
         object => $self,
         sql => $site->SQL_COMPONENT_INSERT,
-        attrs => [ 'path', 'source', 'acl' ],
+        attrs => [ 'path', 'source', 'acl', 'validations' ],
     );
 
     $self->create_file if $status->ok;
@@ -204,7 +206,7 @@ sub update {
         eid => $context->{'current'}->{'eid'},
         object => $self,
         sql => $site->SQL_COMPONENT_UPDATE,
-        attrs => [ 'path', 'source', 'acl', 'cid' ],
+        attrs => [ 'path', 'source', 'acl', 'cid', 'validations' ],
     );
 
     $self->create_file if $status->ok;
