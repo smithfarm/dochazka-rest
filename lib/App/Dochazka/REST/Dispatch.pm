@@ -857,7 +857,7 @@ sub handler_post_component_path {
 
     # second pass
     # - check that entity is kosher
-    my $status = shared_entity_check( $self, 'path', 'source', 'acl' );
+    my $status = shared_entity_check( $self, 'path' );
     return $status unless $status->ok;
     my $context = $self->context;
     my $entity = $context->{'request_entity'};
@@ -871,6 +871,8 @@ sub handler_post_component_path {
     if ( $comp ) {
         return shared_update_component( $self, $comp, $entity );
     } else {
+        my $status = shared_entity_check( $self, 'path', 'source', 'acl' );
+        return $status unless $status->ok;
         return shared_insert_component( $self, $path, $entity );
     }
 }
