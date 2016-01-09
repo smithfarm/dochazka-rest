@@ -226,6 +226,7 @@ is_deeply( $status->payload, {
     path => 'FOOBAR',
     source => 'wombat',
     acl => 'passerby',
+    validations => undef,
 }, "GET $base/:cid 4" );
 
 note( "fail invalid (non-integer) cid" );
