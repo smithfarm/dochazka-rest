@@ -110,7 +110,7 @@ sub calculate_hours {
     my $tsr = shift;
 
     my ( $begin_date, $begin_time, $end_date, $end_time ) = 
-        $tsr =~ m/(\d{4}-\d{2}-\d{2}).+(\d{2}:\d{2}):\d{2}.+(\d{4}-\d{2}-\d{2}).+(\d{2}:\d{2}):\d{2}/a;
+        $tsr =~ m/(\d{4}-\d{2}-\d{2}).+(\d{2}:\d{2}):\d{2}.+(\d{4}-\d{2}-\d{2}).+(\d{2}:\d{2}):\d{2}/;
 
     my $days = canon_date_diff( $begin_date, $end_date );
 
@@ -306,7 +306,7 @@ sub tsrange_to_dates_and_times {
     my ( $tsrange ) = @_;
 
     my ( $begin_date, $begin_time, $end_date, $end_time ) = 
-        $tsrange =~ m/(\d{4}-\d{2}-\d{2}).+(\d{2}:\d{2}):\d{2}.+(\d{4}-\d{2}-\d{2}).+(\d{2}:\d{2}):\d{2}/a;
+        $tsrange =~ m/(\d{4}-\d{2}-\d{2}).+(\d{2}:\d{2}):\d{2}.+(\d{4}-\d{2}-\d{2}).+(\d{2}:\d{2}):\d{2}/;
 
     # if begin_time is 24:00 convert it to 00:00
     if ( $begin_time eq '24:00' ) {
@@ -402,9 +402,9 @@ sub _extract_year {
 # time, calculate and return the number of hours.
 sub _single_day_hours {
     my ( $begin, $end ) = @_;
-    my ( $bh, $begin_minutes ) = $begin =~ m/(\d+):(\d+)/a;
+    my ( $bh, $begin_minutes ) = $begin =~ m/(\d+):(\d+)/;
     my $begin_hours = $bh + $begin_minutes / 60;
-    my ( $eh, $end_minutes ) = $end =~ m/(\d+):(\d+)/a;
+    my ( $eh, $end_minutes ) = $end =~ m/(\d+):(\d+)/;
     my $end_hours = $eh + $end_minutes / 60;
     return $end_hours - $begin_hours;
 }
