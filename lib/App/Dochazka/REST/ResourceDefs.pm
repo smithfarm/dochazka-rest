@@ -1318,7 +1318,18 @@ $defs->{'genreport'} = {
         documentation => <<'EOH',
 =pod
 
-Generate reports.
+The "POST genreport" resource generates reports from Mason templates.
+The resource takes a request body with one mandatory property, "path"
+(corresponding to the path of a Mason component relative to the component
+root), and one optional property, "parameters", which should be a hash
+of parameter names and values.
+
+The resource handler checks (1) if the component exists in the database,
+(2) whether current employee has sufficient permissions to generate the
+report (by comparing the employee's privlevel with the ACL profile of the
+component), and (3) validates the parameters, if any, by applying the 
+validation rules specified in the component object. Iff all of these
+conditions are met, the component is called with the provided parameters.
 EOH
     },
 
