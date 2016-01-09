@@ -1568,30 +1568,45 @@ sub handler_genreport {
     return $fail unless $path;
     delete $entity->{'path'};
 
-    # - convert $entity hashref into @entity array for validation
-    my $count = 0;
-    my @entity;
-    foreach my $key ( keys %$entity ) {
-        $entity[$count] = $key;
-        $count += 1;
-        $entity[$count] = $entity->{$key};
-        $count += 1;
+    # - if there is a 'parameters' property, check that it is a hashref
+    my $parameters;
+    if ( $entity->{'parameters'} ) {
+        $log->debug( "Vetting parameters: " . Dumper $entity->{'parameters'} ) ;
+        if ( ref( $entity->{'parameters'} ) ne 'HASH' ) {
+            $self->mrest_declare_status( 
+                code => 400, 
+                explanation => 'parameters must be given as key:value pairs'
+            );
+            return $fail;
+        }
+        # - convert $parameters hashref into @entity array for validation
+        my $count = 0;
+        foreach my $key ( keys %{ $entity->{'parameters'} } ) {
+            $parameters->[$count] = $key;
+            $count += 1;
+            $parameters->[$count] = $entity->{'parameters'}->{$key};
+            $count += 1;
+        }
     }
 
     # - if there is a validations property, convert it into a hashref
+    #   and check the parameters against it
     if ( my $validations = $comp->{validations} ) { 
-        $comp->{validations} = eval $comp->{validations};
-        die "AGAAKH! validations is not a HASHREF: " . Dumper $comp->{validations}
-            unless ref( $comp->{validations} ) eq 'HASH';
-    }
-
-    # - if there is a parameters property in the component, 
-    #   check the entity against it
-    if ( $comp->{'validations'} ) {
         my $success = 1;
-        $log->debug( "About to validate entity: " . Dumper \@entity );
+        $comp->{validations} = eval $validations;
+        $log->debug( "Validations after eval: " . Dumper $comp->{validations} );
+        if ( ref( $comp->{validations} ) ne 'HASH' ) {
+            $self->mrest_declare_status(
+                code => 500,
+                explanation => "AGAAKH! validations is not a HASHREF: $validations"
+            );
+            $success = 0;
+        }
+        return $fail unless $success;
+        $parameters = {} if not defined $parameters;
+        $log->debug( "About to validate parameters: " . Dumper $parameters );
         validate_with( 
-            params => \@entity, 
+            params => $parameters,
             spec => $comp->{'validations'},
             on_fail => sub {
                 my $errmsg = shift;
@@ -1603,7 +1618,11 @@ sub handler_genreport {
     }
 
     # - generate report
-    return $CELL->status_ok( 'DISPATCH_GENERATED_REPORT', payload => $comp->generate( %$entity ) );
+    $parameters = [] if not defined $parameters;
+    return $CELL->status_ok( 
+        'DISPATCH_GENERATED_REPORT', 
+        payload => $comp->generate( my %paramhash = @$parameters )
+    );
 }
 
 
