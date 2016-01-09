@@ -38,7 +38,7 @@ use 5.012;
 use strict;
 use warnings;
 
-use App::CELL::Test::LogToFile;
+#use App::CELL::Test::LogToFile;
 use App::CELL qw( $log $meta $site );
 use App::Dochazka::REST::ConnBank qw( $dbix_conn );
 use App::Dochazka::REST::Test;
@@ -79,7 +79,7 @@ $status = req( $test, 200, 'root', 'POST', $base, <<EOS );
 { "path":"/sample/site_param.mc", "parameters":{ "param":"DOCHAZKA_STATE_DIR" } }
 EOS
 is( $status->level, 'OK' );
-like( $status->payload, qr/The value of site param DOCHAZKA_STATE_DIR is / );
+like( $status->payload, qr{site_param_name = 'DOCHAZKA_STATE_DIR'.*site_param_value = '/var/lib/dochazka'}s );
 
 note( "sample/site_param.mc error path missing mandatory parameter I" );
 $status = req( $test, 400, 'root', 'POST', $base, '{ "path":"/sample/site_param.mc" }' );

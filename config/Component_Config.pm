@@ -46,6 +46,7 @@ set( 'DOCHAZKA_COMPONENT_DEFINITIONS', [
     source => <<'EOS',
 <%class>
 has 'param' => (isa => 'Str', required => 1);
+use Data::Dumper;
 </%class>
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN"
     "http://www.w3.org/TR/html4/strict.dtd">
@@ -55,7 +56,9 @@ has 'param' => (isa => 'Str', required => 1);
     <title>Dochazka Site Param</title>
   </head>
   <body>
-The value of site param <% $.param %> is <% $site->get($.param) %>.
+<pre>
+$site_param_name = '<% $.param %>';<BR>
+<% Data::Dumper->Dump( [ $site->get($.param) ], [ 'site_param_value' ] ) %>
   </body>
 </html>
 EOS
