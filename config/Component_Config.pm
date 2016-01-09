@@ -57,13 +57,45 @@ use Data::Dumper;
   </head>
   <body>
 <pre>
-$site_param_name = '<% $.param %>';<BR>
+$site_param_name = '<% $.param %>';
 <% Data::Dumper->Dump( [ $site->get($.param) ], [ 'site_param_value' ] ) %>
+</pre>
   </body>
 </html>
 EOS
     acl => 'admin',
     validations => q/{ 'param' => { 'type' => SCALAR } }/,
+  },
+  {
+    path => 'suse-cz-monthly.mc',
+    source => <<'EOS',
+<%class>
+has 'employee' => (isa => 'HashRef', required => 1);
+has 'tsrange' => (isa => 'Str', required => 1);
+use Data::Dumper;
+</%class>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN"
+    "http://www.w3.org/TR/html4/strict.dtd">
+<html lang="en">
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <title>Dochazka Monthly Report</title>
+  </head>
+  <body>
+<pre>
+<% Data::Dumper->Dump( [ $.employee ], [ 'employee' ] ) %>
+$tsrange = '<% $.tsrange %>';
+</pre>
+  </body>
+</html>
+EOS
+    acl => 'active',
+    validations => q/
+{
+    employee => { type => HASHREF },
+    tsrange => { type => SCALAR },
+}
+    /,
   },
 #  {
 #    path => '',
