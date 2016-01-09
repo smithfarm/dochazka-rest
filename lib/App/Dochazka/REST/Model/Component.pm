@@ -206,7 +206,7 @@ sub update {
         eid => $context->{'current'}->{'eid'},
         object => $self,
         sql => $site->SQL_COMPONENT_UPDATE,
-        attrs => [ 'path', 'source', 'acl', 'cid', 'validations' ],
+        attrs => [ 'path', 'source', 'acl', 'validations', 'cid' ],
     );
 
     $self->create_file if $status->ok;
