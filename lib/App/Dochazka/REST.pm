@@ -390,9 +390,11 @@ sub reset_db {
         $conn->txn( fixup => sub {
             my $sth = $_->prepare( $site->SQL_COMPONENT_INSERT );
             foreach my $actdef ( @{ $site->DOCHAZKA_COMPONENT_DEFINITIONS } ) {
+                $actdef->{'validations'} = undef unless exists( $actdef->{'validations'} );
                 $sth->bind_param( 1, $actdef->{path} );
                 $sth->bind_param( 2, $actdef->{source} );
                 $sth->bind_param( 3, $actdef->{acl} );
+                $sth->bind_param( 4, $actdef->{validations} );
                 $sth->execute;
             }
         } );
