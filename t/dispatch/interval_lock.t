@@ -1061,8 +1061,9 @@ EOH
 ok( $status->ok );
 is( $status->code, 'DOCHAZKA_CUD_OK' );
 is( $status->{count}, 1 );
-diag( Dumper $status->payload );
-BAIL_OUT(0);
+
+$status = req( $test, 200, 'active', 'GET', "$base/$eid_active/[1980-01-01,1980-1-31)" );
+is( $status->level, 'OK' );
 is_deeply( $status->payload, {
            '1980-01-15' => {},
            '1980-01-11' => {},
