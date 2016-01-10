@@ -1,8 +1,11 @@
-FROM opensuse:13.2
+#
+# dochazka-rest Dockerized testing environment
+#
+FROM BASE_IMAGE
 MAINTAINER Nathan Cutler <ncutler@suse.com>
 
 # configure repo
-RUN zypper --no-gpg-checks --non-interactive addrepo http://download.opensuse.org/repositories/home:smithfarm/openSUSE_13.2/home:smithfarm.repo
+RUN zypper --no-gpg-checks --non-interactive addrepo http://download.opensuse.org/repositories/home:smithfarm/BUILD_TARGET/home:smithfarm.repo
 RUN zypper --no-gpg-checks --non-interactive ref
 
 # install "general utility" packages 
@@ -32,6 +35,7 @@ RUN zypper --no-gpg-checks --non-interactive install \
     perl-Test-JSON \
     perl-Test-Fatal \
     perl-Test-Warnings \
+    perl-Text-Table \
     perl-Web-Machine \
     perl-Web-MREST \
     perl-Web-MREST-CLI
@@ -59,10 +63,16 @@ RUN install -o smithfarm -g users -m 644 /tmp/gitconfig /home/smithfarm/.gitconf
 WORKDIR /home/smithfarm
 USER smithfarm
 RUN git clone git://github.com/smithfarm/dochazka-rest
+RUN git clone git://github.com/smithfarm/dochazka-cli
 WORKDIR /home/smithfarm/dochazka-rest
 RUN perl Build.PL
 RUN ./Build
 RUN sudo ./Build install
+WORKDIR /home/smithfarm/dochazka-cli
+RUN perl Build.PL
+RUN ./Build
+RUN sudo ./Build install
+WORKDIR /home/smithfarm
 
 # set up some aliases
 COPY alias /tmp/alias
