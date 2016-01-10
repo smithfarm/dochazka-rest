@@ -6,18 +6,26 @@
 # Dockerized testing environment in another container, linked to the
 # PostgreSQL container.
 
-docker rm -f dr >/dev/null 2>&1
-docker rm -f dr-postgres >/dev/null 2>&1
+echo "Destroying any existing containers called 'dochazka' and 'postgres'"
+docker rm -f dochazka >/dev/null 2>&1
+docker rm -f postgres >/dev/null 2>&1
+
+echo "Starting postgres container"
 docker run \
-    --name dr-postgres \
+    --name=postgres \
     -e POSTGRES_PASSWORD=chisel \
     -d \
-    postgres:9.3
+    -p "5432:5432" \
+    postgres:9.4
+
+echo "Waiting 5 seconds for postgres container to settle"
+sleep 5
+
+echo "Starting Dochazka REST server"
 docker run \
-    --user smithfarm \
-    -t \
-    --name dr \
-    --link dr-postgres:postgres \
-    -h dr \
+    --name=dochazka \
+    --link=postgres \
+    -h dochazka \
     -d \
-    dochazka-rest
+    -p "5000:5000" \
+    smithfarm/dochazka-42.1

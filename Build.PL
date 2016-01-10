@@ -26,6 +26,7 @@ my $builder = Module::Build->new(
         }
     },
     script_files         => [
+        'bin/dochazka-dbinit',
         'bin/dochazka-rest',
     ],
     configure_requires => {
