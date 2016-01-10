@@ -43,13 +43,13 @@ use App::CELL qw( $log $meta $site );
 use Data::Dumper;
 #use App::Dochazka::Common qw( $today $yesterday $tomorrow );
 use App::Dochazka::REST::ConnBank qw( $dbix_conn );
+use App::Dochazka::REST::Holiday qw( canon_to_ymd );
 use App::Dochazka::REST::Model::Activity;
 use App::Dochazka::REST::Model::Interval qw( delete_intervals_by_eid_and_tsrange );
 use App::Dochazka::REST::Model::Tempintvls;
 use App::Dochazka::REST::Model::Shared qw( noof );
 use App::Dochazka::REST::Model::Schedhistory;
 use App::Dochazka::REST::Test;
-use App::Dochazka::REST::Util::Date qw( canon_to_ymd );
 use Test::More;
 use Test::Warnings;
 
