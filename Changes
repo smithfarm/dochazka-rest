@@ -3420,3 +3420,16 @@ SPLIT OFF App::MREST into separate distribution
   - genreport resource: apply validations, if any
   - REST/Dispatch.pm->handler_genreport(): vet parameters more carefully
 
+0.517 2016-01-11 00:29 CET
+- config/Component_Config.pm: use Data::Dumper in component
+- config/Component_Config.pm: beginnings of monthly report template
+- t/model/tempintvls.t: change Util::Date to Holiday
+- Dispatch.pm->handler_genreport(): refactor function
+- Revamp Docker testing environment:
+  - version.plx: Perl script to print App::Dochazka::REST version
+  - .gitignore: ignore docker/Dockerfile
+  - bin/dochazka-dbinit: add database reset script
+  - docker: Makefile to generate 3 different images from a single
+    Dockerfile.in
+  - docker-test.sh: adapt to current state
+
