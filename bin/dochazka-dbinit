@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/perl
 # ************************************************************************* 
 # Copyright (c) 2014-2015, SUSE LLC
 # 
@@ -30,5 +30,35 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 # ************************************************************************* 
+#
+# - (re-)initialize the Dochazka database
 
-createdb dochazka-test
+use 5.012;
+use strict;
+use warnings;
+
+#use App::CELL::Test::LogToFile;
+use App::CELL qw( $CELL $site );
+use App::Dochazka::REST;
+use Try::Tiny;
+use Web::MREST;
+
+
+my $status = Web::MREST::init( distro => 'App-Dochazka-REST', sitedir => '/etc/dochazka-rest' );
+if ( $status->not_ok ) {
+    die "Not configured. Please run the test suite manually after initial site configuration";
+}
+
+die "AGGGHGHHH!!!! no timezone" unless $site->DOCHAZKA_TIMEZONE;
+
+# * * * WARNING: THIS WIPES THE DATABASE * * *
+# * * * ALL DATA IN IT WILL BE LOST      * * *
+$status = App::Dochazka::REST::reset_db(
+    $site->DBINIT_CONNECT_SUPERUSER,
+    $site->DBINIT_CONNECT_SUPERAUTH,
+);
+if ( $status->not_ok ) {
+    die "PostgreSQL server is unreachable";
+}
+
+print "Dochazka database reset to pristine state\n";

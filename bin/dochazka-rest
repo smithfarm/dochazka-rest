@@ -84,6 +84,7 @@ while true ; do
 	case "$1" in
                 -e|--echo) demo_echo $2 ; shift 2 ;;
 		-h|--help) display_help ; shift ;;
+                -i|--initialize) dochazka-dbinit ; shift ;;
 		-v|--version) display_version ; shift ;;
 		--) shift ; break ;;
 		*) echo "Internal error!" ; exit 1 ;;
