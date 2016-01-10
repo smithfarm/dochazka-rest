@@ -98,3 +98,4 @@ t/sql/root.t
 t/sql/schedintvl.t
 t/unit/ACL.t
 t/unit/holiday.t
+version.plx
