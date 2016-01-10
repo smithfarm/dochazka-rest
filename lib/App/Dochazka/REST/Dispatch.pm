@@ -1579,7 +1579,7 @@ sub handler_genreport {
             );
             return $fail;
         }
-        # - convert $parameters hashref into @entity array for validation
+        # - convert $parameters hashref into $parameters arrayref for validation
         my $count = 0;
         foreach my $key ( keys %{ $entity->{'parameters'} } ) {
             $parameters->[$count] = $key;
@@ -1591,23 +1591,18 @@ sub handler_genreport {
 
     # - if there is a validations property, convert it into a hashref
     #   and check the parameters against it
-    if ( my $validations = $comp->{validations} ) { 
-        my $success = 1;
-        $comp->{validations} = eval $validations;
-        $log->debug( "Validations after eval: " . Dumper $comp->{validations} );
-        if ( ref( $comp->{validations} ) ne 'HASH' ) {
-            $self->mrest_declare_status(
-                code => 500,
-                explanation => "AGAAKH! validations is not a HASHREF: $validations"
-            );
-            $success = 0;
-        }
-        return $fail unless $success;
+    if ( $comp->{validations} ) { 
+        my $validations = eval $comp->{validations};
+        $log->debug( "Validations before eval: " . Dumper $comp->{validations} );
+        $log->debug( "Validations after eval: " . Dumper $validations );
+        die "AGAAKH! validations is not a HASHREF: $validations" unless
+             ref( $validations ) eq 'HASH';
         $parameters = {} if not defined $parameters;
         $log->debug( "About to validate parameters: " . Dumper $parameters );
+        my $success = 1;
         validate_with( 
             params => $parameters,
-            spec => $comp->{'validations'},
+            spec => $validations,
             on_fail => sub {
                 my $errmsg = shift;
                 $self->mrest_declare_status( code => 400, explanation => $errmsg );
@@ -1615,6 +1610,8 @@ sub handler_genreport {
             },
         );
         return $fail unless $success;
+    } elsif ( $parameters ) {
+        $log->WARN( "Parameters were given to component, but component has no validations!" );
     }
 
     # - generate report
