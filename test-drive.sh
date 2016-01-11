@@ -18,7 +18,6 @@ else
     TARGET=42.1
 fi
 echo "TARGET is $TARGET"
-exit 0
 
 echo "Destroying any existing containers called 'dochazka' and 'postgres'"
 docker rm -f dochazka >/dev/null 2>&1
