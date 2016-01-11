@@ -29,5 +29,5 @@ RUN ln -sf /usr/share/zoneinfo/Europe/Prague /etc/localtime
 ENV PGTZ Europe/Prague
 
 # start the server
-CMD [ "initialize" ]
+CMD [ "--initialize" ]
 ENTRYPOINT [ "dochazka-rest" ]
