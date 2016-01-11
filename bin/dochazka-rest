@@ -42,7 +42,8 @@ function display_help {
     echo "the App::Dochazka::REST server";
     echo;
     echo "It takes the following command-line options:";
-    echo "  -h --help      Displays this text";
+    echo "  -h --help       Displays this text";
+    echo "  -i --initialize (Re-)initialize the database before starting";
     echo "  -v --version   Display App::Dochazka::REST version number";
     echo;
     echo "dochazka-rest is a wrapper for the mrest script from the";
@@ -72,7 +73,7 @@ function demo_echo {
 # Note that we use `"$@"' to let each command-line parameter expand to a
 # separate word. The quotes around `$@' are essential!
 # We need TEMP as the `eval set --' would nuke the return value of getopt.
-TEMP=`getopt -o e:hv --long echo:,help,version \
+TEMP=`getopt -o e:hiv --long echo:,help,initialize,version \
      -n 'dochakza-rest' -- "$@"`
 
 if [ $? != 0 ] ; then echo "Terminating..." >&2 ; exit 1 ; fi
