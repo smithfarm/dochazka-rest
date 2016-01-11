@@ -1,4 +1,4 @@
 #!/usr/bin/perl
-use lib 'lib/App/Dochazka/REST';
+use lib 'lib/';
 use App::Dochazka::REST;
 print App::Dochazka::REST::version();
