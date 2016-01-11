@@ -11,4 +11,5 @@ Build
 *.tar.gz
 blib
 *.bak
-docker/Dockerfile
+docker/production/Dockerfile
+docker/testing/Dockerfile
