@@ -46,7 +46,7 @@ use Params::Validate qw( :all );
 
 =head1 NAME
 
-App::Dochazka::REST::Dispatch::ACL - ACL module
+App::Dochazka::REST::ACL - ACL module
 
 
 
