@@ -6,6 +6,20 @@
 # Dockerized testing environment in another container, linked to the
 # PostgreSQL container.
 
+if [ "$#" -eq 1 ]
+then
+    case $1 in
+        13.2|42.1|tumbleweed)
+            echo "Valid argument" && TARGET=$1 ;;
+        *)
+            echo "Invalid argument" && exit -1 ;;
+    esac
+else
+    TARGET=42.1
+fi
+echo "TARGET is $TARGET"
+exit 0
+
 echo "Destroying any existing containers called 'dochazka' and 'postgres'"
 docker rm -f dochazka >/dev/null 2>&1
 docker rm -f postgres >/dev/null 2>&1
@@ -28,4 +42,4 @@ docker run \
     -h dochazka \
     -d \
     -p "5000:5000" \
-    smithfarm/dochazka-42.1
+    dochazka/rest-$TARGET

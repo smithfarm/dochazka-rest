@@ -10,13 +10,25 @@ Documentation
 
 http://metacpan.org/pod/App::Dochazka::REST
 
+Test drive
+==========
+
+The :code:`test-drive.sh` script makes it possible to take
+App::Dochazka::REST for a test drive without installing it. The only
+prerequisite is that Docker must be installed and running. ::
+
+    $ ./test-drive.sh
+
+When the script finishes, you should be able to access the REST server
+on port 5000.
+
 Dockerized testing environment
 ==============================
 
 The git repo includes a :code:`Dockerfile` that can be used to create
 a Dockerized testing environment: ::
 
-    $ docker build -t dochazka-rest docker/
+    $ docker build -t dochazka-rest docker/testing/
 
 The resulting image, tagged :code:`dochazka-rest`, is designed to work with
 the `official PostgreSQL Docker images`_. 
