@@ -81,3 +81,6 @@ release.sh$
 
 # Avoid "tickets"
 \btickets$
+
+# Avoid "testers"
+\btesters/
