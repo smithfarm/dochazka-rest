@@ -3433,3 +3433,9 @@ SPLIT OFF App::MREST into separate distribution
     Dockerfile.in
   - docker-test.sh: adapt to current state
 
+0.518 2016-01-11 18:29 CET
+- version.plx: use the right library directory
+- docker/: split into two separate subdirs "production" and "testing"
+- docker/: fix CMD so it runs dochazka-rest --initialize
+- bin/dochazka-rest: finish adding --initialize option
+
