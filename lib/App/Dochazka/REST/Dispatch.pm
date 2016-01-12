@@ -2496,53 +2496,41 @@ sub handler_get_schedule_eid {
 }
 
 
-=head3 handler_get_interval_fillup_eid
+=head3 handler_post_interval_fillup
+
+Handler for POST interval/fillup. For a description of what we're trying to
+do, see https://github.com/smithfarm/dochazka-rest/issues/60
 
 =cut
 
-sub handler_interval_fillup_eid {
+sub handler_post_interval_fillup {
     my ( $self, $pass ) = @_;
-    $log->debug( "Entering " . __PACKAGE__ .  "::handler_get_interval_fillup_eid" ); 
-
-    return _handler_interval_fillup( $self, 'eid', $pass );
-}
-
-=head3 handler_get_interval_fillup_nick
-
-=cut
-
-sub handler_interval_fillup_nick {
-    my ( $self, $pass ) = @_;
-    $log->debug( "Entering " . __PACKAGE__ .  "::handler_get_interval_fillup_nick" ); 
-
-    return _handler_interval_fillup( $self, 'nick', $pass );
-}
-
-=head3 handler_get_interval_fillup_self
-
-=cut
-
-sub handler_interval_fillup_self {
-    my ( $self, $pass ) = @_;
-    $log->debug( "Entering " . __PACKAGE__ .  "::handler_get_interval_fillup_self" ); 
-    return _handler_interval_fillup( $self, 'self', $pass );
-}
-
-sub _handler_interval_fillup {
-    my ( $self, $key, $pass ) = @_;
 
     my $context = $self->context;
-    my $method = $self->context->{'method'};
+    my $method = $context->{'method'};
+    my $entity = $context->{'request_entity'};
 
     # first pass
     if ( $pass == 1 ) {
-        my $value;
-        if ( $key eq 'self' ) {
+        # get the key and value indicating the subject employee
+        my ( $key, $value );
+        # the key can be one and only one of the following: 
+        # eid, nick, sec_id (in that order; additional keys are ignored)
+        if ( $entity->{eid} ) {
             $key = 'eid';
-            $value = $context->{'current'}->{'eid'};
-            #$log->info("_handler_interval_fillup (self): key ->$key<- value ->$value<-" );
+            $value = $entity->{eid};
+        } elsif ( $entity->{nick} ) {
+            $key = 'nick';
+            $value = $entity->{nick};
+        } elsif ( $entity->{sec_id} ) {
+            $key = 'sec_id';
+            $value = $entity->{sec_id};
         } else {
-            $value = $context->{'mapping'}->{ $key };
+            $self->mrest_declare_status( 
+                code => 404, 
+                explanation => "DISPATCH_EMPLOYEE_CANNOT_BE_DETERMINED" 
+            );
+            return 0;
         }
         if ( ! acl_check_is_me( $self, $key => $value ) ) {
             $self->mrest_declare_status( code => 403, explanation => "DISPATCH_KEEP_TO_YOURSELF" );
