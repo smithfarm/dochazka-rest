@@ -37,7 +37,7 @@ sleep 5
 echo "Starting Dochazka REST server"
 docker run \
     --name=dochazka \
-    --link=postgres \
+    --link=postgres:postgres \
     -h dochazka \
     -d \
     -p "5000:5000" \
