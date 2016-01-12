@@ -93,18 +93,18 @@ fields in the C<employees> table are optional.
 
 The C<employees> database table is defined as follows:
 
-    CREATE TABLE employees (
-        eid       serial PRIMARY KEY,
-        nick      varchar(32) UNIQUE NOT NULL,
-        sec_id    varchar(64) UNIQUE
-        fullname  varchar(96) UNIQUE,
-        email     text UNIQUE,
-        passhash  text,
-        salt      text,
-        remark    text,
-        stamp     json
+    CREATE TABLE IF NOT EXISTS employees (
+        eid        serial PRIMARY KEY,
+        nick       varchar(32) UNIQUE NOT NULL,
+        sec_id     varchar(64) UNIQUE,
+        fullname   varchar(96) UNIQUE,
+        email      text UNIQUE,
+        passhash   text,
+        salt       text,
+        supervisor integer REFERENCES employees (eid),
+        remark     text,
+        CONSTRAINT kosher_nick CHECK (nick ~* '^[[:alnum:]_][[:alnum:]_-]+$')
     )
-
 
 =head3 EID
 
@@ -116,28 +116,25 @@ change from time to time. The EID should never, ever change.
 
 =head3 nick
 
-The C<nick> field is intended to be used for storing the employee's username.
-While storing each employee's username in the Dochazka database has undeniable
-advantages, it is not required - how employees are identified is a matter of
-site policy, and internally Dochazka does not use the nick to identify
-employees. Should the nick field have a value, however, Dochazka requires that
-it be unique.
+The idea behind the C<nick> field is that each employee can have an
+easy-to-remember nickname - ideally something that appeals to them, personally.
+The C<nick> is required and can only contain certain characters (alphanumerics,
+underscore, hyphen).
 
 
 =head3 sec_id
 
 The secondary ID is an optional unique string identifying the employee.
 This could be useful at sites where employees already have a nick (username)
-and a numeric ID, for example, and the administrators need to have the 
-ability to look up employees by their numeric ID.
+and a numeric ID, for example. This gives administrators and supervisors the
+ability to look up employees by their numeric ID as well as their username
+(nick).
 
 
 =head3 fullname, email
 
-Dochazka does not maintain any history of changes to the C<employees> table. 
-
-The C<full_name> and C<email> fields must also be unique if they have a
-value. Dochazka does not check if the email address is valid. 
+These fields are optional. If they have a value, it must be unique.  value.
+Dochazka does not check if the email address is valid. 
 
 Depending on how C<App::Dochazka::REST> is configured (see especially the
 C<DOCHAZKA_PROFILE_EDITABLE_FIELDS> site parameter), these fields may be
@@ -147,13 +144,22 @@ allowed to maintain their own information.
 
 =head3 passhash, salt
 
-The passhash and salt fields are optional. See L</AUTHENTICATION> for
-details.
+The optional passhash and salt fields are designed to hold a hashed password
+and random salt. See L<App::Dochazka::REST::Guide/AUTHENTICATION AND SESSION
+MANAGEMENT> for details.
 
 
-=head3 remark, stamp
+=head3 supervisor
 
-# FIXME
+If the employee has a supervisor who will use Dochazka to monitor the
+employee's attendance, and provided that supervisor has an EID, this field can
+be used to set up the relationship.
+
+
+=head3 remark
+
+This field can be used by administrators for any purpose. Ordinarily, the
+employee herself is not permitted to edit or even display it.
 
 
 
