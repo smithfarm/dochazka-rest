@@ -2532,6 +2532,7 @@ sub handler_post_interval_fillup {
             );
             return 0;
         }
+        map { delete $entity->{$_} } ( 'eid', 'nick', 'sec_id' );
         if ( ! acl_check_is_me( $self, $key => $value ) ) {
             $self->mrest_declare_status( code => 403, explanation => "DISPATCH_KEEP_TO_YOURSELF" );
             return 0;
