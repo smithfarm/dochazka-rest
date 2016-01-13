@@ -31,10 +31,10 @@ docker run \
     -p "5432:5432" \
     postgres:9.4
 
-echo "Waiting 5 seconds for postgres container to settle"
-sleep 5
+echo "Waiting 60 seconds for the PostgreSQL container to settle"
+sleep 60
 
-echo "Starting Dochazka REST server"
+echo "Starting Dochazka REST container"
 docker run \
     --name=dochazka \
     --link=postgres:postgres \
@@ -42,3 +42,6 @@ docker run \
     -d \
     -p "5000:5000" \
     dochazka/rest-$TARGET
+
+echo "Waiting 60 seconds for the Dochazka REST container to settle"
+sleep 60
