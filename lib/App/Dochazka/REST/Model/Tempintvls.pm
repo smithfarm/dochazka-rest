@@ -39,6 +39,7 @@ use App::CELL qw( $CELL $log $meta $site );
 use App::Dochazka::REST::ConnBank qw( $dbix_conn );
 use App::Dochazka::REST::Model::Employee;
 use App::Dochazka::REST::Model::Shared qw(
+    canonicalize_date
     cud_generic
     select_set_of_single_scalar_rows
     select_single
@@ -56,6 +57,7 @@ use Date::Calc qw(
     Add_Delta_Days
     Date_to_Days
     Day_of_Week
+    check_date
 );
 use JSON;
 use Params::Validate qw( :all );
@@ -64,6 +66,17 @@ use Try::Tiny;
 # we get 'spawn', 'reset', and accessors from parent
 use parent 'App::Dochazka::Common::Model::Tempintvls';
 
+our @attr = qw(
+    tid
+    context
+    emp_obj
+    act_obj
+    date_list
+    tsrange
+    long_desc
+    remark
+    constructor_status
+);
 my %dow_to_num = (
     'MON' => 1,
     'TUE' => 2,
@@ -96,108 +109,6 @@ App::Dochazka::REST::Model::Tempintvls - object class for "scratch schedules"
 =head1 METHODS
 
 
-=head2 tiid
-
-If tiid attribute has been populated, return it. If it hasn't been,
-populate it and return it.
-
-=cut
-
-sub tiid {
-    my $self = shift;
-
-    if ( ! exists( $self->{'tiid'} ) or ! defined( $self->{'tiid'} ) or $self->{'tiid'} == 0 ) {
-        my $ss = _next_tiid();
-        $log->info( "Got next TIID: $ss" );
-        $self->{'tiid'} = $ss;
-    }
-    return $self->{'tiid'};
-}
-
-
-=head2 aid
-
-Accessor for C<aid> attribute. May return undef.
-
-=cut
-
-sub aid {
-    my $self = shift;
-    $self->{'aid'} = $_[0] if exists $_[0];
-    return $self->{'aid'};
-}
-
-
-=head2 constructor_status
-
-Accessor for C<constructor_status> attribute. May return undef.
-
-=cut
-
-sub constructor_status {
-    my $self = shift;
-    $self->{'constructor_status'} = $_[0] if exists $_[0];
-    return $self->{'constructor_status'};
-}
-
-
-=head2 context
-
-Accessor for C<context> attribute. May return undef.
-
-=cut
-
-sub context {
-    my $self = shift;
-    if ( exists $_[0] ) {
-        $self->{'context'} = $_[0]; 
-        if ( exists( $_[0]->{dbix_conn} ) and $_[0]->{dbix_conn}->isa( 'DBIx::Connector' ) ) {
-            $self->dbix_conn( $_[0]->{dbix_conn} );
-        }
-    }
-    return $self->{'context'};
-}
-
-
-=head2 dbix_conn
-
-Accessor for C<dbix_conn> attribute. May return undef.
-
-=cut
-
-sub dbix_conn {
-    my $self = shift;
-    $self->{'dbix_conn'} = $_[0] if exists $_[0];
-    return $self->{'dbix_conn'};
-}
-
-
-=head2 eid
-
-Accessor for C<eid> attribute. May return undef.
-
-=cut
-
-sub eid {
-    my $self = shift;
-    $self->{'eid'} = $_[0] if exists $_[0];
-    return $self->{'eid'};
-}
-
-
-=head2 tsrange
-
-Accessor for C<tsrange> attribute. May return undef.
-
-=cut
-
-sub tsrange {
-    my $self = shift;
-    $self->{'tsrange'} = $_[0] if exists $_[0];
-    return $self->{'tsrange'};
-}
-
-
 =head2 populate
 
 Called automatically when new object is instantiated; assigns next TIID.
@@ -206,15 +117,218 @@ Called automatically when new object is instantiated; assigns next TIID.
 
 sub populate {
     my $self = shift;
-    return $self->tiid;
+    if ( ! exists( $self->{tiid} ) or ! defined( $self->{tiid} ) or $self->{tiid} == 0 ) {
+        my $ss = _next_tiid();
+        $log->info( "Got next TIID: $ss" );
+        $self->{tiid} = $ss;
+    }
+    return;
+}
+
+
+=head2 reset
+
+Since we add several (non-scalar) attributes, the inherited version of
+C<reset> is not sufficient.
+
+=cut
+
+sub reset {
+    # process arguments
+    my $self = shift;
+    my $val_spec;
+    map { $val_spec->{$_} = 0; } @attr;
+    my %ARGS = validate( @_, $val_spec ) if @_ and defined $_[0];
+
+    # Set attributes to run-time values sent in argument list.
+    # Attributes that are not in the argument list will get set to undef.
+    map { $self->{$_} = $ARGS{$_}; } @attr;
+
+    # run the populate function, if any
+    $self->populate() if $self->can( 'populate' );
+
+    # return an appropriate throw-away value
+    return;
+}
+
+
+=head2 Accessors
+
+These accessors must be defined here because the boilerplate
+accessors from L<App::Dochazka::Common> take only SCALAR and UNDEF as their
+argument.
+
+=cut
+
+sub context {
+    my $self = shift;
+    validate_pos( @_, { 
+        type => HASHREF, 
+        optional => 1 } 
+    );
+    $self->{'context'} = shift if @_;
+    $self->{'context'} = undef unless exists $self->{'context'};
+    return $self->{'context'};
+}
+
+sub emp_obj {
+    my $self = shift;
+    validate_pos( @_, { 
+        type => HASHREF, 
+        isa => 'App::Dochazka::REST::Model::Employee', 
+        optional => 1 
+    } );
+    $self->{'emp_obj'} = shift if @_;
+    $self->{'emp_obj'} = undef unless exists $self->{'emp_obj'};
+    return $self->{'emp_obj'};
+}
+
+sub act_obj {
+    my $self = shift;
+    validate_pos( @_, { 
+        type => HASHREF, 
+        isa => 'App::Dochazka::REST::Model::Activity', 
+        optional => 1 
+    } );
+    $self->{'act_obj'} = shift if @_;
+    $self->{'act_obj'} = undef unless exists $self->{'act_obj'};
+    return $self->{'act_obj'};
+}
+
+sub date_list {
+    my $self = shift;
+    validate_pos( @_, { 
+        type => ARRAYREF,
+        optional => 1 
+    } );
+    $self->{'date_list'} = shift if @_;
+    $self->{'date_list'} = undef unless exists $self->{'date_list'};
+    return $self->{'date_list'};
+}
+
+sub constructor_status {
+    my $self = shift;
+    validate_pos( @_, { 
+        type => HASHREF,
+        isa => 'App::CELL::Status',
+        optional => 1 
+    } );
+    $self->{'constructor_status'} = shift if @_;
+    $self->{'constructor_status'} = undef unless exists $self->{'constructor_status'};
+    return $self->{'constructor_status'};
+}
+
+
+=head2 _vet_context
+
+Performs various tests on the C<context> attribute. If the value of that
+attribute is not what we're expecting, returns a non-OK status. Otherwise,
+returns an OK status.
+
+=cut
+
+sub _vet_context {
+    my $self = shift;
+    my %ARGS = @_;
+    return $CELL->status_not_ok unless $ARGS{context};
+    return $CELL->status_not_ok unless $ARGS{context}->{dbix_conn};
+    return $CELL->status_not_ok unless $ARGS{context}->{dbix_conn}->isa('DBIx::Connector');
+    $self->context( $ARGS{context} );
+    $self->{'vetted'}->{'context'} = 1;
+    return $CELL->status_ok;
+}
+
+
+=head2 _vet_date_spec
+
+The user can specify fillup dates either as a tsrange or as a list of
+individual dates.
+
+One or the other must be given, not neither and not both.
+
+Returns a status object.
+
+=cut
+
+sub _vet_date_spec {
+    my $self = shift;
+    my %ARGS = @_;
+    $log->debug( "Entering " . __PACKAGE__ . "::_vet_date_spec to enforce date specification policy" );
+
+    if ( defined( $ARGS{date_list} ) and defined( $ARGS{tsrange} ) ) {
+        return $CELL->status_not_ok;
+    }
+    if ( ! defined( $ARGS{date_list} ) and ! defined( $ARGS{tsrange} ) ) {
+        return $CELL->status_not_ok;
+    }
+    $self->{'vetted'}->{'date_spec'} = 1;
+    return $CELL->status_ok;
+}
+
+
+=head2 _vet_date_list
+
+This function takes one named argument: date_list, the value of which must
+be a reference to an array of dates, each in canonical YYYY-MM-DD form. For
+example, this
+
+    [ '2016-01-13', '2016-01-27', '2016-01-14' ]
+
+is a legal C<date_list> argument.
+
+This function performs various checks on the date list, sorts it, and
+populates the C<tsrange> attribute based on it. For the sample date list
+given above, the tsrange will be C<[ 2016-01-13 00:00, 2016-01-27 24:00 )>.
+
+Returns a status object.
+
+=cut
+
+sub _vet_date_list {
+    my $self = shift;
+    my ( %ARGS ) = validate( @_, {
+        date_list => { type => ARRAYREF|UNDEF },
+    } );
+    $log->debug( "Entering " . __PACKAGE__ . "::_vet_date_list to vet/populate the date_list property" );
+
+    die "GOPHFQQ! tsrange property must not be populated in _vet_date_list()" if $self->tsrange;
+
+    return $CELL->status_ok if not defined( %ARGS{date_list} );
+
+    # check that dates are valid and in canonical form
+    my @canonicalized_date_list = ();
+    foreach my $date ( @{ $ARGS{date_list} } ) {
+        my ( $y, $m, $d ) = canon_to_ymd( $date );
+        if ( ! check_date( $y, $m, $d ) ) {
+            return $CELL->status_err( 
+                "DOCHAZKA_INVALID_DATE_IN_DATE_LIST",
+                args => [ $date ],
+            );
+        }
+        push @canonicalized_date_list, sprintf( "%04d-%02d-%02d", $y, $m, $d );
+    }
+    my @sorted_date_list = sort @canonicalized_date_list;
+    $self->date_list( \@sorted_date_list );
+
+    # populate tsrange
+    if ( scalar @sorted_date_list == 0 ) {
+        $self->tsrange( undef );
+    } elsif ( scalar @sorted_date_list == 1 ) {
+        $self->tsrange( "[ $sorted_date_list[0] 00:00, $sorted_date_list[0] 24:00 )" );
+    } else {
+        $self->tsrange( "[ $sorted_date_list[0] 00:00, $sorted_date_list[-1] 24:00 )" );
+    }
+ 
+    $self->{'vetted'}->{'date_list'} = 1;
+    return $CELL->status_ok; 
 }
 
 
 =head2 _vet_tsrange
 
-Takes a C<DBIx::Connector> object and a tsrange.  Checks the tsrange for sanity
-and populates the C<tsrange>, C<lower_canon>, C<lower_ymd>, C<upper_canon>,
-C<upper_ymd> attributes. Returns a status object.
+Takes a tsrange. Checks the tsrange for sanity and populates the
+C<tsrange>, C<lower_canon>, C<lower_ymd>, C<upper_canon>, C<upper_ymd>
+attributes. Returns a status object.
 
 =cut
 
@@ -227,7 +341,7 @@ sub _vet_tsrange {
 
     # split the tsrange
     my @parens = $ARGS{tsrange} =~ m/[^\[(]*([\[(])[^\])]*([\])])/;
-    my $status = split_tsrange( $self->dbix_conn, $ARGS{tsrange} );
+    my $status = split_tsrange( $self->context->{'dbix_conn'}, $ARGS{tsrange} );
     $log->info( "split_tsrange() returned: " . Dumper( $status ) );
     return $status unless $status->ok;
     my $low = $status->payload->[0];
@@ -265,7 +379,7 @@ sub _vet_tsrange {
 
 Expects to be called *after* C<_vet_tsrange>.
 
-Takes a C<DBIx::Connector> object and an employee object. First, retrieves
+Takes an employee object. First, retrieves
 from the database the employee object corresponding to the EID. Second,
 checks that the employee's privlevel did not change during the tsrange.
 Third, retrieves the prevailing schedule and checks that the schedule does
@@ -283,20 +397,28 @@ sub _vet_employee {
     } );
     my $status;
 
-    die 'AKLDWW###$$%AAAAAH!' unless $ARGS{emp_obj}->eid;
+    die 'AKLDWW###%AAAAAH!' unless $ARGS{emp_obj}->eid;
     $self->{'emp_obj'} = $ARGS{emp_obj};
-    $self->eid( $ARGS{emp_obj}->eid );
 
     # check for priv and schedule changes during the tsrange
-    if ( $self->{'emp_obj'}->priv_change_during_range( $self->dbix_conn, $self->{tsrange} ) ) {
+    if ( $self->{'emp_obj'}->priv_change_during_range( 
+        $self->context->{'dbix_conn'}, 
+        $self->tsrange,
+    ) ) {
         return $CELL->status_err( 'DOCHAZKA_EMPLOYEE_PRIV_CHANGED' ); 
     }
-    if ( $self->{'emp_obj'}->schedule_change_during_range( $self->dbix_conn, $self->{tsrange} ) ) {
+    if ( $self->{'emp_obj'}->schedule_change_during_range(
+        $self->context->{'dbix_conn'}, 
+        $self->tsrange,
+    ) ) {
         return $CELL->status_err( 'DOCHAZKA_EMPLOYEE_SCHEDULE_CHANGED' ); 
     }
 
     # get privhistory record prevailing at beginning of tsrange
-    my $probj = $self->{emp_obj}->privhistory_at_timestamp( $self->dbix_conn, $self->{tsrange} );
+    my $probj = $self->{emp_obj}->privhistory_at_timestamp( 
+        $self->context->{'dbix_conn'}, 
+        $self->tsrange
+    );
     if ( ! $probj->priv ) {
         return $CELL->status_err( 'DISPATCH_EMPLOYEE_NO_PRIVHISTORY' );
     }
@@ -307,13 +429,16 @@ sub _vet_employee {
     }
 
     # get schedhistory record prevailing at beginning of tsrange
-    my $shobj = $self->{emp_obj}->schedhistory_at_timestamp( $self->dbix_conn, $self->{tsrange} );
+    my $shobj = $self->{emp_obj}->schedhistory_at_timestamp( 
+        $self->context->{'dbix_conn'}, 
+        $self->tsrange
+    );
     if ( ! $shobj->sid ) {
         return $CELL->status_err( 'DISPATCH_EMPLOYEE_NO_SCHEDULE' );
     }
     my $sched_obj = App::Dochazka::REST::Model::Schedule->load_by_sid(
-        $self->dbix_conn,
-        $shobj->sid
+        $self->context->{'dbix_conn'},
+        $shobj->sid,
     )->payload;
     die "AGAHO-NO!" unless ref( $sched_obj) eq 'App::Dochazka::REST::Model::Schedule'
         and $sched_obj->schedule =~ m/high_dow/;
@@ -340,7 +465,10 @@ sub _vet_activity {
 
     if ( exists( $ARGS{aid} ) and defined( $ARGS{aid} ) ) {
         # load activity object from database into $self->{act_obj}
-        $status = App::Dochazka::REST::Model::Activity->load_by_aid( $self->dbix_conn, $ARGS{aid} );
+        $status = App::Dochazka::REST::Model::Activity->load_by_aid( 
+            $self->context->{'dbix_conn'}, 
+            $ARGS{aid}
+        );
         if ( $status->ok and $status->code eq 'DISPATCH_RECORDS_FOUND' ) {
             # all green; fall thru to success
             $self->{'act_obj'} = $status->payload;
@@ -353,7 +481,10 @@ sub _vet_activity {
         }
     } else {
         # if no aid given, try to look up "WORK"
-        $status = App::Dochazka::REST::Model::Activity->load_by_code( $self->dbix_conn, 'WORK' );
+        $status = App::Dochazka::REST::Model::Activity->load_by_code( 
+            $self->context->{'dbix_conn'},
+            'WORK'
+        );
         if ( $status->ok and $status->code eq 'DISPATCH_RECORDS_FOUND' ) {
             # all green; fall thru to success
             $self->{'act_obj'} = $status->payload;
@@ -382,9 +513,11 @@ sub vetted {
         $self->{'vetted'}->{'tsrange'} and 
         $self->{'tsrange'} and
         $self->{'vetted'}->{'employee'} and 
-        $self->eid and
+        $self->emp_obj and
+        ref( $self->emp_obj ) eq 'App::Dochazka::REST::Model::Employee' and
         $self->{'vetted'}->{'activity'} and
-        $self->aid
+        $self->act_obj and
+        ref( $self->act_obj ) eq 'App::Dochazka::REST::Model::Activity'
     ) ? 1 : 0;
 }
 
@@ -425,7 +558,7 @@ sub fillup {
     # the insert operation needs to take place within a transaction
     # so we don't leave a mess behind if there is a problem
     try {
-        $self->dbix_conn->txn( fixup => sub {
+        $self->context->{'dbix_conn'}->txn( fixup => sub {
             my $sth = $_->prepare( $site->SQL_TEMPINTVLS_INSERT );
             my $intvls;
 
@@ -491,15 +624,20 @@ sub new {
     my $self = shift;
     my ( %ARGS ) = validate( @_, {
         context => { type => HASHREF },
-        tsrange => { type => SCALAR },
-        aid => { type => SCALAR|UNDEF, optional => 1 },
         emp_obj => { 
-            type => HASHREF|UNDEF, 
+            type => HASHREF,
             isa => 'App::Dochazka::REST::Model::Employee', 
         },
+        aid => { type => SCALAR|UNDEF, optional => 1 },
+        code => { type => SCALAR|UNDEF, optional => 1 },
+        tsrange => { type => SCALAR|UNDEF, optional => 1 },
+        date_list => { type => SCALAR|UNDEF, optional => 1 },
+        long_desc => { type => SCALAR|UNDEF, optional => 1 },
+        remark => { type => SCALAR|UNDEF, optional => 1 },
     } );
     my ( $status );
 
+    # (re-)initialize $self
     if ( ref( $self ) and $self->isa( 'App::Dochazka::REST::Model::Tempintvls' ) ) {
         $self->reset;
     } else {
@@ -507,14 +645,13 @@ sub new {
     }
     die "AGHOOPOWDD@! No tiid in Tempintvls object!" unless $self->tiid;
 
-    $self->context( $ARGS{context} );
-
-    if ( exists( $ARGS{context}->{dbix_conn} ) and $ARGS{context}->{dbix_conn}->isa('DBIx::Connector') ) {
-        $self->dbix_conn( $ARGS{context}->{dbix_conn} );
-    } else {
-        die "AGHOOPOWDB@! No DBIx::Connector in context!";
-    }
-
+    # the order of the following checks is significant!
+    $self->constructor_status( $self->_vet_context( context => $ARGS{context} ) );
+    return $self unless $self->constructor_status->ok;
+    $self->constructor_status( $self->_vet_date_spec( %ARGS ) );
+    return $self unless $self->constructor_status->ok;
+    $self->constructor_status( $self->_vet_date_list( date_list => $ARGS{date_list} ) );
+    return $self unless $self->constructor_status->ok;
     $self->constructor_status( $self->_vet_tsrange( tsrange => $ARGS{tsrange} ) );
     return $self unless $self->constructor_status->ok;
     $self->constructor_status( $self->_vet_employee( emp_obj => $ARGS{emp_obj} ) );
@@ -545,7 +682,7 @@ sub dump {
     my $status;
 
     $status = select_set_of_single_scalar_rows(
-        conn => $self->dbix_conn,
+        conn => $self->context->{'dbix_conn'},
         sql => $site->SQL_TEMPINTVLS_SELECT,
         keys => [ $ARGS{tiid} ],
     );
@@ -582,8 +719,8 @@ sub commit {
 
     # write the rows
     $status = cud_generic(
-        conn => $self->dbix_conn,
-        eid => $self->eid,
+        conn => $self->context->{'dbix_conn'},
+        eid => $self->emp_obj->eid,
         sql => $site->SQL_TEMPINTVLS_COMMIT,
         bind_params => [ 
             $next->tiid, $self->tiid, $self->{tsrange},
@@ -595,7 +732,7 @@ sub commit {
 
     # get the rows we just wrote
     $status = select_set_of_single_scalar_rows(
-        conn => $self->dbix_conn,
+        conn => $self->context->{'dbix_conn'},
         sql => $site->SQL_TEMPINTVLS_SELECT_COMMITTED,
         keys => [ $next->tiid ],
     );
@@ -612,11 +749,11 @@ sub commit {
     # write intervals to database
     $status = undef;
     try {
-        $self->dbix_conn->txn( fixup => sub {
+        $self->context->{'dbix_conn'}->txn( fixup => sub {
             map {
                 my $int = App::Dochazka::REST::Model::Interval->spawn(
-                    eid => $self->eid,
-                    aid => $self->aid,
+                    eid => $self->emp_obj->eid,
+                    aid => $self->act_obj->aid,
                     intvl => $_,
                     remark => 'fillup',
                 );

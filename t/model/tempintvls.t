@@ -39,20 +39,30 @@ use strict;
 use warnings;
 
 #use App::CELL::Test::LogToFile;
-use App::CELL qw( $log $meta $site );
+use App::CELL qw( $CELL $log $meta $site );
 use Data::Dumper;
 #use App::Dochazka::Common qw( $today $yesterday $tomorrow );
 use App::Dochazka::REST::ConnBank qw( $dbix_conn );
 use App::Dochazka::REST::Holiday qw( canon_to_ymd );
-use App::Dochazka::REST::Model::Activity;
 use App::Dochazka::REST::Model::Interval qw( delete_intervals_by_eid_and_tsrange );
 use App::Dochazka::REST::Model::Tempintvls;
 use App::Dochazka::REST::Model::Shared qw( noof );
 use App::Dochazka::REST::Model::Schedhistory;
 use App::Dochazka::REST::Test;
 use Test::More;
-use Test::Warnings;
+use Test::Fatal;
 
+my $status;
+
+# given a Tempintvls object with populated context, reset it
+# without clobbering the context
+sub reset_obj {
+    my $obj = shift;
+    my $saved_context = $obj->context;
+    $obj->reset;
+    $obj->context( $saved_context );
+    return;
+}
 
 note( 'initialize, connect to database, and set up a testing plan' );
 initialize_regression_test();
@@ -70,12 +80,91 @@ isa_ok( $tio, 'App::Dochazka::REST::Model::Tempintvls' );
 note( 'test that populate() was called and that it did its job' );
 ok( $tio->tiid > 0 );
 
-note( "populate context" );
-is( ref( $faux_context ), 'HASH', "\$faux_context is a HASHREF" );
-isa_ok( $faux_context->{dbix_conn}, 'DBIx::Connector' );
-$tio->context( $faux_context );
+note( 'test other inherited accessors on empty object' );
+is( $tio->tsrange, undef );
+is( $tio->long_desc, undef );
+is( $tio->remark, undef );
+
+note( 'test non-inherited accessors on empty object' );
+is( $tio->context, undef );
+is( $tio->emp_obj, undef );
+is( $tio->act_obj, undef );
+is( $tio->date_list, undef );
+is( $tio->constructor_status, undef );
+
+note( 'further test inherited accessors non-pathological' );
+$tio->tsrange( 'bubba' );
+is( $tio->tsrange, 'bubba' );
+$tio->long_desc( 'barbara' );
+is( $tio->long_desc, 'barbara' );
+$tio->remark( 'Now is the winter of our discontent' );
+is( $tio->remark, 'Now is the winter of our discontent' );
+
+note( 'further test inherited accessors pathological' );
+like( 
+    exception { $tio->tsrange( [] ) }, 
+    qr/which is not one of the allowed types: scalar undef/
+);
+like( 
+    exception { $tio->long_desc( [] ) }, 
+    qr/which is not one of the allowed types: scalar undef/
+);
+like( 
+    exception { $tio->remark( [] ) }, 
+    qr/which is not one of the allowed types: scalar undef/
+);
+
+note( 'further test non-inherited accessors non-pathological' );
+my $context = { 'heaven' => 'angel' };
+$tio->context( $context  );
+is( $tio->context, $context );
+my $emp = App::Dochazka::REST::Model::Employee->spawn;
+$tio->emp_obj( $emp );
+is( $tio->emp_obj, $emp );
+my $act = App::Dochazka::REST::Model::Activity->spawn;
+$tio->act_obj( $act );
+is( $tio->act_obj, $act );
+my $dl = [ '2016-01-01', '2016-01-02', '2016-01-03' ];
+$tio->date_list( $dl );
+is( $tio->date_list, $dl );
+$status = $CELL->status_ok( 'DOCHAZKA_ALL_GREEN' );
+$tio->constructor_status( $status );
+is( $tio->constructor_status, $status );
+
+note( 'further test non-inherited accessors pathological' );
+like( 
+    exception { $tio->context( 'bunny rabbit' ) }, 
+    qr/which is not one of the allowed types: hashref/,
+);
+like( 
+    exception { $tio->emp_obj( 'bunny rabbit' ) }, 
+    qr/which is not one of the allowed types: hashref/
+);
+like( 
+    exception { $tio->act_obj( 'bunny rabbit' ) }, 
+    qr/which is not one of the allowed types: hashref/
+);
+like( 
+    exception { $tio->date_list( 'bunny rabbit' ) }, 
+    qr/which is not one of the allowed types: arrayref/
+);
+like( 
+    exception { $tio->constructor_status( 'bunny rabbit' ) }, 
+    qr/which is not one of the allowed types: hashref/
+);
+
+note( "vet empty context" );
+$status = $tio->_vet_context();
+ok( $status->not_ok );
+
+note( "populate context attribute" );
+$status = $tio->_vet_context( context => $faux_context );
+ok( $status->ok );
+
+note( "context should now be OK" );
+ok( $tio->context );
+is( ref( $tio->context ), 'HASH' );
 isa_ok( $tio->context->{dbix_conn}, 'DBIx::Connector' );
-isa_ok( $tio->dbix_conn, 'DBIx::Connector' );
 
 note( 'quickly test canon_to_ymd' );
 my @ymd = canon_to_ymd( '2015-01-01' );
@@ -84,7 +173,87 @@ is( $ymd[0], '2015' );
 is( $ymd[1], '01' );
 is( $ymd[2], '01' );
 
+note( 'test the reset method' );
+my $saved_context = $tio->context;
+$tio->reset;
+map { is( $tio->{ $_ }, undef ); } ( @App::Dochazka::REST::Model::Tempintvls::attr );
+$tio->context( $saved_context );
+is( $tio->context, $saved_context );
+
+note( 'test the _vet_date_spec method' );
+$status = $tio->_vet_date_spec( 
+    date_list => [ qw( 2016-01-01 2016-01-02 2016-01-03 ) ],
+);
+ok( $status->ok );
+$status = $tio->_vet_date_spec( 
+    tsrange => 'bubba', # can be any scalar, not necessarily a valid tsrange
+);
+ok( $status->ok );
+$status = $tio->_vet_date_spec( 
+    date_list => [ qw( 2016-01-01 2016-01-02 2016-01-03 ) ],
+    tsrange => 'bubba', # can be any scalar, not necessarily a valid tsrange
+);
+ok( $status->not_ok );
+$status = $tio->_vet_date_spec();
+ok( $status->not_ok );
+$status = $tio->_vet_date_spec( 
+    date_list => undef,
+    tsrange => undef,
+);
+ok( $status->not_ok );
+isnt( $tio->context, undef );
+
+note( 'vet some valid date lists' );
+reset_obj( $tio );
+is( $tio->date_list, undef );
+is( $tio->tsrange, undef );
+my $dl = [ qw( 2016-01-01 2016-01-02 2016-01-03 ) ];
+$status = $tio->_vet_date_list( date_list => $dl );
+ok( $status->ok );
+isnt( $tio->context, undef );
+is_deeply( $tio->date_list, [ qw( 2016-01-01 2016-01-02 2016-01-03 ) ], "date_list property initialized" );
+is( $tio->tsrange, '[ 2016-01-01 00:00, 2016-01-03 24:00 )', "tsrange property initialized" );
+
+reset_obj( $tio );
+is( $tio->date_list, undef );
+is( $tio->tsrange, undef );
+$dl = [ qw( 1892-12-31 ) ];
+$status = $tio->_vet_date_list( date_list => $dl );
+ok( $status->ok );
+is_deeply( $tio->date_list, [ qw( 1892-12-31 ) ], "date_list property initialized" );
+is( $tio->tsrange, '[ 1892-12-31 00:00, 1892-12-31 24:00 )', "tsrange property initialized" );
+
+reset_obj( $tio );
+is( $tio->date_list, undef );
+is( $tio->tsrange, undef );
+$dl = [];
+$status = $tio->_vet_date_list( date_list => $dl );
+ok( $status->ok );
+is_deeply( $tio->date_list, [], "date_list property initialized" );
+is( $tio->tsrange, undef, "tsrange property (not) initialized" );
+
+note( 'demonstrate how _vet_date_list does some limited canonicalization' );
+$dl = [ qw( 2016-1-1 ) ];
+$status = $tio->_vet_date_list( date_list => $dl );
+ok( $status->ok );
+is_deeply( $tio->date_list, [ qw( 2016-01-01 ) ] );
+
+note( 'vet some invalid date lists' );
+reset_obj( $tio );
+$dl = [ 'bbub' ];
+$status = $tio->_vet_date_list( date_list => $dl );
+is( $status->level, 'ERR' );
+is( $status->code, 'DOCHAZKA_INVALID_DATE_IN_DATE_LIST' );
+
+reset_obj( $tio );
+$dl = [ '2016-01-01', 'bbub' ];
+$status = $tio->_vet_date_list( date_list => $dl );
+is( $status->level, 'ERR' );
+is( $status->code, 'DOCHAZKA_INVALID_DATE_IN_DATE_LIST' );
+
 note( 'attempt to _vet_tsrange bogus tsranges individually' );
+reset_obj( $tio );
+isnt( $tio->context, undef );
 my $bogus = [
         "[)",
         "[,)",
@@ -108,7 +277,7 @@ map {
     } @$bogus;
 
 note( 'vet a too-long tsrange' );
-my $status = $tio->_vet_tsrange( tsrange => '[ 2015-1-1, 2016-1-2 )' );
+$status = $tio->_vet_tsrange( tsrange => '[ 2015-1-1, 2016-1-2 )' );
 is( $status->level, 'ERR' );
 is( $status->code, 'DOCHAZKA_TSRANGE_TOO_BIG' );
 
@@ -126,10 +295,19 @@ note( 'but not fully vetted yet' );
 ok( ! $tio->vetted );
 
 note( 'vet a non-bogus employee (no schedule)' );
+reset_obj( $tio );
+$tio->_vet_date_list( date_list => [ '2016-01-01' ] );
 $status = App::Dochazka::REST::Model::Employee->load_by_eid( $dbix_conn, 1 );
 $status = $tio->_vet_employee( emp_obj => $status->payload );
 is( $status->level, 'ERR' );
 is( $status->code, 'DISPATCH_EMPLOYEE_NO_SCHEDULE' );
+
+note( 'if employee object lacks an eid property, die' );
+my $bogus_emp = App::Dochazka::REST::Model::Employee->spawn( nick => 'bogus');
+like( 
+    exception { $tio->_vet_employee( emp_obj => $bogus_emp ); },
+    qr/AKLDWW###%AAAAAH!/,
+);
 
 note( 'we do not try to vet non-existent employee objects here, because the Tempintvls' );
 note( 'class is designed to be called from Dispatch.pm *after* the employee has been' );
@@ -340,23 +518,6 @@ sub _vet_cleanup {
     is( $status->level, 'OK' );
     is( $status->code, 'DOCHAZKA_CUD_OK' ); 
 }
-
-note( 'CLEANUP' );
-isa_ok( $dbix_conn, 'DBIx::Connector' );
-$status = delete_intervals_by_eid_and_tsrange( $tio2->dbix_conn, $tio2->eid, $tio2->tsrange );
-is( $status->level, 'OK' );
-map {
-    _vet_cleanup( App::Dochazka::REST::Model::Schedhistory->load_by_shid( $dbix_conn, $_ ) );
-} @shids_to_delete;
-map {
-    _vet_cleanup( App::Dochazka::REST::Model::Schedule->load_by_sid( $dbix_conn, $_ ) );
-} @sids_to_delete;
-map {
-    _vet_cleanup( App::Dochazka::REST::Model::Privhistory->load_by_phid( $dbix_conn, $_ ) );
-} @phids_to_delete;
-map {
-    _vet_cleanup( App::Dochazka::REST::Model::Employee->load_by_eid( $dbix_conn, $_ ) );
-} @eids_to_delete;
 
 note( 'tear down' );
 $status = delete_all_attendance_data();
