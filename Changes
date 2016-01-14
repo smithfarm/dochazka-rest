@@ -3439,3 +3439,17 @@ SPLIT OFF App::MREST into separate distribution
 - docker/: fix CMD so it runs dochazka-rest --initialize
 - bin/dochazka-rest: finish adding --initialize option
 
+0.519 2016-01-14 19:42 CET
+- docker:
+  - Dockerfile: delete file which should not be here
+  - .gitignore: adapt to current state
+  - Makefile: push the images/tags to dochazka organization
+  - test-drive.sh: rename test drive script and update README
+  - test-drive.sh: remove silly exit statement
+  - test-drive.sh: use longer --link form
+  - test-drive.sh: increase wait times
+- documentation:
+  - ACL.pm: fix POD
+  - Model/Employee.pm: adapt POD to current state
+  - REST/Guide.pm: adapt INSTALLATION chapter to current state
+
