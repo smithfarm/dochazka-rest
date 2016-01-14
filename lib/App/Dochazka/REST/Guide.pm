@@ -97,17 +97,16 @@ clients or just plain C<curl>.
 Installation is the process of creating (setting up, bootstrapping) a new
 Dochazka instance, or "site" in Dochazka terminology.
 
-It entails the following steps:
+It entails the following steps.
 
-=over
 
-=item * B<Server preparation>
+=head2 Server preparation
 
 Dochazka REST needs hardware (either physical or virtualized) to run on. 
 The hardware will need to have a network connection, etc. Obviously, this
 step is entirely beyond the scope of this document.
 
-=item * B<Software installation>
+=head2 Software installation
 
 Once the hardware is ready, the Dochazka REST software and all its
 dependencies are installed on it.  This could be accomplished by
@@ -117,15 +116,15 @@ installing a packaged version of Dochazka REST if one is available
 (see
 L<https://build.opensuse.org/package/show/home:smithfarm/perl-App-Dochazka-REST>).
 
-=item * B<PostgreSQL setup>
+=head2 PostgreSQL setup
 
 One of Dochazka REST's principal dependencies is PostgreSQL server (version
 9.2 or higher). This needs to be installed (should happen automatically
 when using the packaged version of L<App::Dochazka::REST>). Steps to enable
 it:
 
-    bash# chkconfig postgresql on
-    bash#  systemctl start postgresql.service
+    bash# systemctl enable postgresql.service
+    bash# systemctl start postgresql.service
     bash# su - postgres
     bash$ psql postgres
     postgres-# ALTER ROLE postgres WITH PASSWORD 'mypass';
@@ -157,7 +156,8 @@ Lastly, check if you can connect to the C<postgres> database using the password:
     postgres=# \q
     bash$
 
-=item * B<Site configuration>
+
+=head2 Site configuration
 
 Before the Dochazka REST database can be initialized, we will need to
 tell L<App::Dochazka::REST> about the PostgreSQL superuser password
@@ -188,45 +188,40 @@ as user 'postgres' to drop/create the database. Once the database is created,
 L<App::Dochazka::REST> connects to it using the PostgreSQL credentials of the
 current user.
 
-=item * B<Syslog setup>
 
-The above site configuration includes C<DOCHAZKA_REST_LOG_FILE> so
-L<App::Dochazka::REST> will write its log messages to a file in the home
-directory of the user it is running as. Also, since
-DOCHAZKA_REST_LOG_FILE_RESET is set to a true value, this log file will be
-reset (zeroed) every time L<App::Dochazka::REST> starts. 
+=head2 Database initialization
 
-=item * B<Database initialization>
+To initialize the database or reset it to a pristine state:
 
-In the future, there might be a nifty C<dochazka-dbinit> script to make
-this process less painful, but for now the easiest way to initialize the
-database is to clone the git repo from SourceForge and run the test suite:
+    dochazka-dbinit
+    Dochazka database reset to pristine state
 
-    bash# cd ~/src
-    bash# git clone git://git.code.sf.net/p/dochazka/code dochazka
-    ...
-    bash# cd dochazka
-    bash# perl Build.PL
-    bash# ./Build test
 
-Assuming the previous steps were completed correctly, all the tests should
-complete without errors.
-
-=item * B<Start the server>
+=head2 Start the server
 
 The last step is to start the Dochazka REST server. In the future, this
 will be possible using a command like C<systemctl start dochazka.service>.
 At the moment, however, we are still in development/testing phase and we 
-start the server like this (as a normal user):
+start the server like this:
 
-    $ cd ~/src/dochazka/App-Dochazka-REST
-    $ ../dev.sh server dochazka-rest
+    $ dochazka-rest
+    Starting Web::MREST ver. 0.282
+    App distro is App-Dochazka-REST
+    App module is App::Dochazka::REST::Dispatch
+    Distro sharedir is
+    /usr/lib/perl5/site_perl/5.18.2/auto/share/dist/App-Dochazka-REST
+    Local site configuration directory is /etc/dochazka-rest
+    Loading configuration parameters from /etc/dochazka-rest
+    Setting up logging
+    Logging to /home/smithfarm/mrest.log
+    Calling App::Dochazka::REST::Dispatch::init()
+    Starting server
+    HTTP::Server::PSGI: Accepting connections at http://0:5000/
 
-=item * B<Take it for a spin>
+
+=head2 Take it for a spin
 
 Point your browser to L<http://localhost:5000/>
-
-=back
 
 
 
