@@ -582,8 +582,8 @@ sub vetted {
 
 =head2 fillup
 
-Optionally takes an C<include_holidays> boolean flag, which defaults to 0. This
-method expects to be called on a fully vetted object (see C<vetted>, above).
+This method takes no arguments and expects to be called on a fully vetted
+object (see C<vetted>, above).
 
 This method attempts to INSERT records into the tempintvls table according to
 the tsrange and the employee's schedule.  Returns a status object.
@@ -596,10 +596,6 @@ intervals that will be created if the C<commit> method is called.
 
 sub fillup {
     my $self = shift;
-    my ( %ARGS ) = validate( @_, {
-        include_holidays => { type => SCALAR|UNDEF, default => 0 },
-    } );
-    my $include_holidays = $ARGS{'include_holidays'} ? 1 : 0;
 
     die "ARG_NOT_VETTED" unless $self->vetted;
 
@@ -609,12 +605,10 @@ sub fillup {
     my @pushed_intervals;
     foreach my $t_hash ( @{ $self->tsranges } ) {
 
-        my $holidays = $include_holidays 
-            ? undef
-            : holidays_in_daterange(
-                'begin' => $t_hash->{lower_canon},
-                'end' => $t_hash->{upper_canon},
-              );
+        my $holidays = holidays_in_daterange(
+            'begin' => $t_hash->{lower_canon},
+            'end' => $t_hash->{upper_canon},
+        );
 
         # the insert operation needs to take place within a transaction
         # so we don't leave a mess behind if there is a problem
@@ -630,7 +624,7 @@ sub fillup {
                 my $d = $t_hash->{'lower_canon'};
                 my $days_upper = Date_to_Days( @{ $t_hash->{upper_ymd} } );
                 WHILE_LOOP: while ( $d ne get_tomorrow( $t_hash->{'upper_canon'} ) ) {
-                    if ( _is_holiday( $d, $holidays, $include_holidays ) ) {
+                    if ( _is_holiday( $d, $holidays ) ) {
                         $d = get_tomorrow( $d );
                         next WHILE_LOOP;
                     }
@@ -953,18 +947,13 @@ sub _init_lower_sched_hash {
 
 =head2 _is_holiday
 
-Takes a date, a C<$holidays> hashref, and an C<$include_holidays> boolean.
-Returns true or false.
-
-If C<$include_holidays> is true, C<_is_holiday> will be false over
-all dates.
+Takes a date and a C<$holidays> hashref.  Returns true or false.
 
 =cut
 
 sub _is_holiday {
-    my ( $datum, $holidays, $include_holidays ) = @_;
-    return exists( $holidays->{ $datum } ) unless $include_holidays;
-    return 0;
+    my ( $datum, $holidays ) = @_;
+    return exists( $holidays->{ $datum } );
 }
 
 
