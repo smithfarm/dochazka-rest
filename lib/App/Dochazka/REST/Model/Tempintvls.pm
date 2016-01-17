@@ -38,8 +38,12 @@ use warnings;
 use App::CELL qw( $CELL $log $meta $site );
 use App::Dochazka::REST::ConnBank qw( $dbix_conn );
 use App::Dochazka::REST::Model::Employee;
+use App::Dochazka::REST::Model::Interval qw( 
+    fetch_intervals_by_eid_and_tsrange 
+);
 use App::Dochazka::REST::Model::Shared qw(
     canonicalize_date
+    canonicalize_tsrange
     cud_generic
     select_set_of_single_scalar_rows
     select_single
@@ -326,18 +330,32 @@ sub _vet_date_list {
 
 =head2 _vet_tsrange
 
-Takes a tsrange. Checks the tsrange for sanity and populates the
-C<tsrange>, C<lower_canon>, C<lower_ymd>, C<upper_canon>, C<upper_ymd>
+Takes constructor arguments. Checks the tsrange for sanity and populates
+the C<tsrange>, C<lower_canon>, C<lower_ymd>, C<upper_canon>, C<upper_ymd>
 attributes. Returns a status object.
 
 =cut
 
 sub _vet_tsrange {
     my $self = shift;
-    my ( %ARGS ) = validate( @_, {
-        tsrange => { type => SCALAR },
-    } );
+    my %ARGS = @_;
     $log->debug( "Entering " . __PACKAGE__ . "::_vet_tsrange to vet the tsrange $ARGS{tsrange}" );
+
+    die "YAHOOEY! No tsrange in arguments to _vet_tsrange" unless $ARGS{tsrange};
+    die "YAHOOEY! No DBIx::Connector in object" unless $self->context->{dbix_conn};
+
+    # canonicalize the tsrange
+    my $status = canonicalize_tsrange(
+        $self->context->{dbix_conn},
+        $ARGS{tsrange},
+    );
+    return $status unless $status->ok;
+    my $canonicalized_tsrange = $status->payload;
+
+    # if we are not to clobber, check for intervals in the tsrange
+    if ( ! $ARGS{clobber} ) {
+        # FIXME
+    }
 
     # split the tsrange
     my @parens = $ARGS{tsrange} =~ m/[^\[(]*([\[(])[^\])]*([\])])/;
@@ -634,6 +652,8 @@ sub new {
         date_list => { type => SCALAR|UNDEF, optional => 1 },
         long_desc => { type => SCALAR|UNDEF, optional => 1 },
         remark => { type => SCALAR|UNDEF, optional => 1 },
+        clobber => { type => BOOLEAN, default => 0 },
+        dry_run => { type => BOOLEAN, default => 0 },
     } );
     my ( $status );
 
@@ -652,7 +672,7 @@ sub new {
     return $self unless $self->constructor_status->ok;
     $self->constructor_status( $self->_vet_date_list( date_list => $ARGS{date_list} ) );
     return $self unless $self->constructor_status->ok;
-    $self->constructor_status( $self->_vet_tsrange( tsrange => $ARGS{tsrange} ) );
+    $self->constructor_status( $self->_vet_tsrange( %ARGS ) );
     return $self unless $self->constructor_status->ok;
     $self->constructor_status( $self->_vet_employee( emp_obj => $ARGS{emp_obj} ) );
     return $self unless $self->constructor_status->ok;
