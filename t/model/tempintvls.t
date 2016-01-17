@@ -67,6 +67,10 @@ sub reset_obj {
 note( 'initialize, connect to database, and set up a testing plan' );
 initialize_regression_test();
 
+note( 'start with a clean slate' );
+$status = delete_all_attendance_data();
+BAIL_OUT(0) unless $status->ok;
+
 note( 'tempintvls table should be empty' );
 if ( 0 != noof( $dbix_conn, 'tempintvls') ) {
     diag( "tempintvls table is not empty; bailing out!" );
@@ -506,18 +510,6 @@ is( $status->level, 'OK' );
 is( $status->code, 'DOCHAZKA_TEMPINTVLS_COMMITTED' );
 is( $status->{count}, $count );
 is( noof( $dbix_conn, 'intervals' ), $count );
-
-note( 'delete the tempintvls not necessary; DESTROY() is called automatically' );
-
-sub _vet_cleanup {
-    my $status = shift;
-    is( $status->level, 'OK' );
-    is( $status->code, 'DISPATCH_RECORDS_FOUND' ); 
-    my $obj = $status->payload;
-    $status = $obj->delete( $faux_context );
-    is( $status->level, 'OK' );
-    is( $status->code, 'DOCHAZKA_CUD_OK' ); 
-}
 
 note( 'tear down' );
 $status = delete_all_attendance_data();
