@@ -1861,7 +1861,7 @@ EOH
         parent => '/',
         handler => {
             GET => 'handler_noop',
-            POST => 'handler_post_interval_fillup',
+            POST => 'handler_fillup',
         },
         acl_profile => {
             GET => 'passerby',

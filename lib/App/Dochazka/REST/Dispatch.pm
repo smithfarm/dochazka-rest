@@ -2496,14 +2496,14 @@ sub handler_get_schedule_eid {
 }
 
 
-=head3 handler_post_interval_fillup
+=head3 handler_fillup
 
 Handler for POST interval/fillup. For a description of what we're trying to
 do, see https://github.com/smithfarm/dochazka-rest/issues/60
 
 =cut
 
-sub handler_post_interval_fillup {
+sub handler_fillup {
     my ( $self, $pass ) = @_;
 
     my $context = $self->context;
