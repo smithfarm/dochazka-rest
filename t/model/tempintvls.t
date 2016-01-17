@@ -97,24 +97,24 @@ is( $tio->date_list, undef );
 is( $tio->constructor_status, undef );
 
 note( 'further test inherited accessors non-pathological' );
-$tio->tsrange( 'bubba' );
-is( $tio->tsrange, 'bubba' );
 $tio->long_desc( 'barbara' );
 is( $tio->long_desc, 'barbara' );
 $tio->remark( 'Now is the winter of our discontent' );
 is( $tio->remark, 'Now is the winter of our discontent' );
+$tio->dry_run( undef );
+is( $tio->dry_run, undef );
 
 note( 'further test inherited accessors pathological' );
-like( 
-    exception { $tio->tsrange( [] ) }, 
-    qr/which is not one of the allowed types: scalar undef/
-);
 like( 
     exception { $tio->long_desc( [] ) }, 
     qr/which is not one of the allowed types: scalar undef/
 );
 like( 
     exception { $tio->remark( [] ) }, 
+    qr/which is not one of the allowed types: scalar undef/
+);
+like( 
+    exception { $tio->dry_run( [] ) }, 
     qr/which is not one of the allowed types: scalar undef/
 );
 
@@ -208,6 +208,8 @@ ok( $status->not_ok );
 isnt( $tio->context, undef );
 
 note( 'vet some valid date lists' );
+
+note( 'valid date list #1' );
 reset_obj( $tio );
 is( $tio->date_list, undef );
 is( $tio->tsrange, undef );
@@ -215,40 +217,71 @@ my $dl = [ qw( 2016-01-01 2016-01-02 2016-01-03 ) ];
 $status = $tio->_vet_date_list( date_list => $dl );
 ok( $status->ok );
 isnt( $tio->context, undef );
-is_deeply( $tio->date_list, [ qw( 2016-01-01 2016-01-02 2016-01-03 ) ], "date_list property initialized" );
-is( $tio->tsrange, '[ 2016-01-01 00:00, 2016-01-03 24:00 )', "tsrange property initialized" );
+is_deeply( 
+    $tio->date_list, 
+    [ qw( 2016-01-01 2016-01-02 2016-01-03 ) ], 
+    "date_list property initialized" 
+);
+is( $tio->tsrange, '["2016-01-01 00:00:00+01","2016-01-04 00:00:00+01")' );
+is_deeply( 
+    $tio->tsranges,
+    [ 
+        { tsrange => '["2016-01-01 00:00:00+01","2016-01-02 00:00:00+01")' }, 
+        { tsrange => '["2016-01-02 00:00:00+01","2016-01-03 00:00:00+01")' }, 
+        { tsrange => '["2016-01-03 00:00:00+01","2016-01-04 00:00:00+01")' }, 
+    ], 
+    "tsrange property initialized"
+);
 
+note( 'valid date list #2' );
 reset_obj( $tio );
 is( $tio->date_list, undef );
 is( $tio->tsrange, undef );
 $dl = [ qw( 1892-12-31 ) ];
 $status = $tio->_vet_date_list( date_list => $dl );
 ok( $status->ok );
-is_deeply( $tio->date_list, [ qw( 1892-12-31 ) ], "date_list property initialized" );
-is( $tio->tsrange, '[ 1892-12-31 00:00, 1892-12-31 24:00 )', "tsrange property initialized" );
+is_deeply(
+    $tio->date_list,
+    [ qw( 1892-12-31 ) ],
+    "date_list property initialized"
+);
+is( $tio->tsrange, '["1892-12-31 00:00:00+01","1893-01-01 00:00:00+01")' );
+is_deeply(
+    $tio->tsranges,
+    [
+        { tsrange => '["1892-12-31 00:00:00+01","1893-01-01 00:00:00+01")' },
+    ],
+    "tsrange property initialized"
+);
 
+note( 'demonstrate how _vet_date_list does some limited canonicalization' );
 reset_obj( $tio );
 is( $tio->date_list, undef );
 is( $tio->tsrange, undef );
-$dl = [];
-$status = $tio->_vet_date_list( date_list => $dl );
-ok( $status->ok );
-is_deeply( $tio->date_list, [], "date_list property initialized" );
-is( $tio->tsrange, undef, "tsrange property (not) initialized" );
-
-note( 'demonstrate how _vet_date_list does some limited canonicalization' );
 $dl = [ qw( 2016-1-1 ) ];
 $status = $tio->_vet_date_list( date_list => $dl );
 ok( $status->ok );
 is_deeply( $tio->date_list, [ qw( 2016-01-01 ) ] );
 
 note( 'vet some invalid date lists' );
+
+note( 'invalid date list #1 - empty list' );
+reset_obj( $tio );
+is( $tio->date_list, undef );
+is( $tio->tsrange, undef );
+$dl = [];
+$status = $tio->_vet_date_list( date_list => $dl );
+is( $status->level, 'ERR' );
+is( $status->code, 'DOCHAZKA_EMPTY_DATE_LIST' );
+
+note( 'invalid date list #2 - list consisting of one bogus value' );
 reset_obj( $tio );
 $dl = [ 'bbub' ];
 $status = $tio->_vet_date_list( date_list => $dl );
 is( $status->level, 'ERR' );
 is( $status->code, 'DOCHAZKA_INVALID_DATE_IN_DATE_LIST' );
 
+note( 'invalid date list #3 - list consisting of one bogus and one non-bogus value' );
 reset_obj( $tio );
 $dl = [ '2016-01-01', 'bbub' ];
 $status = $tio->_vet_date_list( date_list => $dl );
@@ -289,11 +322,11 @@ note( 'vet a non-bogus tsrange' );
 $status = $tio->_vet_tsrange( tsrange => '[ "Jan 1, 2015", 2015-12-31 )' );
 is( $status->level, 'OK' );
 is( $status->code, 'SUCCESS' );
-like( $tio->{'tsrange'}, qr/^\[ 2015-01-01 00:00:00..., 2015-12-31 00:00:00... \)$/ );
-is( $tio->{'lower_canon'}, '2014-12-31' );
-is( $tio->{'upper_canon'}, '2016-01-01' );
-is_deeply( $tio->{'lower_ymd'}, [ 2014, 12, 31 ] );
-is_deeply( $tio->{'upper_ymd'}, [ 2016, 1, 1 ] );
+like( $tio->tsranges->[0]->{'tsrange'}, qr/^\[ 2015-01-01 00:00:00..., 2015-12-31 00:00:00... \)$/ );
+is( $tio->tsranges->[0]->{'lower_canon'}, '2014-12-31' );
+is( $tio->tsranges->[0]->{'upper_canon'}, '2016-01-01' );
+is_deeply( $tio->tsranges->[0]->{'lower_ymd'}, [ 2014, 12, 31 ] );
+is_deeply( $tio->tsranges->[0]->{'upper_ymd'}, [ 2016, 1, 1 ] );
 
 note( 'but not fully vetted yet' );
 ok( ! $tio->vetted );
@@ -442,7 +475,7 @@ note( 'change the tsrange' );
 $status = $tio->_vet_tsrange( tsrange => '[ "April 28, 1998" 10:00, 1998-05-6 10:00 )' );
 is( $status->level, 'OK' );
 is( $status->code, 'SUCCESS' );
-like( $tio->{'tsrange'}, qr/^\[ 1998-04-28 10:00:00..., 1998-05-06 10:00:00... \)/ );
+like( $tio->{'tsrange'}, qr/^\["1998-04-28 10:00:00...","1998-05-06 10:00:00..."\)/ );
 
 note( 'proceed with fillup' );
 $status = $tio->fillup;
@@ -480,7 +513,7 @@ my $tio2 = App::Dochazka::REST::Model::Tempintvls->new(
 isa_ok( $tio2, 'App::Dochazka::REST::Model::Tempintvls' );
 ok( $tio2->constructor_status );
 isa_ok( $tio2->constructor_status, 'App::CELL::Status' );
-like( $tio2->tsrange, qr/^\[ 1998-04-28 10:00:00..., 1998-05-06 10:00:00... \)$/ );
+like( $tio2->tsrange, qr/^\["1998-04-28 10:00:00...","1998-05-06 10:00:00..."\)$/ );
 
 note( 'commit (dry run) on object created without using new()' );
 my $count = 11;
