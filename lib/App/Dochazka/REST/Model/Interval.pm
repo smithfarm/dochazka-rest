@@ -275,7 +275,8 @@ BEGIN {
 =head2 fetch_intervals_by_eid_and_tsrange
 
 Given an EID and a tsrange, return all that employee's intervals that 
-fall within that tsrange.
+fall within that tsrange. Partial intervals are marked as such (using the
+C<partial> property).
 
 Before any records are returned, the tsrange is checked to see if it
 overlaps with any privlevel or schedule changes - in which case an error is
