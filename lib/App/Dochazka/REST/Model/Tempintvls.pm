@@ -780,8 +780,6 @@ sub commit {
     my $next = App::Dochazka::REST::Model::Tempintvls->spawn;
     die 'AGCKDSWQ#$L! newly spawned Tempintvls object has no TIID?' unless $next->tiid;
 
-    my $sql = $site->SQL_TEMPINTVLS_SELECT_EXCLUSIVE;
-
     # write the rows
     $status = cud_generic(
         conn => $self->context->{'dbix_conn'},
