@@ -293,7 +293,7 @@ sub _vet_date_list {
 
     die "GOPHFQQ! tsrange property must not be populated in _vet_date_list()" if $self->tsrange;
 
-    return $CELL->status_ok if not defined( %ARGS{date_list} );
+    return $CELL->status_ok if not defined( $ARGS{date_list} );
 
     # check that dates are valid and in canonical form
     my @canonicalized_date_list = ();
