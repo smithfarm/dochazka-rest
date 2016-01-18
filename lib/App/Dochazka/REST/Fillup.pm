@@ -36,6 +36,7 @@ use 5.012;
 use strict;
 use warnings;
 use App::CELL qw( $CELL $log $meta $site );
+use App::Dochazka::Common::Model;
 use App::Dochazka::REST::ConnBank qw( $dbix_conn );
 use App::Dochazka::REST::Model::Employee;
 use App::Dochazka::REST::Model::Interval qw( 
@@ -67,18 +68,61 @@ use JSON;
 use Params::Validate qw( :all );
 use Try::Tiny;
 
-our @attr = qw(
-    act_obj
-    constructor_status
-    context
-    date_list
-    emp_obj
-    intervals
-    long_desc
-    remark
-    tiid
-    tsrange
-);
+BEGIN {
+    no strict 'refs';
+    our %attr= (
+        act_obj => { 
+            type => HASHREF,
+            isa => 'App::Dochazka::REST::Model::Activity', 
+            optional => 1
+        },
+        constructor_status => { 
+            type => HASHREF,
+            isa => 'App::CELL::Status',
+            optional => 1
+        },
+        context => { type => HASHREF, optional => 1 },
+        date_list => { type => ARRAYREF, optional => 1 },
+        dry_run => { type => BOOLEAN, optional => 1 },
+        emp_obj => {
+            type => HASHREF,
+            isa => 'App::Dochazka::REST::Model::Employee',
+            optional => 1
+        },
+        intervals => { type => ARRAYREF, optional => 1 },
+        long_desc => { type => SCALAR, optional => 1 },
+        remark => { type => SCALAR, optional => 1 },
+        tiid => { type => SCALAR, optional => 1 },
+        tsrange => { type => SCALAR, optional => 1 },
+        tsranges => { type => ARRAYREF, optional => 1 },
+    );
+    map {
+        my $fn = __PACKAGE__ . "::$_";
+        $log->debug( "BEGIN BLOCK: $_ $fn" );
+        *{ $fn } = 
+            App::Dochazka::Common::Model::make_accessor( $_, $attr{ $_ } ); 
+    } keys %attr;
+
+    *{ 'reset' } = sub {
+        # process arguments
+        my $self = shift;
+        my %ARGS = validate( @_, \%attr ) if @_ and defined $_[0];
+
+        # Wipe out current TIID
+        $self->DESTROY;
+
+        # Set attributes to run-time values sent in argument list.
+        # Attributes that are not in the argument list will get set to undef.
+        map { $self->{$_} = $ARGS{$_}; } keys %attr;
+
+        # run the populate function, if any
+        $self->populate() if $self->can( 'populate' );
+
+        # return an appropriate throw-away value
+        return;
+    }
+}
+
 my %dow_to_num = (
     'MON' => 1,
     'TUE' => 2,
@@ -127,120 +171,12 @@ sub populate {
     return;
 }
 
-=head2 reset
-
-Since we add several (non-scalar) attributes, the inherited version of
-C<reset> is not sufficient.
-
-=cut
-
-sub reset {
-    # process arguments
-    my $self = shift;
-    $self->DESTROY;
-    my $val_spec;
-    map { $val_spec->{$_} = 0; } @attr;
-    my %ARGS = validate( @_, $val_spec ) if @_ and defined $_[0];
-
-    # Set attributes to run-time values sent in argument list.
-    # Attributes that are not in the argument list will get set to undef.
-    map { $self->{$_} = $ARGS{$_}; } @attr;
-
-    # run the populate function, if any
-    $self->populate() if $self->can( 'populate' );
-
-    # return an appropriate throw-away value
-    return;
-}
-
 
 =head2 Accessors
 
-These accessors must be defined here because the boilerplate
-accessors from L<App::Dochazka::Common> take only SCALAR and UNDEF as their
-argument.
+Make accessors for all the attributes. Already done, above, in BEGIN block.
 
 =cut
-
-sub act_obj {
-    my $self = shift;
-    validate_pos( @_, { 
-        type => HASHREF, 
-        isa => 'App::Dochazka::REST::Model::Activity', 
-        optional => 1 
-    } );
-    $self->{'act_obj'} = shift if @_;
-    $self->{'act_obj'} = undef unless exists $self->{'act_obj'};
-    return $self->{'act_obj'};
-}
-
-sub constructor_status {
-    my $self = shift;
-    validate_pos( @_, { 
-        type => HASHREF,
-        isa => 'App::CELL::Status',
-        optional => 1 
-    } );
-    $self->{'constructor_status'} = shift if @_;
-    $self->{'constructor_status'} = undef unless exists $self->{'constructor_status'};
-    return $self->{'constructor_status'};
-}
-
-sub context {
-    my $self = shift;
-    validate_pos( @_, { 
-        type => HASHREF, 
-        optional => 1 } 
-    );
-    $self->{'context'} = shift if @_;
-    $self->{'context'} = undef unless exists $self->{'context'};
-    return $self->{'context'};
-}
-
-sub date_list {
-    my $self = shift;
-    validate_pos( @_, { 
-        type => ARRAYREF,
-        optional => 1 
-    } );
-    $self->{'date_list'} = shift if @_;
-    $self->{'date_list'} = undef unless exists $self->{'date_list'};
-    return $self->{'date_list'};
-}
-
-sub emp_obj {
-    my $self = shift;
-    validate_pos( @_, { 
-        type => HASHREF, 
-        isa => 'App::Dochazka::REST::Model::Employee', 
-        optional => 1 
-    } );
-    $self->{'emp_obj'} = shift if @_;
-    $self->{'emp_obj'} = undef unless exists $self->{'emp_obj'};
-    return $self->{'emp_obj'};
-}
-
-sub intervals {
-    my $self = shift;
-    validate_pos( @_, { 
-        type => ARRAYREF, 
-        optional => 1 
-    } );
-    $self->{'intervals'} = shift if @_;
-    $self->{'intervals'} = undef unless exists $self->{'intervals'};
-    return $self->{'intervals'};
-}
-
-sub tsranges {
-    my $self = shift;
-    validate_pos( @_, { 
-        type => ARRAYREF,
-        optional => 1 
-    } );
-    $self->{'tsranges'} = shift if @_;
-    $self->{'tsranges'} = undef unless exists $self->{'tsranges'};
-    return $self->{'tsranges'};
-}
 
 
 =head2 _vet_context
@@ -684,7 +620,7 @@ sub fillup {
 
 =head2 new
 
-Constructor method. Returns an C<App::Dochazka::REST::Model::Fillup>
+Constructor method. Returns an C<App::Dochazka::REST::Fillup>
 object.
 
 The constructor method does everything up to C<fillup>. It also populates the
@@ -716,7 +652,7 @@ sub new {
         $self = bless {}, $class;
         $self->populate();
     } else {
-        die "AGHOOPOWDD@! Constructor must be called like this App::Dochazka::REST::Model::Fillup->new()";
+        die "AGHOOPOWDD@! Constructor must be called like this App::Dochazka::REST::Fillup->new()";
     }
     die "AGHOOPOWDD@! No tiid in Fillup object!" unless $self->tiid;
 
@@ -787,7 +723,8 @@ sub commit {
     } );
     my $status;
     my $dry_run = $ARGS{dry_run} ? 1 : 0;
-    my $next = App::Dochazka::REST::Model::Fillup->spawn;
+    my $next = bless {}, 'App::Dochazka::REST::Fillup';
+    $next->populate();
     die 'AGCKDSWQ#$L! newly spawned Fillup object has no TIID?' unless $next->tiid;
 
     # write the rows
@@ -860,11 +797,14 @@ Returns a status object.
 
 sub DESTROY {
     my $self = shift;
+    $log->debug( "Entering " . __PACKAGE__ . "::DESTROY from " . Dumper( \caller ) );
+
+    $log->notice( "GLOBAL DESTRUCTION" ) if ${^GLOBAL_PHASE} eq 'DESTRUCT';
 
     my $status;
     try {
         $dbix_conn->run( fixup => sub {
-            my $sth = $_->prepare( $site->SQL_Fillup_DELETE );
+            my $sth = $_->prepare( $site->SQL_TEMPINTVLS_DELETE );
             $sth->bind_param( 1, $self->tiid );
             $sth->execute;
             my $rows = $sth->rows;

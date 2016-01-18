@@ -59,9 +59,9 @@ set( 'SQL_TEMPINTVLS_DELETE', q/
       / );
 
 #
-# SQL_TEMPINTVLS_INSERT
-#     SQL to insert scratch intervals
-set( 'SQL_TEMPINTVLS_INSERT', q/
+# SQL_TEMPINTVL_INSERT
+#     SQL to insert a single scratch interval
+set( 'SQL_TEMPINTVL_INSERT', q/
       INSERT INTO tempintvls (tiid, intvl)
       VALUES (?, ?)
       RETURNING tiid, intvl

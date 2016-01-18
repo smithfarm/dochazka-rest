@@ -41,11 +41,10 @@ use warnings;
 #use App::CELL::Test::LogToFile;
 use App::CELL qw( $CELL $log $meta $site );
 use Data::Dumper;
-#use App::Dochazka::Common qw( $today $yesterday $tomorrow );
 use App::Dochazka::REST::ConnBank qw( $dbix_conn );
 use App::Dochazka::REST::Holiday qw( canon_to_ymd );
 use App::Dochazka::REST::Model::Interval qw( delete_intervals_by_eid_and_tsrange );
-use App::Dochazka::REST::Model::Fillup;
+use App::Dochazka::REST::Fillup;
 use App::Dochazka::REST::Model::Tempintvl;
 use App::Dochazka::REST::Model::Shared qw( noof );
 use App::Dochazka::REST::Model::Schedhistory;
@@ -53,7 +52,7 @@ use App::Dochazka::REST::Test;
 use Test::More;
 use Test::Fatal;
 
-my $status;
+my ( $note, $status );
 
 # given a Fillup object with populated context, reset it
 # without clobbering the context
@@ -65,159 +64,208 @@ sub reset_obj {
     return;
 }
 
-note( 'initialize, connect to database, and set up a testing plan' );
+note( $note = 'initialize, connect to database, and set up a testing plan' );
+$log->info( "=== $note" );
 initialize_regression_test();
 
-note( 'start with a clean slate' );
+note( $note = 'start with a clean slate' );
+$log->info( "=== $note" );
 $status = delete_all_attendance_data();
 BAIL_OUT(0) unless $status->ok;
 
-note( 'tempintvls table should be empty' );
+note( $note = 'tempintvls table should be empty' );
+$log->info( "=== $note" );
 if ( 0 != noof( $dbix_conn, 'tempintvls') ) {
     diag( "tempintvls table is not empty; bailing out!" );
     BAIL_OUT(0);
 }
 
-note( 'make a testing fillup object' );
+note( $note = 'make a testing fillup object' );
+$log->info( "=== $note" );
 my $fo = bless {}, 'App::Dochazka::REST::Fillup';
 
-note( 'test accessors on empty object' );
-is( $fo->context, undef );
-is( $fo->emp_obj, undef );
-is( $fo->act_obj, undef );
-is( $fo->date_list, undef );
-is( $fo->constructor_status, undef );
-BAIL_OUT(0);
+note( $note = 'test accessors on empty object' );
+$log->info( "=== $note" );
+{
+    no strict 'refs';
+    map {
+        is( $fo->$_, undef, "$_ property is undef" );
+    } keys %App::Dochazka::REST::Fillup::attr;
+}
 
-note( 'further test inherited accessors non-pathological' );
-$tio->long_desc( 'barbara' );
-is( $tio->long_desc, 'barbara' );
-$tio->remark( 'Now is the winter of our discontent' );
-is( $tio->remark, 'Now is the winter of our discontent' );
-$tio->dry_run( undef );
-is( $tio->dry_run, undef );
+note( $note = 'populate() sets tiid property' );
+$log->info( "=== $note" );
+$fo->populate();
+ok( $fo->tiid > 0 );
 
-note( 'further test inherited accessors pathological' );
-like( 
-    exception { $tio->long_desc( [] ) }, 
-    qr/which is not one of the allowed types: scalar undef/
-);
-like( 
-    exception { $tio->remark( [] ) }, 
-    qr/which is not one of the allowed types: scalar undef/
-);
-like( 
-    exception { $tio->dry_run( [] ) }, 
-    qr/which is not one of the allowed types: scalar undef/
-);
+note( $note = 'accessors can be used to set values - non-pathological' );
+$log->info( "=== $note" );
+{
+    my %attr_test = (
+        act_obj => App::Dochazka::REST::Model::Activity->spawn,
+        constructor_status => $CELL->status_ok,
+        context => {},
+        date_list => [],
+        dry_run => 0,
+        emp_obj => App::Dochazka::REST::Model::Employee->spawn,
+        intervals => [],
+        long_desc => '',
+        remark => '',
+        tiid => '',
+        tsrange => '',
+        tsranges => [],
+    );
+    map 
+    {
+        my $throwaway = $attr_test{ $_ };
+        $fo->$_( $throwaway );
+        is( $fo->$_, $throwaway );
+    } keys %attr_test;
+}
 
-note( 'further test non-inherited accessors non-pathological' );
+note( $note = 'further test inherited accessors pathological' );
+$log->info( "=== $note" );
+{
+    my %attr_test = (
+        act_obj => '',
+        constructor_status => '',
+        context => [],
+        date_list => {},
+        dry_run => [],
+        emp_obj => '',
+        intervals => {},
+        long_desc => {},
+        remark => {},
+        tiid => {},
+        tsrange => {},
+        tsranges => {},
+    );
+    map 
+    {
+        my $throwaway = $attr_test{ $_ };
+        like(
+            exception { $fo->$_( $throwaway ) },
+            qr/which is not one of the allowed types:/
+        );
+    } keys %attr_test;
+}
+
+note( $note = 'further test selected accessors non-pathological' );
+$log->info( "=== $note" );
+
 my $context = { 'heaven' => 'angel' };
-$tio->context( $context  );
-is( $tio->context, $context );
+$fo->context( $context  );
+is( $fo->context, $context );
+
 my $emp = App::Dochazka::REST::Model::Employee->spawn;
-$tio->emp_obj( $emp );
-is( $tio->emp_obj, $emp );
+$fo->emp_obj( $emp );
+is( $fo->emp_obj, $emp );
+
 my $act = App::Dochazka::REST::Model::Activity->spawn;
-$tio->act_obj( $act );
-is( $tio->act_obj, $act );
+$fo->act_obj( $act );
+is( $fo->act_obj, $act );
+
 my $dl = [ '2016-01-01', '2016-01-02', '2016-01-03' ];
-$tio->date_list( $dl );
-is( $tio->date_list, $dl );
+$fo->date_list( $dl );
+is( $fo->date_list, $dl );
+
 $status = $CELL->status_ok( 'DOCHAZKA_ALL_GREEN' );
-$tio->constructor_status( $status );
-is( $tio->constructor_status, $status );
+$fo->constructor_status( $status );
+is( $fo->constructor_status, $status );
 
-note( 'further test non-inherited accessors pathological' );
+note( $note = 'further test selected accessors pathological' );
+$log->info( "=== $note" );
 like( 
-    exception { $tio->context( 'bunny rabbit' ) }, 
-    qr/which is not one of the allowed types: hashref/,
+    exception { $fo->constructor_status( App::Dochazka::REST::Model::Activity->spawn ) }, 
+    qr/was not a.*it is a/
 );
 like( 
-    exception { $tio->emp_obj( 'bunny rabbit' ) }, 
-    qr/which is not one of the allowed types: hashref/
+    exception { $fo->act_obj( $CELL->status_ok ) }, 
+    qr/was not a.*it is a/
 );
 like( 
-    exception { $tio->act_obj( 'bunny rabbit' ) }, 
-    qr/which is not one of the allowed types: hashref/
-);
-like( 
-    exception { $tio->date_list( 'bunny rabbit' ) }, 
-    qr/which is not one of the allowed types: arrayref/
-);
-like( 
-    exception { $tio->constructor_status( 'bunny rabbit' ) }, 
-    qr/which is not one of the allowed types: hashref/
+    exception { $fo->emp_obj( $CELL->status_ok ) }, 
+    qr/was not a.*it is a/
 );
 
-note( "vet empty context" );
-$status = $tio->_vet_context();
+note( $note = "vet empty context" );
+$log->info( "=== $note" );
+$status = $fo->_vet_context();
 ok( $status->not_ok );
 
-note( "populate context attribute" );
-$status = $tio->_vet_context( context => $faux_context );
+note( $note = "populate context attribute" );
+$log->info( "=== $note" );
+$status = $fo->_vet_context( context => $faux_context );
 ok( $status->ok );
 
-note( "context should now be OK" );
-ok( $tio->context );
-is( ref( $tio->context ), 'HASH' );
-isa_ok( $tio->context->{dbix_conn}, 'DBIx::Connector' );
+note( $note = "context should now be OK" );
+$log->info( "=== $note" );
+ok( $fo->context );
+is( ref( $fo->context ), 'HASH' );
+isa_ok( $fo->context->{dbix_conn}, 'DBIx::Connector' );
 
-note( 'quickly test canon_to_ymd' );
+note( $note = 'quickly test canon_to_ymd' );
+$log->info( "=== $note" );
 my @ymd = canon_to_ymd( '2015-01-01' );
 is( ref( \@ymd ), 'ARRAY' );
 is( $ymd[0], '2015' );
 is( $ymd[1], '01' );
 is( $ymd[2], '01' );
 
-note( 'test the reset method' );
-my $saved_context = $tio->context;
-$tio->reset;
-map { is( $tio->{ $_ }, undef ); } ( @App::Dochazka::REST::Model::Tempintvls::attr );
-$tio->context( $saved_context );
-is( $tio->context, $saved_context );
+note( $note = 'test the reset method' );
+$log->info( "=== $note" );
+my $saved_context = $fo->context;
+$fo->reset;
+my %test_attrs = %App::Dochazka::REST::Fillup::attr;
+delete( $test_attrs{tiid} );
+map { is( $fo->{ $_ }, undef ); } keys %test_attrs;
+$fo->context( $saved_context );
+is( $fo->context, $saved_context );
 
-note( 'test the _vet_date_spec method' );
-$status = $tio->_vet_date_spec( 
+note( $note = 'test the _vet_date_spec method' );
+$log->info( "=== $note" );
+$status = $fo->_vet_date_spec(
     date_list => [ qw( 2016-01-01 2016-01-02 2016-01-03 ) ],
 );
 ok( $status->ok );
-$status = $tio->_vet_date_spec( 
+$status = $fo->_vet_date_spec(
     tsrange => 'bubba', # can be any scalar, not necessarily a valid tsrange
 );
 ok( $status->ok );
-$status = $tio->_vet_date_spec( 
+$status = $fo->_vet_date_spec(
     date_list => [ qw( 2016-01-01 2016-01-02 2016-01-03 ) ],
     tsrange => 'bubba', # can be any scalar, not necessarily a valid tsrange
 );
 ok( $status->not_ok );
-$status = $tio->_vet_date_spec();
+$status = $fo->_vet_date_spec();
 ok( $status->not_ok );
-$status = $tio->_vet_date_spec( 
+$status = $fo->_vet_date_spec(
     date_list => undef,
     tsrange => undef,
 );
 ok( $status->not_ok );
-isnt( $tio->context, undef );
+isnt( $fo->context, undef );
 
-note( 'vet some valid date lists' );
+note( $note = 'vet some valid date lists' );
+$log->info( "=== $note" );
 
-note( 'valid date list #1' );
-reset_obj( $tio );
-is( $tio->date_list, undef );
-is( $tio->tsrange, undef );
-my $dl = [ qw( 2016-01-01 2016-01-02 2016-01-03 ) ];
-$status = $tio->_vet_date_list( date_list => $dl );
+note( $note = 'valid date list #1' );
+$log->info( "=== $note" );
+reset_obj( $fo );
+is( $fo->date_list, undef );
+is( $fo->tsrange, undef );
+$dl = [ qw( 2016-01-01 2016-01-02 2016-01-03 ) ];
+$status = $fo->_vet_date_list( date_list => $dl );
 ok( $status->ok );
-isnt( $tio->context, undef );
+isnt( $fo->context, undef );
 is_deeply( 
-    $tio->date_list, 
+    $fo->date_list, 
     [ qw( 2016-01-01 2016-01-02 2016-01-03 ) ], 
     "date_list property initialized" 
 );
-is( $tio->tsrange, '["2016-01-01 00:00:00+01","2016-01-04 00:00:00+01")' );
+is( $fo->tsrange, '["2016-01-01 00:00:00+01","2016-01-04 00:00:00+01")' );
 is_deeply( 
-    $tio->tsranges,
+    $fo->tsranges,
     [ 
         { tsrange => '["2016-01-01 00:00:00+01","2016-01-02 00:00:00+01")' }, 
         { tsrange => '["2016-01-02 00:00:00+01","2016-01-03 00:00:00+01")' }, 
@@ -226,64 +274,71 @@ is_deeply(
     "tsrange property initialized"
 );
 
-note( 'valid date list #2' );
-reset_obj( $tio );
-is( $tio->date_list, undef );
-is( $tio->tsrange, undef );
+note( $note = 'valid date list #2' );
+$log->info( "=== $note" );
+reset_obj( $fo );
+is( $fo->date_list, undef );
+is( $fo->tsrange, undef );
 $dl = [ qw( 1892-12-31 ) ];
-$status = $tio->_vet_date_list( date_list => $dl );
+$status = $fo->_vet_date_list( date_list => $dl );
 ok( $status->ok );
 is_deeply(
-    $tio->date_list,
+    $fo->date_list,
     [ qw( 1892-12-31 ) ],
     "date_list property initialized"
 );
-is( $tio->tsrange, '["1892-12-31 00:00:00+01","1893-01-01 00:00:00+01")' );
+is( $fo->tsrange, '["1892-12-31 00:00:00+01","1893-01-01 00:00:00+01")' );
 is_deeply(
-    $tio->tsranges,
+    $fo->tsranges,
     [
         { tsrange => '["1892-12-31 00:00:00+01","1893-01-01 00:00:00+01")' },
     ],
     "tsrange property initialized"
 );
 
-note( 'demonstrate how _vet_date_list does some limited canonicalization' );
-reset_obj( $tio );
-is( $tio->date_list, undef );
-is( $tio->tsrange, undef );
+note( $note = 'demonstrate how _vet_date_list does some limited canonicalizafon' );
+$log->info( "=== $note" );
+reset_obj( $fo );
+is( $fo->date_list, undef );
+is( $fo->tsrange, undef );
 $dl = [ qw( 2016-1-1 ) ];
-$status = $tio->_vet_date_list( date_list => $dl );
+$status = $fo->_vet_date_list( date_list => $dl );
 ok( $status->ok );
-is_deeply( $tio->date_list, [ qw( 2016-01-01 ) ] );
+is_deeply( $fo->date_list, [ qw( 2016-01-01 ) ] );
 
-note( 'vet some invalid date lists' );
+note( $note = 'vet some invalid date lists' );
+$log->info( "=== $note" );
 
-note( 'invalid date list #1 - empty list' );
-reset_obj( $tio );
-is( $tio->date_list, undef );
-is( $tio->tsrange, undef );
+note( $note = 'invalid date list #1 - empty list' );
+$log->info( "=== $note" );
+reset_obj( $fo );
+is( $fo->date_list, undef );
+is( $fo->tsrange, undef );
 $dl = [];
-$status = $tio->_vet_date_list( date_list => $dl );
+$status = $fo->_vet_date_list( date_list => $dl );
 is( $status->level, 'ERR' );
 is( $status->code, 'DOCHAZKA_EMPTY_DATE_LIST' );
 
-note( 'invalid date list #2 - list consisting of one bogus value' );
-reset_obj( $tio );
+note( $note = 'invalid date list #2 - list consisting of one bogus value' );
+$log->info( "=== $note" );
+reset_obj( $fo );
 $dl = [ 'bbub' ];
-$status = $tio->_vet_date_list( date_list => $dl );
+$status = $fo->_vet_date_list( date_list => $dl );
 is( $status->level, 'ERR' );
 is( $status->code, 'DOCHAZKA_INVALID_DATE_IN_DATE_LIST' );
 
-note( 'invalid date list #3 - list consisting of one bogus and one non-bogus value' );
-reset_obj( $tio );
+note( $note = 'invalid date list #3 - list consisting of one bogus and one non-bogus value' );
+$log->info( "=== $note" );
+reset_obj( $fo );
 $dl = [ '2016-01-01', 'bbub' ];
-$status = $tio->_vet_date_list( date_list => $dl );
+$status = $fo->_vet_date_list( date_list => $dl );
 is( $status->level, 'ERR' );
 is( $status->code, 'DOCHAZKA_INVALID_DATE_IN_DATE_LIST' );
 
-note( 'attempt to _vet_tsrange bogus tsranges individually' );
-reset_obj( $tio );
-isnt( $tio->context, undef );
+note( $note = 'attempt to _vet_tsrange bogus tsranges individually' );
+$log->info( "=== $note" );
+reset_obj( $fo );
+isnt( $fo->context, undef );
 my $bogus = [
         "[)",
         "[,)",
@@ -301,58 +356,69 @@ my $bogus = [
         "[2014-07-14 17:15,infinity)",
     ];
 map {
-        my $status = $tio->_vet_tsrange( tsrange => $_ );
+        my $status = $fo->_vet_tsrange( tsrange => $_ );
         #diag( $status->level . ' ' . $status->text );
         is( $status->level, 'ERR', "$_ is a bogus tsrange" ); 
     } @$bogus;
 
-note( 'vet a too-long tsrange' );
-$status = $tio->_vet_tsrange( tsrange => '[ 2015-1-1, 2016-1-2 )' );
+note( $note = 'vet a too-long tsrange' );
+$log->info( "=== $note" );
+$status = $fo->_vet_tsrange( tsrange => '[ 2015-1-1, 2016-1-2 )' );
 is( $status->level, 'ERR' );
 is( $status->code, 'DOCHAZKA_TSRANGE_TOO_BIG' );
 
-note( 'vet a non-bogus tsrange' );
-$status = $tio->_vet_tsrange( tsrange => '[ "Jan 1, 2015", 2015-12-31 )' );
+note( $note = 'vet a non-bogus tsrange' );
+$log->info( "=== $note" );
+$status = $fo->_vet_tsrange( tsrange => '[ "Jan 1, 2015", 2015-12-31 )' );
 is( $status->level, 'OK' );
 is( $status->code, 'SUCCESS' );
-like( $tio->tsranges->[0]->{'tsrange'}, qr/^\[ 2015-01-01 00:00:00..., 2015-12-31 00:00:00... \)$/ );
-is( $tio->tsranges->[0]->{'lower_canon'}, '2014-12-31' );
-is( $tio->tsranges->[0]->{'upper_canon'}, '2016-01-01' );
-is_deeply( $tio->tsranges->[0]->{'lower_ymd'}, [ 2014, 12, 31 ] );
-is_deeply( $tio->tsranges->[0]->{'upper_ymd'}, [ 2016, 1, 1 ] );
+like( $fo->tsranges->[0]->{'tsrange'}, qr/^\[ 2015-01-01 00:00:00..., 2015-12-31 00:00:00... \)$/ );
+is( $fo->tsranges->[0]->{'lower_canon'}, '2014-12-31' );
+is( $fo->tsranges->[0]->{'upper_canon'}, '2016-01-01' );
+is_deeply( $fo->tsranges->[0]->{'lower_ymd'}, [ 2014, 12, 31 ] );
+is_deeply( $fo->tsranges->[0]->{'upper_ymd'}, [ 2016, 1, 1 ] );
 
-note( 'but not fully vetted yet' );
-ok( ! $tio->vetted );
+note( $note = 'but not fully vetted yet' );
+$log->info( "=== $note" );
+ok( ! $fo->vetted );
 
-note( 'vet a non-bogus employee (no schedule)' );
-reset_obj( $tio );
-$tio->_vet_date_list( date_list => [ '2016-01-01' ] );
+note( $note = 'vet a non-bogus employee (no schedule)' );
+$log->info( "=== $note" );
+reset_obj( $fo );
+$fo->_vet_date_list( date_list => [ '2016-01-01' ] );
 $status = App::Dochazka::REST::Model::Employee->load_by_eid( $dbix_conn, 1 );
-$status = $tio->_vet_employee( emp_obj => $status->payload );
+$status = $fo->_vet_employee( emp_obj => $status->payload );
 is( $status->level, 'ERR' );
 is( $status->code, 'DISPATCH_EMPLOYEE_NO_SCHEDULE' );
 
-note( 'if employee object lacks an eid property, die' );
+note( $note = 'if employee object lacks an eid property, die' );
+$log->info( "=== $note" );
 my $bogus_emp = App::Dochazka::REST::Model::Employee->spawn( nick => 'bogus');
 like( 
-    exception { $tio->_vet_employee( emp_obj => $bogus_emp ); },
+    exception { $fo->_vet_employee( emp_obj => $bogus_emp ); },
     qr/AKLDWW###%AAAAAH!/,
 );
 
-note( 'we do not try to vet non-existent employee objects here, because the Tempintvls' );
-note( 'class is designed to be called from Dispatch.pm *after* the employee has been' );
-note( 'determined to exist' );
+note( $note = 'we do not try to vet non-existent employee objects here, because the Tempintvls' );
+$log->info( "=== $note" );
+note( $note = 'class is designed to be called from Dispatch.pm *after* the employee has been' );
+$log->info( "=== $note" );
+note( $note = 'determined to exist' );
+$log->info( "=== $note" );
 
-note( 'create a testing employee with nick "active"' );
+note( $note = 'create a testing employee with nick "active"' );
+$log->info( "=== $note" );
 my $active = create_testing_employee( { nick => 'active', password => 'active' } );
 push my @eids_to_delete, $active->eid;
 
-note( 'vet active - no privhistory' );
-$status = $tio->_vet_employee( emp_obj => $active );
+note( $note = 'vet active - no privhistory' );
+$log->info( "=== $note" );
+$status = $fo->_vet_employee( emp_obj => $active );
 is( $status->level, 'ERR' );
 is( $status->code, 'DISPATCH_EMPLOYEE_NO_PRIVHISTORY' );
 
-note( 'give active a privhistory' );
+note( $note = 'give active a privhistory' );
+$log->info( "=== $note" );
 my $ins_eid = $active->eid;
 my $ins_priv = 'active';
 my $ins_effective = "1892-01-01";
@@ -371,12 +437,14 @@ ok( $priv->phid > 0, "INSERT assigned an phid" );
 is( $priv->remark, $ins_remark, "remark survived INSERT" );
 push my @phids_to_delete, $priv->phid;
 
-note( 'vet active - no schedule' );
-$status = $tio->_vet_employee( emp_obj => $active );
+note( $note = 'vet active - no schedule' );
+$log->info( "=== $note" );
+$status = $fo->_vet_employee( emp_obj => $active );
 is( $status->level, 'ERR' );
 is( $status->code, 'DISPATCH_EMPLOYEE_NO_SCHEDULE' );
 
-note( 'create a testing schedule' );
+note( $note = 'create a testing schedule' );
+$log->info( "=== $note" );
 my $schedule = test_schedule_model( [ 
     '[ 1998-05-04 08:00, 1998-05-04 12:00 )',
     '[ 1998-05-04 12:30, 1998-05-04 16:30 )',
@@ -391,7 +459,8 @@ my $schedule = test_schedule_model( [
 ] );
 push my @sids_to_delete, $schedule->sid;
 
-note( 'give active a schedhistory' );
+note( $note = 'give active a schedhistory' );
+$log->info( "=== $note" );
 my $schedhistory = App::Dochazka::REST::Model::Schedhistory->spawn(
     eid => $active->eid,
     sid => $schedule->sid,
@@ -404,19 +473,22 @@ is( $status->level, 'OK' );
 is( $status->code, 'DOCHAZKA_CUD_OK' );
 push my @shids_to_delete, $schedhistory->shid;
 
-note( 'vet active - all green' );
-$status = $tio->_vet_employee( emp_obj => $active );
+note( $note = 'vet active - all green' );
+$log->info( "=== $note" );
+$status = $fo->_vet_employee( emp_obj => $active );
 is( $status->level, "OK" );
 is( $status->code, "SUCCESS" );
-isa_ok( $tio->{'emp_obj'}, 'App::Dochazka::REST::Model::Employee' );
-is( $tio->{'emp_obj'}->eid, $active->eid );
-is( $tio->{'emp_obj'}->nick, 'active' );
-my $active_obj = $tio->{'emp_obj'};
+isa_ok( $fo->{'emp_obj'}, 'App::Dochazka::REST::Model::Employee' );
+is( $fo->{'emp_obj'}->eid, $active->eid );
+is( $fo->{'emp_obj'}->nick, 'active' );
+my $active_obj = $fo->{'emp_obj'};
 
-note( 'but not fully vetted yet' );
-ok( ! $tio->vetted );
+note( $note = 'but not fully vetted yet' );
+$log->info( "=== $note" );
+ok( ! $fo->vetted );
 
-note( 'get AID of WORK' );
+note( $note = 'get AID of WORK' );
+$log->info( "=== $note" );
 $status = App::Dochazka::REST::Model::Activity->load_by_code( $dbix_conn, 'WORK' );
 is( $status->level, 'OK' );
 is( $status->code, 'DISPATCH_RECORDS_FOUND' );
@@ -424,67 +496,79 @@ isa_ok( $status->payload, 'App::Dochazka::REST::Model::Activity' );
 my $activity = $status->payload;
 #diag( "AID of WORK: " . $activity->aid );
 
-note( 'vet activity (default)' );
-$status = $tio->_vet_activity;
+note( $note = 'vet activity (default)' );
+$log->info( "=== $note" );
+$status = $fo->_vet_activity;
 is( $status->level, 'OK' );
 is( $status->code, 'SUCCESS' );
-isa_ok( $tio->{'act_obj'}, 'App::Dochazka::REST::Model::Activity' ); 
-is( $tio->{'act_obj'}->code, 'WORK' );
-is( $tio->{'act_obj'}->aid, $activity->aid );
-is( $tio->{'aid'}, $activity->aid );
+isa_ok( $fo->{'act_obj'}, 'App::Dochazka::REST::Model::Activity' ); 
+is( $fo->{'act_obj'}->code, 'WORK' );
+is( $fo->{'act_obj'}->aid, $activity->aid );
+is( $fo->{'aid'}, $activity->aid );
 
-note( 'vet non-existent activity 1' );
-$status = $tio->_vet_activity( aid => 'WORBLE' );
+note( $note = 'vet non-existent activity 1' );
+$log->info( "=== $note" );
+$status = $fo->_vet_activity( aid => 'WORBLE' );
 is( $status->level, 'ERR' );
 is( $status->code, 'DOCHAZKA_DBI_ERR' );
 
-note( 'vet non-existent activity 2' );
-$status = $tio->_vet_activity( aid => '-1' );
+note( $note = 'vet non-existent activity 2' );
+$log->info( "=== $note" );
+$status = $fo->_vet_activity( aid => '-1' );
 is( $status->level, 'ERR' );
 is( $status->code, 'DOCHAZKA_GENERIC_NOT_EXIST' );
 is( $status->text, 'There is no activity with AID ->-1<-' );
 
 my $note = 'vet non-existent activity 3';
-note( $note );
+note( $note = $note );
+$log->info( "=== $note" );
 $log->info( "*** $note" );
-$status = $tio->_vet_activity( aid => '0' );
+$status = $fo->_vet_activity( aid => '0' );
 is( $status->level, 'ERR' );
 is( $status->code, 'DOCHAZKA_GENERIC_NOT_EXIST' );
 is( $status->text, 'There is no activity with AID ->0<-' );
 
-note( 'vet activity WORK by explicit AID' );
-$status = $tio->_vet_activity( aid => $activity->aid );
+note( $note = 'vet activity WORK by explicit AID' );
+$log->info( "=== $note" );
+$status = $fo->_vet_activity( aid => $activity->aid );
 is( $status->level, 'OK' );
 is( $status->code, 'SUCCESS' );
-isa_ok( $tio->{'act_obj'}, 'App::Dochazka::REST::Model::Activity' ); 
-is( $tio->{'act_obj'}->code, 'WORK' );
-is( $tio->{'act_obj'}->aid, $activity->aid );
-is( $tio->{'aid'}, $activity->aid );
+isa_ok( $fo->{'act_obj'}, 'App::Dochazka::REST::Model::Activity' ); 
+is( $fo->{'act_obj'}->code, 'WORK' );
+is( $fo->{'act_obj'}->aid, $activity->aid );
+is( $fo->{'aid'}, $activity->aid );
 
-note( 'vetted now true' );
-ok( $tio->vetted );
+note( $note = 'vetted now true' );
+$log->info( "=== $note" );
+ok( $fo->vetted );
 
-note( 'change the tsrange' );
-$status = $tio->_vet_tsrange( tsrange => '[ "April 28, 1998" 10:00, 1998-05-6 10:00 )' );
+note( $note = 'change the tsrange' );
+$log->info( "=== $note" );
+$status = $fo->_vet_tsrange( tsrange => '[ "April 28, 1998" 10:00, 1998-05-6 10:00 )' );
 is( $status->level, 'OK' );
 is( $status->code, 'SUCCESS' );
-like( $tio->{'tsrange'}, qr/^\["1998-04-28 10:00:00...","1998-05-06 10:00:00..."\)/ );
+like( $fo->{'tsrange'}, qr/^\["1998-04-28 10:00:00...","1998-05-06 10:00:00..."\)/ );
+BAIL_OUT(0);
 
-note( 'proceed with fillup' );
-$status = $tio->fillup;
+note( $note = 'proceed with fillup' );
+$log->info( "=== $note" );
+$status = $fo->fillup;
 is( $status->level, 'OK' );
 is( $status->code, 'DOCHAZKA_TEMPINTVLS_INSERT_OK' );
 
-note( 'commit (dry run)' );
-$status = $tio->commit( dry_run => 1 );
+note( $note = 'commit (dry run)' );
+$log->info( "=== $note" );
+$status = $fo->commit( dry_run => 1 );
 is( $status->level, 'OK' );
 is( $status->code, 'RESULT_SET' );
 
-note( '1998-05-01 should not appear anywhere, as it is a holiday' );
+note( $note = '1998-05-01 should not appear anywhere, as it is a holiday' );
+$log->info( "=== $note" );
 my $jumbled_together = join( '', @{ $status->payload} );
 ok( ! ( $jumbled_together =~ m/1998-05-01/ ) );
 
-note( 'Check for more-or-less exact deep match' );
+note( $note = 'Check for more-or-less exact deep match' );
+$log->info( "=== $note" );
 like( $status->payload->[0], qr/^\["1998-04-28 10:00:00...","1998-04-28 12:00:00..."\)$/ );
 like( $status->payload->[1], qr/^\["1998-04-28 12:30:00...","1998-04-28 16:30:00..."\)$/ );
 like( $status->payload->[2], qr/^\["1998-04-29 08:00:00...","1998-04-29 12:00:00..."\)$/ );
@@ -497,20 +581,22 @@ like( $status->payload->[8], qr/^\["1998-05-05 08:00:00...","1998-05-05 12:00:00
 like( $status->payload->[9], qr/^\["1998-05-05 12:30:00...","1998-05-05 16:30:00..."\)$/ );
 like( $status->payload->[10], qr/^\["1998-05-06 08:00:00...","1998-05-06 10:00:00..."\)$/ );
 
-note( 'test the new() method' );
-my $tio2 = App::Dochazka::REST::Model::Tempintvls->new(
+note( $note = 'test the new() method' );
+$log->info( "=== $note" );
+my $fo2 = App::Dochazka::REST::Model::Tempintvls->new(
     context => $faux_context,
     tsrange => '[ 1998-04-28 10:00:00, 1998-05-06 10:00:00 )',
     emp_obj => $active,
 );
-isa_ok( $tio2, 'App::Dochazka::REST::Model::Tempintvls' );
-ok( $tio2->constructor_status );
-isa_ok( $tio2->constructor_status, 'App::CELL::Status' );
-like( $tio2->tsrange, qr/^\["1998-04-28 10:00:00...","1998-05-06 10:00:00..."\)$/ );
+isa_ok( $fo2, 'App::Dochazka::REST::Model::Tempintvls' );
+ok( $fo2->constructor_status );
+isa_ok( $fo2->constructor_status, 'App::CELL::Status' );
+like( $fo2->tsrange, qr/^\["1998-04-28 10:00:00...","1998-05-06 10:00:00..."\)$/ );
 
-note( 'commit (dry run) on object created without using new()' );
+note( $note = 'commit (dry run) on object created without using new()' );
+$log->info( "=== $note" );
 my $count = 11;
-foreach my $obj ( $tio, $tio2 ) {
+foreach my $obj ( $fo, $fo2 ) {
     $status = $obj->commit( dry_run => 1 );
     is( $status->level, 'OK' );
     is( $status->code, 'RESULT_SET' );
@@ -529,15 +615,17 @@ foreach my $obj ( $tio, $tio2 ) {
     is( $status->{'count'}, $count );
 }
 
-note( 'really commit the attendance intervals' );
+note( $note = 'really commit the attendance intervals' );
+$log->info( "=== $note" );
 is( noof( $dbix_conn, 'intervals' ), 0 );
-$status = $tio2->commit;
+$status = $fo2->commit;
 is( $status->level, 'OK' );
 is( $status->code, 'DOCHAZKA_TEMPINTVLS_COMMITTED' );
 is( $status->{count}, $count );
 is( noof( $dbix_conn, 'intervals' ), $count );
 
-note( 'tear down' );
+note( $note = 'tear down' );
+$log->info( "=== $note" );
 $status = delete_all_attendance_data();
 BAIL_OUT(0) unless $status->ok;
 
