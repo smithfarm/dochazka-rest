@@ -78,24 +78,16 @@ if ( 0 != noof( $dbix_conn, 'tempintvls') ) {
     BAIL_OUT(0);
 }
 
-note( "spawn a tempintvl object" );
-my $tio = App::Dochazka::REST::Model::Tempintvl->spawn;
-isa_ok( $tio, 'App::Dochazka::REST::Model::Tempintvl' );
+note( 'make a testing fillup object' );
+my $fo = bless {}, 'App::Dochazka::REST::Fillup';
 
-note( 'test that populate() was called and that it did its job' );
-ok( $tio->tiid > 0 );
-
-note( 'test other inherited accessors on empty object' );
-is( $tio->tsrange, undef );
-is( $tio->long_desc, undef );
-is( $tio->remark, undef );
-
-note( 'test non-inherited accessors on empty object' );
-is( $tio->context, undef );
-is( $tio->emp_obj, undef );
-is( $tio->act_obj, undef );
-is( $tio->date_list, undef );
-is( $tio->constructor_status, undef );
+note( 'test accessors on empty object' );
+is( $fo->context, undef );
+is( $fo->emp_obj, undef );
+is( $fo->act_obj, undef );
+is( $fo->date_list, undef );
+is( $fo->constructor_status, undef );
+BAIL_OUT(0);
 
 note( 'further test inherited accessors non-pathological' );
 $tio->long_desc( 'barbara' );

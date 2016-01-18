@@ -30,7 +30,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 # ************************************************************************* 
 
-package App::Dochazka::REST::Model::Fillup;
+package App::Dochazka::REST::Fillup;
 
 use 5.012;
 use strict;
@@ -94,14 +94,14 @@ my %num_to_dow = reverse %dow_to_num;
 
 =head1 NAME
 
-App::Dochazka::REST::Model::Fillup - object class for "scratch schedules"
+App::Dochazka::REST::Fillup - fillup routines
 
 
 
 
 =head1 SYNOPSIS
 
-    use App::Dochazka::REST::Model::Fillup;
+    use App::Dochazka::REST::Fillup;
 
     ...
 
@@ -113,7 +113,7 @@ App::Dochazka::REST::Model::Fillup - object class for "scratch schedules"
 
 =head2 populate
 
-Called automatically when new object is instantiated; assigns next TIID.
+Get the next TIID and store in the object
 
 =cut
 
