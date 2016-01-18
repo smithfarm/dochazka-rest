@@ -37,6 +37,7 @@ lib/App/Dochazka/REST/Mason.pm
 lib/App/Dochazka/REST/Model/Activity.pm
 lib/App/Dochazka/REST/Model/Component.pm
 lib/App/Dochazka/REST/Model/Employee.pm
+lib/App/Dochazka/REST/Model/Fillup.pm
 lib/App/Dochazka/REST/Model/Interval.pm
 lib/App/Dochazka/REST/Model/Lock.pm
 lib/App/Dochazka/REST/Model/Privhistory.pm
@@ -44,7 +45,7 @@ lib/App/Dochazka/REST/Model/Schedhistory.pm
 lib/App/Dochazka/REST/Model/Schedintvls.pm
 lib/App/Dochazka/REST/Model/Schedule.pm
 lib/App/Dochazka/REST/Model/Shared.pm
-lib/App/Dochazka/REST/Model/Tempintvls.pm
+lib/App/Dochazka/REST/Model/Tempintvl.pm
 lib/App/Dochazka/REST/ResourceDefs.pm
 lib/App/Dochazka/REST/Shared.pm
 lib/App/Dochazka/REST/Test.pm

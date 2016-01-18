@@ -29,71 +29,100 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 # ************************************************************************* 
-#
-# sql/tempintvls_Config.pm
-#
-# SQL statements related to tempintvls
 
-#
-# SQL_NEXT_TIID
-#     SQL to get next value from temp_intvl_seq
-#
-set( 'SQL_NEXT_TIID', q/
-      SELECT nextval('temp_intvl_seq');
-      / );
+package App::Dochazka::REST::Model::Tempintvl;
 
-#
-# SQL_TEMPINTVLS_INSERT
-#     SQL to insert a single record in the 'tempintvls' table
-#
-set( 'SQL_TEMPINTVLS_INSERT', q/
-      INSERT INTO tempintvls (tiid, intvl)
-      VALUES (?, ?)
-      / );
-
-#
-# SQL_TEMPINTVLS_DELETE
-#     SQL to delete scratch intervals once they are no longer needed
-set( 'SQL_TEMPINTVLS_DELETE', q/
-      DELETE FROM tempintvls WHERE tiid = ?
-      / );
-
-#
-# SQL_TEMPINTVLS_INSERT
-#     SQL to insert scratch intervals
-set( 'SQL_TEMPINTVLS_INSERT', q/
-      INSERT INTO tempintvls (tiid, intvl)
-      VALUES (?, ?)
-      RETURNING tiid, intvl
-      / );
-
-#
-# SQL_TEMPINTVLS_SELECT
-#     SELECT all intervals associated with a tiid
-set( 'SQL_TEMPINTVLS_SELECT', q/
-      SELECT intvl FROM tempintvls WHERE tiid = ? ORDER BY intvl
-      / );
-
-#
-set( 'SQL_TEMPINTVLS_SELECT_BY_TIID_AND_TSRANGE', q/
-      SELECT tiid, intvl
-      FROM tempintvls WHERE tiid = ? AND intvl <@ ?
-      LIMIT ?
-      / );
-
-#
-set( 'SQL_TEMPINTVLS_SELECT_BY_TIID_AND_TSRANGE_PARTIAL_INTERVALS', q/
-      SELECT tiid, intvl
-      FROM tempintvls WHERE tiid = ? AND intvl && ?
-      EXCEPT
-      SELECT tiid, intvl
-      FROM tempintvls WHERE tiid = ? AND intvl <@ ?
-      / );
-
-# -----------------------------------
-# DO NOT EDIT ANYTHING BELOW THIS LINE
-# -----------------------------------
+use 5.012;
 use strict;
 use warnings;
+use App::CELL qw( $CELL $log $meta $site );
+use App::Dochazka::REST::Model::Shared qw( cud load load_multiple );
+use Data::Dumper;
+use Params::Validate qw( :all );
+
+# we get 'spawn', 'reset', and accessors from parent
+use parent 'App::Dochazka::Common::Model::Tempintvl';
+
+
+
+
+=head1 NAME
+
+App::Dochazka::REST::Model::Tempintvl - tempintvl data model
+
+
+
+
+=head1 SYNOPSIS
+
+    use App::Dochazka::REST::Model::Tempintvl;
+
+    ...
+
+
+=head1 DESCRIPTION
+
+A description of the tempinvl data model follows.
+
+
+=head2 Tempintvls in the database
+
+    CREATE TABLE tempintvls (
+        int_id  serial PRIMARY KEY,
+        tiid    integer NOT NULL,
+        intvl   tstzrange NOT NULL
+    )
+
+
+
+=head1 EXPORTS
+
+This module provides the following exports:
+
+=cut
+
+use Exporter qw( import );
+our @EXPORT_OK = qw( 
+);
+
+
+
+=head1 METHODS
+
+
+=head2 insert
+
+Instance method. Attempts to INSERT a record. Field values are taken from the
+object. Returns a status object.
+
+=cut
+
+sub insert { 
+    my $self = shift;
+    my ( $context ) = validate_pos( @_, { type => HASHREF } );
+
+    my $status = cud( 
+        conn => $context->{'dbix_conn'},
+        eid => $context->{'current'}->{'eid'},
+        object => $self, 
+        sql => $site->SQL_TEMPINTVL_INSERT, 
+        attrs => [ 'tiid', 'intvl' ],
+    );
+
+    return $status; 
+}
+
+
+
+=head1 FUNCTIONS
+
+
+=head1 AUTHOR
+
+Nathan Cutler, C<< <presnypreklad@gmail.com> >>
+
+=cut 
 
 1;
+
+

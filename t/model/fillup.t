@@ -30,7 +30,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 # ************************************************************************* 
 #
-# unit tests for scratch fillup intervals
+# unit tests for fillup
 #
 
 #!perl
@@ -45,7 +45,8 @@ use Data::Dumper;
 use App::Dochazka::REST::ConnBank qw( $dbix_conn );
 use App::Dochazka::REST::Holiday qw( canon_to_ymd );
 use App::Dochazka::REST::Model::Interval qw( delete_intervals_by_eid_and_tsrange );
-use App::Dochazka::REST::Model::Tempintvls;
+use App::Dochazka::REST::Model::Fillup;
+use App::Dochazka::REST::Model::Tempintvl;
 use App::Dochazka::REST::Model::Shared qw( noof );
 use App::Dochazka::REST::Model::Schedhistory;
 use App::Dochazka::REST::Test;
@@ -54,7 +55,7 @@ use Test::Fatal;
 
 my $status;
 
-# given a Tempintvls object with populated context, reset it
+# given a Fillup object with populated context, reset it
 # without clobbering the context
 sub reset_obj {
     my $obj = shift;
@@ -77,9 +78,9 @@ if ( 0 != noof( $dbix_conn, 'tempintvls') ) {
     BAIL_OUT(0);
 }
 
-note( "spawn a tempintvls object" );
-my $tio = App::Dochazka::REST::Model::Tempintvls->spawn;
-isa_ok( $tio, 'App::Dochazka::REST::Model::Tempintvls' );
+note( "spawn a tempintvl object" );
+my $tio = App::Dochazka::REST::Model::Tempintvl->spawn;
+isa_ok( $tio, 'App::Dochazka::REST::Model::Tempintvl' );
 
 note( 'test that populate() was called and that it did its job' );
 ok( $tio->tiid > 0 );

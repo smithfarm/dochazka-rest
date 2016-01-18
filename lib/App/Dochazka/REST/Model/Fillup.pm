@@ -30,7 +30,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 # ************************************************************************* 
 
-package App::Dochazka::REST::Model::Tempintvls;
+package App::Dochazka::REST::Model::Fillup;
 
 use 5.012;
 use strict;
@@ -67,19 +67,17 @@ use JSON;
 use Params::Validate qw( :all );
 use Try::Tiny;
 
-# we get 'spawn', 'reset', and accessors from parent
-use parent 'App::Dochazka::Common::Model::Tempintvls';
-
 our @attr = qw(
-    tid
-    context
-    emp_obj
     act_obj
+    constructor_status
+    context
     date_list
-    tsrange
+    emp_obj
+    intervals
     long_desc
     remark
-    constructor_status
+    tiid
+    tsrange
 );
 my %dow_to_num = (
     'MON' => 1,
@@ -96,14 +94,14 @@ my %num_to_dow = reverse %dow_to_num;
 
 =head1 NAME
 
-App::Dochazka::REST::Model::Tempintvls - object class for "scratch schedules"
+App::Dochazka::REST::Model::Fillup - object class for "scratch schedules"
 
 
 
 
 =head1 SYNOPSIS
 
-    use App::Dochazka::REST::Model::Tempintvls;
+    use App::Dochazka::REST::Model::Fillup;
 
     ...
 
@@ -129,7 +127,6 @@ sub populate {
     return;
 }
 
-
 =head2 reset
 
 Since we add several (non-scalar) attributes, the inherited version of
@@ -140,6 +137,7 @@ C<reset> is not sufficient.
 sub reset {
     # process arguments
     my $self = shift;
+    $self->DESTROY;
     my $val_spec;
     map { $val_spec->{$_} = 0; } @attr;
     my %ARGS = validate( @_, $val_spec ) if @_ and defined $_[0];
@@ -164,6 +162,30 @@ argument.
 
 =cut
 
+sub act_obj {
+    my $self = shift;
+    validate_pos( @_, { 
+        type => HASHREF, 
+        isa => 'App::Dochazka::REST::Model::Activity', 
+        optional => 1 
+    } );
+    $self->{'act_obj'} = shift if @_;
+    $self->{'act_obj'} = undef unless exists $self->{'act_obj'};
+    return $self->{'act_obj'};
+}
+
+sub constructor_status {
+    my $self = shift;
+    validate_pos( @_, { 
+        type => HASHREF,
+        isa => 'App::CELL::Status',
+        optional => 1 
+    } );
+    $self->{'constructor_status'} = shift if @_;
+    $self->{'constructor_status'} = undef unless exists $self->{'constructor_status'};
+    return $self->{'constructor_status'};
+}
+
 sub context {
     my $self = shift;
     validate_pos( @_, { 
@@ -173,6 +195,17 @@ sub context {
     $self->{'context'} = shift if @_;
     $self->{'context'} = undef unless exists $self->{'context'};
     return $self->{'context'};
+}
+
+sub date_list {
+    my $self = shift;
+    validate_pos( @_, { 
+        type => ARRAYREF,
+        optional => 1 
+    } );
+    $self->{'date_list'} = shift if @_;
+    $self->{'date_list'} = undef unless exists $self->{'date_list'};
+    return $self->{'date_list'};
 }
 
 sub emp_obj {
@@ -187,27 +220,15 @@ sub emp_obj {
     return $self->{'emp_obj'};
 }
 
-sub act_obj {
+sub intervals {
     my $self = shift;
     validate_pos( @_, { 
-        type => HASHREF, 
-        isa => 'App::Dochazka::REST::Model::Activity', 
+        type => ARRAYREF, 
         optional => 1 
     } );
-    $self->{'act_obj'} = shift if @_;
-    $self->{'act_obj'} = undef unless exists $self->{'act_obj'};
-    return $self->{'act_obj'};
-}
-
-sub date_list {
-    my $self = shift;
-    validate_pos( @_, { 
-        type => ARRAYREF,
-        optional => 1 
-    } );
-    $self->{'date_list'} = shift if @_;
-    $self->{'date_list'} = undef unless exists $self->{'date_list'};
-    return $self->{'date_list'};
+    $self->{'intervals'} = shift if @_;
+    $self->{'intervals'} = undef unless exists $self->{'intervals'};
+    return $self->{'intervals'};
 }
 
 sub tsranges {
@@ -219,18 +240,6 @@ sub tsranges {
     $self->{'tsranges'} = shift if @_;
     $self->{'tsranges'} = undef unless exists $self->{'tsranges'};
     return $self->{'tsranges'};
-}
-
-sub constructor_status {
-    my $self = shift;
-    validate_pos( @_, { 
-        type => HASHREF,
-        isa => 'App::CELL::Status',
-        optional => 1 
-    } );
-    $self->{'constructor_status'} = shift if @_;
-    $self->{'constructor_status'} = undef unless exists $self->{'constructor_status'};
-    return $self->{'constructor_status'};
 }
 
 
@@ -585,7 +594,7 @@ sub vetted {
 This method takes no arguments and expects to be called on a fully vetted
 object (see C<vetted>, above).
 
-This method attempts to INSERT records into the tempintvls table according to
+This method attempts to INSERT records into the Fillup table according to
 the tsrange and the employee's schedule.  Returns a status object.
 
 Note that this method does not create any attendance intervals. If the fillup
@@ -614,13 +623,13 @@ sub fillup {
         # so we don't leave a mess behind if there is a problem
         try {
             $self->context->{'dbix_conn'}->txn( fixup => sub {
-                my $sth = $_->prepare( $site->SQL_TEMPINTVLS_INSERT );
+                my $sth = $_->prepare( $site->SQL_Fillup_INSERT );
                 my $intvls;
 
                 # the next sequence value is already in $self->tiid
                 $sth->bind_param( 1, $self->tiid );
 
-                # execute SQL_TEMPINTVLS_INSERT for each fillup interval
+                # execute SQL_Fillup_INSERT for each fillup interval
                 my $d = $t_hash->{'lower_canon'};
                 my $days_upper = Date_to_Days( @{ $t_hash->{upper_ymd} } );
                 WHILE_LOOP: while ( $d ne get_tomorrow( $t_hash->{'upper_canon'} ) ) {
@@ -651,7 +660,7 @@ sub fillup {
                 }
 
                 $status = $CELL->status_ok( 
-                    'DOCHAZKA_TEMPINTVLS_INSERT_OK', 
+                    'DOCHAZKA_Fillup_INSERT_OK', 
                     payload => $intvls,
                 );
             } );
@@ -662,7 +671,7 @@ sub fillup {
         push @pushed_intervals, @{ $status->payload };
     }
     $status = $CELL->status_ok( 
-        'DOCHAZKA_TEMPINTVLS_INSERT_OK', 
+        'DOCHAZKA_Fillup_INSERT_OK', 
         payload => {
             intervals => \@pushed_intervals,
             tiid => $self->tiid,
@@ -675,7 +684,7 @@ sub fillup {
 
 =head2 new
 
-Constructor method. Returns an C<App::Dochazka::REST::Model::Tempintvls>
+Constructor method. Returns an C<App::Dochazka::REST::Model::Fillup>
 object.
 
 The constructor method does everything up to C<fillup>. It also populates the
@@ -684,7 +693,7 @@ C<constructor_status> attribute with an C<App::CELL::Status> object.
 =cut
 
 sub new {
-    my $self = shift;
+    my $class = shift;
     my ( %ARGS ) = validate( @_, {
         context => { type => HASHREF },
         emp_obj => { 
@@ -700,15 +709,16 @@ sub new {
         clobber => { type => BOOLEAN, default => 0 },
         dry_run => { type => BOOLEAN, default => 0 },
     } );
-    my ( $status );
+    my ( $self, $status );
 
     # (re-)initialize $self
-    if ( ref( $self ) and $self->isa( 'App::Dochazka::REST::Model::Tempintvls' ) ) {
-        $self->reset;
+    if ( $class eq __PACKAGE__ ) {
+        $self = bless {}, $class;
+        $self->populate();
     } else {
-        $self = __PACKAGE__->spawn;
+        die "AGHOOPOWDD@! Constructor must be called like this App::Dochazka::REST::Model::Fillup->new()";
     }
-    die "AGHOOPOWDD@! No tiid in Tempintvls object!" unless $self->tiid;
+    die "AGHOOPOWDD@! No tiid in Fillup object!" unless $self->tiid;
 
     # the order of the following checks is significant!
     $self->constructor_status( $self->_vet_context( context => $ARGS{context} ) );
@@ -748,7 +758,7 @@ sub dump {
 
     $status = select_set_of_single_scalar_rows(
         conn => $self->context->{'dbix_conn'},
-        sql => $site->SQL_TEMPINTVLS_SELECT,
+        sql => $site->SQL_Fillup_SELECT,
         keys => [ $ARGS{tiid} ],
     );
     return $status;
@@ -760,7 +770,7 @@ sub dump {
 Optionally takes a PARAMHASH containing, optionally, a C<dry_run> boolean value
 that defaults to 0.
 
-If C<dry_run> is true, merely SELECTs intervals from the tempintvls table
+If C<dry_run> is true, merely SELECTs intervals from the Fillup table
 corresponding to the tsrange (already vetted and stored in the object by
 calling C<_vet_tsrange>). This SELECT includes partial intervals (if any) at
 the beginning and end of the tsrange (using PostgreSQL intersection operator).
@@ -777,14 +787,14 @@ sub commit {
     } );
     my $status;
     my $dry_run = $ARGS{dry_run} ? 1 : 0;
-    my $next = App::Dochazka::REST::Model::Tempintvls->spawn;
-    die 'AGCKDSWQ#$L! newly spawned Tempintvls object has no TIID?' unless $next->tiid;
+    my $next = App::Dochazka::REST::Model::Fillup->spawn;
+    die 'AGCKDSWQ#$L! newly spawned Fillup object has no TIID?' unless $next->tiid;
 
     # write the rows
     $status = cud_generic(
         conn => $self->context->{'dbix_conn'},
         eid => $self->emp_obj->eid,
-        sql => $site->SQL_TEMPINTVLS_COMMIT,
+        sql => $site->SQL_Fillup_COMMIT,
         bind_params => [ 
             $next->tiid, $self->tiid, $self->{tsrange},
             $next->tiid, $self->tiid, $self->{tsrange},
@@ -796,7 +806,7 @@ sub commit {
     # get the rows we just wrote
     $status = select_set_of_single_scalar_rows(
         conn => $self->context->{'dbix_conn'},
-        sql => $site->SQL_TEMPINTVLS_SELECT_COMMITTED,
+        sql => $site->SQL_Fillup_SELECT_COMMITTED,
         keys => [ $next->tiid ],
     );
     my $fillup_intervals = $status->payload;
@@ -832,13 +842,13 @@ WRAPUP:
     # cleanup internal working object $next
     $next->DESTROY;
     return $status unless $status->ok;
-    return $CELL->status_ok( 'DOCHAZKA_TEMPINTVLS_COMMITTED', count => $count );
+    return $CELL->status_ok( 'DOCHAZKA_Fillup_COMMITTED', count => $count );
 }
 
 
 =head2 update
 
-There is no update method for tempintvls. Instead, delete and re-create.
+There is no update method for Fillup. Instead, delete and re-create.
 
 
 =head2 DESTROY
@@ -854,7 +864,7 @@ sub DESTROY {
     my $status;
     try {
         $dbix_conn->run( fixup => sub {
-            my $sth = $_->prepare( $site->SQL_TEMPINTVLS_DELETE );
+            my $sth = $_->prepare( $site->SQL_Fillup_DELETE );
             $sth->bind_param( 1, $self->tiid );
             $sth->execute;
             my $rows = $sth->rows;
@@ -869,7 +879,7 @@ sub DESTROY {
     } catch {
         $status = $CELL->status_err( 'DOCHAZKA_DBI_ERR', args => [ $_ ] );
     };
-    $log->notice( "Tempintvls destructor says " . $status->level . ": " . $status->text );
+    $log->notice( "Fillup destructor says " . $status->level . ": " . $status->text );
     return;
 }
 
@@ -952,6 +962,65 @@ Takes a date and a C<$holidays> hashref.  Returns true or false.
 sub _is_holiday {
     my ( $datum, $holidays ) = @_;
     return exists( $holidays->{ $datum } );
+}
+
+
+=head2 fetch_intervals_by_tsranges
+
+Return a set of intervals that fall within the tsranges.
+
+=cut
+
+sub fetch_intervals_by_tsranges {
+    my $self = shift;
+
+    my $status;
+    my @result_set = ();
+
+    for my $t_hash ( @{ $self->tsranges } ) {
+
+        my $tsr = $t_hash->{'tsrange'};
+
+        $status = load_multiple(
+            conn => $self->context->{'dbix_conn'},
+            class => 'App::Dochazka::REST::Model::Tempintvl',
+            sql => $site->SQL_TEMPINTVL_SELECT_BY_TIID_AND_TSRANGE,
+            keys => [ $self->tiid, $tsr, $site->DOCHAZKA_INTERVAL_SELECT_LIMIT ],
+        );
+        return $status unless 
+            ( $status->ok and $status->code eq 'DISPATCH_RECORDS_FOUND' ) or
+            ( $status->level eq 'NOTICE' and $status->code eq 'DISPATCH_NO_RECORDS_FOUND' );
+        my $whole_intervals = $status->payload;
+
+        $status = load_multiple(
+            conn => $self->context->{'dbix_conn'},
+            class => 'App::Dochazka::REST::Model::Tempintvl',
+            sql => $site->SQL_TEMPINTVL_SELECT_BY_TIID_AND_TSRANGE_PARTIAL_INTERVALS,
+            keys => [ $self->tiid, $tsr, $self->tiid, $tsr ],
+        );
+        return $status unless 
+            ( $status->ok and $status->code eq 'DISPATCH_RECORDS_FOUND' ) or
+            ( $status->level eq 'NOTICE' and $status->code eq 'DISPATCH_NO_RECORDS_FOUND' );
+        my $partial_intervals = $status->payload;
+
+        #map { $_->partial( 0 ) } ( @$whole_intervals );
+        #foreach my $int ( @$partial_intervals ) {
+        #    $int->partial( 1 );
+        #    $int->intvl( tsrange_intersection( $self->context->{'dbix_conn'}, $tsrange, $int->intvl ) );
+        #}
+    
+        my @result_set = @$whole_intervals;
+        push @result_set, @$partial_intervals;
+    }
+
+    # But now the intervals are out of order
+    my @sorted_results = sort { $a->intvl cmp $b->intvl } @result_set;
+
+    if ( my $count = scalar @result_set ) {
+        return $CELL->status_ok( 'DISPATCH_RECORDS_FOUND', 
+            payload => \@sorted_results, count => $count, args => [ $count ] );
+    }
+    return $CELL->status_notice( 'DISPATCH_NO_RECORDS_FOUND' );
 }
 
 
