@@ -3476,3 +3476,6 @@ SPLIT OFF App::MREST into separate distribution
   - Fillup.pm, Tempintvl.pm: refactor
 - Build.PL: require latest App::Dochazka::Common
 
+0.521 2016-01-19 16:28 CET
+- Dispatch.pm: remove references to deprecated Tempintvls.pm
+
