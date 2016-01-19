@@ -35,8 +35,14 @@ package App::Dochazka::REST::Model::Tempintvl;
 use 5.012;
 use strict;
 use warnings;
-use App::CELL qw( $CELL $log $meta $site );
-use App::Dochazka::REST::Model::Shared qw( cud load load_multiple );
+
+use App::CELL qw( $CELL $log $site );
+use App::Dochazka::REST::Model::Shared qw(
+    canonicalize_tsrange
+    cud
+    load_multiple
+    tsrange_intersection
+);
 use Data::Dumper;
 use Params::Validate qw( :all );
 
@@ -83,11 +89,36 @@ This module provides the following exports:
 
 use Exporter qw( import );
 our @EXPORT_OK = qw( 
+    fetch_tempintvls_by_tiid_and_tsrange
 );
 
 
 
 =head1 METHODS
+
+
+=head2 delete
+
+Attempts to the delete the record (in the tempintvls table) corresponding
+to the object. Returns a status object.
+
+=cut
+
+sub delete {
+    my $self = shift;
+    my ( $context ) = validate_pos( @_, { type => HASHREF } );
+
+    my $status = cud(
+        conn => $context->{'dbix_conn'},
+        eid => $context->{'current'}->{'eid'},
+        object => $self,
+        sql => $site->SQL_TEMPINTVL_DELETE_SINGLE,
+        attrs => [ 'int_id' ],
+    );
+    $self->reset( int_id => $self->{int_id} ) if $status->ok;
+
+    return $status;
+}
 
 
 =head2 insert
@@ -105,7 +136,7 @@ sub insert {
         conn => $context->{'dbix_conn'},
         eid => $context->{'current'}->{'eid'},
         object => $self, 
-        sql => $site->SQL_TEMPINTVL_INSERT, 
+        sql => $site->SQL_TEMPINTVL_INSERT,
         attrs => [ 'tiid', 'intvl' ],
     );
 
@@ -115,6 +146,66 @@ sub insert {
 
 
 =head1 FUNCTIONS
+
+
+=head2 fetch_tempintvls_by_tiid_and_tsrange
+
+Given a L<DBIx::Connector> object, a tiid and a tsrange, return the set
+(array) of C<tempintvl> objects that match the tiid and tsrange.
+
+=cut
+
+sub fetch_tempintvls_by_tiid_and_tsrange {
+    my ( $conn, $tiid, $tsrange ) = validate_pos( @_,
+        { isa => 'DBIx::Connector' },
+        { type => SCALAR },
+        { type => SCALAR },
+    );
+
+    my $status = canonicalize_tsrange( $conn, $tsrange );
+    return $status unless $status->ok;
+    $tsrange = $status->payload;
+
+    $status = load_multiple(
+        conn => $conn,
+        class => __PACKAGE__,
+        sql => $site->SQL_TEMPINTVLS_SELECT_BY_TIID_AND_TSRANGE,
+        keys => [ $tiid, $tsrange, $site->DOCHAZKA_INTERVAL_SELECT_LIMIT ],
+    );
+    return $status unless 
+        ( $status->ok and $status->code eq 'DISPATCH_RECORDS_FOUND' ) or
+        ( $status->level eq 'NOTICE' and $status->code eq 'DISPATCH_NO_RECORDS_FOUND' );
+    my $whole_intervals = $status->payload;
+
+    $status = load_multiple(
+        conn => $conn,
+        class => __PACKAGE__,
+        sql => $site->SQL_TEMPINTVLS_SELECT_BY_TIID_AND_TSRANGE_PARTIAL_INTERVALS,
+        keys => [ $tiid, $tsrange, $tiid, $tsrange ],
+    );
+    return $status unless 
+        ( $status->ok and $status->code eq 'DISPATCH_RECORDS_FOUND' ) or
+        ( $status->level eq 'NOTICE' and $status->code eq 'DISPATCH_NO_RECORDS_FOUND' );
+    my $partial_intervals = $status->payload;
+
+    map 
+    { 
+        $_->intvl( 
+            tsrange_intersection( $conn, $tsrange, $_->intvl )
+        );
+    } ( @$partial_intervals );
+    
+    my @result_set = ();
+    push @result_set, @$whole_intervals, @$partial_intervals;
+
+    # But now the intervals are out of order
+    my @sorted_tmpintvls = sort { $a->intvl cmp $b->intvl } @result_set;
+    return \@sorted_tmpintvls;
+
+    return \sort { $a->intvl cmp $b->intvl } @result_set;
+
+}
+
 
 
 =head1 AUTHOR

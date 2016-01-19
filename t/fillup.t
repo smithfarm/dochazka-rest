@@ -112,7 +112,7 @@ $log->info( "=== $note" );
         long_desc => '',
         remark => '',
         tiid => '',
-        tsrange => '',
+        tsrange => {},
         tsranges => [],
     );
     map 
@@ -137,8 +137,8 @@ $log->info( "=== $note" );
         long_desc => {},
         remark => {},
         tiid => {},
-        tsrange => {},
-        tsranges => {},
+        tsrange => '',
+        tsranges => '',
     );
     map 
     {
@@ -263,7 +263,10 @@ is_deeply(
     [ qw( 2016-01-01 2016-01-02 2016-01-03 ) ], 
     "date_list property initialized" 
 );
-is( $fo->tsrange, '["2016-01-01 00:00:00+01","2016-01-04 00:00:00+01")' );
+is_deeply(
+    $fo->tsrange,
+    { tsrange => '["2016-01-01 00:00:00+01","2016-01-04 00:00:00+01")' }
+);
 is_deeply( 
     $fo->tsranges,
     [ 
@@ -287,7 +290,10 @@ is_deeply(
     [ qw( 1892-12-31 ) ],
     "date_list property initialized"
 );
-is( $fo->tsrange, '["1892-12-31 00:00:00+01","1893-01-01 00:00:00+01")' );
+is_deeply(
+    $fo->tsrange,
+    { tsrange => '["1892-12-31 00:00:00+01","1893-01-01 00:00:00+01")' }
+);
 is_deeply(
     $fo->tsranges,
     [
@@ -365,14 +371,21 @@ note( $note = 'vet a too-long tsrange' );
 $log->info( "=== $note" );
 $status = $fo->_vet_tsrange( tsrange => '[ 2015-1-1, 2016-1-2 )' );
 is( $status->level, 'ERR' );
-is( $status->code, 'DOCHAZKA_TSRANGE_TOO_BIG' );
+is( $status->code, 'DOCHAZKA_FILLUP_TSRANGE_TOO_LONG' );
+
+note( $note = 'vet a too-short tsrange' );
+$log->info( "=== $note" );
+$fo->tsrange( { tsrange => '["2015-01-01 09:00:00+01","2015-01-01 10:00:00+01")' } );
+$status = $fo->_tsrange_long_enough();
+is( $status->level, 'ERR' );
+is( $status->code, 'DOCHAZKA_FILLUP_TSRANGE_TOO_SHORT' );
 
 note( $note = 'vet a non-bogus tsrange' );
 $log->info( "=== $note" );
 $status = $fo->_vet_tsrange( tsrange => '[ "Jan 1, 2015", 2015-12-31 )' );
 is( $status->level, 'OK' );
 is( $status->code, 'SUCCESS' );
-like( $fo->tsranges->[0]->{'tsrange'}, qr/^\[ 2015-01-01 00:00:00..., 2015-12-31 00:00:00... \)$/ );
+like( $fo->tsranges->[0]->{'tsrange'}, qr/^\["2015-01-01 00:00:00...","2015-12-31 00:00:00..."\)$/ );
 is( $fo->tsranges->[0]->{'lower_canon'}, '2014-12-31' );
 is( $fo->tsranges->[0]->{'upper_canon'}, '2016-01-01' );
 is_deeply( $fo->tsranges->[0]->{'lower_ymd'}, [ 2014, 12, 31 ] );
@@ -547,20 +560,44 @@ $log->info( "=== $note" );
 $status = $fo->_vet_tsrange( tsrange => '[ "April 28, 1998" 10:00, 1998-05-6 10:00 )' );
 is( $status->level, 'OK' );
 is( $status->code, 'SUCCESS' );
-like( $fo->{'tsrange'}, qr/^\["1998-04-28 10:00:00...","1998-05-06 10:00:00..."\)/ );
-BAIL_OUT(0);
+like( $fo->tsrange->{'tsrange'}, qr/^\["1998-04-28 10:00:00...","1998-05-06 10:00:00..."\)/ );
 
 note( $note = 'proceed with fillup' );
 $log->info( "=== $note" );
-$status = $fo->fillup;
+is( $fo->intervals, undef );
+$status = $fo->fillup_tempintvls;
 is( $status->level, 'OK' );
 is( $status->code, 'DOCHAZKA_TEMPINTVLS_INSERT_OK' );
+is( ref( $fo->intervals ), 'ARRAY' );
+my %should_be_intvls = (
+    '["1998-04-27 08:00:00+02","1998-04-27 12:00:00+02")' => '',
+    '["1998-04-27 12:30:00+02","1998-04-27 16:30:00+02")' => '',
+    '["1998-04-28 08:00:00+02","1998-04-28 12:00:00+02")' => '',
+    '["1998-04-28 12:30:00+02","1998-04-28 16:30:00+02")' => '',
+    '["1998-04-29 08:00:00+02","1998-04-29 12:00:00+02")' => '',
+    '["1998-04-29 12:30:00+02","1998-04-29 16:30:00+02")' => '',
+    '["1998-04-30 08:00:00+02","1998-04-30 12:00:00+02")' => '',
+    '["1998-04-30 12:30:00+02","1998-04-30 16:30:00+02")' => '',
+    '["1998-05-04 08:00:00+02","1998-05-04 12:00:00+02")' => '',
+    '["1998-05-04 12:30:00+02","1998-05-04 16:30:00+02")' => '',
+    '["1998-05-05 08:00:00+02","1998-05-05 12:00:00+02")' => '',
+    '["1998-05-05 12:30:00+02","1998-05-05 16:30:00+02")' => '',
+    '["1998-05-06 08:00:00+02","1998-05-06 12:00:00+02")' => '',
+    '["1998-05-06 12:30:00+02","1998-05-06 16:30:00+02")' => '',
+    '["1998-05-07 08:00:00+02","1998-05-07 12:00:00+02")' => '',
+    '["1998-05-07 12:30:00+02","1998-05-07 16:30:00+02")' => '',
+);
+map { delete $should_be_intvls{$_->intvl} if exists $should_be_intvls{$_->intvl}; }
+    @{ $fo->intervals };
+is( scalar( keys( %should_be_intvls ) ), 0 );
 
 note( $note = 'commit (dry run)' );
 $log->info( "=== $note" );
-$status = $fo->commit( dry_run => 1 );
+$fo->dry_run( 1 );
+$status = $fo->commit;
 is( $status->level, 'OK' );
-is( $status->code, 'RESULT_SET' );
+is( $status->code, 'DISPATCH_FILLUP_INTERVALS_CREATED' );
+is( $status->{count}, 11 );
 
 note( $note = '1998-05-01 should not appear anywhere, as it is a holiday' );
 $log->info( "=== $note" );
@@ -569,48 +606,51 @@ ok( ! ( $jumbled_together =~ m/1998-05-01/ ) );
 
 note( $note = 'Check for more-or-less exact deep match' );
 $log->info( "=== $note" );
-like( $status->payload->[0], qr/^\["1998-04-28 10:00:00...","1998-04-28 12:00:00..."\)$/ );
-like( $status->payload->[1], qr/^\["1998-04-28 12:30:00...","1998-04-28 16:30:00..."\)$/ );
-like( $status->payload->[2], qr/^\["1998-04-29 08:00:00...","1998-04-29 12:00:00..."\)$/ );
-like( $status->payload->[3], qr/^\["1998-04-29 12:30:00...","1998-04-29 16:30:00..."\)$/ );
-like( $status->payload->[4], qr/^\["1998-04-30 08:00:00...","1998-04-30 12:00:00..."\)$/ );
-like( $status->payload->[5], qr/^\["1998-04-30 12:30:00...","1998-04-30 16:30:00..."\)$/ );
-like( $status->payload->[6], qr/^\["1998-05-04 08:00:00...","1998-05-04 12:00:00..."\)$/ );
-like( $status->payload->[7], qr/^\["1998-05-04 12:30:00...","1998-05-04 16:30:00..."\)$/ );
-like( $status->payload->[8], qr/^\["1998-05-05 08:00:00...","1998-05-05 12:00:00..."\)$/ );
-like( $status->payload->[9], qr/^\["1998-05-05 12:30:00...","1998-05-05 16:30:00..."\)$/ );
-like( $status->payload->[10], qr/^\["1998-05-06 08:00:00...","1998-05-06 10:00:00..."\)$/ );
+like( $status->payload->[0]->intvl, qr/^\["1998-04-28 10:00:00...","1998-04-28 12:00:00..."\)$/ );
+like( $status->payload->[1]->intvl, qr/^\["1998-04-28 12:30:00...","1998-04-28 16:30:00..."\)$/ );
+like( $status->payload->[2]->intvl, qr/^\["1998-04-29 08:00:00...","1998-04-29 12:00:00..."\)$/ );
+like( $status->payload->[3]->intvl, qr/^\["1998-04-29 12:30:00...","1998-04-29 16:30:00..."\)$/ );
+like( $status->payload->[4]->intvl, qr/^\["1998-04-30 08:00:00...","1998-04-30 12:00:00..."\)$/ );
+like( $status->payload->[5]->intvl, qr/^\["1998-04-30 12:30:00...","1998-04-30 16:30:00..."\)$/ );
+like( $status->payload->[6]->intvl, qr/^\["1998-05-04 08:00:00...","1998-05-04 12:00:00..."\)$/ );
+like( $status->payload->[7]->intvl, qr/^\["1998-05-04 12:30:00...","1998-05-04 16:30:00..."\)$/ );
+like( $status->payload->[8]->intvl, qr/^\["1998-05-05 08:00:00...","1998-05-05 12:00:00..."\)$/ );
+like( $status->payload->[9]->intvl, qr/^\["1998-05-05 12:30:00...","1998-05-05 16:30:00..."\)$/ );
+like( $status->payload->[10]->intvl, qr/^\["1998-05-06 08:00:00...","1998-05-06 10:00:00..."\)$/ );
 
 note( $note = 'test the new() method' );
 $log->info( "=== $note" );
-my $fo2 = App::Dochazka::REST::Model::Tempintvls->new(
+my $fo2 = App::Dochazka::REST::Fillup->new(
     context => $faux_context,
     tsrange => '[ 1998-04-28 10:00:00, 1998-05-06 10:00:00 )',
     emp_obj => $active,
+    dry_run => 1,
 );
-isa_ok( $fo2, 'App::Dochazka::REST::Model::Tempintvls' );
+isa_ok( $fo2, 'App::Dochazka::REST::Fillup' );
+is( $fo2->dry_run, 1 );
 ok( $fo2->constructor_status );
 isa_ok( $fo2->constructor_status, 'App::CELL::Status' );
-like( $fo2->tsrange, qr/^\["1998-04-28 10:00:00...","1998-05-06 10:00:00..."\)$/ );
+like( $fo2->tsrange->{'tsrange'}, qr/^\["1998-04-28 10:00:00...","1998-05-06 10:00:00..."\)$/ );
 
 note( $note = 'commit (dry run) on object created without using new()' );
 $log->info( "=== $note" );
 my $count = 11;
 foreach my $obj ( $fo, $fo2 ) {
-    $status = $obj->commit( dry_run => 1 );
+    $obj->dry_run( 1 );
+    $status = $obj->commit;
     is( $status->level, 'OK' );
-    is( $status->code, 'RESULT_SET' );
-    like( $status->payload->[0], qr/^\["1998-04-28 10:00:00...","1998-04-28 12:00:00..."\)$/ );
-    like( $status->payload->[1], qr/^\["1998-04-28 12:30:00...","1998-04-28 16:30:00..."\)$/ );
-    like( $status->payload->[2], qr/^\["1998-04-29 08:00:00...","1998-04-29 12:00:00..."\)$/ );
-    like( $status->payload->[3], qr/^\["1998-04-29 12:30:00...","1998-04-29 16:30:00..."\)$/ );
-    like( $status->payload->[4], qr/^\["1998-04-30 08:00:00...","1998-04-30 12:00:00..."\)$/ );
-    like( $status->payload->[5], qr/^\["1998-04-30 12:30:00...","1998-04-30 16:30:00..."\)$/ );
-    like( $status->payload->[6], qr/^\["1998-05-04 08:00:00...","1998-05-04 12:00:00..."\)$/ );
-    like( $status->payload->[7], qr/^\["1998-05-04 12:30:00...","1998-05-04 16:30:00..."\)$/ );
-    like( $status->payload->[8], qr/^\["1998-05-05 08:00:00...","1998-05-05 12:00:00..."\)$/ );
-    like( $status->payload->[9], qr/^\["1998-05-05 12:30:00...","1998-05-05 16:30:00..."\)$/ );
-    like( $status->payload->[10], qr/^\["1998-05-06 08:00:00...","1998-05-06 10:00:00..."\)$/ );
+    is( $status->code, 'DISPATCH_FILLUP_INTERVALS_CREATED' );
+    like( $status->payload->[0]->intvl, qr/^\["1998-04-28 10:00:00...","1998-04-28 12:00:00..."\)$/ );
+    like( $status->payload->[1]->intvl, qr/^\["1998-04-28 12:30:00...","1998-04-28 16:30:00..."\)$/ );
+    like( $status->payload->[2]->intvl, qr/^\["1998-04-29 08:00:00...","1998-04-29 12:00:00..."\)$/ );
+    like( $status->payload->[3]->intvl, qr/^\["1998-04-29 12:30:00...","1998-04-29 16:30:00..."\)$/ );
+    like( $status->payload->[4]->intvl, qr/^\["1998-04-30 08:00:00...","1998-04-30 12:00:00..."\)$/ );
+    like( $status->payload->[5]->intvl, qr/^\["1998-04-30 12:30:00...","1998-04-30 16:30:00..."\)$/ );
+    like( $status->payload->[6]->intvl, qr/^\["1998-05-04 08:00:00...","1998-05-04 12:00:00..."\)$/ );
+    like( $status->payload->[7]->intvl, qr/^\["1998-05-04 12:30:00...","1998-05-04 16:30:00..."\)$/ );
+    like( $status->payload->[8]->intvl, qr/^\["1998-05-05 08:00:00...","1998-05-05 12:00:00..."\)$/ );
+    like( $status->payload->[9]->intvl, qr/^\["1998-05-05 12:30:00...","1998-05-05 16:30:00..."\)$/ );
+    like( $status->payload->[10]->intvl, qr/^\["1998-05-06 08:00:00...","1998-05-06 10:00:00..."\)$/ );
     is( scalar( @{ $status->payload } ), $count );
     is( $status->{'count'}, $count );
 }
@@ -618,9 +658,10 @@ foreach my $obj ( $fo, $fo2 ) {
 note( $note = 'really commit the attendance intervals' );
 $log->info( "=== $note" );
 is( noof( $dbix_conn, 'intervals' ), 0 );
+$fo2->dry_run( 0 );
 $status = $fo2->commit;
 is( $status->level, 'OK' );
-is( $status->code, 'DOCHAZKA_TEMPINTVLS_COMMITTED' );
+is( $status->code, 'DISPATCH_FILLUP_INTERVALS_CREATED' );
 is( $status->{count}, $count );
 is( noof( $dbix_conn, 'intervals' ), $count );
 

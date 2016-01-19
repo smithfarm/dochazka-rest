@@ -39,18 +39,15 @@ use App::CELL qw( $CELL $log $meta $site );
 use App::Dochazka::Common::Model;
 use App::Dochazka::REST::ConnBank qw( $dbix_conn );
 use App::Dochazka::REST::Model::Employee;
-use App::Dochazka::REST::Model::Interval qw( 
-    fetch_intervals_by_eid_and_tsrange 
-);
 use App::Dochazka::REST::Model::Shared qw(
-    canonicalize_date
     canonicalize_tsrange
-    cud_generic
-    select_set_of_single_scalar_rows
-    select_single
     split_tsrange
 );
+use App::Dochazka::REST::Model::Tempintvl qw(
+    fetch_tempintvls_by_tiid_and_tsrange 
+);
 use App::Dochazka::REST::Holiday qw(
+    calculate_hours
     canon_date_diff
     canon_to_ymd
     get_tomorrow
@@ -64,7 +61,7 @@ use Date::Calc qw(
     Day_of_Week
     check_date
 );
-use JSON;
+use JSON qw( decode_json );
 use Params::Validate qw( :all );
 use Try::Tiny;
 
@@ -93,7 +90,7 @@ BEGIN {
         long_desc => { type => SCALAR, optional => 1 },
         remark => { type => SCALAR, optional => 1 },
         tiid => { type => SCALAR, optional => 1 },
-        tsrange => { type => SCALAR, optional => 1 },
+        tsrange => { type => HASHREF, optional => 1 },
         tsranges => { type => ARRAYREF, optional => 1 },
     );
     map {
@@ -238,10 +235,13 @@ is a legal C<date_list> argument.
 
 This function performs various checks on the date list, sorts it, and
 populates the C<tsrange> and C<tsranges> attributes based on it. For the
-sample date list given above, the tsrange will be C<[ 2016-01-13 00:00,
-2016-01-27 24:00 )>. This is used to make sure the employee's schedule
-and priv level did not change during the time period represented by the 
-date list.
+sample date list given above, the tsrange will be something like
+
+    { tsrange => "[\"2016-01-13 00:00:00+01\",\"2016-01-28 00:00:00+01\")" }
+    
+This is used to make sure the employee's schedule and priv level did not
+change during the time period represented by the date list, as well as in
+C<fillup_tempintvls> to generate the C<tempintvl> working set.
 
 Returns a status object.
 
@@ -281,12 +281,12 @@ sub _vet_date_list {
         my $t = "[ $sorted_date_list[0] 00:00, $sorted_date_list[0] 24:00 )";
         my $status = canonicalize_tsrange( $self->context->{dbix_conn}, $t );
         return $status unless $status->ok;
-        $self->tsrange( $status->payload );
+        $self->tsrange( { tsrange => $status->payload } );
     } else {
         my $t = "[ $sorted_date_list[0] 00:00, $sorted_date_list[-1] 24:00 )";
         my $status = canonicalize_tsrange( $self->context->{dbix_conn}, $t );
         return $status unless $status->ok;
-        $self->tsrange( $status->payload );
+        $self->tsrange( { tsrange => $status->payload } );
     }
 
     # populate tsranges
@@ -335,11 +335,11 @@ sub _vet_tsrange {
             $t,
         );
         return $status unless $status->ok;
-        $self->tsrange( $status->payload );
+        $self->tsrange( { tsrange => $status->payload } );
         $self->tsranges( [ { tsrange => $status->payload } ] );
     }
 
-    foreach my $t_hash ( @{ $self->tsranges } ) {
+    foreach my $t_hash ( @{ $self->tsranges }, $self->tsrange ) {
 
         # split the tsrange
         my @parens = $t_hash->{tsrange} =~ m/[^\[(]*([\[(])[^\])]*([\])])/;
@@ -348,7 +348,6 @@ sub _vet_tsrange {
         return $status unless $status->ok;
         my $low = $status->payload->[0];
         my $upp = $status->payload->[1];
-        $t_hash->{'tsrange'} = "$parens[0] $low, $upp $parens[1]";
         my @low = canon_to_ymd( $low );
         my @upp = canon_to_ymd( $upp );
 
@@ -364,7 +363,7 @@ sub _vet_tsrange {
         # - add two days to the limit to account for how we just stretched $low and $upp
         my $fillup_limit = $site->DOCHAZKA_INTERVAL_FILLUP_LIMIT + 2;
         if ( $fillup_limit < canon_date_diff( $low, $upp ) ) {
-            return $CELL->status_err( 'DOCHAZKA_TSRANGE_TOO_BIG', args => [ $ARGS{tsrange} ] )
+            return $CELL->status_err( 'DOCHAZKA_FILLUP_TSRANGE_TOO_LONG', args => [ $ARGS{tsrange} ] )
         }
 
         $t_hash->{'lower_ymd'} = \@low;
@@ -375,6 +374,33 @@ sub _vet_tsrange {
 
     $self->{'vetted'}->{'tsrange'} = 1;
     return $CELL->status_ok( 'SUCCESS' );
+}
+
+
+=head2 _tsrange_long_enough
+
+This method checks the tsrange to find out if it's not too short. (The
+C<fillup_tempintvls> method has trouble with very short tsranges.)
+
+Returns a status object.
+
+=cut
+
+sub _tsrange_long_enough {
+    my $self = shift;
+    $log->debug( "Entering " . __PACKAGE__ . "::_tsrange_long_enough" );
+
+    my $hours = calculate_hours( $self->tsrange->{tsrange} );
+
+    die "HARDY_LAUREL_BOMB in _tsrange_long_enough tsrange not canonicalized"
+        if $hours == 0;
+
+    return $CELL->status_err( 
+        'DOCHAZKA_FILLUP_TSRANGE_TOO_SHORT', 
+        args => [ $hours ] 
+    ) if $hours < 24;
+
+    return $CELL->status_ok( 'SUCCESS', args => [ $hours ] );
 }
 
 
@@ -406,13 +432,13 @@ sub _vet_employee {
     # check for priv and schedule changes during the tsrange
     if ( $self->{'emp_obj'}->priv_change_during_range( 
         $self->context->{'dbix_conn'}, 
-        $self->tsrange,
+        $self->tsrange->{'tsrange'},
     ) ) {
         return $CELL->status_err( 'DOCHAZKA_EMPLOYEE_PRIV_CHANGED' ); 
     }
     if ( $self->{'emp_obj'}->schedule_change_during_range(
         $self->context->{'dbix_conn'}, 
-        $self->tsrange,
+        $self->tsrange->{'tsrange'},
     ) ) {
         return $CELL->status_err( 'DOCHAZKA_EMPLOYEE_SCHEDULE_CHANGED' ); 
     }
@@ -420,7 +446,7 @@ sub _vet_employee {
     # get privhistory record prevailing at beginning of tsrange
     my $probj = $self->{emp_obj}->privhistory_at_timestamp( 
         $self->context->{'dbix_conn'}, 
-        $self->tsrange
+        $self->tsrange->{'tsrange'},
     );
     if ( ! $probj->priv ) {
         return $CELL->status_err( 'DISPATCH_EMPLOYEE_NO_PRIVHISTORY' );
@@ -434,7 +460,7 @@ sub _vet_employee {
     # get schedhistory record prevailing at beginning of tsrange
     my $shobj = $self->{emp_obj}->schedhistory_at_timestamp( 
         $self->context->{'dbix_conn'}, 
-        $self->tsrange
+        $self->tsrange->{'tsrange'},
     );
     if ( ! $shobj->sid ) {
         return $CELL->status_err( 'DISPATCH_EMPLOYEE_NO_SCHEDULE' );
@@ -525,96 +551,90 @@ sub vetted {
 }
 
 
-=head2 fillup
+=head2 fillup_tempintvls
 
 This method takes no arguments and expects to be called on a fully vetted
 object (see C<vetted>, above).
 
-This method attempts to INSERT records into the Fillup table according to
-the tsrange and the employee's schedule.  Returns a status object.
+This method creates (and attempts to INSERT records corresponding to) a
+number of Tempintvl objects according to the C<tsrange> (as stored in the
+Fillup object) and the employee's schedule.
 
-Note that this method does not create any attendance intervals. If the fillup
-operation is successful, the payload will contain a list of attendance
-intervals that will be created if the C<commit> method is called.
+Note that the purpose of this method is to generate a set of Tempintvl
+objects that could potentially become attendance intervals. The
+C<fillup_tempintvls> method only deals with Tempintvls. It is up to the 
+C<fillup_commit> method to choose the right Tempintvls for the fillup
+operation in question and to construct and insert the corresponding
+Interval objects.
+
+Returns a status object.
 
 =cut
 
-sub fillup {
+sub fillup_tempintvls {
     my $self = shift;
+    $log->debug( "Entering " . __PACKAGE__ . "::fillup_tempintvls" );
 
-    die "ARG_NOT_VETTED" unless $self->vetted;
+    die "FILLUP_OBJECT_NOT_VETTED" unless $self->vetted;
 
     my $rest_sched_hash_lower = _init_lower_sched_hash( $self->{sched_obj}->schedule );
 
     my $status;
     my @pushed_intervals;
-    foreach my $t_hash ( @{ $self->tsranges } ) {
 
-        my $holidays = holidays_in_daterange(
-            'begin' => $t_hash->{lower_canon},
-            'end' => $t_hash->{upper_canon},
-        );
-
-        # the insert operation needs to take place within a transaction
-        # so we don't leave a mess behind if there is a problem
-        try {
-            $self->context->{'dbix_conn'}->txn( fixup => sub {
-                my $sth = $_->prepare( $site->SQL_Fillup_INSERT );
-                my $intvls;
-
-                # the next sequence value is already in $self->tiid
-                $sth->bind_param( 1, $self->tiid );
-
-                # execute SQL_Fillup_INSERT for each fillup interval
-                my $d = $t_hash->{'lower_canon'};
-                my $days_upper = Date_to_Days( @{ $t_hash->{upper_ymd} } );
-                WHILE_LOOP: while ( $d ne get_tomorrow( $t_hash->{'upper_canon'} ) ) {
-                    if ( _is_holiday( $d, $holidays ) ) {
-                        $d = get_tomorrow( $d );
-                        next WHILE_LOOP;
-                    }
-                    my ( $ly, $lm, $ld ) = canon_to_ymd( $d );
-                    my $days_lower = Date_to_Days( $ly, $lm, $ld );
-                    my $ndow = Day_of_Week( $ly, $lm, $ld );
-
-                    # get schedule entries starting on that DOW
-                    foreach my $entry ( @{ $rest_sched_hash_lower->{ $ndow } } ) {
-                        my ( $days_high_dow, $hy, $hm, $hd );
-                        # convert "high_dow" into a number of days
-                        $days_high_dow = $days_lower + 
-                            ( $dow_to_num{ $entry->{'high_dow'} } - $dow_to_num{ $entry->{'low_dow'} } );
-                        if ( $days_high_dow <= $days_upper ) {
-                            ( $hy, $hm, $hd ) = Days_to_Date( $days_high_dow );
-                            my $payl = "[ " . ymd_to_canon( $ly,$lm,$ld ) . " " . $entry->{'low_time'} . 
-                                       ", " . ymd_to_canon( $hy,$hm,$hd ) . " ". $entry->{'high_time'} . " )";
-                            $sth->bind_param( 2, $payl );
-                            $sth->execute;
-                            push @$intvls, $payl;
-                        }
-                    }
-                    $d = get_tomorrow( $d );
-                }
-
-                $status = $CELL->status_ok( 
-                    'DOCHAZKA_Fillup_INSERT_OK', 
-                    payload => $intvls,
-                );
-            } );
-        } catch {
-            $status = $CELL->status_err( 'DOCHAZKA_DBI_ERR', args => [ $_ ] );
-        };
-        return $status unless $status->ok;
-        push @pushed_intervals, @{ $status->payload };
-    }
-    $status = $CELL->status_ok( 
-        'DOCHAZKA_Fillup_INSERT_OK', 
-        payload => {
-            intervals => \@pushed_intervals,
-            tiid => $self->tiid,
-        }
+    my $holidays = holidays_in_daterange(
+        'begin' => $self->tsrange->{lower_canon},
+        'end' => $self->tsrange->{upper_canon},
     );
 
-    return $status;
+    # create a bunch of Tempintvl objects
+    my @tempintvls;
+
+    my $d = $self->tsrange->{'lower_canon'};
+    my $days_upper = Date_to_Days( @{ $self->tsrange->{upper_ymd} } );
+    WHILE_LOOP: while ( $d ne get_tomorrow( $self->tsrange->{'upper_canon'} ) ) {
+        if ( _is_holiday( $d, $holidays ) ) {
+            $d = get_tomorrow( $d );
+            next WHILE_LOOP;
+        }
+
+        my ( $ly, $lm, $ld ) = canon_to_ymd( $d );
+        my $days_lower = Date_to_Days( $ly, $lm, $ld );
+        my $ndow = Day_of_Week( $ly, $lm, $ld );
+
+        # get schedule entries starting on that DOW
+        foreach my $entry ( @{ $rest_sched_hash_lower->{ $ndow } } ) {
+            my ( $days_high_dow, $hy, $hm, $hd );
+            # convert "high_dow" into a number of days
+            $days_high_dow = $days_lower + 
+                ( $dow_to_num{ $entry->{'high_dow'} } - $dow_to_num{ $entry->{'low_dow'} } );
+            if ( $days_high_dow <= $days_upper ) {
+
+                # create a Tempintvl object
+                my $to = App::Dochazka::REST::Model::Tempintvl->spawn( tiid => $self->tiid );
+                die "COUGH! GAG! Tempintvl object tiid problem!" 
+                   unless $to->tiid and $to->tiid == $self->tiid;
+
+                # compile the intvl
+                ( $hy, $hm, $hd ) = Days_to_Date( $days_high_dow );
+                $to->intvl( "[ " . ymd_to_canon( $ly,$lm,$ld ) . " " . $entry->{'low_time'} . 
+                            ", " . ymd_to_canon( $hy,$hm,$hd ) . " ".  $entry->{'high_time'} . " )" );
+
+                # insert the object
+                my $status = $to->insert( $self->context );
+                return $status unless $status->ok;
+
+                # push it onto results array
+                push @tempintvls, $to;
+            }
+        }
+        $d = get_tomorrow( $d );
+    }
+
+    $log->debug( "fillup_tempintvls completed successfully, " . scalar( @tempintvls ) . 
+                 " tempintvl objects created and inserted into database" );
+    $self->intervals( \@tempintvls );
+    return $CELL->status_ok( 'DOCHAZKA_TEMPINTVLS_INSERT_OK' );
 }
 
 
@@ -642,7 +662,6 @@ sub new {
         date_list => { type => SCALAR|UNDEF, optional => 1 },
         long_desc => { type => SCALAR|UNDEF, optional => 1 },
         remark => { type => SCALAR|UNDEF, optional => 1 },
-        clobber => { type => BOOLEAN, default => 0 },
         dry_run => { type => BOOLEAN, default => 0 },
     } );
     my ( $self, $status );
@@ -665,127 +684,82 @@ sub new {
     return $self unless $self->constructor_status->ok;
     $self->constructor_status( $self->_vet_tsrange( %ARGS ) );
     return $self unless $self->constructor_status->ok;
+    $self->constructor_status( $self->_tsrange_long_enough() );
     $self->constructor_status( $self->_vet_employee( emp_obj => $ARGS{emp_obj} ) );
     return $self unless $self->constructor_status->ok;
     $self->constructor_status( $self->_vet_activity( aid => $ARGS{aid} ) );
     return $self unless $self->constructor_status->ok;
     die "AGHGCHKFSCK! should be vetted by now!" unless $self->vetted;
 
-    $self->constructor_status( $self->fillup );
+    map
+    {
+        $self->$_( $ARGS{$_} ) if $ARGS{$_};
+    } qw( long_desc remark dry_run );
+
+    $self->constructor_status( $self->fillup_tempintvls );
     return $self unless $self->constructor_status->ok;
 
     return $self;
 }
 
 
-=head2 dump
-
-Takes a PARAMHASH containing a C<DBIx::Connector> object and a C<tiid> 
-property. Returns all intervals matching that C<tiid>.
-
-=cut
-
-sub dump {
-    my $self = shift;
-    my ( %ARGS ) = validate( @_, {
-        tiid => { type => SCALAR },
-    } );
-    my $status;
-
-    $status = select_set_of_single_scalar_rows(
-        conn => $self->context->{'dbix_conn'},
-        sql => $site->SQL_Fillup_SELECT,
-        keys => [ $ARGS{tiid} ],
-    );
-    return $status;
-}
-
-
 =head2 commit
 
-Optionally takes a PARAMHASH containing, optionally, a C<dry_run> boolean value
-that defaults to 0.
+If the C<dry_run> attribute is true, merely SELECTs rows from the
+C<tempintvls> table corresponding to the vetted tsrange(s).  This SELECT
+will generate an array of C<interval> objects.
 
-If C<dry_run> is true, merely SELECTs intervals from the Fillup table
-corresponding to the tsrange (already vetted and stored in the object by
-calling C<_vet_tsrange>). This SELECT includes partial intervals (if any) at
-the beginning and end of the tsrange (using PostgreSQL intersection operator).
-
-If C<dry_run> is false, all the intervals from the SELECT are INSERTed into the
-intervals table.
+If the C<dry_run> attribute is false, all the intervals from the SELECT are
+INSERTed into the intervals table.
 
 =cut
 
 sub commit {
     my $self = shift;
-    my ( %ARGS ) = validate( @_, {
-        dry_run => { type => SCALAR|UNDEF, default => 0 },
-    } );
-    my $status;
-    my $dry_run = $ARGS{dry_run} ? 1 : 0;
-    my $next = bless {}, 'App::Dochazka::REST::Fillup';
-    $next->populate();
-    die 'AGCKDSWQ#$L! newly spawned Fillup object has no TIID?' unless $next->tiid;
+    $log->debug( "Entering " . __PACKAGE__ . "::commit with dry_run " . 
+        $self->dry_run ? "TRUE" : "FALSE" );
 
-    # write the rows
-    $status = cud_generic(
-        conn => $self->context->{'dbix_conn'},
-        eid => $self->emp_obj->eid,
-        sql => $site->SQL_Fillup_COMMIT,
-        bind_params => [ 
-            $next->tiid, $self->tiid, $self->{tsrange},
-            $next->tiid, $self->tiid, $self->{tsrange},
-            $next->tiid, $self->tiid, $self->{tsrange},
-        ],
-    );
-    goto WRAPUP unless $status->ok;
+    my ( $status, @result_set, $count );
 
-    # get the rows we just wrote
-    $status = select_set_of_single_scalar_rows(
-        conn => $self->context->{'dbix_conn'},
-        sql => $site->SQL_Fillup_SELECT_COMMITTED,
-        keys => [ $next->tiid ],
-    );
-    my $fillup_intervals = $status->payload;
-    my $count = defined( $fillup_intervals )
-        ? @$fillup_intervals
-        : 0;
-    if ( $dry_run ) {
-        $status->{'count'} = $count;
-        return $status;
-    }
-    goto WRAPUP unless $status->ok;
-    
-    # write intervals to database
-    $status = undef;
-    try {
-        $self->context->{'dbix_conn'}->txn( fixup => sub {
-            map {
-                my $int = App::Dochazka::REST::Model::Interval->spawn(
-                    eid => $self->emp_obj->eid,
-                    aid => $self->act_obj->aid,
-                    intvl => $_,
-                    remark => 'fillup',
-                );
+    $count = 0;
+    foreach my $t_hash ( @{ $self->tsranges } ) {
+
+        my $tempintvls = fetch_tempintvls_by_tiid_and_tsrange(
+            $self->context->{dbix_conn},
+            $self->tiid,
+            $t_hash->{tsrange},
+        );
+
+        # For each tempintvl object, make a corresponding interval object
+        foreach my $tempintvl ( @$tempintvls ) {
+            my $int = App::Dochazka::REST::Model::Interval->spawn(
+                          eid => $self->emp_obj->eid,
+                          aid => $self->act_obj->aid,
+                          code => $self->act_obj->code,
+                          intvl => $tempintvl->intvl,
+                          long_desc => $self->long_desc || 'FILLUP',
+                          long_desc => $self->remark || 'FILLUP',
+                          partial => 0,
+                      );
+
+            # INSERT only if not dry run
+            if ( ! $self->dry_run ) {
                 $status = $int->insert( $self->context );
-                die $status->text unless $status->ok;
-            } @{ $fillup_intervals };
-        } );
-    } catch {
-        $status = $CELL->status_err( 'DOCHAZKA_DBI_ERR', args => [ $_ ] );
-    };
+                return $status unless $status->ok;
+            }
 
-WRAPUP:
-    # cleanup internal working object $next
-    $next->DESTROY;
-    return $status unless $status->ok;
-    return $CELL->status_ok( 'DOCHAZKA_Fillup_COMMITTED', count => $count );
+            push @result_set, $int;
+            $count += 1;
+        }
+
+    }
+
+    if ( my $count = scalar @result_set ) {
+        return $CELL->status_ok( 'DISPATCH_FILLUP_INTERVALS_CREATED', 
+            payload => \@result_set, count => $count, args => [ $count ] );
+    }
+    return $CELL->status_notice( 'DISPATCH_FILLUP_NO_INTERVALS_CREATED' );
 }
-
-
-=head2 update
-
-There is no update method for Fillup. Instead, delete and re-create.
 
 
 =head2 DESTROY
@@ -804,7 +778,7 @@ sub DESTROY {
     my $status;
     try {
         $dbix_conn->run( fixup => sub {
-            my $sth = $_->prepare( $site->SQL_TEMPINTVLS_DELETE );
+            my $sth = $_->prepare( $site->SQL_TEMPINTVLS_DELETE_MULTIPLE );
             $sth->bind_param( 1, $self->tiid );
             $sth->execute;
             my $rows = $sth->rows;
@@ -902,65 +876,6 @@ Takes a date and a C<$holidays> hashref.  Returns true or false.
 sub _is_holiday {
     my ( $datum, $holidays ) = @_;
     return exists( $holidays->{ $datum } );
-}
-
-
-=head2 fetch_intervals_by_tsranges
-
-Return a set of intervals that fall within the tsranges.
-
-=cut
-
-sub fetch_intervals_by_tsranges {
-    my $self = shift;
-
-    my $status;
-    my @result_set = ();
-
-    for my $t_hash ( @{ $self->tsranges } ) {
-
-        my $tsr = $t_hash->{'tsrange'};
-
-        $status = load_multiple(
-            conn => $self->context->{'dbix_conn'},
-            class => 'App::Dochazka::REST::Model::Tempintvl',
-            sql => $site->SQL_TEMPINTVL_SELECT_BY_TIID_AND_TSRANGE,
-            keys => [ $self->tiid, $tsr, $site->DOCHAZKA_INTERVAL_SELECT_LIMIT ],
-        );
-        return $status unless 
-            ( $status->ok and $status->code eq 'DISPATCH_RECORDS_FOUND' ) or
-            ( $status->level eq 'NOTICE' and $status->code eq 'DISPATCH_NO_RECORDS_FOUND' );
-        my $whole_intervals = $status->payload;
-
-        $status = load_multiple(
-            conn => $self->context->{'dbix_conn'},
-            class => 'App::Dochazka::REST::Model::Tempintvl',
-            sql => $site->SQL_TEMPINTVL_SELECT_BY_TIID_AND_TSRANGE_PARTIAL_INTERVALS,
-            keys => [ $self->tiid, $tsr, $self->tiid, $tsr ],
-        );
-        return $status unless 
-            ( $status->ok and $status->code eq 'DISPATCH_RECORDS_FOUND' ) or
-            ( $status->level eq 'NOTICE' and $status->code eq 'DISPATCH_NO_RECORDS_FOUND' );
-        my $partial_intervals = $status->payload;
-
-        #map { $_->partial( 0 ) } ( @$whole_intervals );
-        #foreach my $int ( @$partial_intervals ) {
-        #    $int->partial( 1 );
-        #    $int->intvl( tsrange_intersection( $self->context->{'dbix_conn'}, $tsrange, $int->intvl ) );
-        #}
-    
-        my @result_set = @$whole_intervals;
-        push @result_set, @$partial_intervals;
-    }
-
-    # But now the intervals are out of order
-    my @sorted_results = sort { $a->intvl cmp $b->intvl } @result_set;
-
-    if ( my $count = scalar @result_set ) {
-        return $CELL->status_ok( 'DISPATCH_RECORDS_FOUND', 
-            payload => \@sorted_results, count => $count, args => [ $count ] );
-    }
-    return $CELL->status_notice( 'DISPATCH_NO_RECORDS_FOUND' );
 }
 
 

@@ -43,18 +43,26 @@ set( 'SQL_NEXT_TIID', q/
       / );
 
 #
-# SQL_TEMPINTVLS_INSERT
+# SQL_TEMPINTVL_INSERT
 #     SQL to insert a single record in the 'tempintvls' table
 #
-set( 'SQL_TEMPINTVLS_INSERT', q/
+set( 'SQL_TEMPINTVL_INSERT', q/
       INSERT INTO tempintvls (tiid, intvl)
       VALUES (?, ?)
+      RETURNING int_id, tiid, intvl
       / );
 
 #
-# SQL_TEMPINTVLS_DELETE
+# SQL_TEMPINTVL_DELETE_SINGLE
+#     SQL to delete a single Tempintvl object
+set( 'SQL_TEMPINTVL_DELETE_SINGLE', q/
+      DELETE FROM tempintvls WHERE int_id = ?
+      / );
+
+#
+# SQL_TEMPINTVLS_DELETE_MULTIPLE
 #     SQL to delete scratch intervals once they are no longer needed
-set( 'SQL_TEMPINTVLS_DELETE', q/
+set( 'SQL_TEMPINTVLS_DELETE_MULTIPLE', q/
       DELETE FROM tempintvls WHERE tiid = ?
       / );
 
