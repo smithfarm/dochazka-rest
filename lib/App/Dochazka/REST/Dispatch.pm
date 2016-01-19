@@ -48,6 +48,7 @@ use App::Dochazka::REST::ACL qw(
     acl_check_is_my_report 
 );
 use App::Dochazka::REST::ConnBank qw( $dbix_conn conn_status );
+use App::Dochazka::REST::Fillup;
 use App::Dochazka::REST::LDAP qw( populate_employee );
 use App::Dochazka::REST::Model::Activity;
 use App::Dochazka::REST::Model::Component qw( get_all_components );
@@ -77,7 +78,6 @@ use App::Dochazka::REST::Model::Shared qw(
     split_tsrange
     timestamp_delta_plus
 );
-use App::Dochazka::REST::Model::Tempintvls;
 use App::Dochazka::REST::ResourceDefs;
 use App::Dochazka::REST::Shared qw( :ALL );  # all the shared_* functions
 use App::Dochazka::REST::Holiday qw( holidays_in_daterange );
@@ -2540,42 +2540,42 @@ sub handler_fillup {
         my $emp = shared_first_pass_lookup( $self, $key, $value );
         return 0 unless $emp->isa( 'App::Dochazka::REST::Model::Employee' );
 
-        # create Tempintvls object
-        my $tempintvls = App::Dochazka::REST::Model::Tempintvls->new( 
+        # create Fillup object
+        my $fillup = App::Dochazka::REST::Fillup->new( 
             context => $context,
             tsrange => $context->{'mapping'}->{'tsrange'},
             emp_obj => $emp,
         );
-        if ( ! defined( $tempintvls ) ) {
+        if ( ! defined( $fillup ) ) {
             $self->mrest_declare_status( 
                 code => 500, 
-                explanation => "No Tempintvls object" 
+                explanation => "No Fillup object" 
             );
             return 0;
         }
-        if ( ! $tempintvls->constructor_status or
-             ! $tempintvls->constructor_status->isa( 'App::CELL::Status' ) )
+        if ( ! $fillup->constructor_status or
+             ! $fillup->constructor_status->isa( 'App::CELL::Status' ) )
         {
             $self->mrest_declare_status( 
                 code => 500, 
-                explanation => "No constructor_status in Tempintvls object" 
+                explanation => "No constructor_status in Fillup object" 
             );
             return 0;
         }
-        if ( $tempintvls->constructor_status->not_ok ) {
-            my $status = $tempintvls->constructor_status;
+        if ( $fillup->constructor_status->not_ok ) {
+            my $status = $fillup->constructor_status;
             $status->{'http_code'} = ( $status->code eq 'DOCHAZKA_DBI_ERR' )
                 ? 500 
                 : 400;
             $self->mrest_declare_status( $status );
         }
-        $context->{'stashed_tempintvls_object'} = $tempintvls;
+        $context->{'stashed_fillup_object'} = $fillup;
 
         return 1;
     }
     
     # second pass
-    my $tio = $context->{'stashed_tempintvls_object'};
+    my $fo = $context->{'stashed_fillup_object'};
     my $dry_run;
     if ( $method eq 'GET' ) {
         $dry_run = 1;
@@ -2584,7 +2584,8 @@ sub handler_fillup {
     } else {
         die "AGGHHDDNPRRWHOA!!";
     }
-    my $status = $tio->commit( dry_run => $dry_run );
+    $fo->dry_run( 1 );
+    my $status = $fo->commit;
     if ( $status->not_ok ) {
         $self->mrest_declare_status( code => 500, explanation => $status->text );
         return $fail;
@@ -2593,7 +2594,7 @@ sub handler_fillup {
     my $count = ( ref( $intervals ) eq 'ARRAY' ) 
         ? scalar @$intervals
         : 0;
-    $tio->DESTROY;
+    $fo->DESTROY;
     if ( $method eq 'GET' ) {
         return $CELL->status_ok( 'DISPATCH_RECORDS_FOUND', 
             args => [ $count ],
