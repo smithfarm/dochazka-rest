@@ -104,13 +104,18 @@ the range is [ 2016-01-06 08:00, 2016-01-06 09:00 ), the return value will
 be 1. If the range is [ 2016-01-06 08:00, 2016-01-07 09:00 ), the return
 value will 25.
 
+Returns 0 if there's a problem with the tsrange argument.
+
 =cut
 
 sub calculate_hours {
     my $tsr = shift;
+    $log->debug( "Entering " . __PACKAGE__ . "::calculate_hours with tsr $tsr" );
 
     my ( $begin_date, $begin_time, $end_date, $end_time ) = 
         $tsr =~ m/(\d{4}-\d{2}-\d{2}).+(\d{2}:\d{2}):\d{2}.+(\d{4}-\d{2}-\d{2}).+(\d{2}:\d{2}):\d{2}/;
+
+    return 0 unless $begin_date and $begin_time and $end_date and $end_time;
 
     my $days = canon_date_diff( $begin_date, $end_date );
 
