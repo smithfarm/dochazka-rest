@@ -31,6 +31,7 @@ lib/App/Dochazka/REST/ConnBank.pm
 lib/App/Dochazka/REST/Dispatch.pm
 lib/App/Dochazka/REST/Docs/Resources.pm
 lib/App/Dochazka/REST/Docs/Workflow.pm
+lib/App/Dochazka/REST/Fillup.pm
 lib/App/Dochazka/REST/Guide.pm
 lib/App/Dochazka/REST/LDAP.pm
 lib/App/Dochazka/REST/Mason.pm
@@ -44,7 +45,7 @@ lib/App/Dochazka/REST/Model/Schedhistory.pm
 lib/App/Dochazka/REST/Model/Schedintvls.pm
 lib/App/Dochazka/REST/Model/Schedule.pm
 lib/App/Dochazka/REST/Model/Shared.pm
-lib/App/Dochazka/REST/Model/Tempintvls.pm
+lib/App/Dochazka/REST/Model/Tempintvl.pm
 lib/App/Dochazka/REST/ResourceDefs.pm
 lib/App/Dochazka/REST/Shared.pm
 lib/App/Dochazka/REST/Test.pm
@@ -75,6 +76,7 @@ t/dispatch/schedule-bug.t
 t/dispatch/schedule.t
 t/dispatch/supervisor.t
 t/dispatch/top.t
+t/fillup.t
 t/mason.t
 t/model/activity.t
 t/model/canonicalize.t
@@ -88,7 +90,6 @@ t/model/privhistory.t
 t/model/schedintvls.t
 t/model/schedule.t
 t/model/split_tsrange.t
-t/model/tempintvls.t
 t/model/timestamp_delta.t
 t/sql/current_priv.t
 t/sql/disabled_to_zero.t

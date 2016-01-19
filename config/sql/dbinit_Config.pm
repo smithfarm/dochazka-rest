@@ -820,51 +820,11 @@ $body$#,
       CREATE TABLE IF NOT EXISTS tempintvls (
           int_id     serial PRIMARY KEY,
           tiid       integer NOT NULL,
-          intvl      tstzrange
+          intvl      tstzrange NOT NULL
       )/,
 
     q/CREATE TRIGGER a2_interval_not_too_future BEFORE INSERT OR UPDATE ON tempintvls
       FOR EACH ROW EXECUTE PROCEDURE not_too_future()/,
-
-    q#CREATE OR REPLACE FUNCTION partial_tempintvls_lower(integer, tstzrange)
-      RETURNS tstzrange AS $$
-        DECLARE
-            overlap_lower  tstzrange;
-            temp_lower     tstzrange;
-            lparen         text;
-            rparen         text;
-        BEGIN
-            SELECT a, b FROM parens($2) INTO lparen, rparen AS ( a text, b text );
-            SELECT intvl FROM tempintvls INTO overlap_lower
-            WHERE tiid = $1 AND intvl @> lower($2);
-            IF overlap_lower IS NOT NULL THEN
-                temp_lower := concat( lparen, lower($2), ',', upper(overlap_lower), rparen )::tstzrange;
-            ELSE
-                temp_lower := null::tstzrange;
-            END IF;
-            RETURN temp_lower;
-        END;
-      $$ LANGUAGE plpgsql#,
-
-    q#CREATE OR REPLACE FUNCTION partial_tempintvls_upper(integer, tstzrange)
-      RETURNS tstzrange AS $$
-        DECLARE
-            overlap_upper  tstzrange;
-            temp_upper     tstzrange;
-            lparen         text;
-            rparen         text;
-        BEGIN
-            SELECT a, b FROM parens($2) INTO lparen, rparen AS ( a text, b text );
-            SELECT intvl FROM tempintvls INTO overlap_upper
-            WHERE tiid = $1 AND intvl @> upper($2);
-            IF overlap_upper IS NOT NULL THEN
-                temp_upper := concat( lparen, lower(overlap_upper), ',', upper($2), rparen )::tstzrange;
-            ELSE
-                temp_upper := null::tstzrange;
-            END IF;
-            RETURN temp_upper;
-        END;
-      $$ LANGUAGE plpgsql#,
 
     # create 'root' and 'demo' employees
 

@@ -43,32 +43,36 @@ set( 'SQL_NEXT_TIID', q/
       / );
 
 #
-# SQL_TEMPINTVLS_INSERT
+# SQL_TEMPINTVL_INSERT
 #     SQL to insert a single record in the 'tempintvls' table
 #
-set( 'SQL_TEMPINTVLS_INSERT', q/
+set( 'SQL_TEMPINTVL_INSERT', q/
       INSERT INTO tempintvls (tiid, intvl)
       VALUES (?, ?)
+      RETURNING int_id, tiid, intvl
       / );
 
 #
-# SQL_TEMPINTVLS_DELETE
+# SQL_TEMPINTVL_DELETE_SINGLE
+#     SQL to delete a single Tempintvl object
+set( 'SQL_TEMPINTVL_DELETE_SINGLE', q/
+      DELETE FROM tempintvls WHERE int_id = ?
+      / );
+
+#
+# SQL_TEMPINTVLS_DELETE_MULTIPLE
 #     SQL to delete scratch intervals once they are no longer needed
-set( 'SQL_TEMPINTVLS_DELETE', q/
+set( 'SQL_TEMPINTVLS_DELETE_MULTIPLE', q/
       DELETE FROM tempintvls WHERE tiid = ?
       / );
 
 #
-# SQL_TEMPINTVLS_COMMIT
-#     SQL to select scratch intervals matching a range
-set( 'SQL_TEMPINTVLS_COMMIT', q/
+# SQL_TEMPINTVL_INSERT
+#     SQL to insert a single scratch interval
+set( 'SQL_TEMPINTVL_INSERT', q/
       INSERT INTO tempintvls (tiid, intvl)
-      SELECT CAST( ? AS integer ) AS tiid, intvl FROM tempintvls 
-      WHERE tiid = ? AND intvl <@ CAST( ? AS tstzrange )
-      UNION
-      SELECT CAST( ? AS integer ) AS tiid, partial_tempintvls_lower(?, ?)
-      UNION
-      SELECT CAST( ? AS integer ) AS tiid, partial_tempintvls_upper(?, ?);
+      VALUES (?, ?)
+      RETURNING tiid, intvl
       / );
 
 #
@@ -79,11 +83,19 @@ set( 'SQL_TEMPINTVLS_SELECT', q/
       / );
 
 #
-# SQL_TEMPINTVLS_SELECT_COMMITTED
-#     SQL to select committed scratch intervals
-set( 'SQL_TEMPINTVLS_SELECT_COMMITTED', q/
-      SELECT intvl FROM tempintvls WHERE tiid = ? AND intvl IS NOT NULL 
-      ORDER BY intvl
+set( 'SQL_TEMPINTVLS_SELECT_BY_TIID_AND_TSRANGE', q/
+      SELECT tiid, intvl
+      FROM tempintvls WHERE tiid = ? AND intvl <@ ?
+      LIMIT ?
+      / );
+
+#
+set( 'SQL_TEMPINTVLS_SELECT_BY_TIID_AND_TSRANGE_PARTIAL_INTERVALS', q/
+      SELECT tiid, intvl
+      FROM tempintvls WHERE tiid = ? AND intvl && ?
+      EXCEPT
+      SELECT tiid, intvl
+      FROM tempintvls WHERE tiid = ? AND intvl <@ ?
       / );
 
 # -----------------------------------

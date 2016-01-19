@@ -197,6 +197,7 @@ is_deeply( $res, {
 note( 'calculate_hours(): valid tsranges' );
 is( calculate_hours( "[ 2016-01-06 08:00:00, 2016-01-06 09:00:00 )" ), 1 );
 is( calculate_hours( "[ 2016-01-06 08:00:00, 2016-01-07 09:00:00 )" ), 25 );
+is( calculate_hours( '["2016-01-06 08:00:00+01","2016-01-06 09:00:00+01")'), 1 );
 my $hours = calculate_hours( "[ 2016-01-06 08:00:00, 2016-01-07 09:05:00 )" );
 ok( $hours > 25 and $hours < 25.1 );
 
