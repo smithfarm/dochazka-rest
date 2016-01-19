@@ -601,22 +601,23 @@ is( $status->{count}, 11 );
 
 note( $note = '1998-05-01 should not appear anywhere, as it is a holiday' );
 $log->info( "=== $note" );
-my $jumbled_together = join( '', @{ $status->payload} );
+my $jumbled_together = join( '', @{ $status->payload->{"success"}->{"intervals"} } );
 ok( ! ( $jumbled_together =~ m/1998-05-01/ ) );
 
 note( $note = 'Check for more-or-less exact deep match' );
 $log->info( "=== $note" );
-like( $status->payload->[0]->intvl, qr/^\["1998-04-28 10:00:00...","1998-04-28 12:00:00..."\)$/ );
-like( $status->payload->[1]->intvl, qr/^\["1998-04-28 12:30:00...","1998-04-28 16:30:00..."\)$/ );
-like( $status->payload->[2]->intvl, qr/^\["1998-04-29 08:00:00...","1998-04-29 12:00:00..."\)$/ );
-like( $status->payload->[3]->intvl, qr/^\["1998-04-29 12:30:00...","1998-04-29 16:30:00..."\)$/ );
-like( $status->payload->[4]->intvl, qr/^\["1998-04-30 08:00:00...","1998-04-30 12:00:00..."\)$/ );
-like( $status->payload->[5]->intvl, qr/^\["1998-04-30 12:30:00...","1998-04-30 16:30:00..."\)$/ );
-like( $status->payload->[6]->intvl, qr/^\["1998-05-04 08:00:00...","1998-05-04 12:00:00..."\)$/ );
-like( $status->payload->[7]->intvl, qr/^\["1998-05-04 12:30:00...","1998-05-04 16:30:00..."\)$/ );
-like( $status->payload->[8]->intvl, qr/^\["1998-05-05 08:00:00...","1998-05-05 12:00:00..."\)$/ );
-like( $status->payload->[9]->intvl, qr/^\["1998-05-05 12:30:00...","1998-05-05 16:30:00..."\)$/ );
-like( $status->payload->[10]->intvl, qr/^\["1998-05-06 08:00:00...","1998-05-06 10:00:00..."\)$/ );
+my $intervals = $status->payload->{"success"}->{"intervals"};
+like( $intervals->[0]->intvl, qr/^\["1998-04-28 10:00:00...","1998-04-28 12:00:00..."\)$/ );
+like( $intervals->[1]->intvl, qr/^\["1998-04-28 12:30:00...","1998-04-28 16:30:00..."\)$/ );
+like( $intervals->[2]->intvl, qr/^\["1998-04-29 08:00:00...","1998-04-29 12:00:00..."\)$/ );
+like( $intervals->[3]->intvl, qr/^\["1998-04-29 12:30:00...","1998-04-29 16:30:00..."\)$/ );
+like( $intervals->[4]->intvl, qr/^\["1998-04-30 08:00:00...","1998-04-30 12:00:00..."\)$/ );
+like( $intervals->[5]->intvl, qr/^\["1998-04-30 12:30:00...","1998-04-30 16:30:00..."\)$/ );
+like( $intervals->[6]->intvl, qr/^\["1998-05-04 08:00:00...","1998-05-04 12:00:00..."\)$/ );
+like( $intervals->[7]->intvl, qr/^\["1998-05-04 12:30:00...","1998-05-04 16:30:00..."\)$/ );
+like( $intervals->[8]->intvl, qr/^\["1998-05-05 08:00:00...","1998-05-05 12:00:00..."\)$/ );
+like( $intervals->[9]->intvl, qr/^\["1998-05-05 12:30:00...","1998-05-05 16:30:00..."\)$/ );
+like( $intervals->[10]->intvl, qr/^\["1998-05-06 08:00:00...","1998-05-06 10:00:00..."\)$/ );
 
 note( $note = 'test the new() method' );
 $log->info( "=== $note" );
@@ -640,18 +641,19 @@ foreach my $obj ( $fo, $fo2 ) {
     $status = $obj->commit;
     is( $status->level, 'OK' );
     is( $status->code, 'DISPATCH_FILLUP_INTERVALS_CREATED' );
-    like( $status->payload->[0]->intvl, qr/^\["1998-04-28 10:00:00...","1998-04-28 12:00:00..."\)$/ );
-    like( $status->payload->[1]->intvl, qr/^\["1998-04-28 12:30:00...","1998-04-28 16:30:00..."\)$/ );
-    like( $status->payload->[2]->intvl, qr/^\["1998-04-29 08:00:00...","1998-04-29 12:00:00..."\)$/ );
-    like( $status->payload->[3]->intvl, qr/^\["1998-04-29 12:30:00...","1998-04-29 16:30:00..."\)$/ );
-    like( $status->payload->[4]->intvl, qr/^\["1998-04-30 08:00:00...","1998-04-30 12:00:00..."\)$/ );
-    like( $status->payload->[5]->intvl, qr/^\["1998-04-30 12:30:00...","1998-04-30 16:30:00..."\)$/ );
-    like( $status->payload->[6]->intvl, qr/^\["1998-05-04 08:00:00...","1998-05-04 12:00:00..."\)$/ );
-    like( $status->payload->[7]->intvl, qr/^\["1998-05-04 12:30:00...","1998-05-04 16:30:00..."\)$/ );
-    like( $status->payload->[8]->intvl, qr/^\["1998-05-05 08:00:00...","1998-05-05 12:00:00..."\)$/ );
-    like( $status->payload->[9]->intvl, qr/^\["1998-05-05 12:30:00...","1998-05-05 16:30:00..."\)$/ );
-    like( $status->payload->[10]->intvl, qr/^\["1998-05-06 08:00:00...","1998-05-06 10:00:00..."\)$/ );
-    is( scalar( @{ $status->payload } ), $count );
+    my $intervals = $status->payload->{"success"}->{"intervals"};
+    like( $intervals->[0]->intvl, qr/^\["1998-04-28 10:00:00...","1998-04-28 12:00:00..."\)$/ );
+    like( $intervals->[1]->intvl, qr/^\["1998-04-28 12:30:00...","1998-04-28 16:30:00..."\)$/ );
+    like( $intervals->[2]->intvl, qr/^\["1998-04-29 08:00:00...","1998-04-29 12:00:00..."\)$/ );
+    like( $intervals->[3]->intvl, qr/^\["1998-04-29 12:30:00...","1998-04-29 16:30:00..."\)$/ );
+    like( $intervals->[4]->intvl, qr/^\["1998-04-30 08:00:00...","1998-04-30 12:00:00..."\)$/ );
+    like( $intervals->[5]->intvl, qr/^\["1998-04-30 12:30:00...","1998-04-30 16:30:00..."\)$/ );
+    like( $intervals->[6]->intvl, qr/^\["1998-05-04 08:00:00...","1998-05-04 12:00:00..."\)$/ );
+    like( $intervals->[7]->intvl, qr/^\["1998-05-04 12:30:00...","1998-05-04 16:30:00..."\)$/ );
+    like( $intervals->[8]->intvl, qr/^\["1998-05-05 08:00:00...","1998-05-05 12:00:00..."\)$/ );
+    like( $intervals->[9]->intvl, qr/^\["1998-05-05 12:30:00...","1998-05-05 16:30:00..."\)$/ );
+    like( $intervals->[10]->intvl, qr/^\["1998-05-06 08:00:00...","1998-05-06 10:00:00..."\)$/ );
+    is( scalar( @{ $intervals } ), $count );
     is( $status->{'count'}, $count );
 }
 
@@ -663,6 +665,7 @@ $status = $fo2->commit;
 is( $status->level, 'OK' );
 is( $status->code, 'DISPATCH_FILLUP_INTERVALS_CREATED' );
 is( $status->{count}, $count );
+is( $status->payload->{'success'}->{count}, $count );
 is( noof( $dbix_conn, 'intervals' ), $count );
 
 note( $note = 'tear down' );

@@ -719,9 +719,10 @@ sub commit {
     $log->debug( "Entering " . __PACKAGE__ . "::commit with dry_run " . 
         $self->dry_run ? "TRUE" : "FALSE" );
 
-    my ( $status, @result_set, $count );
+    my ( $status, @result_set, @fail_set, $count, $ok_count, $not_ok_count );
 
-    $count = 0;
+    $ok_count = 0;
+    $not_ok_count = 0;
     foreach my $t_hash ( @{ $self->tsranges } ) {
 
         my $tempintvls = fetch_tempintvls_by_tiid_and_tsrange(
@@ -731,7 +732,7 @@ sub commit {
         );
 
         # For each tempintvl object, make a corresponding interval object
-        foreach my $tempintvl ( @$tempintvls ) {
+        TEMPINTVL_LOOP: foreach my $tempintvl ( @$tempintvls ) {
             my $int = App::Dochazka::REST::Model::Interval->spawn(
                           eid => $self->emp_obj->eid,
                           aid => $self->act_obj->aid,
@@ -745,18 +746,39 @@ sub commit {
             # INSERT only if not dry run
             if ( ! $self->dry_run ) {
                 $status = $int->insert( $self->context );
-                return $status unless $status->ok;
+                if( $status->not_ok ) {
+                    push @fail_set, {
+                        interval => $int,
+                        status => $status,
+                    };
+                    $not_ok_count += 1;
+                    next TEMPINTVL_LOOP;
+                }
             }
 
             push @result_set, $int;
-            $count += 1;
+            $ok_count += 1;
         }
 
     }
 
-    if ( my $count = scalar @result_set ) {
-        return $CELL->status_ok( 'DISPATCH_FILLUP_INTERVALS_CREATED', 
-            payload => \@result_set, count => $count, args => [ $count ] );
+    $count = $ok_count + $not_ok_count;
+    if ( $count ) {
+        return $CELL->status_ok( 
+            'DISPATCH_FILLUP_INTERVALS_CREATED', 
+            args => [ $count ],
+            payload => {
+                "success" => {
+                    count => $ok_count,
+                    intervals => \@result_set, 
+                },
+                "failure" => {
+                    count => $not_ok_count,
+                    intervals => \@fail_set,
+                },
+            },
+            count => $count, 
+        );
     }
     return $CELL->status_notice( 'DISPATCH_FILLUP_NO_INTERVALS_CREATED' );
 }
