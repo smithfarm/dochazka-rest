@@ -3453,3 +3453,26 @@ SPLIT OFF App::MREST into separate distribution
   - Model/Employee.pm: adapt POD to current state
   - REST/Guide.pm: adapt INSTALLATION chapter to current state
 
+0.520 2016-01-19 15:17 CET
+- dispatch: vastly simplify interval/fillup resource(s)
+- t/dispatch/fillup.t: drop all tests
+- Dispatch: rename handler_post_interval_fillup -> handler_fillup
+- Dispatch.pm: delete employee key fields after employee has been determined
+- dispatch_Message_en.conf: DISPATCH_EMPLOYEE_CANNOT_BE_DETERMINED
+- refactor Tempintvl and Fillup modules
+  - Model/Tempintlvs.pm: support date lists
+  - t/model/tempintvls.t: wipe out database at beginning as well as at end
+  - Model/Interval.pm: tweak POD
+  - Model/Tempintvls.pm: fix syntax error
+  - Model/Tempintvls.pm->new(): add clobber and dry_run parameters
+  - Model/Tempintvls.pm: add tsranges property
+  - Model/Tempintvls.pm: drop include_holidays parameter
+  - Model/Tempintvls.pm: drop deprecated SQL_TEMPINTVLS_SELECT_EXCLUSIVE
+  - Rename Tempintvls->Fillup and add Tempintvl class
+  - Rename ::Model::Fillup to just plain ::Fillup
+  - Fillup.pm: refactor accessors and reset() method
+  - t/unit/holiday.t: add canonicalized interval test case
+  - Holiday.pm->calculate_hours(): return 0 if problem
+  - Fillup.pm, Tempintvl.pm: refactor
+- Build.PL: require latest App::Dochazka::Common
+

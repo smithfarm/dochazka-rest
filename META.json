@@ -4,7 +4,7 @@
       "Nathan Cutler <ncutler@suse.com>"
    ],
    "dynamic_config" : 1,
-   "generated_by" : "Module::Build version 0.4212",
+   "generated_by" : "Module::Build version 0.4205",
    "license" : [
       "bsd"
    ],
@@ -22,7 +22,7 @@
       "build" : {
          "requires" : {
             "App::CELL" : "0.215",
-            "App::Dochazka::Common" : "0.199",
+            "App::Dochazka::Common" : "0.204",
             "Authen::Passphrase::SaltedDigest" : "0.008",
             "DBIx::Connector" : "0.47",
             "Date::Holidays::CZ" : "0.08",
@@ -47,7 +47,7 @@
       "runtime" : {
          "requires" : {
             "App::CELL" : "0.215",
-            "App::Dochazka::Common" : "0.199",
+            "App::Dochazka::Common" : "0.204",
             "Authen::Passphrase::SaltedDigest" : "0.008",
             "DBD::Pg" : "0",
             "DBI" : "0",
@@ -76,7 +76,7 @@
    "provides" : {
       "App::Dochazka::REST" : {
          "file" : "lib/App/Dochazka/REST.pm",
-         "version" : "0.519"
+         "version" : "0.520"
       },
       "App::Dochazka::REST::ACL" : {
          "file" : "lib/App/Dochazka/REST/ACL.pm"
@@ -95,6 +95,9 @@
       },
       "App::Dochazka::REST::Docs::Workflow" : {
          "file" : "lib/App/Dochazka/REST/Docs/Workflow.pm"
+      },
+      "App::Dochazka::REST::Fillup" : {
+         "file" : "lib/App/Dochazka/REST/Fillup.pm"
       },
       "App::Dochazka::REST::Guide" : {
          "file" : "lib/App/Dochazka/REST/Guide.pm"
@@ -138,8 +141,8 @@
       "App::Dochazka::REST::Model::Shared" : {
          "file" : "lib/App/Dochazka/REST/Model/Shared.pm"
       },
-      "App::Dochazka::REST::Model::Tempintvls" : {
-         "file" : "lib/App/Dochazka/REST/Model/Tempintvls.pm"
+      "App::Dochazka::REST::Model::Tempintvl" : {
+         "file" : "lib/App/Dochazka/REST/Model/Tempintvl.pm"
       },
       "App::Dochazka::REST::ResourceDefs" : {
          "file" : "lib/App/Dochazka/REST/ResourceDefs.pm"
@@ -166,6 +169,6 @@
          "url" : "https://github.com/smithfarm/dochazka-rest"
       }
    },
-   "version" : "0.519",
-   "x_serialization_backend" : "JSON::PP version 2.27202"
+   "version" : "0.520",
+   "x_serialization_backend" : "JSON::PP version 2.27203"
 }
