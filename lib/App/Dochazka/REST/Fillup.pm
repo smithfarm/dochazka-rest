@@ -378,33 +378,6 @@ sub _vet_tsrange {
 }
 
 
-=head2 _tsrange_long_enough
-
-This method checks the tsrange to find out if it's not too short. (The
-C<fillup_tempintvls> method has trouble with very short tsranges.)
-
-Returns a status object.
-
-=cut
-
-sub _tsrange_long_enough {
-    my $self = shift;
-    $log->debug( "Entering " . __PACKAGE__ . "::_tsrange_long_enough" );
-
-    my $hours = calculate_hours( $self->tsrange->{tsrange} );
-
-    die "HARDY_LAUREL_BOMB in _tsrange_long_enough tsrange not canonicalized"
-        if $hours == 0;
-
-    return $CELL->status_err( 
-        'DOCHAZKA_FILLUP_TSRANGE_TOO_SHORT', 
-        args => [ $hours ] 
-    ) if $hours < 24;
-
-    return $CELL->status_ok( 'SUCCESS', args => [ $hours ] );
-}
-
-
 =head2 _vet_employee
 
 Expects to be called *after* C<_vet_tsrange>.
@@ -690,7 +663,6 @@ sub new {
     return $self unless $self->constructor_status->ok;
     $self->constructor_status( $self->_vet_tsrange( %ARGS ) );
     return $self unless $self->constructor_status->ok;
-    $self->constructor_status( $self->_tsrange_long_enough() );
     $self->constructor_status( $self->_vet_employee( emp_obj => $ARGS{emp_obj} ) );
     return $self unless $self->constructor_status->ok;
     $self->constructor_status( $self->_vet_activity( aid => $ARGS{aid} ) );
