@@ -373,13 +373,6 @@ $status = $fo->_vet_tsrange( tsrange => '[ 2015-1-1, 2016-1-2 )' );
 is( $status->level, 'ERR' );
 is( $status->code, 'DOCHAZKA_FILLUP_TSRANGE_TOO_LONG' );
 
-note( $note = 'vet a too-short tsrange' );
-$log->info( "=== $note" );
-$fo->tsrange( { tsrange => '["2015-01-01 09:00:00+01","2015-01-01 10:00:00+01")' } );
-$status = $fo->_tsrange_long_enough();
-is( $status->level, 'ERR' );
-is( $status->code, 'DOCHAZKA_FILLUP_TSRANGE_TOO_SHORT' );
-
 note( $note = 'vet a non-bogus tsrange' );
 $log->info( "=== $note" );
 $status = $fo->_vet_tsrange( tsrange => '[ "Jan 1, 2015", 2015-12-31 )' );
@@ -729,14 +722,64 @@ is( $status->code, 'DISPATCH_FILLUP_INTERVALS_CREATED' );
 my $success_hash = $status->payload->{'success'};
 is( $success_hash->{count}, 4 );
 # 1998-05-16 is a weekend, so it will be silently ignored
-is( $success_hash->{intervals}->[0]->intvl, 
-    '["1998-05-20 08:00:00+02","1998-05-20 12:00:00+02")' );
-is( $success_hash->{intervals}->[1]->intvl, 
-    '["1998-05-20 12:30:00+02","1998-05-20 16:30:00+02")' );
-is( $success_hash->{intervals}->[2]->intvl, 
-    '["1998-05-22 08:00:00+02","1998-05-22 12:00:00+02")' );
-is( $success_hash->{intervals}->[3]->intvl, 
-    '["1998-05-22 12:30:00+02","1998-05-22 16:30:00+02")' );
+like( $success_hash->{intervals}->[0]->intvl, 
+    qr/\["1998-05-20 08:00:00...","1998-05-20 12:00:00..."\)/ );
+like( $success_hash->{intervals}->[1]->intvl, 
+    qr/\["1998-05-20 12:30:00...","1998-05-20 16:30:00..."\)/ );
+like( $success_hash->{intervals}->[2]->intvl, 
+    qr/\["1998-05-22 08:00:00...","1998-05-22 12:00:00..."\)/ );
+like( $success_hash->{intervals}->[3]->intvl, 
+    qr/\["1998-05-22 12:30:00...","1998-05-22 16:30:00..."\)/ );
+is( $status->payload->{'failure'}->{count}, 0 );
+
+note( $note = 'fillup on a very short tsrange #1' );
+$log->info( "=== $note" );
+my $fo3 = App::Dochazka::REST::Fillup->new(
+    context => $faux_context,
+    tsrange => '[ 1998-06-01 10:00:00, 1998-06-01 10:30:00 )',
+    emp_obj => $active,
+    dry_run => 0,
+);
+isa_ok( $fo3, 'App::Dochazka::REST::Fillup' );
+is( $fo3->dry_run, 0 );
+ok( $fo3->constructor_status );
+isa_ok( $fo3->constructor_status, 'App::CELL::Status' );
+like( $fo3->tsrange->{'tsrange'}, qr/^\["1998-06-01 10:00:00...","1998-06-01 10:30:00..."\)$/ );
+
+note( $note = 'fillup commit very short tsrange #1' );
+$log->info( "=== $note" );
+$status = $fo3->commit;
+is( $status->level, 'OK' );
+is( $status->code, 'DISPATCH_FILLUP_INTERVALS_CREATED' );
+my $success_hash = $status->payload->{'success'};
+is( $success_hash->{count}, 1 );
+like( $success_hash->{intervals}->[0]->intvl, 
+    qr/\["1998-06-01 10:00:00...","1998-06-01 10:30:00..."\)/ );
+is( $status->payload->{'failure'}->{count}, 0 );
+
+note( $note = 'fillup on a very short tsrange #2' );
+$log->info( "=== $note" );
+my $fo3 = App::Dochazka::REST::Fillup->new(
+    context => $faux_context,
+    tsrange => '[ 1998-06-01 12:00:00, 1998-06-01 13:00:00 )',
+    emp_obj => $active,
+    dry_run => 0,
+);
+isa_ok( $fo3, 'App::Dochazka::REST::Fillup' );
+is( $fo3->dry_run, 0 );
+ok( $fo3->constructor_status );
+isa_ok( $fo3->constructor_status, 'App::CELL::Status' );
+like( $fo3->tsrange->{'tsrange'}, qr/^\["1998-06-01 12:00:00...","1998-06-01 13:00:00..."\)$/ );
+
+note( $note = 'fillup commit very short tsrange' );
+$log->info( "=== $note" );
+$status = $fo3->commit;
+is( $status->level, 'OK' );
+is( $status->code, 'DISPATCH_FILLUP_INTERVALS_CREATED' );
+my $success_hash = $status->payload->{'success'};
+is( $success_hash->{count}, 1 );
+like( $success_hash->{intervals}->[0]->intvl, 
+    qr/\["1998-06-01 12:30:00...","1998-06-01 13:00:00..."\)/ );
 is( $status->payload->{'failure'}->{count}, 0 );
 
 note( $note = 'tear down' );
