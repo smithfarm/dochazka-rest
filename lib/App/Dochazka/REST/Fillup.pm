@@ -73,6 +73,7 @@ BEGIN {
             isa => 'App::Dochazka::REST::Model::Activity', 
             optional => 1
         },
+        clobber => { type => BOOLEAN, optional => 1 },
         constructor_status => { 
             type => HASHREF,
             isa => 'App::CELL::Status',
@@ -662,10 +663,11 @@ sub new {
         date_list => { type => SCALAR|UNDEF, optional => 1 },
         long_desc => { type => SCALAR|UNDEF, optional => 1 },
         remark => { type => SCALAR|UNDEF, optional => 1 },
+        clobber => { type => BOOLEAN, default => 0 },
         dry_run => { type => BOOLEAN, default => 0 },
     } );
-    my ( $self, $status );
 
+    my ( $self, $status );
     # (re-)initialize $self
     if ( $class eq __PACKAGE__ ) {
         $self = bless {}, $class;
@@ -674,6 +676,10 @@ sub new {
         die "AGHOOPOWDD@! Constructor must be called like this App::Dochazka::REST::Fillup->new()";
     }
     die "AGHOOPOWDD@! No tiid in Fillup object!" unless $self->tiid;
+
+    map {
+        $self->$_( $ARGS{$_} ) if defined( $ARGS{$_} );
+    } qw( long_desc remark clobber dry_run );
 
     # the order of the following checks is significant!
     $self->constructor_status( $self->_vet_context( context => $ARGS{context} ) );
@@ -690,11 +696,6 @@ sub new {
     $self->constructor_status( $self->_vet_activity( aid => $ARGS{aid} ) );
     return $self unless $self->constructor_status->ok;
     die "AGHGCHKFSCK! should be vetted by now!" unless $self->vetted;
-
-    map
-    {
-        $self->$_( $ARGS{$_} ) if $ARGS{$_};
-    } qw( long_desc remark dry_run );
 
     $self->constructor_status( $self->fillup_tempintvls );
     return $self unless $self->constructor_status->ok;
@@ -719,9 +720,10 @@ sub commit {
     $log->debug( "Entering " . __PACKAGE__ . "::commit with dry_run " . 
         $self->dry_run ? "TRUE" : "FALSE" );
 
-    my ( $status, @result_set, $count );
+    my ( $status, @result_set, @fail_set, $count, $ok_count, $not_ok_count );
 
-    $count = 0;
+    $ok_count = 0;
+    $not_ok_count = 0;
     foreach my $t_hash ( @{ $self->tsranges } ) {
 
         my $tempintvls = fetch_tempintvls_by_tiid_and_tsrange(
@@ -731,7 +733,7 @@ sub commit {
         );
 
         # For each tempintvl object, make a corresponding interval object
-        foreach my $tempintvl ( @$tempintvls ) {
+        TEMPINTVL_LOOP: foreach my $tempintvl ( @$tempintvls ) {
             my $int = App::Dochazka::REST::Model::Interval->spawn(
                           eid => $self->emp_obj->eid,
                           aid => $self->act_obj->aid,
@@ -745,18 +747,39 @@ sub commit {
             # INSERT only if not dry run
             if ( ! $self->dry_run ) {
                 $status = $int->insert( $self->context );
-                return $status unless $status->ok;
+                if( $status->not_ok ) {
+                    push @fail_set, {
+                        interval => $int,
+                        status => $status,
+                    };
+                    $not_ok_count += 1;
+                    next TEMPINTVL_LOOP;
+                }
             }
 
             push @result_set, $int;
-            $count += 1;
+            $ok_count += 1;
         }
 
     }
 
-    if ( my $count = scalar @result_set ) {
-        return $CELL->status_ok( 'DISPATCH_FILLUP_INTERVALS_CREATED', 
-            payload => \@result_set, count => $count, args => [ $count ] );
+    $count = $ok_count + $not_ok_count;
+    if ( $count ) {
+        return $CELL->status_ok( 
+            'DISPATCH_FILLUP_INTERVALS_CREATED', 
+            args => [ $count ],
+            payload => {
+                "success" => {
+                    count => $ok_count,
+                    intervals => \@result_set, 
+                },
+                "failure" => {
+                    count => $not_ok_count,
+                    intervals => \@fail_set,
+                },
+            },
+            count => $count, 
+        );
     }
     return $CELL->status_notice( 'DISPATCH_FILLUP_NO_INTERVALS_CREATED' );
 }
