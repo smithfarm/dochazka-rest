@@ -3479,3 +3479,11 @@ SPLIT OFF App::MREST into separate distribution
 0.521 2016-01-19 16:28 CET
 - Dispatch.pm: remove references to deprecated Tempintvls.pm
 
+0.522 2016-01-20 10:02 CET
+- MANIFEST.SKIP: ignore test-drive.sh
+- Implement "fillup needs to gracefully avoid existing intervals"
+  https://github.com/smithfarm/dochazka-rest/issues/22
+  - Fillup.pm->commit: collect basic statistics (success/failure)
+  - Fillup.pm->new(): correctly set boolean attributes
+  - t/fillup.t: new test case - conflicting interval
+
