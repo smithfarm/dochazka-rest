@@ -210,6 +210,10 @@ set( 'DOCHAZKA_EMPLOYEE_MINIMAL_FIELDS', [
 #     upper limit (in days) on the fillup tsrange
 set( 'DOCHAZKA_INTERVAL_FILLUP_LIMIT', 365 ); 
 
+# DOCHAZKA_INTERVAL_FILLUP_MAX_DATELIST_ENTRIES
+#     upper limit for number of date_list entries
+set( 'DOCHAZKA_INTERVAL_FILLUP_MAX_DATELIST_ENTRIES', 35 );
+
 # -----------------------------------
 # DO NOT EDIT ANYTHING BELOW THIS LINE
 # -----------------------------------
