@@ -847,7 +847,18 @@ property with the value 'undef' or any unrecognized privilege level string (like
 
 Allowed methods: GET, POST
 
-Generate reports.
+The "POST genreport" resource generates reports from Mason templates.
+The resource takes a request body with one mandatory property, "path"
+(corresponding to the path of a Mason component relative to the component
+root), and one optional property, "parameters", which should be a hash
+of parameter names and values.
+
+The resource handler checks (1) if the component exists in the database,
+(2) whether current employee has sufficient permissions to generate the
+report (by comparing the employee's privlevel with the ACL profile of the
+component), and (3) validates the parameters, if any, by applying the 
+validation rules specified in the component object. Iff all of these
+conditions are met, the component is called with the provided parameters.
 
 
 =back
@@ -1050,7 +1061,7 @@ parameter (set to 'undef' for no limit).
 
 =back
 
-=head2 C<< interval/summary/?:qualifiers >>
+=head2 C<< interval/summary/eid/:eid/:tsrange >>
 
 
 =over
@@ -1059,20 +1070,6 @@ Allowed methods: GET
 
 With this resource, employees can generate summaries of their attendance intervals
 over a given period. 
-
-If no qualifiers are provided, the summary defaults to the current employee and month.
-
-If an 'eid=..' or 'nick=...' qualifier is given, the summary will be generated
-for that employee.
-
-If a 'month=..' qualifer is given, the summary will be generated for the given
-month. If the month is given as an integer between 1 and 12, the summary will 
-be given for the corresponding month of the current year. If the month is given
-as, e.g., 188706, the summary will be given for June of the year 1887.
-
-Qualifiers can be combined, e.g.:
-
-    GET interval/summary/eid=83,month=6
 
 
 
@@ -1083,57 +1080,9 @@ Qualifiers can be combined, e.g.:
 
 =over
 
-Allowed methods: CONNECT, DELETE, GET, OPTIONS, POST, PUT, TRACE
+Allowed methods: GET, POST
 
 Parent for interval fillup resources
-
-
-=back
-
-=head2 C<< interval/fillup/eid/:eid/:tsrange >>
-
-
-=over
-
-Allowed methods: GET, POST
-
-=over
-
-=item * GET
-
-Return set of scheduled attendance intervals (tsranges) for the given employee
-over the given tsrange. Does not add any attendance data to the database.
-
-=item * POST
-
-Post scheduled attendance intervals (tsranges) for the given employee
-over the given tsrange.
-
-=back
-
-
-=back
-
-=head2 C<< interval/fillup/nick/:nick/:tsrange >>
-
-
-=over
-
-Allowed methods: GET, POST
-
-=over
-
-=item * GET
-
-Return set of scheduled attendance intervals (tsranges) for the given employee
-over the given tsrange. Does not add any attendance data to the database.
-
-=item * POST
-
-Post scheduled attendance intervals (tsranges) for the given employee
-over the given tsrange.
-
-=back
 
 
 =back
@@ -1521,30 +1470,6 @@ Allowed methods: CONNECT, DELETE, GET, OPTIONS, POST, PUT, TRACE
 
 This resource presents a list of "child" resources (subresources), all of which
 are related to schedules.  
-
-
-=back
-
-=head2 C<< interval/fillup/self/:tsrange >>
-
-
-=over
-
-Allowed methods: GET, POST
-
-=over
-
-=item * GET
-
-Return set of scheduled attendance intervals (tsranges) for the given employee
-over the given tsrange. Does not add any attendance data to the database.
-
-=item * POST
-
-Post scheduled attendance intervals (tsranges) for the given employee
-over the given tsrange.
-
-=back
 
 
 =back
