@@ -3487,3 +3487,7 @@ SPLIT OFF App::MREST into separate distribution
   - Fillup.pm->new(): correctly set boolean attributes
   - t/fillup.t: new test case - conflicting interval
 
+0.523 2016-01-20 10:15 CET
+- Docs/Resources.pm: re-generate resource documentation
+- release.sh: automatically fill in OBS commit message
+
