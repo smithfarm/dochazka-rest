@@ -532,7 +532,7 @@ is( $status->level, 'ERR' );
 is( $status->code, 'DOCHAZKA_GENERIC_NOT_EXIST' );
 is( $status->text, 'There is no activity with AID ->-1<-' );
 
-my $note = 'vet non-existent activity 3';
+$note = 'vet non-existent activity 3';
 note( $note = $note );
 $log->info( "=== $note" );
 $log->info( "*** $note" );
@@ -667,6 +667,43 @@ is( $status->code, 'DISPATCH_FILLUP_INTERVALS_CREATED' );
 is( $status->{count}, $count );
 is( $status->payload->{'success'}->{count}, $count );
 is( noof( $dbix_conn, 'intervals' ), $count );
+
+note( $note = 'create a conflicting attendance interval' );
+$log->info( "=== $note" );
+my $conflicting_int = App::Dochazka::REST::Model::Interval->spawn(
+    eid => $active->eid,
+    aid => $activity->aid,
+    intvl => "[ 1998-5-11 9:00, 1998-5-11 9:15 )",
+);
+$status = $conflicting_int->insert( $faux_context );
+is( $status->level, 'OK' );
+is( $status->code, 'DOCHAZKA_CUD_OK' );
+
+note( $note = 'fillup_tempintvls to conflict' );
+$log->info( "=== $note" );
+$fo = App::Dochazka::REST::Fillup->new(
+    context => $faux_context,
+    tsrange => '[ 1998-05-09 00:00:00, 1998-05-15 24:00:00 )',
+    emp_obj => $active,
+    dry_run => 0,
+);
+isa_ok( $fo, 'App::Dochazka::REST::Fillup' );
+isa_ok( $fo->constructor_status, 'App::CELL::Status' );
+ok( $fo->constructor_status );
+is( $fo->dry_run, 0 );
+like( $fo->tsrange->{'tsrange'}, qr/^\["1998-05-09 00:00:00...","1998-05-16 00:00:00..."\)$/ );
+
+note( $note = "commit fillup with conflict" );
+$log->info( "=== $note" );
+$status = $fo->commit;
+is( $status->level, 'OK' );
+is( $status->code, 'DISPATCH_FILLUP_INTERVALS_CREATED' );
+is( $status->payload->{'success'}->{count}, 9 );
+is( $status->payload->{'failure'}->{count}, 1 );
+is( $status->payload->{'failure'}->{'intervals'}->[0]->{'interval'}->intvl, 
+      '["1998-05-11 08:00:00+02","1998-05-11 12:00:00+02")' );
+like( $status->payload->{'failure'}->{'intervals'}->[0]->{'status'}->text,
+      qr/conflicting key value violates exclusion constraint/ );
 
 note( $note = 'tear down' );
 $log->info( "=== $note" );
