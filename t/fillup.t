@@ -705,6 +705,40 @@ is( $status->payload->{'failure'}->{'intervals'}->[0]->{'interval'}->intvl,
 like( $status->payload->{'failure'}->{'intervals'}->[0]->{'status'}->text,
       qr/conflicting key value violates exclusion constraint/ );
 
+note( $note = "create fillup object with date_list instead of tsrange" );
+$log->info( "=== $note" );
+$fo = App::Dochazka::REST::Fillup->new(
+    context => $faux_context,
+    date_list => [ '1998-05-16', '1998-05-22', '1998-05-20' ],
+    emp_obj => $active,
+    dry_run => 0,
+);
+isa_ok( $fo, 'App::Dochazka::REST::Fillup' );
+isa_ok( $fo->constructor_status, 'App::CELL::Status' );
+ok( $fo->constructor_status );
+is( $fo->dry_run, 0 );
+like( $fo->tsrange->{'tsrange'}, qr/^\["1998-05-16 00:00:00...","1998-05-23 00:00:00..."\)$/ );
+
+note( $note = "commit fillup with conflict" );
+$log->info( "=== $note" );
+$status = $fo->commit;
+is( $status->level, 'OK' );
+is( $status->code, 'DISPATCH_FILLUP_INTERVALS_CREATED' );
+#diag( "success count: " . $status->payload->{'success'}->{count} );
+#diag( "failure count: " . $status->payload->{'failure'}->{count} );
+my $success_hash = $status->payload->{'success'};
+is( $success_hash->{count}, 4 );
+# 1998-05-16 is a weekend, so it will be silently ignored
+is( $success_hash->{intervals}->[0]->intvl, 
+    '["1998-05-20 08:00:00+02","1998-05-20 12:00:00+02")' );
+is( $success_hash->{intervals}->[1]->intvl, 
+    '["1998-05-20 12:30:00+02","1998-05-20 16:30:00+02")' );
+is( $success_hash->{intervals}->[2]->intvl, 
+    '["1998-05-22 08:00:00+02","1998-05-22 12:00:00+02")' );
+is( $success_hash->{intervals}->[3]->intvl, 
+    '["1998-05-22 12:30:00+02","1998-05-22 16:30:00+02")' );
+is( $status->payload->{'failure'}->{count}, 0 );
+
 note( $note = 'tear down' );
 $log->info( "=== $note" );
 $status = delete_all_attendance_data();
