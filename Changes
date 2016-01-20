@@ -3491,3 +3491,16 @@ SPLIT OFF App::MREST into separate distribution
 - Docs/Resources.pm: re-generate resource documentation
 - release.sh: automatically fill in OBS commit message
 
+0.524 2016-01-20 15:55 CET
+- WISHLIST: holding area for stale feature requests
+- Fillup.pm->new(): fix date_list and tsrange validations
+- t/fillup.pm: add a date_list test case
+- Fix bug "interval/fillup returns wrong intervals for very short tsrange"
+  https://github.com/smithfarm/dochazka-rest/issues/21
+  - Fillup.pm: remove too-short tsrange check
+  - t/fillup.t: add too-short tsrange test cases
+- Fix bug "fillup: enforce configurable limit on length of date_list"
+  https://github.com/smithfarm/dochazka-rest/issues/65
+  - config/: add "date_list too long" config param and message
+  - Fillup.pm: complain when date_list is too long
+
