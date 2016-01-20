@@ -42,7 +42,10 @@ use warnings;
 use App::CELL qw( $CELL $log $meta $site );
 use Data::Dumper;
 use App::Dochazka::REST::ConnBank qw( $dbix_conn );
-use App::Dochazka::REST::Holiday qw( canon_to_ymd );
+use App::Dochazka::REST::Holiday qw(
+    canon_to_ymd
+    get_tomorrow
+);
 use App::Dochazka::REST::Model::Interval qw( delete_intervals_by_eid_and_tsrange );
 use App::Dochazka::REST::Fillup;
 use App::Dochazka::REST::Model::Tempintvl;
@@ -781,6 +784,33 @@ is( $success_hash->{count}, 1 );
 like( $success_hash->{intervals}->[0]->intvl, 
     qr/\["1998-06-01 12:30:00...","1998-06-01 13:00:00..."\)/ );
 is( $status->payload->{'failure'}->{count}, 0 );
+
+note( $note = 'generate an excessively long date_list' );
+$log->info( "=== $note" );
+my $excessive_dl = [ '2017-01-01' ];
+my $excessive_len = $site->DOCHAZKA_INTERVAL_FILLUP_MAX_DATELIST_ENTRIES + 1;
+my $count = 1;
+my $loop_date = $excessive_dl->[0];
+do {
+    $loop_date = get_tomorrow( $loop_date );
+    $excessive_dl->[$count] = $loop_date;
+    $count += 1;
+} while $count < $excessive_len;
+is( scalar( @$excessive_dl ), $excessive_len );
+
+note( $note = 'attempt to fillup_tempintvls with excessively long date_list' );
+$log->info( "=== $note" );
+$fo = App::Dochazka::REST::Fillup->new(
+    context => $faux_context,
+    date_list => $excessive_dl,
+    emp_obj => $active,
+    dry_run => 0,
+);
+isa_ok( $fo, 'App::Dochazka::REST::Fillup' );
+isa_ok( $fo->constructor_status, 'App::CELL::Status' );
+is( $fo->constructor_status->level, 'ERR' );
+is( $fo->constructor_status->code, 'DOCHAZKA_INTERVAL_FILLUP_DATELIST_TOO_LONG' );
+
 
 note( $note = 'tear down' );
 $log->info( "=== $note" );

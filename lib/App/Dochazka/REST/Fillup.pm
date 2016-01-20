@@ -275,6 +275,14 @@ sub _vet_date_list {
     my @sorted_date_list = sort @canonicalized_date_list;
     $self->date_list( \@sorted_date_list );
 
+    my $noof_entries = scalar( @{ $self->date_list } );
+    if ( $noof_entries > $site->DOCHAZKA_INTERVAL_FILLUP_MAX_DATELIST_ENTRIES ) {
+        return $CELL->status_err( 
+            'DOCHAZKA_INTERVAL_FILLUP_DATELIST_TOO_LONG', 
+            args => [ $noof_entries ],
+        );
+    }
+
     # populate tsrange
     if ( scalar @sorted_date_list == 0 ) {
         $self->tsrange( undef );
