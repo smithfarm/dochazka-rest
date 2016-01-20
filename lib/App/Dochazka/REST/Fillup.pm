@@ -73,6 +73,7 @@ BEGIN {
             isa => 'App::Dochazka::REST::Model::Activity', 
             optional => 1
         },
+        clobber => { type => BOOLEAN, optional => 1 },
         constructor_status => { 
             type => HASHREF,
             isa => 'App::CELL::Status',
@@ -662,10 +663,11 @@ sub new {
         date_list => { type => SCALAR|UNDEF, optional => 1 },
         long_desc => { type => SCALAR|UNDEF, optional => 1 },
         remark => { type => SCALAR|UNDEF, optional => 1 },
+        clobber => { type => BOOLEAN, default => 0 },
         dry_run => { type => BOOLEAN, default => 0 },
     } );
-    my ( $self, $status );
 
+    my ( $self, $status );
     # (re-)initialize $self
     if ( $class eq __PACKAGE__ ) {
         $self = bless {}, $class;
@@ -674,6 +676,10 @@ sub new {
         die "AGHOOPOWDD@! Constructor must be called like this App::Dochazka::REST::Fillup->new()";
     }
     die "AGHOOPOWDD@! No tiid in Fillup object!" unless $self->tiid;
+
+    map {
+        $self->$_( $ARGS{$_} ) if defined( $ARGS{$_} );
+    } qw( long_desc remark clobber dry_run );
 
     # the order of the following checks is significant!
     $self->constructor_status( $self->_vet_context( context => $ARGS{context} ) );
@@ -690,11 +696,6 @@ sub new {
     $self->constructor_status( $self->_vet_activity( aid => $ARGS{aid} ) );
     return $self unless $self->constructor_status->ok;
     die "AGHGCHKFSCK! should be vetted by now!" unless $self->vetted;
-
-    map
-    {
-        $self->$_( $ARGS{$_} ) if $ARGS{$_};
-    } qw( long_desc remark dry_run );
 
     $self->constructor_status( $self->fillup_tempintvls );
     return $self unless $self->constructor_status->ok;
