@@ -54,7 +54,14 @@ my $app = initialize_regression_test();
 note( 'instantiate Plack::Test object' );
 my $test = Plack::Test->create( $app );
 
-my $note;
+my ( $note, $status );
+
+note( 'start with a clean slate' );
+$status = delete_all_attendance_data();
+BAIL_OUT(0) unless $status->ok;
+
+note( 'get AID of WORK' );
+my $aid_of_work = get_aid_by_code( $test, 'WORK' );
 
 note( $note = 'create a testing schedule' );
 $log->info( "=== $note" );
@@ -66,15 +73,13 @@ my $eid_active = create_active_employee( $test );
 
 note( $note = 'give \'active\' a schedule as of 1957-01-01 00:00 so it can enter attendance intervals' );
 $log->info( "=== $note" );
-my @shid_for_deletion;
-my $status = req( $test, 201, 'root', 'POST', "schedule/history/nick/active", <<"EOH" );
+$status = req( $test, 201, 'root', 'POST', "schedule/history/nick/active", <<"EOH" );
 { "sid" : $sid, "effective" : "1957-01-01 00:00" }
 EOH
 is( $status->level, "OK" );
 is( $status->code, "DOCHAZKA_CUD_OK" );
 ok( $status->{'payload'} );
 ok( $status->{'payload'}->{'shid'} );
-push @shid_for_deletion, $status->{'payload'}->{'shid'};
 #ok( $status->{'payload'}->{'schedule'} );
 
 note( $note = 'create testing employee \'inactive\' with \'inactive\' privlevel' );
@@ -95,28 +100,13 @@ is( $status->code, "DISPATCH_EMPLOYEE_PRIV" );
 ok( $status->{'payload'} );
 is( $status->{'payload'}->{'priv'}, 'active' );
 
-sub create_testing_interval {
-    my ( $test ) = @_;
-    # get AID of WORK
-    my $aid_of_work = get_aid_by_code( $test, 'WORK' );
-    
-    note( 'in create_testing_interval() function' );
-    $status = req( $test, 201, 'root', 'POST', 'interval/new', <<"EOH" );
-{ "eid" : $eid_active, "aid" : $aid_of_work, "intvl" : "[2014-10-01 08:00, 2014-10-01 12:00)" }
-EOH
-    if( $status->level ne 'OK' ) {
-        diag( Dumper $status );
-        BAIL_OUT(0);
-    }
-    is( $status->level, 'OK' );
-    is( $status->code, 'DOCHAZKA_CUD_OK' );
-    ok( $status->{'payload'} );
-    is( $status->{'payload'}->{'aid'}, $aid_of_work );
-    ok( $status->{'payload'}->{'iid'} );
-    return $status->{'payload'}->{'iid'};
-}
-
-my $test_iid = create_testing_interval( $test );
+note( $note = 'create a testing interval' );
+$log->info( "=== $note" );
+my $int = create_testing_interval(
+    eid => $eid_active,
+    aid => $aid_of_work,
+    intvl => "[2014-10-01 08:00, 2014-10-01 12:00)",
+);
 
 my @failing_tsranges = (
     '[]',
