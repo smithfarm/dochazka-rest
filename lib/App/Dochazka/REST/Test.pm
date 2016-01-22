@@ -90,6 +90,7 @@ our @EXPORT = qw(
     create_testing_employee create_active_employee create_inactive_employee
     delete_testing_employee delete_employee_by_nick
     create_testing_activity delete_testing_activity
+    create_testing_interval delete_testing_interval
     create_testing_component delete_testing_component
     create_testing_schedule delete_testing_schedule delete_all_attendance_data
     gen_activity gen_employee gen_interval gen_lock
@@ -536,6 +537,44 @@ sub delete_testing_activity {
     my $act = $status->payload;
     $status = $act->delete( $faux_context );
     is( $status->level, 'OK', 'delete_testing_activity 2' );
+    return;
+}
+
+
+=head2 create_testing_interval
+
+Tests will need to set up and tear down testing intervals
+
+=cut
+
+sub create_testing_interval {
+    my %PROPS = @_;  # must be at least code
+
+    my $act = App::Dochazka::REST::Model::Interval->spawn( \%PROPS );
+    is( ref($act), 'App::Dochazka::REST::Model::Interval', 'create_testing_interval 1' );
+    my $status = $act->insert( $faux_context );
+    if ( $status->not_ok ) {
+        BAIL_OUT( $status->code . " " . $status->text );
+    }
+    is( $status->level, "OK", 'create_testing_interval 2' );
+    return $status->payload;
+}
+
+
+=head2 delete_testing_interval
+
+Tests will need to set up and tear down testing intervals
+
+=cut
+
+sub delete_testing_interval {
+    my $iid = shift;
+
+    my $status = App::Dochazka::REST::Model::Interval->load_by_iid( $dbix_conn, $iid );
+    is( $status->level, 'OK', 'delete_testing_interval 1' );
+    my $int = $status->payload;
+    $status = $int->delete( $faux_context );
+    is( $status->level, 'OK', 'delete_testing_interval 2' );
     return;
 }
 
