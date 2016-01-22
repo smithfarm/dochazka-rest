@@ -141,6 +141,7 @@ use Exporter qw( import );
 our @EXPORT_OK = qw( 
     delete_intervals_by_eid_and_tsrange
     fetch_intervals_by_eid_and_tsrange
+    fetch_intervals_by_eid_and_tsrange_inclusive 
     generate_interval_summary
     iid_exists 
 );
@@ -272,11 +273,48 @@ BEGIN {
 }
 
 
+=head2 fetch_intervals_by_eid_and_tsrange_inclusive
+
+Given a L<DBIx::Connector> object, an EID and a tsrange, fetch all that
+employee's intervals that overlap (have at least one point in common with)
+that tsrange. 
+
+Returns a status object. If status level is OK, the payload contains at
+least one interval. If the status level is NOTICE, it means the operation
+completed successfully and no overlapping intervals were found.
+
+=cut
+
+sub fetch_intervals_by_eid_and_tsrange_inclusive {
+    my ( $conn, $eid, $tsrange ) = validate_pos( @_,
+        { isa => 'DBIx::Connector' },
+        { type => SCALAR },
+        { type => SCALAR },
+    );
+
+    my $status = canonicalize_tsrange( $conn, $tsrange );
+    return $status unless $status->ok;
+    $tsrange = $status->payload;
+
+    $status = App::Dochazka::REST::Model::Employee->load_by_eid( $conn, $eid );
+    return $status unless $status->ok;
+
+    $status = load_multiple(
+        conn => $conn,
+        class => __PACKAGE__,
+        sql => $site->SQL_INTERVAL_SELECT_BY_EID_AND_TSRANGE_INCLUSIVE,
+        keys => [ $eid, $tsrange, $site->DOCHAZKA_INTERVAL_SELECT_LIMIT ],
+    );
+
+    return $status;
+}
+
+
 =head2 fetch_intervals_by_eid_and_tsrange
 
-Given an EID and a tsrange, return all that employee's intervals that 
-fall within that tsrange. Partial intervals are marked as such (using the
-C<partial> property).
+Given a L<DBIx::Connector> object, an EID and a tsrange, return all that
+employee's intervals that fall within that tsrange. Partial intervals are
+marked as such (using the C<partial> property).
 
 Before any records are returned, the tsrange is checked to see if it
 overlaps with any privlevel or schedule changes - in which case an error is

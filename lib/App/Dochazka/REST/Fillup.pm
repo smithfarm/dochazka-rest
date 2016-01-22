@@ -38,7 +38,10 @@ use warnings;
 use App::CELL qw( $CELL $log $meta $site );
 use App::Dochazka::Common::Model;
 use App::Dochazka::REST::ConnBank qw( $dbix_conn );
-use App::Dochazka::REST::Model::Employee;
+use App::Dochazka::REST::Model::Employee; 
+use App::Dochazka::REST::Model::Interval qw(
+    fetch_intervals_by_eid_and_tsrange_inclusive
+);
 use App::Dochazka::REST::Model::Shared qw(
     canonicalize_tsrange
     split_tsrange
@@ -700,7 +703,7 @@ sub commit {
     $log->debug( "Entering " . __PACKAGE__ . "::commit with dry_run " . 
         $self->dry_run ? "TRUE" : "FALSE" );
 
-    my ( $status, @result_set, @fail_set, $count, $ok_count, $not_ok_count );
+    my ( $status, @result_set, @fail_set, $count, $ok_count, $not_ok_count, @deleted_set );
 
     $ok_count = 0;
     $not_ok_count = 0;
@@ -714,6 +717,12 @@ sub commit {
 
         # For each tempintvl object, make a corresponding interval object
         TEMPINTVL_LOOP: foreach my $tempintvl ( @$tempintvls ) {
+
+            # if clobber is true, we have to check each interval for
+            # overlaps and delete those to avoid the trigger (note that
+            # this does not actually delete anything if dry_run is true)
+            push @deleted_set, @{ $self->_clobber_intervals( $tempintvl ) } if $self->clobber;
+
             my $int = App::Dochazka::REST::Model::Interval->spawn(
                           eid => $self->emp_obj->eid,
                           aid => $self->act_obj->aid,
@@ -744,11 +753,7 @@ sub commit {
     }
 
     $count = $ok_count + $not_ok_count;
-    if ( $count ) {
-        return $CELL->status_ok( 
-            'DISPATCH_FILLUP_INTERVALS_CREATED', 
-            args => [ $count ],
-            payload => {
+    my $pl = {
                 "success" => {
                     count => $ok_count,
                     intervals => \@result_set, 
@@ -757,11 +762,56 @@ sub commit {
                     count => $not_ok_count,
                     intervals => \@fail_set,
                 },
-            },
+            };
+    $pl->{"clobbered"} = {
+        count => scalar( @deleted_set ),
+        intervals => \@deleted_set
+    } if $self->clobber;
+    if ( $count ) {
+        return $CELL->status_ok( 
+            'DISPATCH_FILLUP_INTERVALS_CREATED', 
+            args => [ $count ],
+            payload => $pl,
             count => $count, 
         );
     }
     return $CELL->status_notice( 'DISPATCH_FILLUP_NO_INTERVALS_CREATED' );
+}
+
+# given a tempintvl object, clobbers any intervals that conflict with it,
+# logs errors and returns reference to set of deleted interval objects
+sub _clobber_intervals {
+    my ( $self, $tempintvl ) = @_;
+
+    my @clobbered_intervals = ();
+
+    my $status = fetch_intervals_by_eid_and_tsrange_inclusive(
+        $self->context->{'dbix_conn'},
+        $self->emp_obj->eid,
+        $tempintvl->intvl,
+    );
+    if ( $status->ok and $status->code eq 'DISPATCH_RECORDS_FOUND' ) {
+        foreach my $int ( @{ $status->payload } ) {
+            if ( $self->dry_run ) {
+                push @clobbered_intervals, $int;
+            } else {
+                my $saved_int = $int->clone;
+                my $status = $int->delete( $self->context );
+                if ( $status->ok ) {
+                    push @clobbered_intervals, $saved_int;
+                } else {
+                    $log->error( "Could not delete interval " . $int->intvl .
+                                 " due to " .  $status->text );
+                }
+            }
+        }
+    } elsif ( $status->level eq 'NOTICE' and $status->code eq 'DISPATCH_NO_RECORDS_FOUND' ) {
+        $log->debug( "Interval " . $tempintvl->intvl . 
+                     " does not overlap with any existing intervals" );
+    } else {
+        $log->crit( "FILLUP COMMIT: " . $status->text );
+    }
+    return \@clobbered_intervals;
 }
 
 
