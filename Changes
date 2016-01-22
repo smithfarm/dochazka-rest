@@ -3504,3 +3504,6 @@ SPLIT OFF App::MREST into separate distribution
   - config/: add "date_list too long" config param and message
   - Fillup.pm: complain when date_list is too long
 
+0.525 2016-01-22 09:26 CET
+- Fillup.pm: "clobber conflicting intervals" feature
+
