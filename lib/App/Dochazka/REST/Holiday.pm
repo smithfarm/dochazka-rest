@@ -205,7 +205,7 @@ sub holidays_in_daterange {
     my %retval;
 
     foreach my $year ( sort( keys %{ $daterange_by_year } ) ) {
-        my $holidays = holidays( YEAR => $year, FORMAT => '%Y-%m-%d', WEEKENDS => 0 );
+        my $holidays = holidays( YEAR => $year, FORMAT => '%Y-%m-%d', WEEKENDS => 1 );
         if ( $year eq $begin_year and $year eq $end_year ) {
             my $tmp_holidays = _eliminate_dates( $holidays, $ARGS{begin}, "before" );
             $holidays = _eliminate_dates( $tmp_holidays, $ARGS{end}, "after" );
