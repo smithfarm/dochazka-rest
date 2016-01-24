@@ -201,4 +201,16 @@ is( calculate_hours( '["2016-01-06 08:00:00+01","2016-01-06 09:00:00+01")'), 1 )
 my $hours = calculate_hours( "[ 2016-01-06 08:00:00, 2016-01-07 09:05:00 )" );
 ok( $hours > 25 and $hours < 25.1 );
 
+note( 'confirm bug #67' );
+$res = holidays_in_daterange( 
+    begin => '1960-12-22',
+    end => '1960-12-27',
+);
+is_deeply( $res, {
+    '1960-12-24' => '',
+    '1960-12-25' => '',
+    '1960-12-26' => '',
+} );
+diag( Dumper $res );
+
 done_testing;
