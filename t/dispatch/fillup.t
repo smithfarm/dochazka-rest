@@ -56,9 +56,9 @@ my $test = Plack::Test->create( $app );
 
 my ( $note, $status );
 
-note( 'start with a clean slate' );
-$status = delete_all_attendance_data();
-BAIL_OUT(0) unless $status->ok;
+#note( 'start with a clean slate' );
+#$status = delete_all_attendance_data();
+#BAIL_OUT(0) unless $status->ok;
 
 note( 'get AID of WORK' );
 my $aid_of_work = get_aid_by_code( $test, 'WORK' );
@@ -161,14 +161,13 @@ is( ref( $status->payload ), 'HASH' );
 is( $status->{'count'}, 2 );
 ok( exists( $status->payload->{'success'} ) );
 ok( exists( $status->payload->{'success'}->{'count'} ) );
-is( $status->payload->{'success'}->{'count'}, 6 );
+is( $status->payload->{'success'}->{'count'}, 2 );
 ok( exists( $status->payload->{'failure'} ) );
 ok( exists( $status->payload->{'failure'}->{'count'} ) );
 is( $status->payload->{'failure'}->{'count'}, 0 );
-diag( Dumper $status->payload );
 
-#note( 'tear down' );
-#$status = delete_all_attendance_data();
-#BAIL_OUT(0) unless $status->ok;
+note( 'tear down' );
+$status = delete_all_attendance_data();
+BAIL_OUT(0) unless $status->ok;
 
 done_testing;

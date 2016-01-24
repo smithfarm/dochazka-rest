@@ -57,9 +57,9 @@ my $test = Plack::Test->create( $app );
 
 my ( $note, $status );
 
-note( 'start with a clean slate' );
-$status = delete_all_attendance_data();
-BAIL_OUT(0) unless $status->ok;
+#note( 'start with a clean slate' );
+#$status = delete_all_attendance_data();
+#BAIL_OUT(0) unless $status->ok;
 
 note( 'get AID of WORK' );
 my $aid_of_work = get_aid_by_code( $test, 'WORK' );
@@ -135,11 +135,16 @@ ok( $status->ok );
 
 note( $note = "examine the resulting intervals" );
 $log->info( "=== $note" );
-diag( Dumper $fo->intervals );
-BAIL_OUT(0);
+my $tempintvls = $fo->intervals;
+is( ref( $tempintvls ), 'ARRAY' );
+is( scalar( @$tempintvls ), 2 );
+is( ref( $tempintvls->[0] ), 'App::Dochazka::REST::Model::Tempintvl' );
+is( $tempintvls->[0]->intvl, '["1960-12-23 08:00:00+01","1960-12-23 12:00:00+01")' );
+is( ref( $tempintvls->[1] ), 'App::Dochazka::REST::Model::Tempintvl' );
+is( $tempintvls->[1]->intvl, '["1960-12-23 12:30:00+01","1960-12-23 16:30:00+01")' );
 
-#note( 'tear down' );
-#$status = delete_all_attendance_data();
-#BAIL_OUT(0) unless $status->ok;
+note( 'tear down' );
+$status = delete_all_attendance_data();
+BAIL_OUT(0) unless $status->ok;
 
 done_testing;
