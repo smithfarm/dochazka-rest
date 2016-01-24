@@ -166,6 +166,39 @@ ok( exists( $status->payload->{'failure'} ) );
 ok( exists( $status->payload->{'failure'}->{'count'} ) );
 is( $status->payload->{'failure'}->{'count'}, 0 );
 
+note( $note = "Fillup with date list; intervals on 1960-12-23 will be skipped" );
+$log->info( "=== $note" );
+$status = req( $test, 200, 'active', 'POST', 'interval/fillup', <<"EOH" );
+{ "eid" : $eid_of_active, "date_list" : [ "1960-12-22", "1960-12-23", "1960-12-27", "1960-12-30" ] }
+EOH
+is( ref( $status->payload ), 'HASH' );
+is( $status->{'count'}, 4 );
+ok( exists( $status->payload->{'success'} ) );
+ok( exists( $status->payload->{'success'}->{'count'} ) );
+is( $status->payload->{'success'}->{'count'}, 2 );
+ok( exists( $status->payload->{'failure'} ) );
+ok( exists( $status->payload->{'failure'}->{'count'} ) );
+is( $status->payload->{'failure'}->{'count'}, 2 );
+
+note( $note = "Fillup with the same date list and clobber TRUE" );
+$log->info( "=== $note" );
+$status = req( $test, 200, 'active', 'POST', 'interval/fillup', <<"EOH" );
+{ "eid" : $eid_of_active, "date_list" : [ 
+    "1960-12-22",
+    "1960-12-23",
+    "1960-12-27",
+    "1960-12-30"
+], "clobber" : true }
+EOH
+is( ref( $status->payload ), 'HASH' );
+is( $status->{'count'}, 4 );
+ok( exists( $status->payload->{'success'} ) );
+ok( exists( $status->payload->{'success'}->{'count'} ) );
+is( $status->payload->{'success'}->{'count'}, 4 );
+ok( exists( $status->payload->{'failure'} ) );
+ok( exists( $status->payload->{'failure'}->{'count'} ) );
+is( $status->payload->{'failure'}->{'count'}, 0 );
+
 note( 'tear down' );
 $status = delete_all_attendance_data();
 BAIL_OUT(0) unless $status->ok;

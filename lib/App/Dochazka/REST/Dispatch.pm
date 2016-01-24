@@ -2532,7 +2532,6 @@ sub handler_fillup {
     # create Fillup object
     my $fillup = App::Dochazka::REST::Fillup->new( 
         context => $context,
-        tsrange => $context->{'mapping'}->{'tsrange'},
         emp_obj => $emp,
         aid => $act->aid,
         %$tsdl,
@@ -2561,6 +2560,7 @@ sub handler_fillup {
             ? 500 
             : 400;
         $self->mrest_declare_status( $status );
+        return $fail;
     }
     
     my $status = $fillup->commit;

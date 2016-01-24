@@ -699,7 +699,7 @@ is( $status->payload->{'success'}->{count}, 9 );
 is( $status->payload->{'failure'}->{count}, 1 );
 is( $status->payload->{'failure'}->{'intervals'}->[0]->{'interval'}->intvl, 
       '["1998-05-11 08:00:00+02","1998-05-11 12:00:00+02")' );
-like( $status->payload->{'failure'}->{'intervals'}->[0]->{'status'}->text,
+like( $status->payload->{'failure'}->{'intervals'}->[0]->{'status'}->{'text'},
       qr/conflicting key value violates exclusion constraint/ );
 
 note( $note = 'create a conflicting attendance interval #2' );

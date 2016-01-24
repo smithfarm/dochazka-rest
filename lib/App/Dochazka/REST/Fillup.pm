@@ -121,7 +121,15 @@ BEGIN {
 
         # return an appropriate throw-away value
         return;
-    }
+    };
+
+    *{ 'TO_JSON' } = sub {
+        my $self = shift;
+        my $unblessed_copy;
+        map { $unblessed_copy->{$_} = $self->{$_}; } keys %attr;
+        return $unblessed_copy;
+    };
+
 }
 
 my %dow_to_num = (
@@ -260,6 +268,9 @@ sub _vet_date_list {
         date_list => { type => ARRAYREF|UNDEF },
     } );
     $log->debug( "Entering " . __PACKAGE__ . "::_vet_date_list to vet/populate the date_list property" );
+    if ( $ARGS{'date_list'} ) {
+        $log->debug( "Date list is " . Dumper $ARGS{'date_list'} );
+    }
 
     die "GOPHFQQ! tsrange property must not be populated in _vet_date_list()" if $self->tsrange;
 
@@ -338,7 +349,8 @@ attributes. Returns a status object.
 sub _vet_tsrange {
     my $self = shift;
     my %ARGS = @_;
-    $log->debug( "Entering " . __PACKAGE__ . "::_vet_tsrange to vet the tsrange $ARGS{tsrange}" );
+    $log->debug( "Entering " . __PACKAGE__ . "::_vet_tsrange to vet the tsrange " . 
+                 ( defined( $ARGS{tsrange} ) ? $ARGS{tsrange} : "(undef)" ) );
 
     die "YAHOOEY! No DBIx::Connector in object" unless $self->context->{dbix_conn};
 
@@ -650,8 +662,8 @@ sub new {
         date_list => { type => ARRAYREF, optional => 1 },
         long_desc => { type => SCALAR|UNDEF, optional => 1 },
         remark => { type => SCALAR|UNDEF, optional => 1 },
-        clobber => { type => BOOLEAN, default => 0 },
-        dry_run => { type => BOOLEAN, default => 0 },
+        clobber => { default => 0 },
+        dry_run => { default => 0 },
     } );
     $log->debug( "Entering " . __PACKAGE__ . "::new" );
 
@@ -666,6 +678,9 @@ sub new {
     die "AGHOOPOWDD@! No tiid in Fillup object!" unless $self->tiid;
 
     map {
+        if ( ref( $ARGS{$_} ) eq 'JSON::PP::Boolean' ) {
+            $ARGS{$_} = $ARGS{$_} ? 1 : 0;
+        }
         $self->$_( $ARGS{$_} ) if defined( $ARGS{$_} );
     } qw( long_desc remark clobber dry_run );
 
@@ -739,10 +754,10 @@ sub commit {
             # INSERT only if not dry run
             if ( ! $self->dry_run ) {
                 $status = $int->insert( $self->context );
-                if( $status->not_ok ) {
+                if ( $status->not_ok ) {
                     push @fail_set, {
                         interval => $int,
-                        status => $status,
+                        status => $status->expurgate,
                     };
                     $not_ok_count += 1;
                     next TEMPINTVL_LOOP;
@@ -827,7 +842,7 @@ Returns a status object.
 
 sub DESTROY {
     my $self = shift;
-    $log->debug( "Entering " . __PACKAGE__ . "::DESTROY from " . Dumper( \caller ) );
+    $log->debug( "Entering " . __PACKAGE__ . "::DESTROY with arguments " .  join( ' ', @_ ) );
 
     $log->notice( "GLOBAL DESTRUCTION" ) if ${^GLOBAL_PHASE} eq 'DESTRUCT';
 
@@ -850,7 +865,8 @@ sub DESTROY {
         $status = $CELL->status_err( 'DOCHAZKA_DBI_ERR', args => [ $_ ] );
     };
     $log->notice( "Fillup destructor says " . $status->level . ": " . $status->text );
-    return;
+    return $status if $status;
+    return $CELL->status_ok;
 }
 
 
