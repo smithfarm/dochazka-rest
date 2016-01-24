@@ -217,12 +217,15 @@ sub _vet_date_spec {
     $log->debug( "Entering " . __PACKAGE__ . "::_vet_date_spec to enforce date specification policy" );
 
     if ( defined( $ARGS{date_list} ) and defined( $ARGS{tsrange} ) ) {
+        $log->debug( "date_spec is NOT OK" );
         return $CELL->status_not_ok;
     }
     if ( ! defined( $ARGS{date_list} ) and ! defined( $ARGS{tsrange} ) ) {
+        $log->debug( "date_spec is NOT OK" );
         return $CELL->status_not_ok;
     }
     $self->{'vetted'}->{'date_spec'} = 1;
+    $log->debug( "date_spec is OK" );
     return $CELL->status_ok;
 }
 
@@ -650,6 +653,7 @@ sub new {
         clobber => { type => BOOLEAN, default => 0 },
         dry_run => { type => BOOLEAN, default => 0 },
     } );
+    $log->debug( "Entering " . __PACKAGE__ . "::new" );
 
     my ( $self, $status );
     # (re-)initialize $self
@@ -700,8 +704,7 @@ INSERTed into the intervals table.
 
 sub commit {
     my $self = shift;
-    $log->debug( "Entering " . __PACKAGE__ . "::commit with dry_run " . 
-        $self->dry_run ? "TRUE" : "FALSE" );
+    $log->debug( "Entering " . __PACKAGE__ . "::commit with dry_run " . ( $self->dry_run ? "TRUE" : "FALSE" ) );
 
     my ( $status, @result_set, @fail_set, $count, $ok_count, $not_ok_count, @deleted_set );
 
