@@ -30,7 +30,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 # ************************************************************************* 
 #
-# test 'interval/fillup' resource
+# test fix of fillup bug #67
+# https://github.com/smithfarm/dochazka-rest/issues/67
 #
 
 #!perl
@@ -70,6 +71,10 @@ my $sid = create_testing_schedule( $test );
 note( $note = 'create testing employee \'active\' with \'active\' privlevel' );
 $log->info( "=== $note" );
 my $eid_of_active = create_active_employee( $test );
+my $active = App::Dochazka::REST::Model::Employee->load_by_eid(
+    $faux_context->{dbix_conn},
+    $eid_of_active
+)->payload;
 
 note( $note = 'give \'active\' a schedule as of 1957-01-01 00:00 so it can enter attendance intervals' );
 $log->info( "=== $note" );
@@ -108,63 +113,35 @@ my $int = create_testing_interval(
     intvl => "[2014-10-01 08:00, 2014-10-01 12:00)",
 );
 
-note( $note = "test _extract_employee_spec method" );
+note( $note = "Create fillup object over a Thu-Mon tsrange where Sat, Sun are holidays" );
 $log->info( "=== $note" );
-note( $note = "test _extract_activity_spec method" );
-$log->info( "=== $note" );
-note( $note = "test _extract_date_list_or_tsrange method" );
-$log->info( "=== $note" );
-$status = req( $test, 400, 'active', 'POST', 'interval/fillup', <<"EOH" );
-{ "eid" : $eid_of_active }
-EOH
-is( $status->level, "ERR" );
-is( $status->code, 'DISPATCH_DATE_LIST_OR_TSRANGE' );
-
-note( $note = "test some malformed tsranges" );
-$log->info( "=== $note" );
-my @failing_tsranges = (
-    '[]',
-    '{asf}',
-    '[2014-01-01: 2015-01-01)',
-    'wamble wumble womble',
+my $fo = App::Dochazka::REST::Fillup->new(
+    context => $faux_context,
+    tsrange => "[ 1960-12-22 00:00, 1960-12-26 24:00 )",
+    emp_obj => $active,
+    dry_run => 0,
+    clobber => 0,
 );
-foreach my $tsrange ( @failing_tsranges ) {
-    $status = req( $test, 500, 'active', 'POST', 'interval/fillup', <<"EOH" );
-    { "eid" : $eid_of_active, "tsrange" : "$tsrange" }
-EOH
-    is( $status->level, "ERR" );
-    like( $status->text, qr/malformed range literal/ );
-}
+isa_ok( $fo, 'App::Dochazka::REST::Fillup' );
+isa_ok( $fo->constructor_status, 'App::CELL::Status' );
+ok( $fo->constructor_status );
+is( $fo->dry_run, 0 );
+like( $fo->tsrange->{'tsrange'}, qr/^\["1960-12-22 00:00:00...","1960-12-27 00:00:00..."\)$/ );
 
-note( $note = "The testing schedule has intervals on Fri, Sat, and Sun" );
+note( $note = "fillup_tempinvls() over a Thu-Mon tsrange where Sat, Sun are holidays" );
 $log->info( "=== $note" );
-note( $note = "Run fillup over a Thu-Mon tsrange" );
-$log->info( "=== $note" );
-$status = req( $test, 200, 'active', 'POST', 'interval/fillup', <<"EOH" );
-{ "eid" : $eid_of_active, "tsrange" : "[ 2014-09-04 00:00, 2014-09-08 24:00 )" }
-EOH
-is( ref( $status->payload ), 'HASH' );
-is( $status->{'count'}, 6 );
-ok( exists( $status->payload->{'success'} ) );
-ok( exists( $status->payload->{'success'}->{'count'} ) );
-is( $status->payload->{'success'}->{'count'}, 6 );
-ok( exists( $status->payload->{'failure'} ) );
-ok( exists( $status->payload->{'failure'}->{'count'} ) );
-is( $status->payload->{'failure'}->{'count'}, 0 );
+$status = $fo->fillup_tempintvls;
+ok( $status->ok );
 
-note( $note = "Run fillup over a Thu-Mon tsrange where Sat, Sun are holidays" );
+note( $note = "examine the resulting intervals" );
 $log->info( "=== $note" );
-$status = req( $test, 200, 'active', 'POST', 'interval/fillup', <<"EOH" );
-{ "eid" : $eid_of_active, "tsrange" : "[ 1960-12-22 00:00, 1960-12-26 24:00 )" }
-EOH
-is( ref( $status->payload ), 'HASH' );
-is( $status->{'count'}, 2 );
-ok( exists( $status->payload->{'success'} ) );
-ok( exists( $status->payload->{'success'}->{'count'} ) );
-is( $status->payload->{'success'}->{'count'}, 2 );
-ok( exists( $status->payload->{'failure'} ) );
-ok( exists( $status->payload->{'failure'}->{'count'} ) );
-is( $status->payload->{'failure'}->{'count'}, 0 );
+my $tempintvls = $fo->intervals;
+is( ref( $tempintvls ), 'ARRAY' );
+is( scalar( @$tempintvls ), 2 );
+is( ref( $tempintvls->[0] ), 'App::Dochazka::REST::Model::Tempintvl' );
+is( $tempintvls->[0]->intvl, '["1960-12-23 08:00:00+01","1960-12-23 12:00:00+01")' );
+is( ref( $tempintvls->[1] ), 'App::Dochazka::REST::Model::Tempintvl' );
+is( $tempintvls->[1]->intvl, '["1960-12-23 12:30:00+01","1960-12-23 16:30:00+01")' );
 
 note( 'tear down' );
 $status = delete_all_attendance_data();
