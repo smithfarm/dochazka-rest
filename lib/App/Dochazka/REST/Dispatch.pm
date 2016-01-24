@@ -2505,105 +2505,160 @@ do, see https://github.com/smithfarm/dochazka-rest/issues/60
 
 sub handler_fillup {
     my ( $self, $pass ) = @_;
+    $log->debug( "Entering " . __PACKAGE__ . "::handler_fillup" );
 
     my $context = $self->context;
     my $method = $context->{'method'};
     my $entity = $context->{'request_entity'};
 
     # first pass
-    if ( $pass == 1 ) {
-        # get the key and value indicating the subject employee
-        my ( $key, $value );
-        # the key can be one and only one of the following: 
-        # eid, nick, sec_id (in that order; additional keys are ignored)
-        if ( $entity->{eid} ) {
-            $key = 'eid';
-            $value = $entity->{eid};
-        } elsif ( $entity->{nick} ) {
-            $key = 'nick';
-            $value = $entity->{nick};
-        } elsif ( $entity->{sec_id} ) {
-            $key = 'sec_id';
-            $value = $entity->{sec_id};
-        } else {
-            $self->mrest_declare_status( 
-                code => 404, 
-                explanation => "DISPATCH_EMPLOYEE_CANNOT_BE_DETERMINED" 
-            );
-            return 0;
-        }
-        map { delete $entity->{$_} } ( 'eid', 'nick', 'sec_id' );
-        if ( ! acl_check_is_me( $self, $key => $value ) ) {
-            $self->mrest_declare_status( code => 403, explanation => "DISPATCH_KEEP_TO_YOURSELF" );
-            return 0;
-        }
-        my $emp = shared_first_pass_lookup( $self, $key, $value );
-        return 0 unless $emp->isa( 'App::Dochazka::REST::Model::Employee' );
+    return 1 if $self->_first_pass_always_exists( $pass ); 
 
-        # create Fillup object
-        my $fillup = App::Dochazka::REST::Fillup->new( 
-            context => $context,
-            tsrange => $context->{'mapping'}->{'tsrange'},
-            emp_obj => $emp,
+    # second pass
+    $log->debug( "handler_fillup(): Commencing pass #2, entity is " .  Dumper( $entity ) );
+
+    # extract employee from request entity
+    my $emp = $self->_extract_employee_spec( $entity );
+    return $fail unless ref( $emp ) eq 'App::Dochazka::REST::Model::Employee';
+
+    # extract activity from request entity
+    my $act = $self->_extract_activity_spec( $entity );
+    return $fail unless ref( $act ) eq 'App::Dochazka::REST::Model::Activity';
+
+    # either tsrange or date_list, but not both
+    my $tsdl = $self->_extract_date_list_or_tsrange( $entity );
+    return $fail unless ref( $tsdl ) eq 'HASH';
+
+    # create Fillup object
+    my $fillup = App::Dochazka::REST::Fillup->new( 
+        context => $context,
+        tsrange => $context->{'mapping'}->{'tsrange'},
+        emp_obj => $emp,
+        aid => $act->aid,
+        %$tsdl,
+        %$entity,
+    );
+    if ( ! defined( $fillup ) or ref( $fillup ) ne 'App::Dochazka::REST::Fillup' ) {
+        $self->mrest_declare_status( 
+            code => 500, 
+            explanation => "No Fillup object" 
         );
-        if ( ! defined( $fillup ) ) {
-            $self->mrest_declare_status( 
-                code => 500, 
-                explanation => "No Fillup object" 
-            );
-            return 0;
-        }
-        if ( ! $fillup->constructor_status or
-             ! $fillup->constructor_status->isa( 'App::CELL::Status' ) )
-        {
-            $self->mrest_declare_status( 
-                code => 500, 
-                explanation => "No constructor_status in Fillup object" 
-            );
-            return 0;
-        }
-        if ( $fillup->constructor_status->not_ok ) {
-            my $status = $fillup->constructor_status;
-            $status->{'http_code'} = ( $status->code eq 'DOCHAZKA_DBI_ERR' )
-                ? 500 
-                : 400;
-            $self->mrest_declare_status( $status );
-        }
-        $context->{'stashed_fillup_object'} = $fillup;
-
-        return 1;
+        return $fail;
+    }
+    if ( ! $fillup->constructor_status or
+         ! $fillup->constructor_status->isa( 'App::CELL::Status' ) )
+    {
+        $self->mrest_declare_status( 
+            code => 500, 
+            explanation => "No constructor_status in Fillup object" 
+        );
+        return $fail;
+    }
+    $log->debug( "Fillup object created; constructor status is " . Dumper( $fillup->constructor_status ) );
+    if ( $fillup->constructor_status->not_ok ) {
+        my $status = $fillup->constructor_status;
+        $status->{'http_code'} = ( $status->code eq 'DOCHAZKA_DBI_ERR' )
+            ? 500 
+            : 400;
+        $self->mrest_declare_status( $status );
     }
     
-    # second pass
-    my $fo = $context->{'stashed_fillup_object'};
-    my $dry_run;
-    if ( $method eq 'GET' ) {
-        $dry_run = 1;
-    } elsif ( $method eq 'POST' ) {
-        $dry_run = 0;
-    } else {
-        die "AGGHHDDNPRRWHOA!!";
-    }
-    $fo->dry_run( 1 );
-    my $status = $fo->commit;
+    my $status = $fillup->commit;
     if ( $status->not_ok ) {
         $self->mrest_declare_status( code => 500, explanation => $status->text );
         return $fail;
     }
-    my $intervals = $status->payload;
-    my $count = ( ref( $intervals ) eq 'ARRAY' ) 
-        ? scalar @$intervals
-        : 0;
-    $fo->DESTROY;
-    if ( $method eq 'GET' ) {
-        return $CELL->status_ok( 'DISPATCH_RECORDS_FOUND', 
-            args => [ $count ],
-            count => $count,
-            payload => $intervals,
-        );
-    }
-    # POST
     return $status;
+}
+
+# helper function to extract employee spec from request entity
+# takes request entity hash and returns either undef on failure
+# or Employee object on success
+sub _extract_employee_spec {
+    my ( $self, $entity ) = @_;
+    $log->debug( "Entering " . __PACKAGE__ . "::_extract_employee_spec " .
+                 "with entity " . Dumper( $entity ) );
+    my ( $key, $value );
+    # the key can be one and only one of the following: 
+    # eid, nick, sec_id (in that order; additional keys are ignored)
+    if ( $entity->{eid} ) {
+        $key = 'eid';
+        $value = $entity->{eid};
+    } elsif ( $entity->{nick} ) {
+        $key = 'nick';
+        $value = $entity->{nick};
+    } elsif ( $entity->{sec_id} ) {
+        $key = 'sec_id';
+        $value = $entity->{sec_id};
+    } else {
+        $self->mrest_declare_status(
+            code => 404,
+            explanation => "DISPATCH_EMPLOYEE_CANNOT_BE_DETERMINED"
+        );
+        return;
+    }
+    map { delete $entity->{$_} } ( 'eid', 'nick', 'sec_id' );
+    if ( ! acl_check_is_me( $self, $key => $value ) ) {
+        $self->mrest_declare_status( code => 403, explanation => "DISPATCH_KEEP_TO_YOURSELF" );
+        return;
+    }
+    my $emp = shared_first_pass_lookup( $self, $key, $value );
+    return unless $emp->isa( 'App::Dochazka::REST::Model::Employee' );
+    return $emp;
+}
+
+# helper function to extract activity spec from request entity
+# takes request entity hash and returns either undef on failure
+# or Activity object on success
+sub _extract_activity_spec {
+    my ( $self, $entity ) = @_;
+    $log->debug( "Entering " . __PACKAGE__ . "::_extract_activity_spec " .
+                 "with entity " . Dumper( $entity ) );
+    my ( $key, $value );
+    # the key can be one and only one of the following: 
+    # aid, code, or nothing (in which case code defaults to "WORK")
+    if ( $entity->{aid} ) {
+        $key = 'aid';
+        $value = $entity->{aid};
+    } elsif ( $entity->{code} ) {
+        $key = 'code';
+        $value = $entity->{code};
+    } else {
+        $key = 'code';
+        $value = 'WORK';
+    }
+    map { delete $entity->{$_} } ( 'aid', 'code' );
+    my $act = shared_first_pass_lookup( $self, $key, $value );
+    return unless $act->isa( 'App::Dochazka::REST::Model::Activity' );
+    return $act;
+}
+
+# helper function to extract date_list or tsrange from request entity
+sub _extract_date_list_or_tsrange {
+    my ( $self, $entity ) = @_;
+    $log->debug( "Entering " . __PACKAGE__ .  "::_extract_date_list_or_tsrange " .
+                 "with entity " . Dumper( $entity ) );
+
+    my $date_list = $entity->{date_list};
+    my $tsrange = $entity->{tsrange};
+    my $dlts;
+    
+    if ( ( $date_list and $tsrange ) or
+         ( ! $date_list and ! $tsrange ) ) {
+        $self->mrest_declare_status( code => 400, explanation => "DISPATCH_DATE_LIST_OR_TSRANGE" );
+        return;
+    }
+
+    if ( $entity->{date_list} ) {
+        $dlts = { 'date_list' => $entity->{date_list} };
+    } elsif ( $entity->{tsrange} ) {
+        $dlts = { 'tsrange' => $entity->{tsrange} };
+    } else {
+        die "ASSERT AGCJDK!!!!!!DEE";
+    }
+
+    $log->debug( "_extract_date_list_or_tsrange returning " . Dumper $dlts );
+    return $dlts;
 }
 
 
@@ -2889,7 +2944,24 @@ sub handler_delete_schedule_scode {
     return $context->{'stashed_schedule_object'}->delete( $context );
 }
 
+
 =head2 Helper functions
+
+=head3 _first_pass_always_exists
+
+Boilerplate code for use in handlers of resources that always exist
+
+=cut
+
+sub _first_pass_always_exists {
+    my ( $self, $pass ) = @_;
+
+    if ( $pass == 1 ) {
+        $log->debug( "Resource handler first pass, resource always exists" );
+        return 1;
+    }
+    return 0;
+}
 
 =head3 _tsrange_from_context
 
