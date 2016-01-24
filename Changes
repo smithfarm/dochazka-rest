@@ -3507,3 +3507,15 @@ SPLIT OFF App::MREST into separate distribution
 0.525 2016-01-22 09:26 CET
 - Fillup.pm: "clobber conflicting intervals" feature
 
+0.526 2016-01-24 23:55 CET
+- Test.pm: add create_testing_interval and delete_testing_interval
+- t/dispatch/interval_lock.t: rename helper function
+- t/dispatch/fillup.t: get ready to start adding test cases
+- Dispatch.pm: re-implement interval/fillup resource (#61)
+- Fix bug "Holiday problems when employee has weekend work scheduled"
+  (#67)
+  - t/fillup-bug-67.t: add test case demonstrating the bug
+  - t/unit/holiday.t: add test confirming bug #67
+  - Holiday.pm: get holidays that fall on weekends
+- Fillup.pm: fix various date_list bugs
+
