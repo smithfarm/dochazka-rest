@@ -103,12 +103,12 @@ ok( $status->{'payload'} );
 is( $status->{'payload'}->{'priv'}, 'active' );
 
 
-sub create_testing_interval {
+sub test_interval_new {
     my ( $test ) = @_;
     # get AID of WORK
     my $aid_of_work = get_aid_by_code( $test, 'WORK' );
     
-    note( 'in create_testing_interval() function' );
+    note( 'in test_interval_new() function' );
     $status = req( $test, 201, 'root', 'POST', 'interval/new', <<"EOH" );
 { "eid" : $eid_active, "aid" : $aid_of_work, "intvl" : "[2014-10-01 08:00, 2014-10-01 12:00)" }
 EOH
@@ -142,7 +142,7 @@ EOH
     return $status->{'payload'}->{'lid'};
 }
 
-my $test_iid = create_testing_interval( $test );
+my $test_iid = test_interval_new( $test );
 my $test_lid = create_testing_lock( $test );
 
 my @failing_tsranges = (
@@ -448,7 +448,7 @@ foreach my $il ( qw( interval lock ) ) {
 
 
 note( 're-create the testing intervals' );
-$test_iid = create_testing_interval( $test );
+$test_iid = test_interval_new( $test );
 $test_lid = create_testing_lock( $test );
 
 
