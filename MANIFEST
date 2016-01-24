@@ -77,6 +77,7 @@ t/dispatch/schedule.t
 t/dispatch/supervisor.t
 t/dispatch/top.t
 t/fillup.t
+t/fillup-bug-67.t
 t/mason.t
 t/model/activity.t
 t/model/canonicalize.t
