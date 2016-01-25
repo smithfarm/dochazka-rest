@@ -793,7 +793,7 @@ sub commit {
             count => $count, 
         );
     }
-    return $CELL->status_notice( 'DISPATCH_FILLUP_NO_INTERVALS_CREATED' );
+    return $CELL->status_ok( 'DISPATCH_FILLUP_NO_INTERVALS_CREATED', count => 0 );
 }
 
 # given a tempintvl object, clobbers any intervals that conflict with it,

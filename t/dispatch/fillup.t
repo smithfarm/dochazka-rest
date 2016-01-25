@@ -199,6 +199,18 @@ ok( exists( $status->payload->{'failure'} ) );
 ok( exists( $status->payload->{'failure'}->{'count'} ) );
 is( $status->payload->{'failure'}->{'count'}, 0 );
 
+note( $note = "Fillup with a date list that results in no intervals created" );
+$log->info( "=== $note" );
+$status = req( $test, 200, 'active', 'POST', 'interval/fillup', <<"EOH" );
+{ "eid" : $eid_of_active, "date_list" : [ 
+    "2016-01-05",
+    "2016-01-06"
+], "clobber" : true }
+EOH
+is( $status->level, 'OK' );
+is( $status->code, 'DISPATCH_FILLUP_NO_INTERVALS_CREATED' );
+is( $status->{'count'}, 0 );
+
 note( 'tear down' );
 $status = delete_all_attendance_data();
 BAIL_OUT(0) unless $status->ok;
