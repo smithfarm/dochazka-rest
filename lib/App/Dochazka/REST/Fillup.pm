@@ -746,8 +746,8 @@ sub commit {
                           aid => $self->act_obj->aid,
                           code => $self->act_obj->code,
                           intvl => $tempintvl->intvl,
-                          long_desc => $self->long_desc || 'FILLUP',
-                          long_desc => $self->remark || 'FILLUP',
+                          long_desc => $self->long_desc,
+                          long_desc => $self->remark || 'fillup',
                           partial => 0,
                       );
 
