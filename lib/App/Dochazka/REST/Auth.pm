@@ -30,12 +30,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 # ************************************************************************* 
 
-# ------------------------
-# This package, which is between Web::MREST and Web::Dochazka::REST::Dispatch
-# in the chain of inheritance, provides the 'is_authorized' and 'forbidden'
-# methods called by Web::Machine on each incoming HTTP request
-# ------------------------
-
 package App::Dochazka::REST::Auth;
 
 use strict;
@@ -66,23 +60,18 @@ App::Dochazka::REST::Auth - HTTP request authentication and authorization
 
 
 
-=head1 SYNOPSIS
-
-To be determined
-
-
 
 =head1 DESCRIPTION
 
-To be determined
-
-=cut
+This package, which is between L<Web::MREST::Entity> and
+L<Web::Dochazka::REST::Dispatch> in the chain of inheritance, provides the
+'is_authorized' and 'forbidden' methods called by L<Web::Machine> on each
+incoming HTTP request.
 
 
 
 
 =head1 METHODS
-
 
 
 =head2 is_authorized

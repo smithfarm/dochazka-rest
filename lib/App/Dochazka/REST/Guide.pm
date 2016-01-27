@@ -244,6 +244,7 @@ Another implication of REST is that the server provides "resources" and that
 those resources are, to some extent at least, self-documenting.
 
 
+
 =head1 EXPLORING THE SERVER
 
 =head2 With a web browser
@@ -384,27 +385,38 @@ If this test fails, a "405 Method Not Allowed" response is sent.
 
 =item * B<Internal and external authentication, session management>
 
-After the Allowed methods test, the user's credentials are authenticated
+This takes place when L<Web::Machine> calls the C<is_authorized> method,
+our implementation of which is in L<App::Dochazka::REST::Auth>.
+
+Though the method is called C<is_authorized>, what it really does is
+authenticate the request - i.e., validate the user's credentials to 
+determine his or her identity. B<Authorization> - determination whether the
+user has sufficient privileges to make the request - takes place one step
+further on. (The HTTP standard uses the term "authorized" to mean
+"authenticated"; the name of this method is a nod to that usage.)
+
+In C<is_authorized>, the user's credentials are authenticated
 against an external database (LDAP), an internal database (PostgreSQL
 'employees' table), or both. Session management techniques are utilized
 to minimize external authentication queries, which impose latency. The
-authentication and session management algorithms are described in,
+authentication and session management algorithms are described in
 L<"AUTHENTICATION AND SESSION MANAGEMENT">. If authentication fails, a "401
 Unauthorized" response is sent. 
+
+Since this is the first time that the PostgreSQL database is needed, this
+is also where the L<DBIx::Connector> object is attached to the request
+context. (The request context is a hashref that accompanies the request 
+as it undergoes processing.) For details, see
+L<App::Dochazka::REST::Auth/"is_authorized">.
 
 In a web browser, repeated failed authentication attempts are typically
 associated with repeated display of the credentials dialog (and no other
 indication of what is wrong, which can be confusing to users but is probably a
 good idea, because any error messages could be abused by attackers).
 
-Authentication (validation of user credentials to determine her identity)
-should not be confused with authorization (determination whether the user
-has sufficient privileges to do what she is trying to do). Authorization is
-dealt with in the next step ("Authorization/ACL check").
-
 =item * B<Authorization/ACL check>
 
-After the request is authenticated (i.e. associated with a known employee), the
+After the request is authenticated (associated with a known employee), the
 server examines the ACL profile of the resource being requested and compares it
 with the employee's privilege level. If the privilege level is too low for the
 requested operation, a "403 Forbidden" response is sent.
@@ -504,6 +516,9 @@ Dochazka data can be seen to exist in the following classes of objects:
 =item * Components (Mason components, i.e. report templates)
 
 =back
+
+The "state" of each object is stored in a PostgreSQL database (see
+L<"DATABASE"> for details).
 
 These classes are described in the following sections.
 
@@ -1216,6 +1231,27 @@ make sense for and are used by Dochazka, in some cases Dochazka needs to return
 status codes that are not provided for by the standard. For this reason, the
 information returned by Dochazka is further encapsulated in a Dochazka-specific
 status structure, and this is what is returned in the response body.
+
+
+
+=head1 DATABASE
+
+The "state" of practically all data model objects is stored in a PostgreSQL
+database - one database per site.
+
+PostgreSQL is used for its tsrange type (see
+L<http://www.postgresql.org/docs/9.4/static/rangetypes.html> for details),
+which is used to store and manipulate schedule and attendance intervals, as
+well as locks.
+
+The database is accessed through L<DBI>, and the L<DBI> connection is
+accessed through a L<DBIx::Connector> singleton stored in
+L<App::Dochazka::Rest::ConnBank>. When an incoming request is
+authenticated, the L<DBIx::Connector> singleton is placed in the request
+context (a hashref used to store request processing state).
+
+The purpose of this somewhat complicated mechanism is to ensure that each
+request can potentially have its own database connection.
 
 
 
