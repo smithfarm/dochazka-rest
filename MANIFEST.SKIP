@@ -85,3 +85,4 @@ release.sh$
 # Avoid "testers"
 \btesters/
 \btest-drive.sh$
+\bfactory-progress$
