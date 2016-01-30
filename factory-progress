@@ -54,7 +54,7 @@ perl-HTTP-Body - DONE
 perl-HTTP-Headers-ActionPack - https://build.opensuse.org/request/show/356328
 perl-HTTP-Tiny - DONE
 perl-IO-Handle-Util - https://build.opensuse.org/request/show/356781
-perl-IO-Socket-IP - DONE (in core as of Perl 5.19.8, linked from d:l:p)
+perl-IO-Socket-IP - in core as of Perl 5.19.8, linked from d:l:p
 perl-IPC-System-Simple - DONE
 perl-JSON-Any - DONE
 perl-Log-Any - DONE
@@ -76,6 +76,8 @@ perl-namespace-clean - DONE
 perl-Number-Compare - DONE
 perl-Package-DeprecationManager - DONE
 perl-Params-Classify - DONE
+perl-Parse-CPAN-Meta - in core since v5.10.1, but "Provided:" missing in
+Perl package (linked from devel:languages:perl for now)
 perl-Path-Router - https://build.opensuse.org/request/show/356434
 perl-Plack - DONE
 perl-Plack-Middleware-LogErrors - https://build.opensuse.org/request/show/356437
@@ -101,7 +103,8 @@ perl-Test-Deep - DONE
 perl-Test-Differences - DONE
 perl-Test-Exception - DONE
 perl-Test-FailWarnings - DONE
-perl-Test-Harness - in core since forever (?)
+perl-Test-Harness - needed for SLE-12-SP1, but not in Factory - linked from
+devel:languages:perl
 perl-Test-JSON - DONE
 perl-Test-LeakTrace - DONE
 perl-Test-LongString - DONE
