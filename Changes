@@ -3519,3 +3519,11 @@ SPLIT OFF App::MREST into separate distribution
   - Holiday.pm: get holidays that fall on weekends
 - Fillup.pm: fix various date_list bugs
 
+0.527 2016-01-30 23:59 CET
+- MANIFEST: add t/fillup-bug-67.t
+- Fillup.pm->commit: return OK even if no intervals created
+- Fillup.pm: give fillup intervals a fig leaf
+- Fillup.pm->commit(): do not overwrite long_desc parameter
+- document the DBIx::Connector object in the request context
+- factory-progress: working document for Factory submission
+
