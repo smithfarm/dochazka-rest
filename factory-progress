@@ -52,6 +52,7 @@ perl-Hash-MultiValue - DONE
 perl-Hash-Util-FieldHash-Compat - DONE
 perl-HTTP-Body - DONE
 perl-HTTP-Headers-ActionPack - https://build.opensuse.org/request/show/356328
+perl-HTTP-Parser-XS - https://build.opensuse.org/request/show/356895
 perl-HTTP-Tiny - DONE
 perl-IO-Handle-Util - https://build.opensuse.org/request/show/356781
 perl-IO-Socket-IP - in core as of Perl 5.19.8, linked from d:l:p
@@ -87,6 +88,7 @@ perl-Role-Tiny - DONE
 perl-Scalar-String - DONE
 perl-Software-License - DONE
 perl-Sort-Versions - https://build.opensuse.org/request/show/356443
+perl-Starman - https://build.opensuse.org/request/show/356896
 perl-Stream-Buffered - DONE
 perl-Sub-Exporter - DONE
 perl-Sub-Exporter-Progressive - DONE
