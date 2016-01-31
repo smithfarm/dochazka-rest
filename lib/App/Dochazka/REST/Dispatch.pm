@@ -166,7 +166,8 @@ default one in L<Web::MREST::InitRouter>.
 
 sub init_router {
     $log->debug("Entering " . __PACKAGE__. "::init_router");
-    $router = Path::Router->new unless ref( $router ) and $router->can( 'match' );
+    return if ref( $router ) and $router->can( 'match' );
+    $router = Path::Router->new;
     App::Dochazka::REST::ResourceDefs::load();
 }
 
