@@ -3527,3 +3527,7 @@ SPLIT OFF App::MREST into separate distribution
 - document the DBIx::Connector object in the request context
 - factory-progress: working document for Factory submission
 
+0.528 2016-02-01 00:58 CET
+- factory-progress: submit Starman to Factory
+- Dispatch.pm: do not reinitialize Path::Router object on every request
+
