@@ -131,14 +131,16 @@ it:
     ALTER ROLE
 
 At this point, we exit C<psql> and, still as the user C<postgres>, we 
-edit C<pg_hba.conf>. Using our favorite editor, we change the METHOD entry
-for C<local> so it looks like this:
+edit C<pg_hba.conf>. In SUSE distributions, this file is located in
+C<data/> under the C<postgres> home directory.  Using our favorite editor,
+we change the METHOD entry for C<local> so it looks like this:
 
     # TYPE  DATABASE   USER   ADDRESS     METHOD
     local   all        all                password
 
 For the audit triggers to work (and the application will not run otherwise), we
-must to add the following line to the end of C<postgresql.conf>:
+must to add the following line to the end of C<postgresql.conf> (also
+located in C<data/> in SUSE distros):
 
     dochazka.eid = -1
 
@@ -152,6 +154,10 @@ Lastly, check if you can connect to the C<postgres> database using the password:
     Password for user postgres: [...type 'mypass'...]
     psql (9.2.7)
     Type "help" for help.
+
+    postgres=# 
+    
+To exit, type C<\q> at the postgres prompt:
 
     postgres=# \q
     bash$
@@ -193,7 +199,7 @@ current user.
 
 To initialize the database or reset it to a pristine state:
 
-    dochazka-dbinit
+    # dochazka-dbinit
     Dochazka database reset to pristine state
 
 
@@ -204,7 +210,7 @@ will be possible using a command like C<systemctl start dochazka.service>.
 At the moment, however, we are still in development/testing phase and we 
 start the server like this:
 
-    $ dochazka-rest
+    # dochazka-rest
     Starting Web::MREST ver. 0.282
     App distro is App-Dochazka-REST
     App module is App::Dochazka::REST::Dispatch
