@@ -6,6 +6,8 @@ perl-Authen-Passphrase - https://build.opensuse.org/request/show/355401
 perl-B-Hooks-EndOfScope - DONE
 perl-B-Hooks-OP-Check - DONE
 perl-Capture-Tiny - DONE
+perl-Class-Data-Inheritable - DONE
+perl-Class-Inspector - DONE
 perl-Class-Load-XS - DONE
 perl-Class-Mix - https://build.opensuse.org/request/show/355403
 perl-Class-Unload - DONE
