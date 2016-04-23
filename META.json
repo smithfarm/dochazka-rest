@@ -25,7 +25,7 @@
             "App::Dochazka::Common" : "0.204",
             "Authen::Passphrase::SaltedDigest" : "0.008",
             "DBIx::Connector" : "0.47",
-            "Date::Holidays::CZ" : "0.08",
+            "Date::Holidays::CZ" : "0.12",
             "File::Slurp" : "0",
             "HTTP::Request" : "0",
             "Mason" : "0",
@@ -53,7 +53,7 @@
             "DBI" : "0",
             "DBIx::Connector" : "0.47",
             "Date::Calc" : "0",
-            "Date::Holidays::CZ" : "0.08",
+            "Date::Holidays::CZ" : "0.12",
             "File::ShareDir" : "1.00",
             "JSON" : "0",
             "Mason" : "0",
@@ -76,7 +76,7 @@
    "provides" : {
       "App::Dochazka::REST" : {
          "file" : "lib/App/Dochazka/REST.pm",
-         "version" : "0.528"
+         "version" : "0.529"
       },
       "App::Dochazka::REST::ACL" : {
          "file" : "lib/App/Dochazka/REST/ACL.pm"
@@ -169,6 +169,6 @@
          "url" : "https://github.com/smithfarm/dochazka-rest"
       }
    },
-   "version" : "0.528",
+   "version" : "0.529",
    "x_serialization_backend" : "JSON::PP version 2.27203"
 }

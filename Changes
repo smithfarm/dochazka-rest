@@ -3531,3 +3531,9 @@ SPLIT OFF App::MREST into separate distribution
 - factory-progress: submit Starman to Factory
 - Dispatch.pm: do not reinitialize Path::Router object on every request
 
+0.529 2016-04-23 18:26 CEST
+- factory-progress: add dependencies missing from SLES-12-SP1
+- Guide.pm: add some clarifications from testing on humans
+- systemd: add dochazka-rest.service file (#59)
+- Build.PL: bump Date::Holidays::CZ dependency to 0.12 (#76)
+
