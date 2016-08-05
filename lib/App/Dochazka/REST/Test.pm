@@ -88,7 +88,7 @@ our @EXPORT = qw(
     initialize_regression_test $faux_context
     req dbi_err docu_check 
     create_bare_employee create_active_employee create_inactive_employee
-    delete_testing_employee delete_employee_by_nick
+    delete_bare_employee delete_employee_by_nick
     create_testing_activity delete_testing_activity
     create_testing_interval delete_testing_interval
     create_testing_component delete_testing_component
@@ -394,6 +394,38 @@ sub create_bare_employee {
 }
 
 
+=head2 delete_bare_employee
+
+Takes a single argument: the EID.
+
+Loads the EID into a new Employee object and calls that object's delete method.
+
+=cut
+
+sub delete_bare_employee {
+    my $eid = shift;  
+    note( "delete testing employee with EID $eid" );
+    my $status = App::Dochazka::REST::Model::Employee->load_by_eid( $dbix_conn, $eid );
+    if ( $status->not_ok ) {
+        diag( "Employee delete method returned NOT_OK status in delete_bare_employee" );
+        diag( "test automation function, which was called from " . (caller)[1] . " line " . (caller)[2] );
+        diag( "with arguments: " . Dumper( $PROPS ) );
+        diag( "Full status returned by Employee delete method:" );
+        diag( Dumper $status );
+        BAIL_OUT(0);
+    }
+    is( $status->level, 'OK', 'delete_bare_employee 1' );
+    my $emp = $status->payload;
+    $status = $emp->delete( $faux_context );
+    if ( $status->not_ok ) {
+        diag( Dumper $status );
+        BAIL_OUT(0);
+    }
+    is( $status->level, 'OK', 'delete_bare_employee 2' );
+    return;
+}
+
+
 =head2 create_active_employee
 
 Create testing employee with 'active' privilege
@@ -427,38 +459,6 @@ sub create_inactive_employee {
     ok( $status->ok, "Create inactive employee 2" );
     is( $status->code, 'DOCHAZKA_CUD_OK', "Create inactive employee 3" );
     return $eid_of_inactive; 
-}
-
-
-=head2 delete_testing_employee
-
-Takes a single argument: the EID.
-
-Loads the EID into a new Employee object and calls that object's delete method.
-
-=cut
-
-sub delete_testing_employee {
-    my $eid = shift;  
-    note( "delete testing employee with EID $eid" );
-    my $status = App::Dochazka::REST::Model::Employee->load_by_eid( $dbix_conn, $eid );
-    if ( $status->not_ok ) {
-        diag( "Employee delete method returned NOT_OK status in delete_testing_employee" );
-        diag( "test automation function, which was called from " . (caller)[1] . " line " . (caller)[2] );
-        diag( "with arguments: " . Dumper( $PROPS ) );
-        diag( "Full status returned by Employee delete method:" );
-        diag( Dumper $status );
-        BAIL_OUT(0);
-    }
-    is( $status->level, 'OK', 'delete_testing_employee 1' );
-    my $emp = $status->payload;
-    $status = $emp->delete( $faux_context );
-    if ( $status->not_ok ) {
-        diag( Dumper $status );
-        BAIL_OUT(0);
-    }
-    is( $status->level, 'OK', 'delete_testing_employee 2' );
-    return;
 }
 
 

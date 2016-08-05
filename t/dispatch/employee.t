@@ -444,7 +444,7 @@ $status = req( $test, 200, 'root', 'DELETE', "priv/history/phid/$mrfu_phid" );
 ok( $status->ok );
 
 note( "then, delete the employee" );
-delete_testing_employee( $eid_of_mrfu );
+delete_bare_employee( $eid_of_mrfu );
 
 note( "DELETE $base" );
 req( $test, 405, 'demo', 'DELETE', $base );
@@ -656,7 +656,7 @@ EOH
 }
 
 note( 'delete the \'brotherchen\' testing user' );
-delete_testing_employee( $eid_of_brchen );
+delete_bare_employee( $eid_of_brchen );
 
 note( "POST $base/:eid" );
 req( $test, 405, 'demo', 'POST', "$base/2" );
@@ -819,8 +819,8 @@ note( 'bogus property' );
 $status = req( $test, 400, 'root', 'POST', $base, '{ "Nick" : "foobar" }' );
 
 note( 'cleanup: delete the testing users' );
-delete_testing_employee( $eid_of_mrfu );
-delete_testing_employee( $eid_of_mrfutra );
+delete_bare_employee( $eid_of_mrfu );
+delete_bare_employee( $eid_of_mrfutra );
 
 note( 'add a new employee with nick in request body' );
 req( $test, 403, 'demo', 'POST', $base, '{' );
@@ -856,7 +856,7 @@ $status = req( $test, 400, 'root', 'POST', $base,
     '{ "nick" : "wombat", "bogus" : "json" }' );
 
 note( 'cleanup: delete wombat employee' ); 
-delete_testing_employee( $eid_of_wombat );
+delete_bare_employee( $eid_of_wombat );
 
 note( "update existing employee" );
 req( $test, 403, 'demo', 'POST', $base, 
@@ -878,7 +878,7 @@ is( $status->code, 'DOCHAZKA_CUD_OK' );
 my $eid_of_bogus = $status->payload->{'eid'};
 
 note( 'delete testing employees' );
-map { delete_testing_employee( $_ ); } ( $eid_of_mrfu, $eid_of_bogus );
+map { delete_bare_employee( $_ ); } ( $eid_of_mrfu, $eid_of_bogus );
 
 note( "DELETE employee/nick" );
 req( $test, 405, 'demo', 'DELETE', $base );
@@ -1034,8 +1034,8 @@ EOH
 }
 
 note( 'clean up testing employees' );
-delete_testing_employee( $eid_of_mrsfu );
-delete_testing_employee( $eid_of_hapless );
+delete_bare_employee( $eid_of_mrsfu );
+delete_bare_employee( $eid_of_hapless );
 
 note( 'POST employee/nick:nick' );
 req( $test, 405, 'demo', 'POST', "$base/root" );
@@ -1087,7 +1087,7 @@ is( $status->level, 'OK' );
 is( $status->code, 'DISPATCH_EMPLOYEE_FOUND' );
 
 note( 'tear down testing employee' );
-delete_testing_employee( $eid_of_cf );
+delete_bare_employee( $eid_of_cf );
 
 note( 'attempt to delete \'root the immutable\' (won\'t work)' );
 dbi_err( $test, 500, 'root', 'DELETE', "$base/root", undef, qr/immutable/i );
