@@ -417,7 +417,7 @@ $log->info( "=== $note" );
 
 note( $note = 'create a testing employee with nick "active"' );
 $log->info( "=== $note" );
-my $active = create_testing_employee( { nick => 'active', password => 'active' } );
+my $active = create_bare_employee( { nick => 'active', password => 'active' } );
 push my @eids_to_delete, $active->eid;
 
 note( $note = 'vet active - no privhistory' );

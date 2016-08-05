@@ -298,7 +298,7 @@ $status = req( $test, 405, 'root', 'PUT', $base );
 note( "POST: $base" );
 
 note( "create a 'mrfu' employee" );
-my $mrfu = create_testing_employee( { nick => 'mrfu', password => 'mrfu' } );
+my $mrfu = create_bare_employee( { nick => 'mrfu', password => 'mrfu' } );
 my $eid_of_mrfu = $mrfu->eid;
 
 # these tests break when 'email' is added to DOCHAZKA_PROFILE_EDITABLE_FIELDS
@@ -533,7 +533,7 @@ foreach my $user ( qw( active inactive demo ) ) {
 note( "PUT $base/:eid" );
 
 note( "create a testing employee 'brotherchen'" );
-my $emp = create_testing_employee( {
+my $emp = create_bare_employee( {
     nick => 'brotherchen',
     email => 'goodbrother@orient.cn',
     fullname => 'Good Brother Chen',
@@ -666,7 +666,7 @@ req( $test, 405, 'root', 'POST', "$base/2" );
 note( "DELETE $base/:eid" );
 
 note( 'create a "cannon fodder" employee' );
-my $cf = create_testing_employee( { nick => 'cannonfodder' } );
+my $cf = create_bare_employee( { nick => 'cannonfodder' } );
 my $eid_of_cf = $cf->eid;
 
 note( 'employee/eid/:eid - delete cannonfodder' );
@@ -682,7 +682,7 @@ req( $test, 403, 'demo', 'GET', "$base/$eid_of_cf" );
 req( $test, 404, 'root', 'GET', "$base/$eid_of_cf" );
 
 note( 'create another "cannon fodder" employee' );
-$cf = create_testing_employee( { nick => 'cannonfodder' } );
+$cf = create_bare_employee( { nick => 'cannonfodder' } );
 ok( $cf->eid > $eid_of_cf ); # EID will have incremented
 $eid_of_cf = $cf->eid;
 
@@ -787,7 +787,7 @@ req( $test, 405, 'root', 'PUT', $base );
 note( 'POST employee/nick' );
 
 note( 'create a \'mrfu\' employee' );
-$mrfu = create_testing_employee( { nick => 'mrfu' } );
+$mrfu = create_bare_employee( { nick => 'mrfu' } );
 my $nick_of_mrfu = $mrfu->nick;
 $eid_of_mrfu = $mrfu->eid;
 
@@ -1044,7 +1044,7 @@ req( $test, 405, 'root', 'POST', "$base/root" );
 note( 'DELETE employee/nick/:nick' );
 
 note( 'create a "cannon fodder" employee' );
-$cf = create_testing_employee( { nick => 'cannonfodder' } );
+$cf = create_bare_employee( { nick => 'cannonfodder' } );
 ok( $cf->eid > 1 );
 $eid_of_cf = $cf->eid;
 
@@ -1068,7 +1068,7 @@ is( $status->level, 'NOTICE' );
 is( $status->code, 'DISPATCH_NO_RECORDS_FOUND' );
 
 note( 'create another "cannon fodder" employee' );
-$cf = create_testing_employee( { nick => 'cannonfodder' } );
+$cf = create_bare_employee( { nick => 'cannonfodder' } );
 ok( $cf->eid > $eid_of_cf ); # EID will have incremented
 $eid_of_cf = $cf->eid;
 

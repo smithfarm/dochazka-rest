@@ -90,7 +90,7 @@ note( 'create testing employee \'inactive\' with \'inactive\' privlevel' );
 my $eid_inactive = create_inactive_employee( $test );
 
 note( "create an active employee nicknamed 'super'" );
-my $super = create_testing_employee( { nick => 'super', password => 'super' } );
+my $super = create_bare_employee( { nick => 'super', password => 'super' } );
 my $eid_of_super = $super->eid;
 my $status = req( $test, 201, 'root', 'POST', 'priv/history/nick/super', <<"EOH" );
 { "eid" : $eid_of_super, "priv" : "active", "effective" : "1967-06-17 00:00" }
@@ -104,7 +104,7 @@ ok( $status->{'payload'} );
 is( $status->{'payload'}->{'priv'}, 'active' );
 
 note( 'create testing employee \'bubba\' with \'active\' privlevel' );
-my $bubba = create_testing_employee( { nick => 'bubba', password => 'bubba' } );
+my $bubba = create_bare_employee( { nick => 'bubba', password => 'bubba' } );
 my $eid_of_bubba = $bubba->eid;
 $status = req( $test, 201, 'root', 'POST', 'priv/history/nick/bubba', <<"EOH" );
 { "eid" : $eid_of_bubba, "priv" : "active", "effective" : "1967-06-17 00:00" }

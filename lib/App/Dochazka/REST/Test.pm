@@ -87,7 +87,7 @@ use Exporter qw( import );
 our @EXPORT = qw( 
     initialize_regression_test $faux_context
     req dbi_err docu_check 
-    create_testing_employee create_active_employee create_inactive_employee
+    create_bare_employee create_active_employee create_inactive_employee
     delete_testing_employee delete_employee_by_nick
     create_testing_activity delete_testing_activity
     create_testing_interval delete_testing_interval
@@ -359,13 +359,16 @@ sub docu_check {
 }
 
 
-=head2 create_testing_employee
+=head2 create_bare_employee
 
-Tests will need to set up and tear down testing employees
+For use in tests only. Spawns an employee object and inserts it into the
+database.
+
+Takes PROPLIST which is passed through unmunged to the employee spawn method.
 
 =cut
 
-sub create_testing_employee {
+sub create_bare_employee {
     my ( $PROPS ) = validate_pos( @_,
         { type => HASHREF },
     );
@@ -373,15 +376,19 @@ sub create_testing_employee {
     hash_the_password( $PROPS );
 
     my $emp = App::Dochazka::REST::Model::Employee->spawn( $PROPS );
-    is( ref($emp), 'App::Dochazka::REST::Model::Employee', 'create_testing_employee 1' );
+    is( ref($emp), 'App::Dochazka::REST::Model::Employee', 'create_bare_employee 1' );
 
     my $status = $emp->insert( $faux_context );
     if ( $status->not_ok ) {
+        diag( "Employee insert method returned NOT_OK status in create_bare_employee" );
+	diag( "test automation function, which was called from " . (caller)[1] . " line " . (caller)[2] );
+	diag( "with arguments: " . Dumper( $PROPS ) );
+	diag( "Full status returned by employee insert method:" );
         diag( Dumper $status );
         BAIL_OUT(0);
     }
 
-    is( $status->level, "OK", 'create_testing_employee 2' );
+    is( $status->level, "OK", 'create_bare_employee 2' );
     is( ref( $status->payload ), 'App::Dochazka::REST::Model::Employee' );
     return $status->payload;
 }
@@ -396,7 +403,7 @@ Create testing employee with 'active' privilege
 sub create_active_employee {
     my ( $test ) = @_;
     note('create active employee');
-    my $eid_of_active = create_testing_employee( { nick => 'active', password => 'active' } )->eid;
+    my $eid_of_active = create_bare_employee( { nick => 'active', password => 'active' } )->eid;
     my $status = req( $test, 201, 'root', 'POST', "priv/history/eid/$eid_of_active", 
         '{ "effective":"1892-01-01", "priv":"active" }' );
     ok( $status->ok, "Create active employee 2" );
@@ -414,7 +421,7 @@ Create testing employee with 'active' privilege
 sub create_inactive_employee {
     my ( $test ) = @_;
     note( 'create inactive employee' );
-    my $eid_of_inactive = create_testing_employee( { nick => 'inactive', password => 'inactive' } )->eid;
+    my $eid_of_inactive = create_bare_employee( { nick => 'inactive', password => 'inactive' } )->eid;
     my $status = req( $test, 201, 'root', 'POST', "priv/history/eid/$eid_of_inactive", 
         '{ "effective":"1892-01-01", "priv":"inactive" }' );
     ok( $status->ok, "Create inactive employee 2" );

@@ -93,7 +93,7 @@ my $eid_inactive = create_inactive_employee( $test );
 
 note( $note = 'create testing employee \'bubba\' with \'active\' privlevel' );
 $log->info( "=== $note" );
-my $eid_bubba = create_testing_employee( { nick => 'bubba', password => 'bubba' } )->eid;
+my $eid_bubba = create_bare_employee( { nick => 'bubba', password => 'bubba' } )->eid;
 $status = req( $test, 201, 'root', 'POST', 'priv/history/nick/bubba', <<"EOH" );
 { "eid" : $eid_bubba, "priv" : "active", "effective" : "1967-06-17 00:00" }
 EOH
