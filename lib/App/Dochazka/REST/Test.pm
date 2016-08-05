@@ -366,6 +366,8 @@ database.
 
 Takes PROPLIST which is passed through unmunged to the employee spawn method.
 
+Returns the new Employee object.
+
 =cut
 
 sub create_bare_employee {
@@ -387,10 +389,11 @@ sub create_bare_employee {
         diag( Dumper $status );
         BAIL_OUT(0);
     }
-
     is( $status->level, "OK", 'create_bare_employee 2' );
-    is( ref( $status->payload ), 'App::Dochazka::REST::Model::Employee' );
-    return $status->payload;
+    my $employee_object = $status->payload;
+    is( ref( $employee_object ), 'App::Dochazka::REST::Model::Employee' );
+
+    return $employee_object;
 }
 
 
@@ -407,10 +410,10 @@ sub delete_bare_employee {
     note( "delete testing employee with EID $eid" );
     my $status = App::Dochazka::REST::Model::Employee->load_by_eid( $dbix_conn, $eid );
     if ( $status->not_ok ) {
-        diag( "Employee delete method returned NOT_OK status in delete_bare_employee" );
+        diag( "Employee load_by_eid method returned NOT_OK status in delete_bare_employee" );
         diag( "test automation function, which was called from " . (caller)[1] . " line " . (caller)[2] );
-        diag( "with arguments: " . Dumper( $PROPS ) );
-        diag( "Full status returned by Employee delete method:" );
+        diag( "with EID $eid" );
+        diag( "Full status returned by Employee load_by_eid method:" );
         diag( Dumper $status );
         BAIL_OUT(0);
     }
@@ -426,6 +429,19 @@ sub delete_bare_employee {
 }
 
 
+sub _create_employee {
+    my ( $test, $privspec ) = @_;
+
+    note("create $privspec employee");
+    my $eid = create_bare_employee( { nick => $privspec, password => $privspec } )->eid;
+    my $status = req( $test, 201, 'root', 'POST', "priv/history/eid/$eid", 
+        "{ \"effective\":\"1892-01-01\", \"priv\":\"$privspec\" }" );
+    ok( $status->ok, "Create $privspec employee 2" );
+    is( $status->code, 'DOCHAZKA_CUD_OK', "Create $privspec employee 3" );
+    return $eid;
+
+}
+
 =head2 create_active_employee
 
 Create testing employee with 'active' privilege
@@ -434,31 +450,19 @@ Create testing employee with 'active' privilege
 
 sub create_active_employee {
     my ( $test ) = @_;
-    note('create active employee');
-    my $eid_of_active = create_bare_employee( { nick => 'active', password => 'active' } )->eid;
-    my $status = req( $test, 201, 'root', 'POST', "priv/history/eid/$eid_of_active", 
-        '{ "effective":"1892-01-01", "priv":"active" }' );
-    ok( $status->ok, "Create active employee 2" );
-    is( $status->code, 'DOCHAZKA_CUD_OK', "Create active employee 3" );
-    return $eid_of_active;
+    return _create_employee( $test, "active" );
 }
 
 
 =head2 create_inactive_employee
 
-Create testing employee with 'active' privilege
+Create testing employee with 'inactive' privilege
 
 =cut
 
 sub create_inactive_employee {
     my ( $test ) = @_;
-    note( 'create inactive employee' );
-    my $eid_of_inactive = create_bare_employee( { nick => 'inactive', password => 'inactive' } )->eid;
-    my $status = req( $test, 201, 'root', 'POST', "priv/history/eid/$eid_of_inactive", 
-        '{ "effective":"1892-01-01", "priv":"inactive" }' );
-    ok( $status->ok, "Create inactive employee 2" );
-    is( $status->code, 'DOCHAZKA_CUD_OK', "Create inactive employee 3" );
-    return $eid_of_inactive; 
+    return _create_employee( $test, "inactive" );
 }
 
 
