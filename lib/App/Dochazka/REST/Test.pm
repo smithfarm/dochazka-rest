@@ -381,9 +381,9 @@ sub create_bare_employee {
     my $status = $emp->insert( $faux_context );
     if ( $status->not_ok ) {
         diag( "Employee insert method returned NOT_OK status in create_bare_employee" );
-	diag( "test automation function, which was called from " . (caller)[1] . " line " . (caller)[2] );
-	diag( "with arguments: " . Dumper( $PROPS ) );
-	diag( "Full status returned by employee insert method:" );
+        diag( "test automation function, which was called from " . (caller)[1] . " line " . (caller)[2] );
+        diag( "with arguments: " . Dumper( $PROPS ) );
+        diag( "Full status returned by employee insert method:" );
         diag( Dumper $status );
         BAIL_OUT(0);
     }
@@ -432,7 +432,9 @@ sub create_inactive_employee {
 
 =head2 delete_testing_employee
 
-Tests will need to set up and tear down testing employees (takes EID)
+Takes a single argument: the EID.
+
+Loads the EID into a new Employee object and calls that object's delete method.
 
 =cut
 
@@ -441,6 +443,10 @@ sub delete_testing_employee {
     note( "delete testing employee with EID $eid" );
     my $status = App::Dochazka::REST::Model::Employee->load_by_eid( $dbix_conn, $eid );
     if ( $status->not_ok ) {
+        diag( "Employee delete method returned NOT_OK status in delete_testing_employee" );
+        diag( "test automation function, which was called from " . (caller)[1] . " line " . (caller)[2] );
+        diag( "with arguments: " . Dumper( $PROPS ) );
+        diag( "Full status returned by Employee delete method:" );
         diag( Dumper $status );
         BAIL_OUT(0);
     }
