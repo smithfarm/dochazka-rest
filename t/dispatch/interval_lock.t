@@ -89,10 +89,25 @@ EOH
 note( 'create testing employee \'inactive\' with \'inactive\' privlevel' );
 my $eid_inactive = create_inactive_employee( $test );
 
+note( "create an active employee nicknamed 'super'" );
+my $super = create_testing_employee( { nick => 'super', password => 'super' } );
+my $eid_of_super = $super->eid;
+my $status = req( $test, 201, 'root', 'POST', 'priv/history/nick/super', <<"EOH" );
+{ "eid" : $eid_of_super, "priv" : "active", "effective" : "1967-06-17 00:00" }
+EOH
+is( $status->level, "OK" );
+is( $status->code, "DOCHAZKA_CUD_OK" );
+$status = req( $test, 200, 'root', 'GET', 'priv/nick/super' );
+is( $status->level, "OK" );
+is( $status->code, "DISPATCH_EMPLOYEE_PRIV" );
+ok( $status->{'payload'} );
+is( $status->{'payload'}->{'priv'}, 'active' );
+
 note( 'create testing employee \'bubba\' with \'active\' privlevel' );
-my $eid_bubba = create_testing_employee( { nick => 'bubba', password => 'bubba' } )->eid;
-my $status = req( $test, 201, 'root', 'POST', 'priv/history/nick/bubba', <<"EOH" );
-{ "eid" : $eid_bubba, "priv" : "active", "effective" : "1967-06-17 00:00" }
+my $bubba = create_testing_employee( { nick => 'bubba', password => 'bubba' } );
+my $eid_of_bubba = $bubba->eid;
+$status = req( $test, 201, 'root', 'POST', 'priv/history/nick/bubba', <<"EOH" );
+{ "eid" : $eid_of_bubba, "priv" : "active", "effective" : "1967-06-17 00:00" }
 EOH
 is( $status->level, "OK" );
 is( $status->code, "DOCHAZKA_CUD_OK" );
@@ -102,6 +117,12 @@ is( $status->code, "DISPATCH_EMPLOYEE_PRIV" );
 ok( $status->{'payload'} );
 is( $status->{'payload'}->{'priv'}, 'active' );
 
+note( 'let super be active\'s supervisor' );
+$status = req( $test, 200, 'root', 'PUT', 'employee/nick/active', <<"EOH" );
+{ "supervisor" : $eid_of_super }
+EOH
+is( $status->level, "OK" );
+is( $status->code, "DOCHAZKA_CUD_OK" );
 
 sub test_interval_new {
     my ( $test ) = @_;
@@ -209,7 +230,7 @@ ok( $status->{'payload'} );
 ok( $status->{'payload'}->{'iid'} );
 my $iae_iid = $status->payload->{'iid'}; # store for later deletion
 
-foreach my $user ( qw( root active ) ) {
+foreach my $user ( qw( root active super ) ) {
     note( "let $user use GET interval/eid/:eid/:tsrange to list it" );
     $status = req( $test, 200, $user, 'GET', "interval/eid/$eid_active/[ 1958-01-01, 1958-12-31 )" );
     is( $status->level, 'OK' );
@@ -238,7 +259,7 @@ $status = req( $test, 403, 'active', 'GET', "interval/eid/$eid_inactive/[ 1958-0
 is( $status->level, 'ERR' );
 is( $status->code, 'DISPATCH_KEEP_TO_YOURSELF' );
 
-foreach my $user ( qw( inactive demo ) ) {
+foreach my $user ( qw( inactive demo bubba ) ) {
     note( "let $user try GET interval/eid/:eid/:tsrange and get 403" );
     req( $test, 403, $user, 'GET', "interval/eid/$eid_active/[ 1958-01-01, 1958-12-31 )" );
 }
@@ -264,9 +285,12 @@ EOH
 is( $status->level, 'OK' );
 is( $status->code, 'DOCHAZKA_CUD_OK' );
 
-note( 'delete all intervals in tsrange [1980-01-03 00:00, 1980-01-03 24:00)' );
+note( 'have bubba try to delete all active\'s intervals in tsrange [1980-01-03 00:00, 1980-01-03 24:00)' );
+req( $test, 403, 'bubba', 'DELETE', 'interval/nick/active/[1980-01-03 00:00, 1980-01-03 24:00)' );
+
+note( 'have super delete all active\'s intervals in tsrange [1980-01-03 00:00, 1980-01-03 24:00)' );
 note( 'only the one whole interval is deleted; two partial intervals are unaffected' );
-$status = req( $test, 200, 'active', 'DELETE', 'interval/self/[1980-01-03 00:00, 1980-01-03 24:00)' );
+$status = req( $test, 200, 'super', 'DELETE', 'interval/nick/active/[1980-01-03 00:00, 1980-01-03 24:00)' );
 is( $status->level, 'OK' );
 is( $status->code, 'DOCHAZKA_CUD_OK' );
 is( $status->{'count'}, 1 );
@@ -349,6 +373,13 @@ EOH
     req( $test, 403, 'bubba', 'POST', "$il/$idmap{$il}", <<"EOH" );
 { "$idmap{$il}" : $test_id, "remark" : "mine" }
 EOH
+
+    note( 'can a different active employee edit active\'s interval?' );
+    note( 'let active\'s supervisor try it' );
+    req( $test, 403, 'super', 'POST', "$il/$idmap{$il}", <<"EOH" );
+{ "$idmap{$il}" : $test_id, "remark" : "super was here" }
+EOH
+
     note( 'now root will try to post an illegal interval' );
     dbi_err( $test, 500, 'root', 'POST', "$il/$idmap{$il}", <<"EOH", $illegal );
 { "$idmap{$il}" : $test_id, "intvl" : "(-infinity, today)" }
