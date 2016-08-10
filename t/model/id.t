@@ -94,13 +94,16 @@ foreach my $cl (
     note( 'second, create a pristine clone of that object to compare against' );
     my $testclone = $testobj->clone;
 
-    note( 'attempt to change ID to a different integer' );
-    ok( $testobj->{$id_map{$cl}} != 2397 );
-    $testobj->{$id_map{$cl}} = 2397;
-    is( $testobj->{$id_map{$cl}}, 2397 );
-    my $status = $testobj->update( $faux_context );
-    is( $status->level, 'OK' );
-    is( $testobj->{$id_map{$cl}}, 2397 ); 
+    note( 'When created in this testing context, the test object\'s ID will' );
+    note( 'be a low integer value, most probably *not* 2397. This test' );
+    note( 'exercises the immutability of the ID by attempting to change the' );
+    note( 'ID to 2397' );
+    ok( $testobj->{$id_map{$cl}} != 2397, "Initial ID is not 2397" );
+    $testobj->{$id_map{$cl}} = 2397; # force-set ID to 2397
+    is( $testobj->{$id_map{$cl}}, 2397, "Object ID is 2397" );
+    my $status = $testobj->update( $faux_context ); # attempt to update database
+    is( $status->level, 'OK' ); # all green haha
+    is( $testobj->{$id_map{$cl}}, 2397 ); # oops!
     note( 'object not restored, even though no records were affected' );
     note( 'in other words, the object is no longer in sync with the database' );
     note( 'but this is our own fault for changing the ID' );
@@ -140,6 +143,17 @@ foreach my $cl (
     $testobj->{$id_map{$cl}} = $testclone->{$id_map{$cl}};
     is_deeply( $testobj, $testclone );
     
+    note( "attempt to change ID to '' (empty string)" );
+    $testobj->{$id_map{$cl}} = '';
+    is( $testobj->{$id_map{$cl}}, '' );
+    $status = $testobj->update( $faux_context );
+    is( $status->level, 'ERR' );
+    is( $status->code, 'DOCHAZKA_MALFORMED_400' );
+
+    note( 'restore object to pristine state' );
+    $testobj->{$id_map{$cl}} = $testclone->{$id_map{$cl}};
+    is_deeply( $testobj, $testclone );
+
     note( 'delete the database record' );
     $d_map{$cl}->( 'delete' );
 
