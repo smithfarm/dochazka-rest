@@ -444,7 +444,8 @@ sub _create_employee {
 
 =head2 create_active_employee
 
-Create testing employee with 'active' privilege
+Create a testing employee with 'active' privilege. The employee will get an
+'active' privhistory record with date 1892-01-01.
 
 =cut
 
@@ -456,7 +457,8 @@ sub create_active_employee {
 
 =head2 create_inactive_employee
 
-Create testing employee with 'inactive' privilege
+Create a testing employee with 'inactive' privilege. The employee will get an
+'inactive' privhistory record with date 1892-01-01.
 
 =cut
 
@@ -910,6 +912,7 @@ sub gen_activity {
     BAIL_OUT(0);
 }
 
+
 sub gen_employee {
     my $dis = shift;
     my $nick = 'bubbaTheCat';
@@ -944,6 +947,7 @@ sub gen_employee {
     BAIL_OUT(0);
 }
 
+
 sub gen_interval {
     my $dis = shift;
     if ( $dis eq 'create' ) {
@@ -954,6 +958,7 @@ sub gen_interval {
     diag( "gen_interval: AAAAAAHHHHH@@@!! \$dis " . Dumper( $dis ) );
     BAIL_OUT(0);
 }
+
 
 sub gen_lock {
     my $dis = shift;
@@ -967,6 +972,7 @@ sub gen_lock {
     diag( "gen_lock: AAAAAAHHHHH@@@!! \$dis " . Dumper( $dis ) );
     BAIL_OUT(0);
 }
+
 
 sub gen_privhistory {
     my $dis = shift;
