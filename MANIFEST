@@ -1,4 +1,5 @@
 bin/create_active_employee.t
+bin/dbinit-development
 bin/docgen.plx
 bin/dochazka-dbinit
 bin/dochazka-rest
