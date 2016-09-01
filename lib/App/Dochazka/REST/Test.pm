@@ -950,9 +950,31 @@ sub gen_employee {
 
 sub gen_interval {
     my $dis = shift;
+    my $eid = $site->DOCHAZKA_EID_OF_ROOT;
+    my $aid = App::Dochazka::REST::Model::Activity->load_by_code( $dbix_conn, 'WORK' )->aid;
     if ( $dis eq 'create' ) {
 
+        # create an interval
+        my $int = App::Dochazka::REST::Model::Interval->spawn(
+            eid => $eid,
+            aid => $aid,
+            intvl => "['1950-06-30 09:00', '1950-06-30 10:00')",
+        );
+        my $status = $int->insert( $faux_context );
+        is( $status->level, 'OK' );
+        $int = $status->payload;
+        is( $int->eid, $eid );
+        is( $int->aid, $aid );
+        ok( $int->iid > 0 );
+        # FIXME: use "state" variable to store iid for use in retrieve
+        return $int;
+
     } elsif ( $dis eq 'retrieve' ) {
+
+#        my $status = App::Dochazka::REST::Model::Interval->load_by_iid( $dbix_conn, $iid );
+#        return $status;
+
+    } elsif ( $dis eq 'delete' ) {
 
     }
     diag( "gen_interval: AAAAAAHHHHH@@@!! \$dis " . Dumper( $dis ) );
