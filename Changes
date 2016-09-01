@@ -3537,3 +3537,15 @@ SPLIT OFF App::MREST into separate distribution
 - systemd: add dochazka-rest.service file (#59)
 - Build.PL: bump Date::Holidays::CZ dependency to 0.12 (#76)
 
+0.530 2016-09-01 23:38 CEST
+- MANIFEST: include dochazka-rest.service (systemd unit file)
+- dispatch/interval_lock.t: add basic supervisor test case
+- tests: rename create_testing_employee to create_bare_employee
+- tests: rename delete_testing_employee to delete_bare_employee
+- Test.pm: improve error reporting and documentation
+- Test.pm: reimplement create_*_employee functions as wrappers
+- t/model/id.t: improve documentation
+- REST/Test.pm: start work on gen_interval()
+- New dbinit paradigm
+- t/001-init.t: drop redundant test file
+
