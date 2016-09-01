@@ -58,7 +58,6 @@ META.json
 META.yml
 README.rst
 systemd/dochazka-rest.service
-t/001-init.t
 t/LDAP.t
 t/dispatch/001-resource.t
 t/dispatch/activity.t
