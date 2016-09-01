@@ -38,6 +38,7 @@ use warnings;
 
 use App::CELL qw( $CELL $log $meta $core $site );
 use App::Dochazka::REST::ConnBank qw( $dbix_conn );
+use Data::Dumper;
 use File::Path;
 use File::ShareDir;
 use File::Spec;
@@ -306,44 +307,48 @@ Be very, _very_, _VERY_ careful with this function.
 =cut
 
 sub reset_db {
-    my ( $superuser, $superpass ) = @_;
 
     my $status;
     my $dbname = $site->DOCHAZKA_DBNAME;
     my $dbuser = $site->DOCHAZKA_DBUSER;
     my $dbpass = $site->DOCHAZKA_DBPASS;
-    $log->debug( "Entering " . __PACKAGE__ . "::reset_db to (re-)initialize database $dbname with superuser credentials $superuser / $superpass" );
+    $log->debug( "Entering " . __PACKAGE__ . "::reset_db to initialize database $dbname with credentials $dbuser / $dbpass" );
 
     # PGTZ *must* be set
     $ENV{'PGTZ'} = $site->DOCHAZKA_TIMEZONE;
-
-    my $conn = App::Dochazka::REST::ConnBank::get_arbitrary_dbix_conn(
-        'postgres', $superuser, $superpass
-    );
-    $status = run_sql( 
-        $conn,
-        "DROP DATABASE IF EXISTS \"$dbname\"",
-        "DROP ROLE IF EXISTS $dbuser",
-        "CREATE ROLE \"$dbuser\" WITH LOGIN PASSWORD '$dbpass'",
-        "CREATE DATABASE \"$dbname\"",
-        "REVOKE CONNECT ON DATABASE \"$dbname\" FROM PUBLIC",
-    );
-    return $status unless $status->ok;
 
     # create:
     # - audit schema (see config/sql/audit_Config.pm)
     # - public schema (all application-specific tables, functions, triggers, etc.)
     # - the 'root' and 'demo' employees
     # - privhistory record for root
-    $conn = App::Dochazka::REST::ConnBank::get_arbitrary_dbix_conn(
-        $dbname, $superuser, $superpass
+    print "Getting database connection...";
+    my $conn = App::Dochazka::REST::ConnBank::get_arbitrary_dbix_conn(
+        $dbname, $dbuser, $dbpass
     );
+    print "done\n";
+
+    print "Initializing audit schema...";
     $status = run_sql(
         $conn,
         @{ $site->DBINIT_AUDIT },
+    );
+    if ( $status->not_ok ) {
+        print Dumper( $status ), "\n";
+        return $status;
+    }
+    print "done\n";
+
+    print "Initializing public schema...";
+    $status = run_sql(
+        $conn,
         @{ $site->DBINIT_CREATE },
     );
-    return $status unless $status->ok;
+    if ( $status->not_ok ) {
+        print Dumper( $status ), "\n";
+        return $status;
+    }
+    print "done\n";
 
     # get EID of root employee that was just created, since
     # we will need it in the second round of SQL statements
@@ -361,24 +366,10 @@ sub reset_db {
         local $_ = $_; s/\?/$eids->{'root'}/g; $_; 
     } @{ $site->DBINIT_MAKE_ROOT_IMMUTABLE };
 
-    # prep DBINIT_GRANTS (replace the strings '$dbuser' and '$dbpass' with
-    # the DOCHAZKA_DBUSER and DOCHAZKA_DBPASS site params, respectively
-    my $dbname_search = quotemeta( '$dbname' );
-    my $dbuser_search = quotemeta( '$dbuser' );
-    my $dbpass_search = quotemeta( '$dbpass' );
-    my @grants = map {
-        local $_ = $_; 
-        s{$dbname_search}{$dbname}g; 
-        s{$dbuser_search}{$dbuser}g; 
-        s{$dbpass_search}{$dbpass}g; 
-        $_; 
-    } @{ $site->DBINIT_GRANTS };
-
     # run the modified statements
     $status = run_sql(
         $conn,
         @root_immutable_statements,
-        @grants,
     );
     return $status unless $status->ok;
 
@@ -431,6 +422,7 @@ sub get_eid_of {
     my ( $conn, @nicks ) = @_;
     $log->debug( "Entering " . __PACKAGE__ . "::get_eid_of" );
     my ( %eids, $status );
+    $status = $CELL->status_ok;
     try {
         $conn->run( fixup => sub { 
             my $sth = $_->prepare( $site->DBINIT_SELECT_EID_OF );
@@ -442,8 +434,9 @@ sub get_eid_of {
             }
         } );
     } catch {
-        $CELL->status_err( 'DOCHAZKA_DBI_ERR', args => [ $_ ] );
+        $status = $CELL->status_err( 'DOCHAZKA_DBI_ERR', args => [ $_ ] );
     };
+    die $status->text unless $status->ok;
     return \%eids;
 }
 

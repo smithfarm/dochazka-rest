@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/bin/bash
 # ************************************************************************* 
 # Copyright (c) 2014-2015, SUSE LLC
 # 
@@ -31,27 +31,21 @@
 # POSSIBILITY OF SUCH DAMAGE.
 # ************************************************************************* 
 #
-# - initialize a pristine Dochazka database
+# - destroy existing database, user and create a new one from scratch
 
-use 5.012;
-use strict;
-use warnings;
+DBNAME="dochazka-test"
+DBUSER=dochazka
+DBPASS=dochazka
 
-#use App::CELL::Test::LogToFile;
-use App::CELL qw( $CELL $site );
-use App::Dochazka::REST;
-use Try::Tiny;
-use Web::MREST;
+psql -U postgres <<EOD
+DROP DATABASE IF EXISTS "$DBNAME";
+DROP ROLE IF EXISTS "$DBUSER";
+CREATE ROLE "$DBUSER" WITH LOGIN PASSWORD '$DBPASS';
+CREATE DATABASE "$DBNAME";
+REVOKE CONNECT ON DATABASE "$DBNAME" FROM PUBLIC;
+GRANT ALL PRIVILEGES ON DATABASE "$DBNAME" TO "$DBUSER";
+\\connect $DBNAME
+CREATE EXTENSION hstore;
+CREATE EXTENSION btree_gist;
+EOD
 
-
-my $status = Web::MREST::init( distro => 'App-Dochazka-REST', sitedir => '/etc/dochazka-rest' );
-if ( $status->not_ok ) {
-    die "Not configured. Please run the test suite manually after initial site configuration";
-}
-
-$status = App::Dochazka::REST::reset_db();
-if ( $status->not_ok ) {
-    die "PostgreSQL server is unreachable";
-}
-
-print "Dochazka database initialized\n";

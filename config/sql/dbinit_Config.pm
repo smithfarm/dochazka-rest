@@ -56,8 +56,6 @@ set( 'DBINIT_CREATE', [
 
     # miscellaneous settings
 
-    q/CREATE EXTENSION IF NOT EXISTS btree_gist/,
-
     q/SET client_min_messages=WARNING/,
 
     # generalized (utility) functions used in multiple datamodel classes
