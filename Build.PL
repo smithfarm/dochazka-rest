@@ -27,6 +27,7 @@ my $builder = Module::Build->new(
     },
     script_files         => [
         'bin/dochazka-dbinit',
+        'bin/dochazka-resetdb',
         'bin/dochazka-rest',
     ],
     configure_requires => {
