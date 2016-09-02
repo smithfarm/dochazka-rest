@@ -3549,3 +3549,9 @@ SPLIT OFF App::MREST into separate distribution
 - New dbinit paradigm
 - t/001-init.t: drop redundant test file
 
+0.531 2016-09-02 10:28 CEST
+- Rename dbinit-development -> dochazka-resetdb
+- dochazka-resetdb: abort immediately on non-zero exit status
+- dochazka-rest: drop --initialize option
+- dochazka-dbinit: set up logging
+
