@@ -3,8 +3,9 @@
 # meant to be run from the distro directory
 CPAN_NAME=$(cat CPAN_NAME)
 OBS_NAME="perl-$CPAN_NAME"
-OBS_DIR="$HOME/obs/home:smithfarm:branches:Application:Dochazka/$OBS_NAME/"
-VERSION=$(grep -P 'Version \d\.*\d{3,3}' lib/App/Dochazka/REST.pm | cut -d' ' -f2)
+OBS_PROJECT=$(cat OBS_PROJECT)
+OBS_DIR="$HOME/obs/home:smithfarm:branches:$OBS_PROJECT/$OBS_NAME/"
+VERSION=$(grep -P 'Version \d\.*\d{3,3}' $(cat VERSION_MODULE) | cut -d' ' -f2)
 perl Build.PL
 ./Build distmeta
 ./Build dist
