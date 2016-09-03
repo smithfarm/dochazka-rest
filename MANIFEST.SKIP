@@ -71,9 +71,13 @@
 
 # Avoid archives of this distribution
 \bApp-Dochazka-REST-[\d\.\_]+
-\bCPAN_NAME$
 release.sh$
 \bticket$
+
+# Avoid release script helper files
+\bCPAN_NAME$
+\bOBS_PROJECT$
+\bVERSION_MODULE$
 
 # Avoid docker stuff
 \bdocker-test.sh$
