@@ -3559,3 +3559,7 @@ SPLIT OFF App::MREST into separate distribution
 - release.sh: submitrequest to Application:Dochazka
 - t/001-noauto.t: replacement for t/001-init.t
 
+0.533 2016-09-03 10:03 CEST
+- release: make release scripts generic
+- Drop release scripts
+
