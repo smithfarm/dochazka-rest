@@ -1,6 +1,13 @@
 ===================
 App::Dochazka::REST
 ===================
+
+.. image:: https://travis-ci.org/smithfarm/dochazka-rest.svg?branch=master
+    :target: https://travis-ci.org/smithfarm/dochazka-rest
+
+.. image:: https://badge.fury.io/pl/App-Dochazka-REST.svg
+    :target: https://badge.fury.io/pl/App-Dochazka-REST
+
 -----------------------------------------------------------------------
 REST server component of the Dochazka Attendance & Time Tracking system
 -----------------------------------------------------------------------
