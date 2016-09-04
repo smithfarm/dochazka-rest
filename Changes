@@ -3563,3 +3563,7 @@ SPLIT OFF App::MREST into separate distribution
 - release: make release scripts generic
 - Drop release scripts
 
+0.534 2016-09-04 22:19 CEST
+- MANIFEST.SKIP: release script helper files
+- Travis CI
+
