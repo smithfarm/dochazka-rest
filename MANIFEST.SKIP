@@ -79,3 +79,12 @@
 # Avoid perlcritic, travis config files
 \B\.perlcriticrc\b
 \B\.travis.yml\b
+
+# Avoid docker stuff (if any)
+\bdocker/
+\Btest-drive.sh\b
+
+# Avoid "tickets" file (if any)
+\Btickets\b
+
+
