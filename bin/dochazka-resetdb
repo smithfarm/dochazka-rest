@@ -51,5 +51,3 @@ CREATE EXTENSION btree_gist;
 EOD
 
 dochazka-dbinit
-
-prove -lr t/
