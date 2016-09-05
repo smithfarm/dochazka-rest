@@ -199,18 +199,17 @@ current user.
 
 To initialize the database or reset it to a pristine state:
 
-    # dochazka-dbinit
-    Dochazka database reset to pristine state
+    $ dochazka-resetdb
 
 
 =head2 Start the server
 
 The last step is to start the Dochazka REST server. In the future, this
-will be possible using a command like C<systemctl start dochazka.service>.
+will be possible using a command like C<systemctl start dochazka-rest.service>.
 At the moment, however, we are still in development/testing phase and we 
 start the server like this:
 
-    # dochazka-rest
+    $ dochazka-rest
     Starting Web::MREST ver. 0.282
     App distro is App-Dochazka-REST
     App module is App::Dochazka::REST::Dispatch
@@ -223,6 +222,11 @@ start the server like this:
     Calling App::Dochazka::REST::Dispatch::init()
     Starting server
     HTTP::Server::PSGI: Accepting connections at http://0:5000/
+
+Note that the development web server L<HTTP::Server::PSGI> is used. To use
+L<Starman> instead, use the following command:
+
+    $ dochazka-rest -- --server Starman
 
 
 =head2 Take it for a spin
