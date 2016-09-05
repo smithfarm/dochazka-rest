@@ -201,6 +201,18 @@ To initialize the database or reset it to a pristine state:
 
     $ dochazka-resetdb
 
+Note that this is a two-step process. The first step is to create the database,
+role, extensions etc. - i.e., everything that requires database superuser
+permissions. The second step is to create the schemas, etc. For this, the
+ordinary "dochazka" role is used.
+
+In a production setting, or whenever the two steps need to be done separately,
+the database administrator can perform the first step using the "psql" command
+in C<bin/dochazka-resetdb>. After that, the second step can be performed by
+simply running
+
+    $ dochazka-dbinit
+
 
 =head2 Start the server
 
