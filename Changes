@@ -3567,3 +3567,8 @@ SPLIT OFF App::MREST into separate distribution
 - MANIFEST.SKIP: release script helper files
 - Travis CI
 
+0.535 2016-09-05 18:27 CEST
+- README.rst: add Travis CI badges
+- test: skip more gracefully in Travis CI
+- bin/dochazka-rest: no longer require double '--'
+
