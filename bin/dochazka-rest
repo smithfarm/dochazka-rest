@@ -95,4 +95,4 @@ if [[ $@ ]] ; then
     for arg do echo '--> '"\`$arg'" ; done
 fi
 
-mrest --distro App-Dochazka-REST --module App::Dochazka::REST::Dispatch --sitedir /etc/dochazka-rest "$@"
+mrest --distro App-Dochazka-REST --module App::Dochazka::REST::Dispatch --sitedir /etc/dochazka-rest -- "$@"
