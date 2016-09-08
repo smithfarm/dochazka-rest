@@ -145,8 +145,8 @@ sub initialize_regression_test {
 
     require App::Dochazka::REST;
 
-    note( "Check status of database server connection" );
-    plan skip_all => "PostgreSQL server is unreachable" unless conn_up();
+    my $travis_msg = "Travis CI environment detected. Skipping test.";
+    plan skip_all => $travis_msg if $ENV{'TRAVIS_PERL_VERSION'};
 
     my $status = Web::MREST::init( 
         distro => 'App-Dochazka-REST', 
@@ -167,6 +167,9 @@ sub initialize_regression_test {
         $status = $CELL->status_crit( 'DOCHAZKA_MASON_INIT_FAIL', args => [ $_ ] );
     };
     plan skip_all => $status->text unless $status->ok;
+
+    note( "Check status of database server connection" );
+    plan skip_all => "PostgreSQL server is unreachable" unless conn_up();
 
     my $eids = App::Dochazka::REST::get_eid_of( $dbix_conn, "root", "demo" );
     $site->set( 'DOCHAZKA_EID_OF_ROOT', $eids->{'root'} );
