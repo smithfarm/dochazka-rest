@@ -3,9 +3,11 @@ Description=Dochazka REST server
 After=network.target
 
 [Service]
-EnvironmentFile=-/etc/dochazka-rest
-ExecStart=/usr/bin/dochazka-rest
-PIDFile=/var/run/dochazka-rest.pid
+Type=simple
+User=dochazka
+Group=dochazka
+ExecStart=/usr/bin/dochazka-rest -- --server Starman
+#PIDFile=/var/run/dochazka-rest.pid
 
 [Install]
 WantedBy=multi-user.target
