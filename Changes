@@ -3572,3 +3572,15 @@ SPLIT OFF App::MREST into separate distribution
 - test: skip more gracefully in Travis CI
 - bin/dochazka-rest: no longer require double '--'
 
+0.536 2016-09-08 10:39 CEST
+- Drop "factory-progress" file
+- MANIFEST.SKIP: docker, tickets
+- doc: how to use Starman instead of default web server
+- bin/dochazka-resetdb: do not run the test suite
+- Document how to (re-)initialize the database
+- create ext/ dir and move inside there extra (non-production related) files
+  (Theo Chatzimichos)
+- run systemd service as dochazka user, use starman as webapp server
+  (Theo Chatzimichos)
+- tests: make integration tests run again...
+
