@@ -4,8 +4,8 @@ After=network.target
 
 [Service]
 Type=simple
-User=dochazka
-Group=dochazka
+User=dochazka-rest
+Group=dochazka-rest
 ExecStart=/usr/bin/dochazka-rest -- --server Starman
 #PIDFile=/var/run/dochazka-rest.pid
 
