@@ -34,7 +34,7 @@ no_index:
 provides:
   App::Dochazka::REST:
     file: lib/App/Dochazka/REST.pm
-    version: '0.536'
+    version: '0.537'
   App::Dochazka::REST::ACL:
     file: lib/App/Dochazka/REST/ACL.pm
   App::Dochazka::REST::Auth:
@@ -116,5 +116,5 @@ resources:
   bugtracker: https://github.com/smithfarm/dochazka-rest/issues
   license: http://opensource.org/licenses/bsd-license.php
   repository: https://github.com/smithfarm/dochazka-rest
-version: '0.536'
+version: '0.537'
 x_serialization_backend: 'CPAN::Meta::YAML version 0.012'

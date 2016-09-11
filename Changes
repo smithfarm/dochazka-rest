@@ -3584,3 +3584,9 @@ SPLIT OFF App::MREST into separate distribution
   (Theo Chatzimichos)
 - tests: make integration tests run again...
 
+0.537 2016-09-11 21:19 CEST
+- set owner of the db (Theo Chatzimichos)
+- change the systemd user to dochazka-rest (Theo Chatzimichos)
+- build/ops: regenerate Makefile.PL
+- build/ops: set OBS_PROJECT to Application:Dochazka:staging
+
