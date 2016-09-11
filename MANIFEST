@@ -26,6 +26,7 @@ config/sql/tempintvls_Config.pm
 ext/helpers/create_active_employee.t
 ext/helpers/docgen.plx
 ext/systemd/dochazka-rest.service
+ext/test-drive.sh
 lib/App/Dochazka/REST.pm
 lib/App/Dochazka/REST/ACL.pm
 lib/App/Dochazka/REST/Auth.pm

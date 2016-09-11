@@ -81,10 +81,8 @@
 \B\.travis.yml\b
 
 # Avoid docker stuff (if any)
-\Btest-drive.sh\b
 \bext/docker/
 
 # Avoid "tickets" file (if any)
-\Btickets\b
-
+\btickets$
 
