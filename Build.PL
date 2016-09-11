@@ -78,7 +78,7 @@ my $builder = Module::Build->new(
         'Web::MREST::CLI'     => 0.276,
     },
     add_to_cleanup     => [ 'App-Dochazka-REST-*' ],
-#    create_makefile_pl => 'traditional',
+    create_makefile_pl => 'traditional',
     recursive_test_files => 1,
 );
 

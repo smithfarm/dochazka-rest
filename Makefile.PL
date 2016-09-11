@@ -6,16 +6,19 @@ WriteMakefile
   'NAME' => 'App::Dochazka::REST',
   'VERSION_FROM' => 'lib/App/Dochazka/REST.pm',
   'PREREQ_PM' => {
-                   'App::CELL' => '0.209',
-                   'App::Dochazka::Common' => '0.189',
+                   'App::CELL' => '0.215',
+                   'App::Dochazka::Common' => '0.204',
                    'Authen::Passphrase::SaltedDigest' => '0.008',
                    'DBD::Pg' => 0,
                    'DBI' => 0,
                    'DBIx::Connector' => '0.47',
                    'Date::Calc' => 0,
+                   'Date::Holidays::CZ' => '0.12',
                    'File::ShareDir' => '1.00',
+                   'File::Slurp' => 0,
                    'HTTP::Request' => 0,
                    'JSON' => 0,
+                   'Mason' => 0,
                    'Params::Validate' => '1.06',
                    'Path::Router' => '0.12',
                    'Plack::Middleware::Session' => 0,
@@ -27,17 +30,21 @@ WriteMakefile
                    'Test::Deep::NoTest' => 0,
                    'Test::Fatal' => 0,
                    'Test::JSON' => 0,
+                   'Test::Warnings' => 0,
                    'Try::Tiny' => 0,
-                   'Web::MREST' => '0.261',
+                   'Web::MREST' => '0.282',
+                   'Web::MREST::CLI' => '0.276',
                    'Web::Machine' => '0.15'
                  },
   'INSTALLDIRS' => 'site',
   'EXE_FILES' => [
+                   'bin/dochazka-dbinit',
+                   'bin/dochazka-resetdb',
                    'bin/dochazka-rest'
                  ],
   'PL_FILES' => {},
   'test' => {
-              'TESTS' => 't/*.t t/sql/*.t t/util/*.t t/model/*.t t/model/general/*.t t/dispatch/*.t'
+              'TESTS' => 't/*.t t/dispatch/*.t t/model/*.t t/sql/*.t t/unit/*.t'
             }
 )
 ;
