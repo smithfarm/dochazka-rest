@@ -49,7 +49,7 @@ set( 'DOCHAZKA_REST_LOG_FILE_RESET', 0 );
 # DOCHAZKA_STATE_DIR
 #     full path of Dochazka server state directory
 #     (should be created by packaging)
-set( 'DOCHAZKA_STATE_DIR', '/var/lib/dochazka' );
+set( 'DOCHAZKA_STATE_DIR', '/var/lib/dochazka-rest' );
 
 # DOCHAZKA_REPORT_BUGS_TO
 #    this should be an ordinary string like "bugs@dochazka.com" or
