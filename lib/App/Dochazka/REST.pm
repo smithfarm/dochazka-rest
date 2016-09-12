@@ -244,12 +244,12 @@ to the Mason component root.
 sub reset_mason_dir {
     my $status;
 
-    # wipe out
+    $log->info( "Checking permissions of Mason directory (DOCHAZKA_STATE_DIR)" );
     my $statedir = $site->DOCHAZKA_STATE_DIR;
     die "OUCH!!! DOCHAZKA_STATE_DIR site parameter not defined!" unless $statedir;
-    die "OUCH!!! DOCHAZKA_STATE_DIR is not readable by me!" unless -r $statedir;
-    die "OUCH!!! DOCHAZKA_STATE_DIR is not writable by me!" unless -w $statedir;
-    die "OUCH!!! DOCHAZKA_STATE_DIR is not executable by me!" unless -x $statedir;
+    die "OUCH!!! DOCHAZKA_STATE_DIR $statedir is not readable by me!" unless -r $statedir;
+    die "OUCH!!! DOCHAZKA_STATE_DIR $statedir is not writable by me!" unless -w $statedir;
+    die "OUCH!!! DOCHAZKA_STATE_DIR $statedir is not executable by me!" unless -x $statedir;
     my $masondir = File::Spec->catfile( $statedir, 'Mason' );
     $log->debug( "Mason directory is $masondir" );
     rmtree( $masondir );
