@@ -3590,3 +3590,7 @@ SPLIT OFF App::MREST into separate distribution
 - build/ops: regenerate Makefile.PL
 - build/ops: set OBS_PROJECT to Application:Dochazka:staging
 
+0.538 2016-09-12 11:33 CEST
+- build/ops: update MANIFEST, MANIFEST.SKIP
+- config: set default DOCHAZKA_STATE_DIR to /var/lib/dochazka-rest
+
