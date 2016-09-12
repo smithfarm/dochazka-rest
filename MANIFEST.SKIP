@@ -82,6 +82,7 @@
 
 # Avoid docker stuff (if any)
 \bext/docker/
+\bext/test-drive.sh$
 
 # Avoid "tickets" file (if any)
 \btickets$
