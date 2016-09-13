@@ -3599,3 +3599,9 @@ SPLIT OFF App::MREST into separate distribution
 - build/ops: do not package test-drive.sh
 - test: do not load config params from /etc/dochazka-rest
 
+0.540 2016-09-13 14:23 CEST
+- Add sample configuration file for inclusion in packaging
+- doc: provide more guidance in sample config file
+- doc: append .example to name of sample config file
+- scripts: do not run dochazka-dbinit from dochazka-resetdb
+
