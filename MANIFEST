@@ -25,7 +25,7 @@ config/sql/schedule_Config.pm
 config/sql/tempintvls_Config.pm
 ext/helpers/create_active_employee.t
 ext/helpers/docgen.plx
-ext/REST_SiteConfig.pm
+ext/REST_SiteConfig.pm.example
 ext/systemd/dochazka-rest.service
 lib/App/Dochazka/REST.pm
 lib/App/Dochazka/REST/ACL.pm
