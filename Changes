@@ -3594,3 +3594,8 @@ SPLIT OFF App::MREST into separate distribution
 - build/ops: update MANIFEST, MANIFEST.SKIP
 - config: set default DOCHAZKA_STATE_DIR to /var/lib/dochazka-rest
 
+0.539 2016-09-13 08:47 CEST
+- REST.pm: improve DOCHAZKA_STATE_DIR error message
+- build/ops: do not package test-drive.sh
+- test: do not load config params from /etc/dochazka-rest
+
