@@ -164,6 +164,7 @@ foreach my $base ( "employee/current", "employee/self" ) {
         'fullname' => 'Demo Employee',
         'email' => 'demo@dochazka.site',
         'supervisor' => undef,
+        'sync' => 0,
     }, "GET $base 5");
     #
     $status = req( $test, 200, 'root', 'GET', $base );
@@ -178,6 +179,7 @@ foreach my $base ( "employee/current", "employee/self" ) {
         'email' => 'root@site.org',
         'supervisor' => undef,
         'remark' => 'dbinit',
+        'sync' => 0,
     }, "GET $base 10" );
     
     note( "looping: PUT $base" );
@@ -556,7 +558,7 @@ my $brchen = App::Dochazka::REST::Model::Employee->spawn( %{ $status->payload } 
 is( $brchen->eid, $eid_of_brchen );
 my $brchenprime = App::Dochazka::REST::Model::Employee->spawn( eid => $eid_of_brchen,
     nick => 'brotherchen', email => 'goodbrother@orient.cn', fullname =>
-    'Chen Update Again', salt => 'tasty' );
+    'Chen Update Again', salt => 'tasty', sync => 0 );
 is_deeply( $brchen, $brchenprime );
 
 note( "provide invalid EID in request body -> it will be ignored" );
@@ -569,7 +571,7 @@ isnt( $brchen->eid, 99999 );
 is( $brchen->eid, $eid_of_brchen );
 $brchenprime = App::Dochazka::REST::Model::Employee->spawn( eid => $eid_of_brchen,
     nick => 'brotherchen', email => 'goodbrother@orient.cn', fullname =>
-    'Chen Update Again 2', salt => 'tasty' );
+    'Chen Update Again 2', salt => 'tasty', sync => 0 );
 is_deeply( $brchen, $brchenprime );
 
 note( 'change the nick' );
@@ -585,7 +587,7 @@ isnt( $mrfu->nick, 'brotherchen' );
 is( $mrfu->nick, 'mrfu' );
 my $mrfuprime = App::Dochazka::REST::Model::Employee->spawn( eid => $eid_of_brchen,
     nick => 'mrfu', fullname => 'Lizard Scale', email => 'mrfu@dragon.cn',
-    salt => 'tasty' );
+    salt => 'tasty', sync => 0 );
 is_deeply( $mrfu, $mrfuprime );
 $eid_of_mrfu = $mrfu->eid;
 is( $eid_of_mrfu, $eid_of_brchen );
@@ -833,7 +835,8 @@ is( $status->level, 'OK' );
 is( $status->code, 'DOCHAZKA_CUD_OK' );
 $mrfu = App::Dochazka::REST::Model::Employee->spawn( %{ $status->payload } );
 $mrfuprime = App::Dochazka::REST::Model::Employee->spawn( eid => $mrfu->eid, 
-    nick => 'mrfu', fullname => 'Dragon Scale', email => 'mrfu@dragon.cn' );
+    nick => 'mrfu', fullname => 'Dragon Scale', email => 'mrfu@dragon.cn', 
+    sync => 0 );
 is_deeply( $mrfu, $mrfuprime );
 $eid_of_mrfu = $mrfu->eid;
 
@@ -867,7 +870,8 @@ is( $status->level, "OK" );
 is( $status->code, 'DOCHAZKA_CUD_OK' );
 $mrfu = App::Dochazka::REST::Model::Employee->spawn( %{ $status->payload } );
 $mrfuprime = App::Dochazka::REST::Model::Employee->spawn( eid => $eid_of_mrfu,
-    nick => 'mrfu', fullname => 'Dragon Scale Update', email => 'scale@dragon.org' );
+    nick => 'mrfu', fullname => 'Dragon Scale Update', email => 'scale@dragon.org',
+    sync => 0 );
 is_deeply( $mrfu, $mrfuprime );
 
 note( 'create a bogus user with a bogus property' );
@@ -953,7 +957,7 @@ is( $status->level, 'OK' );
 is( $status->code, 'DOCHAZKA_CUD_OK' );
 $mrsfu = App::Dochazka::REST::Model::Employee->spawn( %{ $status->payload } );
 $mrsfuprime = App::Dochazka::REST::Model::Employee->spawn( eid => $mrsfu->eid, 
-    nick => 'mrsfu', fullname => 'Dragonness' );
+    nick => 'mrsfu', fullname => 'Dragonness', sync => 0 );
 is_deeply( $mrsfu, $mrsfuprime );
 my $eid_of_mrsfu = $mrsfu->eid;
 
@@ -972,7 +976,7 @@ my $hapless = App::Dochazka::REST::Model::Employee->spawn( %{ $status->payload }
 isnt( $hapless->nick, 'INVALID' );
 is( $hapless->nick, 'hapless' );
 my $haplessprime = App::Dochazka::REST::Model::Employee->spawn( eid => $hapless->eid, 
-    nick => 'hapless', fullname => 'Anders Chen' );
+    nick => 'hapless', fullname => 'Anders Chen', sync => 0 );
 is_deeply( $hapless, $haplessprime );
 my $eid_of_hapless = $hapless->eid;
 
@@ -986,7 +990,8 @@ is( $hapless->nick, "hapless" );
 is( $hapless->fullname, "Chen Update" );
 is( $hapless->salt, "none, please" );
 $haplessprime = App::Dochazka::REST::Model::Employee->spawn( eid => $eid_of_hapless,
-    nick => 'hapless', fullname => 'Chen Update', salt => "none, please" );
+    nick => 'hapless', fullname => 'Chen Update', salt => "none, please",
+    sync => 0 );
 is_deeply( $hapless, $haplessprime );
 
 note( "update: change salt to null" );
@@ -999,7 +1004,7 @@ is( $hapless->nick, "hapless" );
 is( $hapless->fullname, "Chen Update" );
 is( $hapless->salt, undef );
 $haplessprime = App::Dochazka::REST::Model::Employee->spawn( eid => $eid_of_hapless,
-    nick => 'hapless', fullname => 'Chen Update' );
+    nick => 'hapless', fullname => 'Chen Update', sync => 0 );
 is_deeply( $hapless, $haplessprime );
 
 note( "update: pathological paths" );
@@ -1014,7 +1019,7 @@ is( $hapless->fullname, "Good Brother Chen" );
 is( $hapless->eid, $eid_of_hapless );
 isnt( $hapless->eid, 534 );
 $haplessprime = App::Dochazka::REST::Model::Employee->spawn( eid => $eid_of_hapless,
-    nick => 'hapless', fullname => 'Good Brother Chen' );
+    nick => 'hapless', fullname => 'Good Brother Chen', salt => '', sync => 0 );
 is_deeply( $hapless, $haplessprime );
 
 note( 'attempt to change nick to null' );

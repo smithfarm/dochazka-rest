@@ -158,6 +158,7 @@ $body$
         email      text UNIQUE,
         passhash   text,
         salt       text,
+        sync       boolean DEFAULT FALSE NOT NULL,
         supervisor integer REFERENCES employees (eid),
         remark     text,
         CONSTRAINT kosher_nick CHECK (nick ~* '^[[:alnum:]_][[:alnum:]_-]+$')

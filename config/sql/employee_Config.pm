@@ -40,17 +40,17 @@
 
 # 
 set( 'SQL_EMPLOYEE_SELECT_BY_EID', q/
-      SELECT eid, sec_id, nick, fullname, email, passhash, salt, supervisor, remark
+      SELECT eid, sec_id, nick, fullname, email, passhash, salt, sync, supervisor, remark
       FROM employees WHERE eid=?/ );
 
 # 
 set( 'SQL_EMPLOYEE_SELECT_BY_SEC_ID', q/
-      SELECT eid, sec_id, nick, fullname, email, passhash, salt, supervisor, remark
+      SELECT eid, sec_id, nick, fullname, email, passhash, salt, sync, supervisor, remark
       FROM employees WHERE sec_id=?/ );
 
 #
 set( 'SQL_EMPLOYEE_SELECT_BY_NICK', q/
-      SELECT eid, sec_id, nick, fullname, email, passhash, salt, supervisor, remark
+      SELECT eid, sec_id, nick, fullname, email, passhash, salt, sync, supervisor, remark
       FROM employees WHERE nick=?/ );
 
 #
@@ -65,7 +65,7 @@ set( 'SQL_EMPLOYEE_SCHEDULE_AT_TIMESTAMP', q/
 
 # 
 set( 'SQL_EMPLOYEE_SELECT_MULTIPLE_BY_NICK', q/
-      SELECT eid, sec_id, nick, fullname, email, passhash, salt, supervisor, remark
+      SELECT eid, sec_id, nick, fullname, email, passhash, salt, sync, supervisor, remark
       FROM employees WHERE nick LIKE ?/ );
 
 #
@@ -79,23 +79,23 @@ set( 'SQL_EMPLOYEE_CURRENT_SCHEDULE', q/
 #
 set( 'SQL_EMPLOYEE_INSERT', q/
       INSERT INTO employees 
-                (sec_id, nick, fullname, email, passhash, salt, supervisor, remark)
-      VALUES    (?,      ?,    ?,        ?,     ?,        ?,    ?,          ?) 
-      RETURNING  eid, sec_id, nick, fullname, email, passhash, salt, supervisor, remark
+                (sec_id, nick, fullname, email, passhash, salt, sync, supervisor, remark)
+      VALUES    (?,      ?,    ?,        ?,     ?,        ?,    ?,    ?,          ?) 
+      RETURNING  eid, sec_id, nick, fullname, email, passhash, salt, sync, supervisor, remark
       / );
 
 #
 set( 'SQL_EMPLOYEE_UPDATE_BY_EID', q/
       UPDATE employees SET sec_id = ?, nick = ?, fullname = ?, email = ?,
-         passhash = ?, salt = ?, supervisor =?, remark = ?  
+         passhash = ?, salt = ?, sync = ?, supervisor =?, remark = ?  
       WHERE eid = ?
-      RETURNING  eid, sec_id, nick, fullname, email, passhash, salt, supervisor, remark
+      RETURNING  eid, sec_id, nick, fullname, email, passhash, salt, sync, supervisor, remark
       / );
 
 #
 set( 'SQL_EMPLOYEE_DELETE', q/
       DELETE FROM employees WHERE eid = ? 
-      RETURNING  eid, sec_id, nick, fullname, email, passhash, salt, supervisor, remark
+      RETURNING  eid, sec_id, nick, fullname, email, passhash, salt, sync, supervisor, remark
       / );
 
 #
