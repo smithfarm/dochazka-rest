@@ -45,7 +45,7 @@ use Test::More;
 use Web::MREST;
 
 note( 'initialize the REST server' );
-my $status = Web::MREST::init( distro => 'App-Dochazka-REST', sitedir => '/etc/dochazka-rest' );
+my $status = Web::MREST::init( distro => 'App-Dochazka-REST' );
 if ( $status->not_ok ) { 
     diag( $status->text );
     plan skip_all => "Not configured. Please run the test suite manually after initial site configuration";
