@@ -50,4 +50,4 @@ CREATE EXTENSION hstore;
 CREATE EXTENSION btree_gist;
 EOD
 
-dochazka-dbinit
+echo "Database $DBNAME reset to pristine state. Now run 'dochazka-dbinit'."
