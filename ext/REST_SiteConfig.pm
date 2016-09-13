@@ -4,6 +4,13 @@
 # App::Dochazka::REST site configuration parameters that site administrators
 # might need to change the default values of.
 #
+# The first argument to "set()" is the name of the configuration parameter, and
+# the second argument is its value. The values shown below are the defaults.
+#
+# To keep the default value, do nothing.
+#
+# To override a default, uncomment the "set" call and change the value. 
+#
 
 # DOCHAZKA_REST_LOG_FILE
 #     full path of log file to log to
