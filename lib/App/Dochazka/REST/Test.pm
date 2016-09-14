@@ -145,14 +145,13 @@ sub initialize_regression_test {
 
     require App::Dochazka::REST;
 
-    #my $travis_msg = "Travis CI environment detected. Skipping test.";
-    #plan skip_all => $travis_msg if $ENV{'TRAVIS_PERL_VERSION'};
-
     my $status = Web::MREST::init( 
         distro => 'App-Dochazka-REST', 
         sitedir => '/etc/dochazka-rest', 
     );
     plan skip_all => "Web::MREST::init failed: " . $status->text unless $status->ok;
+
+    diag( "DOCHAZKA_STATE_DIR is set to " . $site->DOCHAZKA_STATE_DIR );
 
     note( "Set log level" );
     $log->init( 
