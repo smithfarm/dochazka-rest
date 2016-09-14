@@ -521,6 +521,9 @@ is( $status->code, 'DOCHAZKA_CUD_OK', "DELETE $base/foobarpus 3" );
 
 note( "teardown" );
 $status = delete_all_attendance_data();
-BAIL_OUT(0) unless $status->ok;
+if ( $status->not_ok ) {
+    diag( Dumper $status );
+    BAIL_OUT(0);
+}
 
 done_testing;
