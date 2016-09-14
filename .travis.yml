@@ -9,6 +9,8 @@ addons:
   postgresql: '9.4'
 before_script:
   - sudo mkdir /etc/dochazka-rest
+  - sudo mkdir /var/lib/dochazka-rest
+  - sudo chown $USER /var/lib/dochazka-rest
   - sudo sh -c "echo \"set( 'DOCHAZKA_DBNAME', 'dochazka-test' );\" >> /etc/dochazka-rest/REST_SiteConfig.pm"
   - sudo sh -c "echo \"set( 'DOCHAZKA_DBUSER', 'dochazka' );\" >> /etc/dochazka-rest/REST_SiteConfig.pm"
   - sudo sh -c "echo \"set( 'DOCHAZKA_DBPASS', 'dochazka' );\" >> /etc/dochazka-rest/REST_SiteConfig.pm"
