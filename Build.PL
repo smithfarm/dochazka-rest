@@ -39,6 +39,7 @@ my $builder = Module::Build->new(
         'Authen::Passphrase::SaltedDigest' => 0.008,
         'Date::Holidays::CZ' => 0.12,
         'DBIx::Connector' => 0.47,
+        'File::ShareDir::Install' => 0.11,
         'File::Slurp'    => 0,
         'HTTP::Request'  => 0,
         'Mason'          => 0,
@@ -61,7 +62,7 @@ my $builder = Module::Build->new(
         'DBD::Pg'        => 0,
         'DBI'            => 0,
         'DBIx::Connector' => 0.47,
-        'File::ShareDir' => 0,
+        'File::ShareDir' => 1.0,
         'JSON'           => 0,
         'Mason'          => 0,
         'Params::Validate' => 1.06,
@@ -78,7 +79,7 @@ my $builder = Module::Build->new(
         'Web::MREST::CLI'     => 0.276,
     },
     add_to_cleanup     => [ 'App-Dochazka-REST-*' ],
-    create_makefile_pl => 'traditional',
+    # create_makefile_pl => 'traditional',
     recursive_test_files => 1,
 );
 
