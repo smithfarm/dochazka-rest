@@ -3605,3 +3605,14 @@ SPLIT OFF App::MREST into separate distribution
 - doc: append .example to name of sample config file
 - scripts: do not run dochazka-dbinit from dochazka-resetdb
 
+0.541 2016-09-14 12:49 CEST
+- scripts: add executable bits to all scripts in bin/
+- tests: comment out TRAVIS_PERL_VERSION check in init routine
+- set up database in travis for the testsuite (Theo Chatzimichos)
+- Plumb sync property into Employee data model
+- build/ops: make Makefile.PL use File::ShareDir::Install
+- build/ops: create state dir in Travis CI
+- build/ops: require App::Dochazka::Common 0.205
+- tests: dump status when bailing out in t/dispatch/activity.t
+- build/ops: turn DOCHAZKA_AUDITING off in Travis CI
+

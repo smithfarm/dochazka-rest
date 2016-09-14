@@ -4,10 +4,11 @@ author:
   - 'Nathan Cutler <ncutler@suse.com>'
 build_requires:
   App::CELL: '0.215'
-  App::Dochazka::Common: '0.204'
+  App::Dochazka::Common: '0.205'
   Authen::Passphrase::SaltedDigest: '0.008'
   DBIx::Connector: '0.47'
   Date::Holidays::CZ: '0.12'
+  File::ShareDir::Install: '0.11'
   File::Slurp: '0'
   HTTP::Request: '0'
   Mason: '0'
@@ -34,7 +35,7 @@ no_index:
 provides:
   App::Dochazka::REST:
     file: lib/App/Dochazka/REST.pm
-    version: '0.540'
+    version: '0.541'
   App::Dochazka::REST::ACL:
     file: lib/App/Dochazka/REST/ACL.pm
   App::Dochazka::REST::Auth:
@@ -89,14 +90,14 @@ provides:
     file: lib/App/Dochazka/REST/Util.pm
 requires:
   App::CELL: '0.215'
-  App::Dochazka::Common: '0.204'
+  App::Dochazka::Common: '0.205'
   Authen::Passphrase::SaltedDigest: '0.008'
   DBD::Pg: '0'
   DBI: '0'
   DBIx::Connector: '0.47'
   Date::Calc: '0'
   Date::Holidays::CZ: '0.12'
-  File::ShareDir: '1.00'
+  File::ShareDir: '1'
   JSON: '0'
   Mason: '0'
   Params::Validate: '1.06'
@@ -116,5 +117,5 @@ resources:
   bugtracker: https://github.com/smithfarm/dochazka-rest/issues
   license: http://opensource.org/licenses/bsd-license.php
   repository: https://github.com/smithfarm/dochazka-rest
-version: '0.540'
+version: '0.541'
 x_serialization_backend: 'CPAN::Meta::YAML version 0.012'
