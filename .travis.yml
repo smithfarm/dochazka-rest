@@ -3,4 +3,19 @@ language: perl
 perl:
   - '5.18'
   - '5.24'
-script: perl Build.PL && ./Build && ./Build test --verbose
+services:
+  - postgresql
+addons:
+  postgresql: '9.4'
+before_script:
+  - sudo mkdir /etc/dochazka-rest
+  - sudo sh -c "echo \"set( 'DOCHAZKA_DBNAME', 'dochazka-test' );\" >> /etc/dochazka-rest/REST_SiteConfig.pm"
+  - sudo sh -c "echo \"set( 'DOCHAZKA_DBUSER', 'dochazka' );\" >> /etc/dochazka-rest/REST_SiteConfig.pm"
+  - sudo sh -c "echo \"set( 'DOCHAZKA_DBPASS', 'dochazka' );\" >> /etc/dochazka-rest/REST_SiteConfig.pm"
+  - bin/dochazka-resetdb
+script:
+  - perl Build.PL
+  - ./Build
+  - ./Build install
+  - perl bin/dochazka-dbinit
+  - ./Build test --verbose
