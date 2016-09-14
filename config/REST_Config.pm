@@ -151,10 +151,19 @@ set( 'DOCHAZKA_LDAP_SERVER', 'ldaps://ldap.dochazka.site' );
 #     base DN
 set( 'DOCHAZKA_LDAP_BASE', 'dc=dochazka,dc=site' );
 
-# DOCHAZKA_LDAP_NICK_MAPPING
-#     in order for LDAP authentication to work, the Dochazka 'nick' must
-#     be mapped to a field in the LDAP database (e.g. 'uid', 'cn', etc.)
-set( 'DOCHAZKA_LDAP_NICK_MAPPING', 'uid' );
+# DOCHAZKA_LDAP_MAPPING
+#     in order for LDAP authentication to work, the employee fields that
+#     Dochazka uses, such as 'nick', 'fullname', 'email', etc. must be mapped
+#     to corresponding fields in the LDAP database (e.g. 'uid', 'cn', etc.) -
+#     that is accomplished via this parameter
+#     WARNING: change the values only, never the keys! The only exception is
+#     that you can optionally add a 'sec_id' key if appropriate for your LDAP
+#     database.
+set( 'DOCHAZKA_LDAP_MAPPING', {
+    'nick' => 'uid',
+    'fullname' => 'cn',
+    'email' => 'mail',
+});
 
 # DOCHAZKA_LDAP_FILTER
 #     filter
@@ -167,13 +176,6 @@ set( 'DOCHAZKA_LDAP_TEST_UID_EXISTENT', 'I_exist_in_local_LDAP' );
 # DOCHAZKA_LDAP_TEST_UID_NON_EXISTENT
 #     a non-existent UID for LDAP testing (t/201-LDAP.t)
 set( 'DOCHAZKA_LDAP_TEST_UID_NON_EXISTENT', 'I_do_NOT_exist_in_local_LDAP' );
-
-# DOCHAZKA_LDAP_POPULATE_MATRIX
-#     set of key => value pairs where key is Employee object property and value
-#     is the matching LDAP property; used to populate employee objects with
-#     values from LDAP (do *not* include nick mapping here - use
-#     DOCHAZKA_LDAP_NICK_MAPPING for that)
-set( 'DOCHAZKA_LDAP_POPULATE_MATRIX', {} );
 
 # DOCHAZKA_REST_SESSION_EXPIRATION_TIME
 #     number of seconds after which a session will be considered stale
