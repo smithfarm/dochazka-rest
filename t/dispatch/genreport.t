@@ -79,7 +79,7 @@ $status = req( $test, 200, 'root', 'POST', $base, <<EOS );
 { "path":"/sample/site_param.mc", "parameters":{ "param":"DOCHAZKA_STATE_DIR" } }
 EOS
 is( $status->level, 'OK' );
-like( $status->payload, qr{site_param_name = 'DOCHAZKA_STATE_DIR'.*site_param_value = '/var/lib/dochazka'}s );
+like( $status->payload, qr{site_param_name = 'DOCHAZKA_STATE_DIR'.*site_param_value = '/var/lib/dochazka-rest'}s );
 
 note( "sample/site_param.mc error path missing mandatory parameter I" );
 $status = req( $test, 400, 'root', 'POST', $base, '{ "path":"/sample/site_param.mc" }' );

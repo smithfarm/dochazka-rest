@@ -240,7 +240,7 @@ sub cud {
             my $counter = 0;
             map {
                 $counter += 1;
-                $sth->bind_param( $counter, $ARGS{'object'}->{$_} || undef );
+                $sth->bind_param( $counter, $ARGS{'object'}->{$_} );
             } @{ $ARGS{'attrs'} }; 
 
             # execute the SQL statement

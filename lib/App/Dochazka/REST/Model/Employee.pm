@@ -320,12 +320,15 @@ sub insert {
     my $self = shift;
     my ( $context ) = validate_pos( @_, { type => HASHREF } );
 
+    $self->{sync} = 0 unless defined( $self->{sync} );
+
     my $status = cud(
         conn => $context->{'dbix_conn'},
         eid => $context->{'current'}->{'eid'},
         object => $self,
         sql => $site->SQL_EMPLOYEE_INSERT,
-        attrs => [ 'sec_id', 'nick', 'fullname', 'email', 'passhash', 'salt', 'supervisor', 'remark' ],
+        attrs => [ 'sec_id', 'nick', 'fullname', 'email', 'passhash', 'salt',
+                   'sync', 'supervisor', 'remark' ],
     );
     return $status;
 }
@@ -348,12 +351,15 @@ sub update {
 
     return $CELL->status_err( 'DOCHAZKA_MALFORMED_400' ) unless $self->{'eid'};
 
+    $self->{sync} = 0 unless defined( $self->{sync} );
+
     my $status = cud(
         conn => $context->{'dbix_conn'},
         eid => $context->{'current'}->{'eid'},
         object => $self,
         sql => $site->SQL_EMPLOYEE_UPDATE_BY_EID,
-        attrs => [ 'sec_id', 'nick', 'fullname', 'email', 'passhash', 'salt', 'supervisor', 'remark', 'eid' ],
+        attrs => [ 'sec_id', 'nick', 'fullname', 'email', 'passhash', 'salt',
+                   'sync', 'supervisor', 'remark', 'eid' ],
     );
     return $status;
 }
