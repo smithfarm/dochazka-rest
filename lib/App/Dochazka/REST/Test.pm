@@ -151,7 +151,7 @@ sub initialize_regression_test {
     );
     plan skip_all => "Web::MREST::init failed: " . $status->text unless $status->ok;
 
-    diag( "DOCHAZKA_STATE_DIR is set to " . $site->DOCHAZKA_STATE_DIR );
+    #diag( "DOCHAZKA_STATE_DIR is set to " . $site->DOCHAZKA_STATE_DIR );
 
     note( "Set log level" );
     $log->init( 
