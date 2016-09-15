@@ -42,7 +42,7 @@ use warnings;
 use App::CELL qw( $meta $site );
 use Data::Dumper;
 use App::Dochazka::REST::ConnBank qw( $dbix_conn );
-use App::Dochazka::REST::LDAP qw( populate_employee );;
+use App::Dochazka::REST::LDAP qw( populate_employee );
 use App::Dochazka::REST::Model::Employee qw( nick_exists );
 use App::Dochazka::REST::Test;
 use Plack::Test;
@@ -73,7 +73,9 @@ SKIP: {
 
     note( 'create LDAP user in database' );
     my $uid = $site->DOCHAZKA_LDAP_TEST_UID_EXISTENT;
-    my $emp = App::Dochazka::REST::Model::Employee->spawn( 'nick' => $uid );
+    my $emp = App::Dochazka::REST::Model::Employee->spawn(
+        'nick' => $uid
+    );
     $emp->load_by_nick( $dbix_conn, $uid );
 
     note( "Populate $uid employee object from LDAP" );
@@ -89,6 +91,28 @@ SKIP: {
     $uid = $site->DOCHAZKA_LDAP_TEST_UID_EXISTENT;
     $status = req( $test, 200, 'root', 'GET', "employee/nick/$uid/ldap" );
     is( $status->level, 'OK' );
+
+    note( "Make a pristine employee object" );
+    my $pristine = App::Dochazka::REST::Model::Employee->spawn(
+        'nick' => $uid,
+    );
+    ok( $uid, "Existing LDAP user $uid is not undef or empty string" );
+    is( $pristine->nick, $uid, "Employee we just created has nick $uid" );
+
+    note( "Pristine employee object has non-nick properties unpopulated" );
+    my @props = grep( !/^nick/, keys( %{ $site->DOCHAZKA_LDAP_MAPPING } ) );
+    foreach my $prop ( @props ) {
+        is( $pristine->{$prop}, undef, "$prop property is undef" );
+    }
+
+    note( "Populate pristine employee object from LDAP" );
+    $status = $pristine->sync();
+    ok( $status->ok, "Employee sync operation succeeded" );
+
+    note( "Mapped properties now have values" );
+    foreach my $prop ( @props ) {
+        ok( $pristine->{$prop}, "$prop property has value " . $pristine->{$prop} );
+    }
 }
 
 done_testing;

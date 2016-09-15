@@ -61,7 +61,7 @@ META.json
 META.yml
 README.rst
 t/001-noauto.t
-t/LDAP.t
+t/ldap.t
 t/dispatch/001-resource.t
 t/dispatch/activity.t
 t/dispatch/component.t

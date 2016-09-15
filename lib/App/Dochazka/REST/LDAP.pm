@@ -118,7 +118,7 @@ sub ldap_search {
     my ( $ldap, $nick, $prop ) = @_;
     $nick = $nick || '';
     my $base = $site->DOCHAZKA_LDAP_BASE || '';
-    my $field = $site->DOCHAZKA_LDAP_NICK_MAPPING || ''; 
+    my $field = $site->DOCHAZKA_LDAP_MAPPING->{nick} || '';
     my $filter = $site->DOCHAZKA_LDAP_FILTER || '';
     my $prop_value;
 
@@ -214,8 +214,8 @@ sub populate_employee {
 
     # get LDAP properties and stuff them into the employee object
     my $count = 0;
-    foreach my $key ( keys( %{ $site->DOCHAZKA_LDAP_POPULATE_MATRIX } ) ) {
-        my $prop = $site->DOCHAZKA_LDAP_POPULATE_MATRIX->{ $key };
+    foreach my $key ( keys( %{ $site->DOCHAZKA_LDAP_MAPPING } ) ) {
+        my $prop = $site->DOCHAZKA_LDAP_MAPPING->{ $key };
         my $value = ldap_search( $ldap, $emp->nick, $prop );
         last unless $value;
         $log->debug( "Setting $key to $value" );
@@ -228,6 +228,5 @@ sub populate_employee {
     return $CELL->status_ok( "$count properties populated from LDAP", payload => $emp ) if $count > 0;
     return $CELL->status_not_ok;
 }
-
 
 1;
