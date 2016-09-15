@@ -34,9 +34,36 @@
 # - destroy existing database, user and create a new one from scratch
 set -e
 
+help() {
+    echo
+    echo "Sets up a dochazka database and user. Needs to be run on the DB PostgreSQL server."
+    echo
+    echo "Options:"
+    echo "-d <database> The database name. Default: dochazka-test"
+    echo "-u <user>     The database user. Default: dochazka"
+    echo "-p <password> The database user's password. Default: dochazka"
+    echo
+}
+
+[[ $1 == '--help' ]] && help
+
 DBNAME="dochazka-test"
 DBUSER=dochazka
 DBPASS=dochazka
+
+while getopts d:u:p:h arg; do
+    case ${arg} in
+        d) DBNAME=${OPTARG} ;;
+        u) DBUSER=${OPTARG} ;;
+        p) DBPASS=${OPTARG} ;;
+        h) help ;;
+        *) help && exit 1 ;;
+    esac
+done
+
+[[ -z $DBNAME ]] && help && exit 1
+[[ -z $DBUSER ]] && help && exit 1
+[[ -z $DBPASS ]] && help && exit 1
 
 psql -U postgres <<EOD
 DROP DATABASE IF EXISTS "$DBNAME";
