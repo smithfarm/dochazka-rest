@@ -163,9 +163,9 @@ sub initialize_regression_test {
     try {
         App::Dochazka::REST::Dispatch::init();
     } catch {
-        $status = $CELL->status_crit( 'DOCHAZKA_MASON_INIT_FAIL', args => [ $_ ] );
+        $status = $CELL->status_not_ok;
     };
-    plan skip_all => $status->text unless $status->ok;
+    plan skip_all => 'Integration testing environment not detected - skipping' unless $status->ok;
 
     note( "Check status of database server connection" );
     plan skip_all => "PostgreSQL server is unreachable" unless conn_up();
