@@ -3616,3 +3616,9 @@ SPLIT OFF App::MREST into separate distribution
 - tests: dump status when bailing out in t/dispatch/activity.t
 - build/ops: turn DOCHAZKA_AUDITING off in Travis CI
 
+0.542 2016-09-15 09:01 CEST
+- A more-general DOCHAZKA_LDAP_MAPPING parameter
+- Employee sync method
+- tests: comment out DOCHAZKA_STATE_DIR diagnostic
+- tests: run tests non-verbose in Travis CI
+
