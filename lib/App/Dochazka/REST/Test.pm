@@ -165,7 +165,7 @@ sub initialize_regression_test {
     } catch {
         $status = $CELL->status_not_ok;
     };
-    plan skip_all => 'Integration testing environment not detected - skipping' unless $status->ok;
+    plan skip_all => 'Integration testing environment not detected' unless $status->ok;
 
     note( "Check status of database server connection" );
     plan skip_all => "PostgreSQL server is unreachable" unless conn_up();
