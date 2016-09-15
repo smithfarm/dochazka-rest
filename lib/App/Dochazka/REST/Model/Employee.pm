@@ -36,7 +36,7 @@ use 5.012;
 use strict;
 use warnings;
 use App::CELL qw( $CELL $log $meta $site );
-use App::Dochazka::REST::LDAP;
+use App::Dochazka::REST::LDAP qw( populate_employee );
 use App::Dochazka::REST::Model::Shared qw( 
     cud 
     load 
@@ -389,6 +389,24 @@ sub delete {
     return $status;
 }
 
+
+=head2 sync
+
+Sync the mapping fields to the values found in the LDAP database.
+
+=cut
+
+sub sync {
+    my $self = shift;
+    my $status = populate_employee( $self );
+    if ( $status->ok ) {
+        foreach my $key ( keys( %{ $site->DOCHAZKA_LDAP_MAPPING } ) ) {
+            my $value = $site->DOCHAZKA_LDAP_MAPPING->{ $key };
+            $self->set( $key, $value );
+        }
+    }
+    return $status;
+}
 
 
 =head2 load_by_eid
