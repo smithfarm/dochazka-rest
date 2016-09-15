@@ -21,4 +21,4 @@ script:
   - ./Build
   - ./Build install
   - perl bin/dochazka-dbinit
-  - ./Build test --verbose
+  - ./Build test
