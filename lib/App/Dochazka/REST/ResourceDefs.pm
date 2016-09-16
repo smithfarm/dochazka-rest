@@ -1081,8 +1081,28 @@ EOH
         documentation => <<'EOH',
 =pod
 
-This resource enables any employee to perform an LDAP lookup on
-any other employee.
+LDAP search and sync resource
+
+=over
+
+=item * GET
+
+Enables any employee to perform an LDAP lookup on any other employee.
+
+=item * PUT
+
+Enables active employees to sync their own employee profile fields[1] from the
+site's LDAP database.
+
+Enables admin employees to sync/create[1] any existing employee from the LDAP
+database. If the employee does not exist, it will be created (just the employee
+object itself, without any privhistory records).
+
+=back
+
+[1] Which fields get synced depends on DOCHAZKA_LDAP_MAPPING site config
+parameter.
+
 EOH
     },
 
