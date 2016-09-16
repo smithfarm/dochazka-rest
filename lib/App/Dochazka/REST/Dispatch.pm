@@ -1282,6 +1282,23 @@ sub handler_get_employee_eid {
 }
 
 
+=head3 _check_ldap
+
+=cut
+
+sub _ldap_ok {
+    my ( $self ) = @_;
+    if ( ! $site->DOCHAZKA_LDAP ) {
+        $self->mrest_declare_status(
+            'code' => 501,
+            'explanation' => 'LDAP not configured on this server'
+        );
+        return 0;
+    }
+    return 1;
+}
+
+
 =head3 handler_get_employee_ldap
 
 Handler for 'GET employee/nick/:nick/ldap' resource.
@@ -1296,20 +1313,10 @@ sub handler_get_employee_ldap {
     my $nick = $self->context->{'mapping'}->{'nick'};
 
     if ( $pass == 1 ) {
-        if ( ! $site->DOCHAZKA_LDAP ) {
-            $self->mrest_declare_status( 
-                'code' => 501, 
-                'explanation' => 'LDAP not configured on this server' 
-            );
-            return 0;
-        } else {
-            $log->debug( "DOCHAZKA_LDAP site param is true: LDAP is enabled" );
-        }
+        return 0 unless $self->_ldap_ok();
         my $emp = App::Dochazka::REST::Model::Employee->spawn( 'nick' => $nick );
-        $context->{'stashed_nick'} = $nick;
         my $status = $emp->sync();
         return 0 unless $status->ok;
-        $context->{'stashed_ldap_status'} = $status;
         $context->{'stashed_employee_object'} = $emp;
         return 1;
     }
@@ -1333,23 +1340,26 @@ sub handler_put_employee_ldap {
 
     # first pass
     if ( $pass == 1 ) {
+        return 0 unless _ldap_ok();
         # determine if this is an insert or an update
         my $nick = $self->context->{'mapping'}->{'nick'};
         my $emp = shared_first_pass_lookup( $self, 'nick', $nick );
+        $self->nullify_declared_status;
+        return 0 unless shared_employee_acl_part1( $self, $emp );  # additional ACL checks
         if ( $emp ) {
             $context->{'put_employee_func'} = 'update_employee';
         } else {
             $context->{'put_employee_func'} = 'insert_employee';
+            $emp = App::Dochazka::REST::Model::Employee->spawn( 'nick' => $nick );
         }
-        return 0 unless shared_employee_acl_part1( $self, $emp );  # additional ACL checks
-        if ( ldap_exists( $nick ) ) {
+        $status = $emp->sync();
+        if ( $status->ok ) {
             $context->{'stashed_employee_object'} = $emp;
-            $self->nullify_declared_status;
             return 1;
         }
         $self->mrest_declare_status(
             'code' => 404,
-            'explanation' => "Nick ->$nick not found in LDAP"
+            'explanation' => "Nick ->$nick<- not found in LDAP"
         );
         return 0;
     }

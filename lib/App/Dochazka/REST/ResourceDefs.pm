@@ -1071,7 +1071,7 @@ EOH
         },
         acl_profile => {
             GET => 'passerby',
-            PUT => 'admin',
+            PUT => 'active',
         },
         cli => 'employee nick $nick ldap',
         validations => {

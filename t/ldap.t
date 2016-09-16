@@ -142,6 +142,52 @@ SKIP: {
         ok( $pristine->{$prop}, "$prop property has value " . $emp->{$prop} );
     }
 
+    note( "Employee $uid is a passerby" );
+    is( $emp->nick, $uid );
+    is( $emp->priv( $dbix_conn ), 'passerby' );
+    my $eid = $emp->eid;
+    ok( $eid > 0 );
+
+    note( "Make $uid an active employee" );
+    $status = req( $test, 201, 'root', 'POST', "priv/history/eid/$eid", 
+        "{ \"effective\":\"1892-01-01\", \"priv\":\"active\" }" );
+    ok( $status->ok, "New privhistory record created for $uid" );
+    is( $status->code, 'DOCHAZKA_CUD_OK', "Status code is as expected" );
+
+    note( "Employee $uid is an active" );
+    diag( "Privlevel of $uid is " . $emp->priv( $dbix_conn ) );
+    is( $emp->priv( $dbix_conn ), 'active' );
+
+    note( "Depopulate fullname field" );
+    my $saved_fullname = $emp->fullname;
+    $emp->fullname( undef );
+    is( $emp->fullname, undef );
+    $status = $emp->update( $faux_context );
+    ok( $status->ok );
+
+    note( "GET employee/nick/:nick 2" );
+    $status = req( $test, 200, 'root', 'GET', "employee/nick/$uid" );
+    is( $status->level, 'OK' );
+    is( $status->payload->{fullname}, undef );
+
+    note( "Set password of employee $uid to $uid" );
+    $status = req( $test, 200, 'root', 'PUT', "employee/nick/$uid", 
+        "{\"password\":\"$uid\"}" );
+    is( $status->level, 'OK' );
+
+    note( "PUT employee/nick/:nick/ldap 1" );
+    $uid = $site->DOCHAZKA_LDAP_TEST_UID_EXISTENT;
+    $status = req( $test, 200, $uid, 'PUT', "employee/nick/$uid/ldap" );
+    is( $status->level, 'OK' );
+
+    note( "GET employee/nick/:nick 2" );
+    $status = req( $test, 200, 'root', 'GET', "employee/nick/$uid" );
+    is( $status->level, 'OK' );
+    is( $status->payload->{fullname}, $saved_fullname );
+
+    note( "Cleanup" );
+    $status = delete_all_attendance_data();
+    BAIL_OUT(0) unless $status->ok;
 }
 
 done_testing;
