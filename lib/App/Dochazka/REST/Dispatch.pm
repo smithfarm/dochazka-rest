@@ -49,7 +49,6 @@ use App::Dochazka::REST::ACL qw(
 );
 use App::Dochazka::REST::ConnBank qw( $dbix_conn conn_status );
 use App::Dochazka::REST::Fillup;
-use App::Dochazka::REST::LDAP qw( populate_employee );
 use App::Dochazka::REST::Model::Activity;
 use App::Dochazka::REST::Model::Component qw( get_all_components );
 use App::Dochazka::REST::Model::Employee qw( 
@@ -1307,7 +1306,7 @@ sub handler_get_employee_ldap {
         }
         my $emp = App::Dochazka::REST::Model::Employee->spawn( 'nick' => $nick );
         $context->{'stashed_nick'} = $nick;
-        my $status = populate_employee( $emp );
+        my $status = $emp->sync();
         return 0 unless $status->ok;
         $context->{'stashed_ldap_status'} = $status;
         $context->{'stashed_employee_object'} = $emp;

@@ -41,6 +41,8 @@ use strict;
 use warnings;
 
 use App::CELL qw( $CELL $log $site );
+use App::Dochazka::Common qw( $today init_timepiece );
+use App::Dochazka::REST::Model::Employee qw( nick_exists );
 use Params::Validate qw( :all );
 
 
@@ -66,8 +68,12 @@ Container for LDAP-related stuff.
 =cut
 
 use Exporter qw( import );
-our @EXPORT_OK = qw( ldap_exists ldap_auth ldap_search populate_employee );
-
+our @EXPORT_OK = qw(
+    autocreate_employee
+    ldap_exists
+    ldap_auth
+    ldap_search
+);
 
 
 
@@ -188,45 +194,66 @@ sub ldap_auth {
 }
 
 
-=head2 populate_employee
+=head2 autocreate_employee
 
-Populate employee profile from LDAP. Takes employee object which must have the
-'nick' property already populated. Returns a status object.
+Takes a DBIx::Connector object and a nick - the nick is assumed not to exist in
+the Dochazka employees table. If DOCHAZKA_LDAP_AUTOCREATE is true, attempts to 
+create the employee. Returns a status object.
 
 =cut
 
-sub populate_employee {
-    my ( $emp ) = @_;
-    $log->debug( "Entering " . __PACKAGE__ . "::populate_employee()" );
+sub autocreate_employee {
+    my ( $dbix_conn, $nick ) = @_;
+    $log->debug( "Entering " . __PACKAGE__ . "::autocreate_employee()" );
+    my $status;
 
-    return $CELL->status_err( "LDAP not enabled" ) unless $site->DOCHAZKA_LDAP;
-    return $CELL->status_err( "nick property not populated" ) unless $emp->nick;
+    return $CELL->status_ok() if nick_exists( $dbix_conn, $nick );
+    return $CELL->status_not_ok( 'DOCHAZKA_NO_AUTOCREATE' ) unless $site->DOCHAZKA_LDAP_AUTOCREATE;
 
-    $log->debug( "About to populate " . $emp->nick . " from LDAP" );
+    my $emp = App::Dochazka::REST::Model::Employee->spawn(
+        nick => $nick,
+        remark => 'LDAP autocreate',
+    );
+    $status = $emp->sync();
+    return $status unless $status->ok;
 
-    require Net::LDAP;
+    my $faux_context = { 'dbix_conn' => $dbix_conn, 'current' => { 'eid' => 1 } };
+    $status = $emp->insert( $faux_context );
+    if ( $status->not_ok ) {
+        my $reason = $status->text;
+        return $CELL->status_err(
+            'DOCHAZKA_EMPLOYEE_CREATE_FAIL',
+            args => [ $nick, $reason ],
+        );
+    }
+    $log->notice( "Auto-created employee $nick, who was authenticated via LDAP" );
 
-    # initiate connection to LDAP server (anonymous bind)
-    my $server = $site->DOCHAZKA_LDAP_SERVER;
-    my $ldap = Net::LDAP->new( $server );
-    $log->error("$@") unless $ldap;
-    return $CELL->status_err( 'Could not connect to LDAP server' ) unless $ldap;
-
-    # get LDAP properties and stuff them into the employee object
-    my $count = 0;
-    foreach my $key ( keys( %{ $site->DOCHAZKA_LDAP_MAPPING } ) ) {
-        my $prop = $site->DOCHAZKA_LDAP_MAPPING->{ $key };
-        my $value = ldap_search( $ldap, $emp->nick, $prop );
-        last unless $value;
-        $log->debug( "Setting $key to $value" );
-        $emp->set( $key, $value );
-        $count += 1;
+    my $priv = $site->DOCHAZKA_LDAP_AUTOCREATE_AS;
+    if ( $priv !~ m/^(inactive)|(active)$/ ) {
+        return $CELL->status_err(
+            'DOCHAZKA_INVALID_PARAM',
+            args => [ 'DOCHAZKA_LDAP_AUTOCREATE_AS', $priv ],
+        );
     }
 
-    $ldap->unbind;
+    # create a privhistory record (inactive/active only)
+    init_timepiece();
+    my $ph_obj = App::Dochazka::REST::Model::Privhistory->spawn(
+        eid => $emp->eid,
+        priv => $priv,
+        effective => ( $today . ' 00:00' ),
+        remark => 'LDAP autocreate',
+    );
+    $status = $ph_obj->insert( $faux_context );
+    if ( $status->not_ok ) {
+        my $reason = $status->text;
+        $status = $CELL->status_err(
+            'DOCHAZKA_AUTOCREATE_PRIV_PROBLEM',
+            args => [ $nick, $reason ],
+        );
+    }
 
-    return $CELL->status_ok( "$count properties populated from LDAP", payload => $emp ) if $count > 0;
-    return $CELL->status_not_ok;
+    return $status;
 }
 
 1;

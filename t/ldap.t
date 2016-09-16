@@ -42,7 +42,6 @@ use warnings;
 use App::CELL qw( $meta $site );
 use Data::Dumper;
 use App::Dochazka::REST::ConnBank qw( $dbix_conn );
-use App::Dochazka::REST::LDAP qw( populate_employee );
 use App::Dochazka::REST::Model::Employee qw( nick_exists );
 use App::Dochazka::REST::Test;
 use Plack::Test;
@@ -76,12 +75,11 @@ SKIP: {
     my $emp = App::Dochazka::REST::Model::Employee->spawn(
         'nick' => $uid
     );
-    $emp->load_by_nick( $dbix_conn, $uid );
 
     note( "Populate $uid employee object from LDAP" );
-    my $status = populate_employee( $emp );
+    my $throwaway_emp = $emp->clone();
+    my $status = $throwaway_emp->sync();
     is( $status->level, 'OK' );
-    diag( Dumper $emp );
 
     note( "GET employee/nick/:nick/ldap 1" );
     $uid = $site->DOCHAZKA_LDAP_TEST_UID_NON_EXISTENT;
