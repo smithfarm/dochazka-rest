@@ -36,7 +36,7 @@ use 5.012;
 use strict;
 use warnings;
 use App::CELL qw( $CELL $log $meta $site );
-use App::Dochazka::REST::LDAP qw( populate_employee );
+use App::Dochazka::REST::LDAP qw( ldap_search );
 use App::Dochazka::REST::Model::Shared qw( 
     cud 
     load 
@@ -398,14 +398,40 @@ Sync the mapping fields to the values found in the LDAP database.
 
 sub sync {
     my $self = shift;
-    my $status = populate_employee( $self );
-    if ( $status->ok ) {
-        foreach my $key ( keys( %{ $site->DOCHAZKA_LDAP_MAPPING } ) ) {
-            my $value = $site->DOCHAZKA_LDAP_MAPPING->{ $key };
-            $self->set( $key, $value );
-        }
+    $log->debug( "Entering " . __PACKAGE__ . "::sync()" );
+
+    return $CELL->status_err( "LDAP not enabled" ) unless $site->DOCHAZKA_LDAP;
+    return $CELL->status_err( "Employee nick property not populated" ) unless $self->nick;
+
+    $log->debug( "About to populate " . $self->nick . " from LDAP" );
+
+    require Net::LDAP;
+
+    # initiate connection to LDAP server (anonymous bind)
+    my $server = $site->DOCHAZKA_LDAP_SERVER;
+    my $ldap = Net::LDAP->new( $server );
+    $log->error("$@") unless $ldap;
+    return $CELL->status_err( 'Could not connect to LDAP server' ) unless $ldap;
+
+    # get LDAP properties and stuff them into the employee object
+    my $count = 0;
+    foreach my $key ( keys( %{ $site->DOCHAZKA_LDAP_MAPPING } ) ) {
+        my $prop = $site->DOCHAZKA_LDAP_MAPPING->{ $key };
+        my $value = ldap_search( $ldap, $self->nick, $prop );
+        last unless $value;
+        $log->debug( "Setting $key to $value" );
+        $self->set( $key, $value );
+        $count += 1;
     }
-    return $status;
+
+    $ldap->unbind;
+
+    return $CELL->status_ok( 
+        'DOCHAZKA_LDAP_SYNC_SUCCESS',
+        args => [ $count ],
+    ) unless $count < 1;
+
+    return $CELL->status_not_ok( 'DOCHAZKA_LDAP_SYNC_FAILURE' );
 }
 
 
