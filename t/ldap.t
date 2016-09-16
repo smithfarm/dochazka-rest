@@ -70,7 +70,7 @@ SKIP: {
         $site->DOCHAZKA_LDAP_TEST_UID_NON_EXISTENT
     ) );
 
-    note( 'create LDAP user in database' );
+    note( 'create object for LDAP user' );
     my $uid = $site->DOCHAZKA_LDAP_TEST_UID_EXISTENT;
     my $emp = App::Dochazka::REST::Model::Employee->spawn(
         'nick' => $uid
@@ -79,15 +79,6 @@ SKIP: {
     note( "Populate $uid employee object from LDAP" );
     my $throwaway_emp = $emp->clone();
     my $status = $throwaway_emp->sync();
-    is( $status->level, 'OK' );
-
-    note( "GET employee/nick/:nick/ldap 1" );
-    $uid = $site->DOCHAZKA_LDAP_TEST_UID_NON_EXISTENT;
-    req( $test, 404, 'root', 'GET', "employee/nick/$uid/ldap" );
-
-    note( "GET employee/nick/:nick/ldap 2" );
-    $uid = $site->DOCHAZKA_LDAP_TEST_UID_EXISTENT;
-    $status = req( $test, 200, 'root', 'GET', "employee/nick/$uid/ldap" );
     is( $status->level, 'OK' );
 
     note( "Make a pristine employee object" );
@@ -105,12 +96,52 @@ SKIP: {
 
     note( "Populate pristine employee object from LDAP" );
     $status = $pristine->sync();
+    diag( Dumper $status ) unless $status->ok;
     ok( $status->ok, "Employee sync operation succeeded" );
 
     note( "Mapped properties now have values" );
     foreach my $prop ( @props ) {
         ok( $pristine->{$prop}, "$prop property has value " . $pristine->{$prop} );
     }
+
+    note( "GET employee/nick/:nick/ldap 1" );
+    $uid = $site->DOCHAZKA_LDAP_TEST_UID_NON_EXISTENT;
+    req( $test, 404, 'root', 'GET', "employee/nick/$uid/ldap" );
+
+    note( "GET employee/nick/:nick/ldap 2" );
+    $uid = $site->DOCHAZKA_LDAP_TEST_UID_EXISTENT;
+    $status = req( $test, 200, 'root', 'GET', "employee/nick/$uid/ldap" );
+    is( $status->level, 'OK' );
+
+    note( "PUT employee/nick/:nick/ldap 1" );
+    $uid = $site->DOCHAZKA_LDAP_TEST_UID_NON_EXISTENT;
+    req( $test, 404, 'root', 'PUT', "employee/nick/$uid/ldap" );
+
+    note( 'LDAP user does not exist in Dochazka database' );
+    $emp->delete( $faux_context );
+    $status = App::Dochazka::REST::Model::Employee->load_by_nick( $dbix_conn, $uid ); 
+    is( $status->level, 'NOTICE' );
+    is( $status->code, 'DISPATCH_NO_RECORDS_FOUND', "nick doesn't exist" );
+    is( $status->{'count'}, 0, "nick doesn't exist" );
+    ok( ! exists $status->{'payload'} );
+    ok( ! defined( $status->payload ) );
+
+    note( "PUT employee/nick/:nick/ldap 2" );
+    $uid = $site->DOCHAZKA_LDAP_TEST_UID_EXISTENT;
+    $status = req( $test, 200, 'root', 'PUT', "employee/nick/$uid/ldap" );
+    is( $status->level, 'OK' );
+
+    note( 'Employee now exists in Dochazka database' );
+    $status = $emp->load_by_nick( $dbix_conn, $uid );
+    is( $status->code, 'DISPATCH_RECORDS_FOUND', "Nick $uid exists" );
+    $emp = $status->payload;
+    is( $emp->nick, $uid, "Nick is the right string" );
+
+    note( "Mapped properties have values" );
+    foreach my $prop ( @props ) {
+        ok( $pristine->{$prop}, "$prop property has value " . $emp->{$prop} );
+    }
+
 }
 
 done_testing;
