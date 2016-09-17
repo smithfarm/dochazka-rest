@@ -390,20 +390,29 @@ sub delete {
 }
 
 
-=head2 sync
+=head2 ldap_sync
 
 Sync the mapping fields to the values found in the LDAP database.
 
 =cut
 
-sub sync {
+sub ldap_sync {
     my $self = shift;
     $log->debug( "Entering " . __PACKAGE__ . "::sync()" );
+    die "Employee nick property not populated!" unless $self->nick;
+    my $nick = $self->nick;
 
-    return $CELL->status_err( "LDAP not enabled" ) unless $site->DOCHAZKA_LDAP;
-    return $CELL->status_err( "Employee nick property not populated" ) unless $self->nick;
+    return $CELL->status_err( 'DOCHAZKA_LDAP_NOT_ENABLED' ) unless $site->DOCHAZKA_LDAP;
+    return $CELL->status_err(
+        'DOCHAZKA_LDAP_SYNC_PROP_FALSE',
+        args => [ $nick ],
+    ) unless $self->sync;
+    return $CELL->status_err(
+        'DOCHAZKA_LDAP_SYSTEM_USER_NOSYNC',
+        args => [ $nick ],
+    ) if grep {/^$nick/} @{ $site->DOCHAZKA_SYSTEM_USERS };
 
-    $log->debug( "About to populate " . $self->nick . " from LDAP" );
+    $log->debug( "About to populate $nick from LDAP" );
 
     require Net::LDAP;
 
@@ -417,7 +426,7 @@ sub sync {
     my $count = 0;
     foreach my $key ( keys( %{ $site->DOCHAZKA_LDAP_MAPPING } ) ) {
         my $prop = $site->DOCHAZKA_LDAP_MAPPING->{ $key };
-        my $value = ldap_search( $ldap, $self->nick, $prop );
+        my $value = ldap_search( $ldap, $nick, $prop );
         last unless $value;
         $log->debug( "Setting $key to $value" );
         $self->set( $key, $value );

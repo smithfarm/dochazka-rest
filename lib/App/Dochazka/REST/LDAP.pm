@@ -214,7 +214,7 @@ sub autocreate_employee {
         nick => $nick,
         remark => 'LDAP autocreate',
     );
-    $status = $emp->sync();
+    $status = $emp->ldap_sync();
     return $status unless $status->ok;
 
     my $faux_context = { 'dbix_conn' => $dbix_conn, 'current' => { 'eid' => 1 } };

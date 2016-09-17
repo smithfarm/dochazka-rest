@@ -143,8 +143,6 @@ them to be run separately.
 
 sub initialize_regression_test {
 
-    require App::Dochazka::REST;
-
     my $status = Web::MREST::init( 
         distro => 'App-Dochazka-REST', 
         sitedir => '/etc/dochazka-rest', 

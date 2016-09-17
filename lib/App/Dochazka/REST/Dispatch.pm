@@ -1287,11 +1287,19 @@ sub handler_get_employee_eid {
 =cut
 
 sub _ldap_ok {
-    my ( $self ) = @_;
+    my ( $self, $nick ) = @_;
+    die "UFFHDC! No nick in Dispatch.pm->_ldap_ok()!" unless $nick;
     if ( ! $site->DOCHAZKA_LDAP ) {
         $self->mrest_declare_status(
             'code' => 501,
-            'explanation' => 'LDAP not configured on this server'
+            'explanation' => 'LDAP not configured on this server',
+        );
+        return 0;
+    }
+    if ( grep {/^$nick/} @{ $site->DOCHAZKA_SYSTEM_USERS } ) {
+        $self->mrest_declare_status(
+            'code' => 403,
+            'explanation' => "Employee ->$nick<- is a system user; no LDAP operations allowed!",
         );
         return 0;
     }
@@ -1310,12 +1318,15 @@ sub handler_get_employee_ldap {
     $log->debug( "Entering " . __PACKAGE__ . "::handler_get_employee_ldap" ); 
 
     my $context = $self->context;
-    my $nick = $self->context->{'mapping'}->{'nick'};
+    my $nick = $context->{'mapping'}->{'nick'};
 
     if ( $pass == 1 ) {
-        return 0 unless $self->_ldap_ok();
-        my $emp = App::Dochazka::REST::Model::Employee->spawn( 'nick' => $nick );
-        my $status = $emp->sync();
+        return 0 unless $self->_ldap_ok( $nick );
+        my $emp = App::Dochazka::REST::Model::Employee->spawn(
+            'nick' => $nick,
+            'sync' => 1,
+        );
+        my $status = $emp->ldap_sync();
         return 0 unless $status->ok;
         $context->{'stashed_employee_object'} = $emp;
         return 1;
@@ -1336,13 +1347,14 @@ sub handler_put_employee_ldap {
     $log->debug( "Entering " . __PACKAGE__ . "::handler_put_employee_ldap" ); 
 
     my $context = $self->context;
+    $log->debug( "mapping " . Dumper( $context->{'mapping'} ) );
+    my $nick = $context->{'mapping'}->{'nick'};
     my $status;
 
     # first pass
     if ( $pass == 1 ) {
-        return 0 unless _ldap_ok();
+        return 0 unless $self->_ldap_ok( $nick );
         # determine if this is an insert or an update
-        my $nick = $self->context->{'mapping'}->{'nick'};
         my $emp = shared_first_pass_lookup( $self, 'nick', $nick );
         $self->nullify_declared_status;
         return 0 unless shared_employee_acl_part1( $self, $emp );  # additional ACL checks
@@ -1352,7 +1364,8 @@ sub handler_put_employee_ldap {
             $context->{'put_employee_func'} = 'insert_employee';
             $emp = App::Dochazka::REST::Model::Employee->spawn( 'nick' => $nick );
         }
-        $status = $emp->sync();
+        $emp->sync( 1 );
+        $status = $emp->ldap_sync();
         if ( $status->ok ) {
             $context->{'stashed_employee_object'} = $emp;
             return 1;
@@ -1368,10 +1381,11 @@ sub handler_put_employee_ldap {
 
     my $emp = $context->{'stashed_employee_object'};
     my $func = $context->{'put_employee_func'};
-    $log->debug( "PUT employee function is $func - " );
     if ( $func eq 'update_employee' ) {
+        $log->debug( "Updating employee from LDAP" );
         $status = $emp->update( $context );
     } elsif ( $func eq 'insert_employee' ) {
+        $log->debug( "Inserting new employee from LDAP" );
         $status = $emp->insert( $context );
     } else {
         die "AAAAAAAAAAAAGAGGGGGGGGAAAHAHAAHHHH!";

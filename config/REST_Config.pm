@@ -101,6 +101,10 @@ set( 'DOCHAZKA_AUDIT_TABLES', [
     qw( activities employees intervals locks privhistory schedhistory schedules ) 
 ] );
 
+# DOCHAZKA_SYSTEM_USERS
+#    system users - not eligible for LDAP sync
+set( 'DOCHAZKA_SYSTEM_USERS', [ 'root', 'demo' ] );
+
 # DOCHAZKA_EID_OF_ROOT
 #    Employee ID of the root employee -- set at initialization time (in
 #    REST.pm) -- do not set here

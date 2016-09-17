@@ -73,20 +73,21 @@ SKIP: {
     note( 'create object for LDAP user' );
     my $uid = $site->DOCHAZKA_LDAP_TEST_UID_EXISTENT;
     my $emp = App::Dochazka::REST::Model::Employee->spawn(
-        'nick' => $uid
+        'nick' => $uid,
+        'sync' => 1,
     );
 
     note( "Populate $uid employee object from LDAP" );
     my $throwaway_emp = $emp->clone();
-    my $status = $throwaway_emp->sync();
+    my $status = $throwaway_emp->ldap_sync();
     is( $status->level, 'OK' );
 
     note( "Make a pristine employee object" );
     my $pristine = App::Dochazka::REST::Model::Employee->spawn(
-        'nick' => $uid,
+        'nick' => 'root',
+        'sync' => 1,
     );
-    ok( $uid, "Existing LDAP user $uid is not undef or empty string" );
-    is( $pristine->nick, $uid, "Employee we just created has nick $uid" );
+    is( $pristine->nick, 'root', "Employee we just created has nick root" );
 
     note( "Pristine employee object has non-nick properties unpopulated" );
     my @props = grep( !/^nick/, keys( %{ $site->DOCHAZKA_LDAP_MAPPING } ) );
@@ -94,10 +95,19 @@ SKIP: {
         is( $pristine->{$prop}, undef, "$prop property is undef" );
     }
 
-    note( "Populate pristine employee object from LDAP" );
-    $status = $pristine->sync();
+    note( "System users cannot be synced from LDAP" );
+    $status = $pristine->ldap_sync();
+    ok( $status->not_ok, "Employee sync operation failed" );
+    is( $status->code, 'DOCHAZKA_LDAP_SYSTEM_USER_NOSYNC', "and for the right reason" );
+
+    note( "Change nick to $uid" );
+    $pristine->nick( $uid );
+
+    note( "Populate pristine employee object from LDAP: succeed" );
+    $status = $pristine->ldap_sync();
     diag( Dumper $status ) unless $status->ok;
     ok( $status->ok, "Employee sync operation succeeded" );
+    is( $status->code, 'DOCHAZKA_LDAP_SYNC_SUCCESS' );
 
     note( "Mapped properties now have values" );
     foreach my $prop ( @props ) {
@@ -155,7 +165,6 @@ SKIP: {
     is( $status->code, 'DOCHAZKA_CUD_OK', "Status code is as expected" );
 
     note( "Employee $uid is an active" );
-    diag( "Privlevel of $uid is " . $emp->priv( $dbix_conn ) );
     is( $emp->priv( $dbix_conn ), 'active' );
 
     note( "Depopulate fullname field" );
