@@ -119,4 +119,6 @@ foreach ( @ARGV ) {
     } else {
         print "$_ not inserted because " . $status->text;
     }
-} @ARGV;
+}
+
+exit( 0 );
