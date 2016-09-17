@@ -31,10 +31,10 @@
 # POSSIBILITY OF SUCH DAMAGE.
 # ************************************************************************* 
 #
-# dochazka-ldap-batch-create
+# dochazka-ldap-sync-all
 #
-# Creates employee records for an arbitrary number of LDAP users, whose nicks
-# (usernames) are supplied as arguments on the command line.
+# Does the equivalent of "PUT employee/nick/:nick/ldap" on all employees whose
+# sync property is true.
 #
 
 #!perl
@@ -46,7 +46,7 @@ use warnings;
 use App::Dochazka::REST qw( init_arbitrary_script $faux_context );
 use App::Dochazka::REST::ConnBank qw( $dbix_conn );
 use App::Dochazka::REST::LDAP qw( ldap_exists );
-use App::Dochazka::REST::Model::Employee qw( nick_exists );
+use App::Dochazka::REST::Model::Employee qw( get_all_sync_employees );
 use Getopt::Long;
 use Pod::Usage;
 
@@ -54,20 +54,15 @@ use Pod::Usage;
 
 =head1 NAME
 
-dochazka-ldap-batch-create - create Dochazka employee records for a list of LDAP users
+dochazka-ldap-sync-all - syncs the profiles of all LDAP-enabled employees
 
 
 
 =head1 SYNOPSIS
 
-Quickly create three Dochazka employees, provided they are already in LDAP:
+Sync all LDAP-enabled Dochazka employees from the LDAP database.
 
-    dochazka-ldap-batch-create [one or more usernames]
-
-For example:
-
-    dochazka-ldap-batch-create perry
-    dochazka-ldap-batch-create hans mojo avenger
+    dochazka-ldap-sync-all [--quiet]
 
 The script should be run on an L<App::Dochazka::REST> server that has been
 configured to use LDAP.
@@ -76,49 +71,59 @@ configured to use LDAP.
 
 =head1 DESCRIPTION
 
-Sometimes there is a need to quickly create Dochazka employee records for an
-arbitrary number of LDAP users.
+The script first queries the Dochazka database for a list of all employees
+whose "sync" property is true ("LDAP-enabled employees").
 
-For example, if "hans", "mojo", and "avenger" are valid LDAP users and the
-local L<App::Dochazka::REST> instance has been properly configured to work with
-an LDAP database, the following command will create three employees with nicks
-"hans", "mojo", and "avenger":
-
-    dochazka-ldap-batch-create hans mojo avenger
-
-The employee's "sync" property will be set to true.
+The script then loops over these employees, syncing each employee from LDAP and
+updating the employee record if anything has changed.
 
 =cut
 
 
 # process command-line options
 my $help = 0;
+my $quiet = 0;
 GetOptions(
     'help|?' => \$help,
+    'quiet|q' => \$quiet,
 ) or pod2usage(2);
 pod2usage(1) if $help;
 
-init_arbitrary_script();
+my $ARGS = {
+    quiet => $quiet,
+};
+init_arbitrary_script( $ARGS );
 
-foreach ( @ARGV ) {
-    if ( nick_exists( $dbix_conn, $_ ) ) {
-        print "$_ already exists in Dochazka database; skipping\n";
-        next;
-    }
-    if ( ! ldap_exists( $_ ) ) {
-        print "WARNING: $_ not found in LDAP database!\n";
-        next;
-    }
-    my $emp = App::Dochazka::REST::Model::Employee->spawn(
-        nick => $_,
-        sync => 1,
-    );
-    my $status = $emp->insert( $faux_context );
-    if ( $status->ok ) {
-        print "$_ inserted successfully\n";
-    } else {
-        print "$_ not inserted because " . $status->text;
-    }
+my $status = get_all_sync_employees( $dbix_conn );
+if ( $status->level eq 'NOTICE' and $status->code eq 'DISPATCH_NO_RECORDS_FOUND' ) {
+    print "No employees to sync\n" unless $quiet;
+    exit( 0 );
 }
+my $emp_list = $status->payload;
+
+foreach ( @$emp_list ) {
+    if ( ! ldap_exists( $_->nick ) ) {
+        print "WARNING: " . $_->nick . " not found in LDAP database!\n" unless $quiet;
+        next;
+    }
+    my $old = $_->clone();
+    $status = $_->ldap_sync();
+    if ( $status->not_ok ) {
+        print "WARNING: could not sync " . $_->nick . " from LDAP\n" unless $quiet; 
+        next;
+    }
+    if ( $old->compare( $_ ) ) {
+        print $_->nick . " existing profile data match LDAP: no action needed\n" unless $quiet;
+        next;
+    }
+    $status = $_->update( $faux_context );
+    if ( $status->ok ) {
+        print $_->nick . " profile updated from LDAP\n" unless $quiet;
+        next;
+    }
+    print "WARNING: could not update " . $_->nick . " employee object (" .
+          $status->text . ")\n" unless $quiet; 
+}
+print "Processed " . scalar( @$emp_list ) . " employees\n" unless $quiet;
 
 exit( 0 );

@@ -471,22 +471,27 @@ model).
 =cut
 
 sub init_arbitrary_script {
+    my ( $ARGS ) = @_;
+    my $quiet = 0;
+    if ( ref( $ARGS ) eq 'HASH' and exists( $ARGS->{quiet} ) ) {
+        $quiet = $ARGS->{quiet};
+    }
     my $app_distro = 'App-Dochazka-REST';
     my $sitedir = '/etc/dochazka-rest';
-    print "Loading configuration parameters from $sitedir\n";
+    print "Loading configuration parameters from $sitedir\n" unless $quiet;
     my $status = Web::MREST::init(
         distro => $app_distro,
         sitedir => $sitedir,
     );
     die $status->text unless $status->ok;
 
-    print "Setting up logging\n";
+    print "Setting up logging\n" unless $quiet;
     my $log_file = normalize_filespec( $site->MREST_LOG_FILE );
     my $should_reset = $site->MREST_LOG_FILE_RESET;
     unlink $log_file if $should_reset;
     Log::Any::Adapter->set( 'File', $log_file );
     my $message = "Logging to $log_file";
-    print "$message\n";
+    print "$message\n" unless $quiet;
     $log->info( $message );
     if ( ! $site->MREST_APPNAME ) {
         die "Site parameter MREST_APPNAME is undefined - please investigate!";
@@ -496,9 +501,9 @@ sub init_arbitrary_script {
         debug_mode => ( $site->MREST_DEBUG_MODE || 0 ),
     );
 
-    print "Connecting to database\n";
+    print "Connecting to database\n" unless $quiet;
     App::Dochazka::REST::ConnBank::init_singleton();
-    print "Database is " . conn_status() . "\n";
+    print "Database is " . conn_status() . "\n" unless $quiet;
 
     $faux_context = { 'dbix_conn' => $dbix_conn, 'current' => { 'eid' => 1 } };
 }
