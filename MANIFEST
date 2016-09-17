@@ -1,4 +1,5 @@
 bin/dochazka-dbinit
+bin/dochazka-ldap-batch-create
 bin/dochazka-resetdb
 bin/dochazka-rest
 Build.PL

@@ -37,7 +37,7 @@ use strict;
 use warnings;
 
 use App::CELL qw( $CELL $log $meta $core $site );
-use App::Dochazka::REST::ConnBank qw( $dbix_conn );
+use App::Dochazka::REST::ConnBank qw( $dbix_conn conn_status );
 use Data::Dumper;
 use File::Path;
 use File::ShareDir;
@@ -46,6 +46,7 @@ use Log::Any::Adapter;
 use Params::Validate qw( :all );
 use Try::Tiny;
 use Web::Machine;
+use Web::MREST;
 use Web::MREST::CLI qw( normalize_filespec );
 
 
@@ -150,6 +151,17 @@ Reference Dochazka command-line client.
 Reference Dochazka WWW client.
 
 =over
+
+
+
+
+=head1 EXPORTS
+
+=cut
+
+use Exporter qw( import );
+our @EXPORT_OK = qw( init_arbitrary_script $faux_context );
+our $faux_context;
 
 
 
@@ -448,6 +460,48 @@ Accessor method (to be called like a constructor) providing access to C<$VERSION
 =cut
 
 sub version { $VERSION; }
+
+
+
+=head2 init_arbitrary_script
+
+For scripts that need to manipulate the database directly (i.e. via the data
+model).
+
+=cut
+
+sub init_arbitrary_script {
+    my $app_distro = 'App-Dochazka-REST';
+    my $sitedir = '/etc/dochazka-rest';
+    print "Loading configuration parameters from $sitedir\n";
+    my $status = Web::MREST::init(
+        distro => $app_distro,
+        sitedir => $sitedir,
+    );
+    die $status->text unless $status->ok;
+
+    print "Setting up logging\n";
+    my $log_file = normalize_filespec( $site->MREST_LOG_FILE );
+    my $should_reset = $site->MREST_LOG_FILE_RESET;
+    unlink $log_file if $should_reset;
+    Log::Any::Adapter->set( 'File', $log_file );
+    my $message = "Logging to $log_file";
+    print "$message\n";
+    $log->info( $message );
+    if ( ! $site->MREST_APPNAME ) {
+        die "Site parameter MREST_APPNAME is undefined - please investigate!";
+    }
+    $log->init(
+        ident => $site->MREST_APPNAME,
+        debug_mode => ( $site->MREST_DEBUG_MODE || 0 ),
+    );
+
+    print "Connecting to database\n";
+    App::Dochazka::REST::ConnBank::init_singleton();
+    print "Database is " . conn_status() . "\n";
+
+    $faux_context = { 'dbix_conn' => $dbix_conn, 'current' => { 'eid' => 1 } };
+}
 
 
 
