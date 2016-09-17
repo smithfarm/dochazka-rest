@@ -60,6 +60,7 @@ MANIFEST			This list of files
 META.json
 META.yml
 README.rst
+run-tests.sh
 t/001-noauto.t
 t/ldap.t
 t/dispatch/001-resource.t
