@@ -212,6 +212,7 @@ sub autocreate_employee {
 
     my $emp = App::Dochazka::REST::Model::Employee->spawn(
         nick => $nick,
+        sync => 1,
         remark => 'LDAP autocreate',
     );
     $status = $emp->ldap_sync();
