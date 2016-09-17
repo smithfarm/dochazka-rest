@@ -36,11 +36,10 @@ use strict;
 use warnings;
 
 use App::CELL qw( $CELL $log $meta $site );
-use App::Dochazka::Common qw( $today init_timepiece );
 use App::Dochazka::REST;
 use App::Dochazka::REST::ConnBank qw( $dbix_conn conn_status );
 use App::Dochazka::REST::ACL qw( check_acl );
-use App::Dochazka::REST::LDAP qw( ldap_exists ldap_search ldap_auth populate_employee );
+use App::Dochazka::REST::LDAP qw( autocreate_employee ldap_exists ldap_search ldap_auth );
 use App::Dochazka::REST::Model::Employee qw( nick_exists );
 use Authen::Passphrase::SaltedDigest;
 use Data::Dumper;
@@ -130,11 +129,18 @@ Initialize the session. Takes an employee object.
 
 sub _init_session {
     my $self = shift;
+    $log->debug( "Entering " . __PACKAGE__ . "::_init_session" );
     my ( $emp ) = validate_pos( @_, { type => HASHREF, can => 'eid' } );
     my $session = Plack::Session->new( $self->request->{'env'} );
-    $session->set( 'eid', $emp->eid );
-    $session->set( 'ip_addr', $self->request->{'env'}->{'REMOTE_ADDR'} );
-    $session->set( 'last_seen', time );
+    my $eid = $emp->eid;
+    $session->set( 'eid', $eid );
+    $log->debug( "Saved EID ->$eid<- to session data" );
+    my $ip_addr = $self->request->{'env'}->{'REMOTE_ADDR'};
+    $session->set( 'ip_addr', $ip_addr );
+    $log->debug( "Saved IP address ->$ip_addr<- to session data" );
+    my $last_seen = time;
+    $session->set( 'last_seen', $last_seen );
+    $log->debug( "Saved \"last seen\" time ->$last_seen<- to session data" );
     return;
 }
 
@@ -240,50 +246,10 @@ sub _authenticate {
 
         # - authenticate by LDAP bind
         if ( ldap_auth( $nick, $password ) ) {
-            # successful LDAP auth
-            # if the employee doesn't exist in the database, possibly autocreate
-            if ( ! nick_exists( $dbix_conn, $nick ) ) {
-                $log->info( "There is no employee $nick in the database: auto-creating" );
-                if ( $site->DOCHAZKA_LDAP_AUTOCREATE ) {
-                    my $emp = App::Dochazka::REST::Model::Employee->spawn(
-                        nick => $nick,
-                        remark => 'LDAP autocreate',
-                    );
-                    populate_employee( $emp );
-                    my $faux_context = { 'dbix_conn' => $dbix_conn, 'current' => { 'eid' => 1 } };
-                    $status = $emp->insert( $faux_context );
-                    if ( $status->not_ok ) {
-                        $log->crit("Could not create $nick as new employee");
-                        return $CELL->status_not_ok( 'DOCHAZKA_EMPLOYEE_AUTH' );
-                    }
-                    $log->notice( "Auto-created employee $nick, who was authenticated via LDAP" );
-                    if ( my $priv = $site->DOCHAZKA_LDAP_AUTOCREATE_AS ) {
-                        if ( $priv eq 'passerby' ) {
-                            # do nothing
-                        } elsif ( $priv =~ m/^(inactive)|(active)$/ ) {
-                            init_timepiece();
-                            my $ph_obj = App::Dochazka::REST::Model::Privhistory->spawn(
-                                eid => $emp->eid,
-                                priv => $priv,
-                                effective => ( $today . ' 00:00' ),
-                                remark => 'LDAP autocreate',
-                            );
-                            $status = $ph_obj->insert( $faux_context );
-                            $log->error("Could not add priv history record for LDAP-autocreated " .
-                                " employee ->$nick<- ; reason was " . $status->text )
-                                if $status->not_ok;
-                        } else {
-                            $log->error( "Site configuration parameter DOCHAZKA_LDAP_AUTOCREATE_AS " .
-                                         "is invalid" );
-                        }
-                    }
-                } else {
-                    $log->notice( "Authentication attempt from LDAP user $nick failed " . 
-                                  "because the user is not in the database and " . 
-                                  "DOCHAZKA_LDAP_AUTOCREATE is not enabled" );
-                    return $CELL->status_not_ok( 'DOCHAZKA_EMPLOYEE_AUTH' );
-                }
-            }
+            # successful LDAP auth: if the employee doesn't already exist in
+            # the database, possibly autocreate
+            $status = autocreate_employee( $dbix_conn, $nick );
+            return $status unless $status->ok;
         } else {
             return $CELL->status_not_ok( 'DOCHAZKA_EMPLOYEE_AUTH' );
         }

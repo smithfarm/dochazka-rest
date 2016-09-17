@@ -304,7 +304,6 @@ sub shared_update_employee {
         } 
     }
 
-
     # for password hashing, we will assume that $over might contain
     # a 'password' property, which is converted into 'passhash' + 'salt' via 
     # Authen::Passphrase

@@ -42,7 +42,6 @@ use warnings;
 use App::CELL qw( $meta $site );
 use Data::Dumper;
 use App::Dochazka::REST::ConnBank qw( $dbix_conn );
-use App::Dochazka::REST::LDAP qw( populate_employee );
 use App::Dochazka::REST::Model::Employee qw( nick_exists );
 use App::Dochazka::REST::Test;
 use Plack::Test;
@@ -71,17 +70,49 @@ SKIP: {
         $site->DOCHAZKA_LDAP_TEST_UID_NON_EXISTENT
     ) );
 
-    note( 'create LDAP user in database' );
+    note( 'create object for LDAP user' );
     my $uid = $site->DOCHAZKA_LDAP_TEST_UID_EXISTENT;
     my $emp = App::Dochazka::REST::Model::Employee->spawn(
-        'nick' => $uid
+        'nick' => $uid,
+        'sync' => 1,
     );
-    $emp->load_by_nick( $dbix_conn, $uid );
 
     note( "Populate $uid employee object from LDAP" );
-    my $status = populate_employee( $emp );
+    my $throwaway_emp = $emp->clone();
+    my $status = $throwaway_emp->ldap_sync();
     is( $status->level, 'OK' );
-    diag( Dumper $emp );
+
+    note( "Make a pristine employee object" );
+    my $pristine = App::Dochazka::REST::Model::Employee->spawn(
+        'nick' => 'root',
+        'sync' => 1,
+    );
+    is( $pristine->nick, 'root', "Employee we just created has nick root" );
+
+    note( "Pristine employee object has non-nick properties unpopulated" );
+    my @props = grep( !/^nick/, keys( %{ $site->DOCHAZKA_LDAP_MAPPING } ) );
+    foreach my $prop ( @props ) {
+        is( $pristine->{$prop}, undef, "$prop property is undef" );
+    }
+
+    note( "System users cannot be synced from LDAP" );
+    $status = $pristine->ldap_sync();
+    ok( $status->not_ok, "Employee sync operation failed" );
+    is( $status->code, 'DOCHAZKA_LDAP_SYSTEM_USER_NOSYNC', "and for the right reason" );
+
+    note( "Change nick to $uid" );
+    $pristine->nick( $uid );
+
+    note( "Populate pristine employee object from LDAP: succeed" );
+    $status = $pristine->ldap_sync();
+    diag( Dumper $status ) unless $status->ok;
+    ok( $status->ok, "Employee sync operation succeeded" );
+    is( $status->code, 'DOCHAZKA_LDAP_SYNC_SUCCESS' );
+
+    note( "Mapped properties now have values" );
+    foreach my $prop ( @props ) {
+        ok( $pristine->{$prop}, "$prop property has value " . $pristine->{$prop} );
+    }
 
     note( "GET employee/nick/:nick/ldap 1" );
     $uid = $site->DOCHAZKA_LDAP_TEST_UID_NON_EXISTENT;
@@ -92,27 +123,80 @@ SKIP: {
     $status = req( $test, 200, 'root', 'GET', "employee/nick/$uid/ldap" );
     is( $status->level, 'OK' );
 
-    note( "Make a pristine employee object" );
-    my $pristine = App::Dochazka::REST::Model::Employee->spawn(
-        'nick' => $uid,
-    );
-    ok( $uid, "Existing LDAP user $uid is not undef or empty string" );
-    is( $pristine->nick, $uid, "Employee we just created has nick $uid" );
+    note( "PUT employee/nick/:nick/ldap 1" );
+    $uid = $site->DOCHAZKA_LDAP_TEST_UID_NON_EXISTENT;
+    req( $test, 404, 'root', 'PUT', "employee/nick/$uid/ldap" );
 
-    note( "Pristine employee object has non-nick properties unpopulated" );
-    my @props = grep( !/^nick/, keys( %{ $site->DOCHAZKA_LDAP_MAPPING } ) );
+    note( 'LDAP user does not exist in Dochazka database' );
+    $emp->delete( $faux_context );
+    $status = App::Dochazka::REST::Model::Employee->load_by_nick( $dbix_conn, $uid ); 
+    is( $status->level, 'NOTICE' );
+    is( $status->code, 'DISPATCH_NO_RECORDS_FOUND', "nick doesn't exist" );
+    is( $status->{'count'}, 0, "nick doesn't exist" );
+    ok( ! exists $status->{'payload'} );
+    ok( ! defined( $status->payload ) );
+
+    note( "PUT employee/nick/:nick/ldap 2" );
+    $uid = $site->DOCHAZKA_LDAP_TEST_UID_EXISTENT;
+    $status = req( $test, 200, 'root', 'PUT', "employee/nick/$uid/ldap" );
+    is( $status->level, 'OK' );
+
+    note( 'Employee now exists in Dochazka database' );
+    $status = $emp->load_by_nick( $dbix_conn, $uid );
+    is( $status->code, 'DISPATCH_RECORDS_FOUND', "Nick $uid exists" );
+    $emp = $status->payload;
+    is( $emp->nick, $uid, "Nick is the right string" );
+
+    note( "Mapped properties have values" );
     foreach my $prop ( @props ) {
-        is( $pristine->{$prop}, undef, "$prop property is undef" );
+        ok( $pristine->{$prop}, "$prop property has value " . $emp->{$prop} );
     }
 
-    note( "Populate pristine employee object from LDAP" );
-    $status = $pristine->sync();
-    ok( $status->ok, "Employee sync operation succeeded" );
+    note( "Employee $uid is a passerby" );
+    is( $emp->nick, $uid );
+    is( $emp->priv( $dbix_conn ), 'passerby' );
+    my $eid = $emp->eid;
+    ok( $eid > 0 );
 
-    note( "Mapped properties now have values" );
-    foreach my $prop ( @props ) {
-        ok( $pristine->{$prop}, "$prop property has value " . $pristine->{$prop} );
-    }
+    note( "Make $uid an active employee" );
+    $status = req( $test, 201, 'root', 'POST', "priv/history/eid/$eid", 
+        "{ \"effective\":\"1892-01-01\", \"priv\":\"active\" }" );
+    ok( $status->ok, "New privhistory record created for $uid" );
+    is( $status->code, 'DOCHAZKA_CUD_OK', "Status code is as expected" );
+
+    note( "Employee $uid is an active" );
+    is( $emp->priv( $dbix_conn ), 'active' );
+
+    note( "Depopulate fullname field" );
+    my $saved_fullname = $emp->fullname;
+    $emp->fullname( undef );
+    is( $emp->fullname, undef );
+    $status = $emp->update( $faux_context );
+    ok( $status->ok );
+
+    note( "GET employee/nick/:nick 2" );
+    $status = req( $test, 200, 'root', 'GET', "employee/nick/$uid" );
+    is( $status->level, 'OK' );
+    is( $status->payload->{fullname}, undef );
+
+    note( "Set password of employee $uid to $uid" );
+    $status = req( $test, 200, 'root', 'PUT', "employee/nick/$uid", 
+        "{\"password\":\"$uid\"}" );
+    is( $status->level, 'OK' );
+
+    note( "PUT employee/nick/:nick/ldap 1" );
+    $uid = $site->DOCHAZKA_LDAP_TEST_UID_EXISTENT;
+    $status = req( $test, 200, $uid, 'PUT', "employee/nick/$uid/ldap" );
+    is( $status->level, 'OK' );
+
+    note( "GET employee/nick/:nick 2" );
+    $status = req( $test, 200, 'root', 'GET', "employee/nick/$uid" );
+    is( $status->level, 'OK' );
+    is( $status->payload->{fullname}, $saved_fullname );
+
+    note( "Cleanup" );
+    $status = delete_all_attendance_data();
+    BAIL_OUT(0) unless $status->ok;
 }
 
 done_testing;

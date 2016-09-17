@@ -49,7 +49,7 @@ use App::Dochazka::REST::ACL qw(
 );
 use App::Dochazka::REST::ConnBank qw( $dbix_conn conn_status );
 use App::Dochazka::REST::Fillup;
-use App::Dochazka::REST::LDAP qw( populate_employee );
+use App::Dochazka::REST::LDAP qw( ldap_exists );
 use App::Dochazka::REST::Model::Activity;
 use App::Dochazka::REST::Model::Component qw( get_all_components );
 use App::Dochazka::REST::Model::Employee qw( 
@@ -1282,6 +1282,31 @@ sub handler_get_employee_eid {
 }
 
 
+=head3 _check_ldap
+
+=cut
+
+sub _ldap_ok {
+    my ( $self, $nick ) = @_;
+    die "UFFHDC! No nick in Dispatch.pm->_ldap_ok()!" unless $nick;
+    if ( ! $site->DOCHAZKA_LDAP ) {
+        $self->mrest_declare_status(
+            'code' => 501,
+            'explanation' => 'LDAP not configured on this server',
+        );
+        return 0;
+    }
+    if ( grep {/^$nick/} @{ $site->DOCHAZKA_SYSTEM_USERS } ) {
+        $self->mrest_declare_status(
+            'code' => 403,
+            'explanation' => "Employee ->$nick<- is a system user; no LDAP operations allowed!",
+        );
+        return 0;
+    }
+    return 1;
+}
+
+
 =head3 handler_get_employee_ldap
 
 Handler for 'GET employee/nick/:nick/ldap' resource.
@@ -1293,23 +1318,16 @@ sub handler_get_employee_ldap {
     $log->debug( "Entering " . __PACKAGE__ . "::handler_get_employee_ldap" ); 
 
     my $context = $self->context;
-    my $nick = $self->context->{'mapping'}->{'nick'};
+    my $nick = $context->{'mapping'}->{'nick'};
 
     if ( $pass == 1 ) {
-        if ( ! $site->DOCHAZKA_LDAP ) {
-            $self->mrest_declare_status( 
-                'code' => 501, 
-                'explanation' => 'LDAP not configured on this server' 
-            );
-            return 0;
-        } else {
-            $log->debug( "DOCHAZKA_LDAP site param is true: LDAP is enabled" );
-        }
-        my $emp = App::Dochazka::REST::Model::Employee->spawn( 'nick' => $nick );
-        $context->{'stashed_nick'} = $nick;
-        my $status = populate_employee( $emp );
+        return 0 unless $self->_ldap_ok( $nick );
+        my $emp = App::Dochazka::REST::Model::Employee->spawn(
+            'nick' => $nick,
+            'sync' => 1,
+        );
+        my $status = $emp->ldap_sync();
         return 0 unless $status->ok;
-        $context->{'stashed_ldap_status'} = $status;
         $context->{'stashed_employee_object'} = $emp;
         return 1;
     }
@@ -1329,29 +1347,50 @@ sub handler_put_employee_ldap {
     $log->debug( "Entering " . __PACKAGE__ . "::handler_put_employee_ldap" ); 
 
     my $context = $self->context;
+    $log->debug( "mapping " . Dumper( $context->{'mapping'} ) );
+    my $nick = $context->{'mapping'}->{'nick'};
+    my $status;
 
+    # first pass
     if ( $pass == 1 ) {
-        return $self->handler_get_employee_ldap( $pass );
+        return 0 unless $self->_ldap_ok( $nick );
+        # determine if this is an insert or an update
+        my $emp = shared_first_pass_lookup( $self, 'nick', $nick );
+        $self->nullify_declared_status;
+        return 0 unless shared_employee_acl_part1( $self, $emp );  # additional ACL checks
+        if ( $emp ) {
+            $context->{'put_employee_func'} = 'update_employee';
+        } else {
+            $context->{'put_employee_func'} = 'insert_employee';
+            $emp = App::Dochazka::REST::Model::Employee->spawn( 'nick' => $nick );
+        }
+        $emp->sync( 1 );
+        $status = $emp->ldap_sync();
+        if ( $status->ok ) {
+            $context->{'stashed_employee_object'} = $emp;
+            return 1;
+        }
+        $self->mrest_declare_status(
+            'code' => 404,
+            'explanation' => "Nick ->$nick<- not found in LDAP"
+        );
+        return 0;
     }
 
-    my $nick = $context->{'stashed_nick'};
+    # second pass
 
-    # Get the employee object corresponding to the nick provided by the user.
     my $emp = $context->{'stashed_employee_object'};
-    if ( ! $emp ) {
-        $self->mrest_declare_status( 'code' => 404, 'explanation' => "Nick ->$nick<- not found in LDAP" );
-        return $fail;
+    my $func = $context->{'put_employee_func'};
+    if ( $func eq 'update_employee' ) {
+        $log->debug( "Updating employee from LDAP" );
+        $status = $emp->update( $context );
+    } elsif ( $func eq 'insert_employee' ) {
+        $log->debug( "Inserting new employee from LDAP" );
+        $status = $emp->insert( $context );
+    } else {
+        die "AAAAAAAAAAAAGAGGGGGGGGAAAHAHAAHHHH!";
     }
 
-    my $status = $emp->load_by_nick( $context->{'dbix_conn'}, $emp->nick );
-    if ( $status->ok ) {
-        # employee exists; update it
-        my $eid = $status->payload->eid;
-        $emp->eid( $eid );
-        return $emp->update( $context );
-    } elsif ( $status->level eq 'NOTICE' and $status->code eq 'DISPATCH_NO_RECORDS_FOUND' ) {
-        return $emp->insert( $context );
-    }
     return $status;
 }
 
