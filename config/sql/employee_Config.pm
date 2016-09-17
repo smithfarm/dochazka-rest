@@ -63,10 +63,15 @@ set( 'SQL_EMPLOYEE_SCHEDULE_AT_TIMESTAMP', q/
       SELECT sid_at_timestamp($1, $2)
       / );
 
-# 
+#
 set( 'SQL_EMPLOYEE_SELECT_MULTIPLE_BY_NICK', q/
       SELECT eid, sec_id, nick, fullname, email, passhash, salt, sync, supervisor, remark
       FROM employees WHERE nick LIKE ?/ );
+
+#
+set( 'SQL_EMPLOYEE_SELECT_MULTIPLE_BY_SYNC', q/
+      SELECT eid, sec_id, nick, fullname, email, passhash, salt, sync, supervisor, remark
+      FROM employees WHERE sync = ?/ );
 
 #
 set( 'SQL_EMPLOYEE_CURRENT_PRIV', q/

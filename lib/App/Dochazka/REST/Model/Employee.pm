@@ -1,5 +1,5 @@
-# ************************************************************************* 
-# Copyright (c) 2014-2015, SUSE LLC
+# *************************************************************************
+# Copyright (c) 2014-2016, SUSE LLC
 # 
 # All rights reserved.
 # 
@@ -238,9 +238,10 @@ This module provides the following exports:
 
 use Exporter qw( import );
 our @EXPORT_OK = qw( 
-    nick_exists 
     eid_exists 
+    get_all_sync_employees
     list_employees_by_priv 
+    nick_exists 
     noof_employees_by_priv 
 );
 
@@ -787,6 +788,26 @@ sub noof_employees_by_priv {
     $count += 0;
     $CELL->status_ok( 'DISPATCH_COUNT_EMPLOYEES', args => [ $count, $priv ], 
         payload => { 'priv' => $priv, 'count' => $count } );
+}
+
+
+=head2 get_all_sync_employees
+
+Function returns a status object. If the status is OK, the payload will contain
+a reference to an array of employee objects whose sync property is true.
+
+=cut
+
+sub get_all_sync_employees {
+    my ( $conn ) = validate_pos( @_,
+       { isa => 'DBIx::Connector' },
+    );
+    return load_multiple(
+        conn => $conn,
+        class => 'App::Dochazka::REST::Model::Employee',
+        sql => $site->SQL_EMPLOYEE_SELECT_MULTIPLE_BY_SYNC,
+        keys => [ 1 ],
+    );
 }
 
 
