@@ -39,7 +39,12 @@ use warnings;
 use App::CELL qw( $meta $site );
 use Data::Dumper;
 use App::Dochazka::REST::ConnBank qw( $dbix_conn );
-use App::Dochazka::REST::Model::Employee qw( nick_exists eid_exists list_employees_by_priv );
+use App::Dochazka::REST::Model::Employee qw(
+    eid_exists
+    get_all_sync_employees
+    list_employees_by_priv
+    nick_exists
+);
 use App::Dochazka::REST::Model::Shared qw( noof );
 use App::Dochazka::REST::Test;
 use Test::Fatal;
@@ -161,9 +166,37 @@ ok( ! eid_exists( $dbix_conn, 554 ) );
 note( 'spawn another object (still Mr. Fu)' );
 $status = App::Dochazka::REST::Model::Employee->load_by_eid( $dbix_conn, $eid_of_mrfu );
 is( $status->code, 'DISPATCH_RECORDS_FOUND', "load_by_eid returned OK status" );
-my $emp2 = $status->payload;
-is( $emp2->{eid}, $eid_of_mrfu, "EID matches that of Mr. Fu" );
-is( $emp2->{nick}, 'mrfu', "Nick should be mrfu" );
+my $mrfu = $status->payload;
+is( $mrfu->{eid}, $eid_of_mrfu, "EID matches that of Mr. Fu" );
+is( $mrfu->{nick}, 'mrfu', "Nick should be mrfu" );
+
+note( 'get_all_sync_employees() returns nothing' );
+$status = get_all_sync_employees( $dbix_conn );
+is( $status->level, 'NOTICE' );
+is( $status->code, 'DISPATCH_NO_RECORDS_FOUND' );
+
+note( 'set Mr. Fu sync property to true' );
+ok( ! $mrfu->sync );
+is( $mrfu->sync, 0 );
+$mrfu->sync( 1 );
+ok( $mrfu->sync );
+is( $mrfu->sync, 1 );
+
+note( 'update Mr. Fu database record' );
+$status = $mrfu->update( $faux_context );
+is( $status->level, 'OK', 'Mr. Fu database record updated' );
+is( $status->code, 'DOCHAZKA_CUD_OK' );
+ok( $status->payload );
+is( $status->payload->sync, 1 );
+
+note( 'get_all_sync_employees() returns Mr. Fu' );
+$status = get_all_sync_employees( $dbix_conn );
+is( $status->level, 'OK' );
+is( $status->code, 'DISPATCH_RECORDS_FOUND' );
+ok( $status->payload );
+is( ref( $status->payload ), 'ARRAY' );
+is( scalar( @{ $status->payload } ), 1 );
+is( $status->payload->[0]->nick, 'mrfu' );
 
 note( 'spawn Mrs. Fu object' );
 $emp = App::Dochazka::REST::Model::Employee->spawn( 
@@ -212,7 +245,7 @@ $status = $emp->update( $faux_context );
 ok( $status->ok, "UPDATE status is OK" );
 $status = App::Dochazka::REST::Model::Employee->load_by_nick( $dbix_conn, 'mrsfu' );
 is( $status->code, 'DISPATCH_RECORDS_FOUND', "Nick mrsfu exists" );
-$emp2 = $status->payload;
+my $emp2 = $status->payload;
 is_deeply( $emp, $emp2 );
 
 note( "pathologically change Mrs. Fu's nick to null" );
@@ -227,7 +260,7 @@ $emp->nick( $saved_nick );
 note( "Mrs. Fu is Mr. Fu's supervisor" );
 $status = App::Dochazka::REST::Model::Employee->load_by_nick( $dbix_conn, 'mrfu' );
 is( $status->code, 'DISPATCH_RECORDS_FOUND', "Nick mrsfu exists" );
-my $mrfu = $status->payload;
+$mrfu = $status->payload;
 
 note( "Mr. Fu's supervisor changed to $eid_of_mrsfu" );
 $mrfu->supervisor( $eid_of_mrsfu );
