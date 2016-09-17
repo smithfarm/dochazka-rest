@@ -27,6 +27,8 @@ my $builder = Module::Build->new(
     },
     script_files         => [
         'bin/dochazka-dbinit',
+        'bin/dochazka-ldap-batch-create',
+        'bin/dochazka-ldap-sync-all',
         'bin/dochazka-resetdb',
         'bin/dochazka-rest',
     ],
