@@ -77,7 +77,7 @@
    "provides" : {
       "App::Dochazka::REST" : {
          "file" : "lib/App/Dochazka/REST.pm",
-         "version" : "0.542"
+         "version" : "0.543"
       },
       "App::Dochazka::REST::ACL" : {
          "file" : "lib/App/Dochazka/REST/ACL.pm"
@@ -170,6 +170,6 @@
          "url" : "https://github.com/smithfarm/dochazka-rest"
       }
    },
-   "version" : "0.542",
+   "version" : "0.543",
    "x_serialization_backend" : "JSON::PP version 2.27203"
 }

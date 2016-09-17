@@ -3622,3 +3622,29 @@ SPLIT OFF App::MREST into separate distribution
 - tests: comment out DOCHAZKA_STATE_DIR diagnostic
 - tests: run tests non-verbose in Travis CI
 
+0.543 2016-09-17 23:24 CEST
+- tests: present less alarming message when skipping integration test
+- tests: eliminate redundancy in skipped integration test message
+- tests: improve state dir error messages in t/mason.t
+- Add help msg and params support for resetdb script
+- auth: more logging detail for debugging session issues
+- Model/Employee.pm: refactor sync method
+- ldap: refactor (drop populate_employee, add autocreate_employee)
+- dispatch: refactor handler_put_employee_ldap()
+- dispatch: active employees can sync themselves
+- doc: update POD in employee/nick/:nick/ldap resource definition
+- ldap: add sanity checks, respect sync property
+- ldap: set employee sync property in autocreate
+- tests: refactor t/ldap.t
+- scripts: fix dochazka-resetdb --help
+- scripts: add run-tests.sh script
+- Model/Employee.pm: get_all_sync_employees() function
+- REST.pm: new init_arbitrary_script() function
+- scripts: dochazka-ldap-batch-create
+- scripts: clean up end of bin/dochazka-ldap-batch-create
+- Move autocreate_employee() to Model/Employee.pm
+- scripts: dochazka-ldap-sync-all
+- REST.pm: make init_arbitrary_script() take a "quiet" option
+- build/ops: package the new LDAP scripts in CPAN distro
+- build/ops: do not package run-tests.sh script
+
