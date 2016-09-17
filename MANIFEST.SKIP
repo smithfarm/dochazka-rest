@@ -87,3 +87,5 @@
 # Avoid "tickets" file (if any)
 \btickets$
 
+# Avoid "run-tests.sh" script
+\brun-tests.sh$
