@@ -1035,13 +1035,28 @@ sub handler_get_employee_self_full {
     my $current_emp = $context->{'current'};
     my $current_priv = priv_by_eid( $conn, $current_emp->{'eid'} );
     my $current_sched = schedule_by_eid( $conn, $current_emp->{'eid'} );
+    my %history;
+    foreach my $prop ( 'priv', 'schedule' ) {
+        my $status;
+        my @ARGS = ( $conn, $current_emp->{'eid'} );
+        if ( $prop eq 'priv' ) {
+            $status = App::Dochazka::REST::Model::Privhistory->load_by_eid( @ARGS );
+        } elsif ( $prop eq 'schedule' ) {
+            $status = App::Dochazka::REST::Model::Schedhistory->load_by_eid( @ARGS );
+        } else {
+            die "DEFDXXEGUG!";
+        }
+        $history{$prop} = $status->payload;
+    }
     $CELL->status_ok( 
         'DISPATCH_EMPLOYEE_PROFILE_FULL',
         args => [ $current_emp->{'nick'}, $current_priv ], 
         payload => { 
-            'priv' => $current_priv,
-            'schedule' => $current_sched,
             'emp' => $current_emp,
+            'priv' => $current_priv,
+            'privhistory' => $history{'priv'},
+            'schedule' => $current_sched,
+            'schedhistory' => $history{'schedule'},
         } 
     );
 }
