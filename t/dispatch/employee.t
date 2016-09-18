@@ -245,27 +245,31 @@ foreach my $base ( "employee/self/full" ) {
     docu_check($test, "employee/self/full");
 
     note( "looping: GET $base" );
-    $status = req( $test, 200, 'demo', 'GET', $base );
-    is( $status->level, 'OK' );
-    is( $status->code, 'DISPATCH_EMPLOYEE_PROFILE_FULL' );
-    ok( defined $status->payload );
-    ok( exists $status->payload->{'priv'} );
-    ok( exists $status->payload->{'schedule'} );
-    ok( exists $status->payload->{'emp'} );
-    is( $status->payload->{'emp'}->{'nick'}, 'demo' );
-    is( $status->payload->{'priv'}, 'passerby' );
-    is( $status->payload->{'schedule'}, undef );
-    
-    $status = req( $test, 200, 'root', 'GET', $base );
-    is( $status->level, 'OK' );
-    is( $status->code, 'DISPATCH_EMPLOYEE_PROFILE_FULL' );
-    ok( defined $status->payload );
-    ok( exists $status->payload->{'priv'} );
-    ok( exists $status->payload->{'schedule'} );
-    ok( exists $status->payload->{'emp'} );
-    is( $status->payload->{'emp'}->{'nick'}, 'root' );
-    is( $status->payload->{'priv'}, 'admin' );
-    is( $status->payload->{'schedule'}, undef );
+    foreach my $originator ( 'demo', 'root' ) {
+        $status = req( $test, 200, $originator, 'GET', $base );
+        is( $status->level, 'OK' );
+        is( $status->code, 'DISPATCH_EMPLOYEE_PROFILE_FULL' );
+        ok( defined $status->payload );
+        ok( exists $status->payload->{'emp'} );
+        ok( exists $status->payload->{'priv'} );
+        ok( exists $status->payload->{'privhistory'} );
+        ok( exists $status->payload->{'schedule'} );
+        ok( exists $status->payload->{'schedhistory'} );
+        is( $status->payload->{'emp'}->{'nick'}, $originator );
+        if ( $originator eq 'demo' ) {
+            is( $status->payload->{'priv'}, 'passerby' );
+            is( $status->payload->{'privhistory'}, undef );
+        } elsif ( $originator eq 'root' ) {
+            is( $status->payload->{'priv'}, 'admin' );
+            is( ref( $status->payload->{'privhistory'} ), 'HASH' );
+            ok( exists $status->payload->{'privhistory'}->{'phid'} );
+        } else {
+            diag( "\$originator ($originator) is neither root nor demo" );
+            BAIL_OUT(0);
+        }
+        is( $status->payload->{'schedule'}, undef );
+        is( $status->payload->{'schedhistory'}, undef );
+    }
     
     note( "looping: PUT, POST, DELETE $base" );
     $status = req( $test, 405, 'demo', 'PUT', $base );
