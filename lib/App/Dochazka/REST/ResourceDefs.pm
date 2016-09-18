@@ -857,7 +857,7 @@ EOH
     {
         parent => 'employee/eid/:eid',
         handler => {
-            GET => 'handler_get_employee_full', 
+            GET => 'handler_get_employee_eid_full',
         },
         acl_profile => 'active',
         cli => 'employee eid $EID full',
@@ -1075,7 +1075,7 @@ EOH
     {
         parent => 'employee/nick/:nick',
         handler => {
-            GET => 'handler_get_employee_full', 
+            GET => 'handler_get_employee_nick_full',
         },
         acl_profile => 'active',
         cli => 'employee nick $nick full',

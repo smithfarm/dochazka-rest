@@ -1076,6 +1076,50 @@ sub handler_get_employee_self_full {
 }
 
 
+=head3 handler_get_employee_eid_full
+
+Handler for GET requests on 'employee/eid/:eid/full'
+
+=cut
+
+sub handler_get_employee_eid_full {
+    my ( $self, $pass ) = @_;
+    $log->debug( "Entering " . __PACKAGE__ . "::handler_get_employee_eid_full" );
+
+    my $context = $self->context;
+
+    # first pass
+    if ( $pass == 1 ) {
+        return shared_get_employee_pass1( $self, $pass, 'EID', $self->context->{'mapping'}->{'eid'} );
+    }
+
+    # second pass
+    return $self->_handler_get_employee_full_pass2();
+}
+
+
+=head3 handler_get_employee_nick_full
+
+Handler for GET requests on 'employee/nick/:nick/full'
+
+=cut
+
+sub handler_get_employee_nick_full {
+    my ( $self, $pass ) = @_;
+    $log->debug( "Entering " . __PACKAGE__ . "::handler_get_employee_nick_full" );
+
+    my $context = $self->context;
+
+    # first pass
+    if ( $pass == 1 ) {
+        return shared_get_employee_pass1( $self, $pass, 'nick', $self->context->{'mapping'}->{'nick'} );
+    }
+
+    # second pass
+    return $self->_handler_get_employee_full_pass2();
+}
+
+
 =head3 handler_put_employee_eid
 
 Handler for 'PUT employee/eid/:eid' - can only be update.
