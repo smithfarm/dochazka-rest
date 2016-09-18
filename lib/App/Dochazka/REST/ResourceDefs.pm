@@ -45,7 +45,7 @@ use Web::MREST::InitRouter;
 
 my $defs;
 my $tsrange_validation = qr/^[[(].*,.*[])]$/;
-my $ts_validation = qr/\d+-\d+-\d+/;
+my $ts_validation = qr/^(\"|\')?\d+-\d+-\d+( +\d+:\d+(:\d+)?)?(\"|\')?$/;
 my $term_validation = qr/^[[:alnum:]_][[:alnum:]_-]*$/;
 my $date_validation = qr/^\d{2,4}-\d{1,2}-\d{1,2}$/;
 my $priv_validation = qr/^(admin)|(active)|(inactive)|(passerby)$/i;
