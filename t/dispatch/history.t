@@ -81,11 +81,7 @@ my $j;
 my $res;
 
 
-note( '=============================' );
-note( '"{priv,schedule}/history/self/?:tsrange" resource' );
-note( '=============================' );
-
-note( 'make sure root has some kind of schedule history' );
+note( 'give root a schedule history of sorts' );
 my $ts_sid = create_testing_schedule( $test );
 my $status = req( $test, 201, 'root', 'POST', 'schedule/history/nick/root',
     '{ "effective":"1892-01-01 00:00", "sid":' . $ts_sid . ' }' );
@@ -99,6 +95,12 @@ ok( $status->payload->{'shid'} > 0 );
 my $root_shid = $status->payload->{'shid'};
 
 my $base;
+
+
+note( '=============================' );
+note( '"{priv,schedule}/history/self/?:tsrange" resource' );
+note( '=============================' );
+
 foreach $base ( 'priv/history/self', 'schedule/history/self' ) {
     note( "testing $base" );
 
@@ -358,6 +360,136 @@ foreach $base ( "priv/history/eid", "schedule/history/eid" ) {
     foreach my $user ( qw( demo root ) ) {
         foreach my $method ( qw( PUT POST DELETE ) ) {
             req( $test, 405, $user, $method, "$base/23/[,)" );
+        }
+    }
+}
+
+
+note( '===========================================' );
+note( '"{priv,schedule}/history/eid/:eid/:ts" resource' );
+note( '===========================================' );
+
+foreach my $prop ( "priv", "schedule" ) {
+    my $base = "$prop/history/eid";
+    note( "testing $base/:eid/:ts" );
+
+    note( 'docu_check()' );
+    docu_check($test, "$base/:eid/:ts");
+
+    note( 'GET' );
+
+    note( 'fail 403 as demo' );
+    req( $test, 403, 'demo', 'GET', $base. '/' . $site->DOCHAZKA_EID_OF_ROOT . 
+        '/1891-12-30' );
+
+    note( 'root employee, record found' );
+    note( "GET $base" . '/' . $site->DOCHAZKA_EID_OF_ROOT . 
+        '/1892-01-01 00:00' );
+    $status = req( $test, 200, 'root', 'GET', $base. '/' . $site->DOCHAZKA_EID_OF_ROOT . 
+        '/1892-01-01 00:00' );
+    is( $status->level, 'OK' );
+    is( $status->code, "DISPATCH_RECORDS_FOUND" );
+    ok( defined $status->payload );
+    ok( exists $status->payload->{'eid'} );
+    is( $status->payload->{'eid'}, $site->DOCHAZKA_EID_OF_ROOT );
+    if ( $prop eq 'priv' ) {
+        ok( exists $status->payload->{'phid'} );
+    } elsif ( $prop eq 'schedule' ) {
+        ok( exists $status->payload->{'shid'} );
+    } else {
+        diag( "A very bad thing happened" );
+        BAIL_OUT(0);
+    }
+    ok( exists $status->payload->{'effective'} );
+
+    my $uri = $base . '/' .  $site->DOCHAZKA_EID_OF_ROOT .
+              '/"1891-12-31 23:59:59"';
+
+    note( 'fail 403 as demo' );
+    req( $test, 403, 'demo', 'GET', $uri );
+
+    note( '"succeed" (404) as root' );
+    req( $test, 404, 'root', 'GET', $uri );
+
+    note( 'non-existent EID');
+    my $ts = '\'2015-01-06 14:55\'';
+    req( $test, 403, 'demo', 'GET', "$base/4534/$ts" );
+    req( $test, 404, 'root', 'GET', "$base/4534/$ts" );
+
+    note( 'invalid EID (caught by Path::Router validations)' );
+    foreach my $user ( qw( demo root ) ) {
+        req( $test, 400, $user, 'GET', "$base/asas/$ts" );
+    }
+
+    note( 'PUT, POST, DELETE' );
+    foreach my $user ( qw( demo root ) ) {
+        foreach my $method ( qw( PUT POST DELETE ) ) {
+            req( $test, 405, $user, $method, "$base/23/1966-09-28 00:00" );
+        }
+    }
+}
+
+
+note( '===========================================' );
+note( '"{priv,schedule}/history/eid/:eid/now" resource' );
+note( '===========================================' );
+
+foreach my $prop ( "priv", "schedule" ) {
+    my $base = "$prop/history/eid";
+    note( "testing $base/:eid/now" );
+
+    note( 'docu_check()' );
+    docu_check($test, "$base/:eid/now");
+
+    note( 'GET' );
+
+    note( 'fail 403 as demo' );
+    req( $test, 403, 'demo', 'GET', $base. '/' . $site->DOCHAZKA_EID_OF_ROOT . 
+        '/now' );
+
+    note( 'root employee, record found' );
+    note( "GET $base" . '/' . $site->DOCHAZKA_EID_OF_ROOT . '/now' );
+    $status = req( $test, 200, 'root', 'GET', $base. '/' . $site->DOCHAZKA_EID_OF_ROOT . 
+        '/now' );
+    is( $status->level, 'OK' );
+    is( $status->code, "DISPATCH_RECORDS_FOUND" );
+    ok( defined $status->payload );
+    ok( exists $status->payload->{'eid'} );
+    is( $status->payload->{'eid'}, $site->DOCHAZKA_EID_OF_ROOT );
+    if ( $prop eq 'priv' ) {
+        ok( exists $status->payload->{'phid'} );
+    } elsif ( $prop eq 'schedule' ) {
+        ok( exists $status->payload->{'shid'} );
+    } else {
+        diag( "A very bad thing happened" );
+        BAIL_OUT(0);
+    }
+    ok( exists $status->payload->{'effective'} );
+
+    my $uri = $base . '/' .  $site->DOCHAZKA_EID_OF_ROOT . '/now';
+
+    note( 'fail 403 as demo' );
+    req( $test, 403, 'demo', 'GET', $uri );
+
+    $uri = $base . '/' .  $site->DOCHAZKA_EID_OF_DEMO . '/now';
+
+    note( '"succeed" (404) as root' );
+    req( $test, 404, 'root', 'GET', $uri );
+
+    note( 'non-existent EID');
+    my $ts = '\'2015-01-06 14:55\'';
+    req( $test, 403, 'demo', 'GET', "$base/4534/now" );
+    req( $test, 404, 'root', 'GET', "$base/4534/now" );
+
+    note( 'invalid EID (caught by Path::Router validations)' );
+    foreach my $user ( qw( demo root ) ) {
+        req( $test, 400, $user, 'GET', "$base/asas/now" );
+    }
+
+    note( 'PUT, POST, DELETE' );
+    foreach my $user ( qw( demo root ) ) {
+        foreach my $method ( qw( PUT POST DELETE ) ) {
+            req( $test, 405, $user, $method, "$base/23/now" );
         }
     }
 }
