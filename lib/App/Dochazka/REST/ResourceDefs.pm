@@ -852,6 +852,28 @@ exists and nothing in the database refers to it).
 EOH
     },
 
+    # /employee/eid/:eid/full
+    'employee/eid/:eid/full' =>
+    {
+        parent => 'employee/eid/:eid',
+        handler => {
+            GET => 'handler_get_employee_full', 
+        },
+        acl_profile => 'active',
+        cli => 'employee eid $EID full',
+        validations => {
+            eid => 'Int',
+        },
+        description => 'Full employee profile',
+        documentation => <<'EOH',
+=pod
+
+This resource enables any active employee to retrieve her own
+full employee profile. Admins and supervisors can retrieve the
+profiles of other employees.
+EOH
+    },
+
     # /employee/eid/:eid/minimal
     'employee/eid/:eid/minimal' =>
     {
@@ -1045,6 +1067,28 @@ object itself, without any privhistory records).
 [1] Which fields get synced depends on DOCHAZKA_LDAP_MAPPING site config
 parameter.
 
+EOH
+    },
+
+    # /employee/nick/:nick/full
+    'employee/nick/:nick/full' =>
+    {
+        parent => 'employee/nick/:nick',
+        handler => {
+            GET => 'handler_get_employee_full', 
+        },
+        acl_profile => 'active',
+        cli => 'employee nick $nick full',
+        validations => {
+            nick => $term_validation,
+        },
+        description => 'Full employee profile',
+        documentation => <<'EOH',
+=pod
+
+This resource enables any active employee to retrieve her own
+full employee profile. Admins and supervisors can retrieve the
+profiles of other employees.
 EOH
     },
 
