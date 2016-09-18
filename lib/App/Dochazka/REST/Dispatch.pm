@@ -1011,21 +1011,20 @@ sub handler_whoami {
     delete $current_emp->{'passhash'};
     delete $current_emp->{'salt'};
     delete $current_emp->{'remark'} unless $context->{'current_priv'} eq 'admin';
-    $CELL->status_ok( 'DISPATCH_EMPLOYEE_CURRENT', args => 
+    $CELL->status_ok( 'DISPATCH_EMPLOYEE_SELF', args => 
         [ $current_emp->{'nick'} ], payload => $current_emp );
 }
 
 
-=head3 handler_get_employee_self_privsched
+=head3 handler_get_employee_self_full
 
-Handler for GET requests on 'employee/self/priv' and 'employee/current/priv', 
-which are synonymous resources.
+Handler for GET requests on 'employee/self/full'
 
 =cut
 
-sub handler_get_employee_self_privsched {
+sub handler_get_employee_self_full {
     my ( $self, $pass ) = @_;
-    $log->debug( "Entering " . __PACKAGE__ . "::handler_get_employee_self_privsched" ); 
+    $log->debug( "Entering " . __PACKAGE__ . "::handler_get_employee_self_full" ); 
 
     # first pass
     return 1 if $pass == 1;
@@ -1037,7 +1036,7 @@ sub handler_get_employee_self_privsched {
     my $current_priv = priv_by_eid( $conn, $current_emp->{'eid'} );
     my $current_sched = schedule_by_eid( $conn, $current_emp->{'eid'} );
     $CELL->status_ok( 
-        'DISPATCH_EMPLOYEE_CURRENT_PRIV', 
+        'DISPATCH_EMPLOYEE_PROFILE_FULL',
         args => [ $current_emp->{'nick'}, $current_priv ], 
         payload => { 
             'priv' => $current_priv,

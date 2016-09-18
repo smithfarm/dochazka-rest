@@ -383,8 +383,7 @@ EOH
         documentation => <<'EOH',
 =pod
 
-Displays the profile of the currently logged-in employee (same as
-"employee/current")
+Displays the profile of the currently logged-in employee
 EOH
     },
 
@@ -767,63 +766,6 @@ given privlevel. Valid privlevels are:
 =item * admin
 
 =back
-EOH
-    },
-
-    # /employee/current
-    'employee/current' =>
-    { 
-        parent => 'employee',
-        handler => {
-            GET => 'handler_whoami',
-            POST => 'handler_post_employee_self',
-        },
-        acl_profile => {
-            'GET' => 'passerby', 
-            'POST' => 'inactive',
-        },
-        cli => 'employee current',
-        description => 'Retrieve (GET) and edit (POST) our own employee profile',
-        documentation => <<'EOH',
-=pod
-
-With this resource, we can retrieve (GET) and edit (POST) our own employee
-profile.
-
-=over
-
-=item * GET
-
-Displays the profile of the currently logged-in employee. The information
-is limited to just the employee object itself.
-
-=item * POST
-
-Provides a way for an employee to update certain fields of her own employee
-profile. Exactly which fields can be updated may differ from site to site
-(see the DOCHAZKA_PROFILE_EDITABLE_FIELDS site parameter).
-
-=back
-EOH
-    },
-
-    # /employee/current/priv
-    'employee/current/priv' =>
-    { 
-        parent => 'employee/current',
-        handler => {
-            GET => 'handler_get_employee_self_privsched', 
-        },
-        acl_profile => 'passerby',
-        cli => 'employee current priv',
-        description => 'Retrieve our own employee profile, including current privlevel and schedule', 
-        documentation => <<'EOH',
-=pod
-
-Displays the "full profile" of the currently logged-in employee. The
-information includes the full employee object (taken from the 'current_emp'
-property) as well as the employee's current privlevel and schedule, which are
-looked up from the database.
 EOH
     },
 
@@ -1274,12 +1216,12 @@ profile. Exactly which fields can be updated may differ from site to site
 EOH
     },
 
-    # /employee/self/priv
-    'employee/self/priv' =>
+    # /employee/self/full
+    'employee/self/full' =>
     { 
         parent => 'employee/self',
         handler => {
-            GET => 'handler_get_employee_self_privsched',
+            GET => 'handler_get_employee_self_full',
         },
         acl_profile => 'passerby',
         cli => 'employee current priv',

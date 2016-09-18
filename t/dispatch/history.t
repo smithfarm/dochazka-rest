@@ -286,9 +286,9 @@ foreach $base ( "priv/history/eid", "schedule/history/eid" ) {
 
     if ( $base =~ m/^priv/ ) {
         # check if demo really is an admin
-        $status = req( $test, 200, 'demo', 'GET', "employee/current/priv" );
+        $status = req( $test, 200, 'demo', 'GET', "employee/self/full" );
         is( $status->level, 'OK' );
-        is( $status->code, 'DISPATCH_EMPLOYEE_CURRENT_PRIV' );
+        is( $status->code, 'DISPATCH_EMPLOYEE_PROFILE_FULL' );
         ok( exists $status->{'payload'} );
         ok( exists $status->payload->{'priv'} );
         is( $status->payload->{'priv'}, 'admin' );

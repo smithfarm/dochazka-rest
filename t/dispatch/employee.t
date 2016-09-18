@@ -143,20 +143,19 @@ $status = req( $test, 405, 'root', 'DELETE', $base );
 
 
 note( '=============================' );
-note( '"employee/current" resource' );
 note( '"employee/self" resource' );
 note( '=============================' );
 
 my $ts_eid_inactive = create_inactive_employee( $test );
 my $ts_eid_active = create_active_employee( $test );
 
-foreach my $base ( "employee/current", "employee/self" ) {
+foreach my $base ( "employee/self" ) {
     docu_check($test, $base);
     
     note( "looping GET $base" );
     $status = req( $test, 200, 'demo', 'GET', $base );
     is( $status->level, 'OK' );
-    is( $status->code, 'DISPATCH_EMPLOYEE_CURRENT', "GET $base 3" );
+    is( $status->code, 'DISPATCH_EMPLOYEE_SELF', "GET $base 3" );
     ok( defined $status->payload, "GET $base 4" );
     is_deeply( $status->payload, {
         'eid' => 2,
@@ -170,7 +169,7 @@ foreach my $base ( "employee/current", "employee/self" ) {
     #
     $status = req( $test, 200, 'root', 'GET', $base );
     is( $status->level, 'OK' );
-    is( $status->code, 'DISPATCH_EMPLOYEE_CURRENT', "GET $base 8" );
+    is( $status->code, 'DISPATCH_EMPLOYEE_SELF', "GET $base 8" );
     ok( defined $status->payload, "GET $base 9" );
     is_deeply( $status->payload, {
         'eid' => 1,
@@ -240,16 +239,15 @@ foreach my $base ( "employee/current", "employee/self" ) {
 
 
 note( '=============================' );
-note( '"employee/current/priv" resource' );
-note( '"employee/self/priv" resource' );
+note( '"employee/self/full" resource' );
 note( '=============================' );
-foreach my $base ( "employee/current/priv", "employee/self/priv" ) {
-    docu_check($test, "employee/current/priv");
+foreach my $base ( "employee/self/full" ) {
+    docu_check($test, "employee/self/full");
 
     note( "looping: GET $base" );
     $status = req( $test, 200, 'demo', 'GET', $base );
     is( $status->level, 'OK' );
-    is( $status->code, 'DISPATCH_EMPLOYEE_CURRENT_PRIV' );
+    is( $status->code, 'DISPATCH_EMPLOYEE_PROFILE_FULL' );
     ok( defined $status->payload );
     ok( exists $status->payload->{'priv'} );
     ok( exists $status->payload->{'schedule'} );
@@ -260,7 +258,7 @@ foreach my $base ( "employee/current/priv", "employee/self/priv" ) {
     
     $status = req( $test, 200, 'root', 'GET', $base );
     is( $status->level, 'OK' );
-    is( $status->code, 'DISPATCH_EMPLOYEE_CURRENT_PRIV' );
+    is( $status->code, 'DISPATCH_EMPLOYEE_PROFILE_FULL' );
     ok( defined $status->payload );
     ok( exists $status->payload->{'priv'} );
     ok( exists $status->payload->{'schedule'} );
