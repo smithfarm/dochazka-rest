@@ -82,6 +82,7 @@ our @EXPORT_OK = qw(
     shared_first_pass_lookup
     shared_entity_check
     shared_get_employee
+    shared_get_employee_pass1
     shared_insert_employee
     shared_update_employee
     shared_update_schedule
@@ -236,6 +237,35 @@ sub shared_entity_check {
 }
 
 
+=head2 shared_get_employee_pass1
+
+=cut
+
+sub shared_get_employee_pass1 {
+    my ( $d_obj, $pass, $key, $value ) = @_;
+    $log->debug( "Entering " . __PACKAGE__ . "::shared_get_employee_pass1" ); 
+
+    #
+    # ACL checks
+    #
+    if (
+            ! acl_check_is_my_report( $d_obj, ( lc $key ) => $value ) and
+            ! acl_check_is_me( $d_obj, ( lc $key ) => $value )
+       )
+    {
+        $d_obj->mrest_declare_status( code => 403, explanation => "DISPATCH_KEEP_TO_YOURSELF" );
+        return 0;
+    }
+    #
+    # 404 check
+    #
+    my $emp = shared_first_pass_lookup( $d_obj, $key, $value );
+    return 0 unless $emp;
+    $d_obj->context->{'stashed_employee_object'} = $emp;
+    return 1;
+}
+
+
 =head2 shared_get_employee
 
 =cut
@@ -246,24 +276,9 @@ sub shared_get_employee {
 
     # first pass
     if ( $pass == 1 ) {
-        #
-        # ACL checks
-        #
-        if ( 
-                ! acl_check_is_my_report( $d_obj, ( lc $key ) => $value ) and
-                ! acl_check_is_me( $d_obj, ( lc $key ) => $value ) 
-           ) 
-        {
-            $d_obj->mrest_declare_status( code => 403, explanation => "DISPATCH_KEEP_TO_YOURSELF" );
-            return 0;
-        }
-        #
-        # 404 check
-        #
-        my $emp = shared_first_pass_lookup( $d_obj, $key, $value );
-        return 0 unless $emp;
-        $d_obj->context->{'stashed_employee_object'} = $emp;
-        return 1;
+        return shared_get_employee_pass1(
+            $d_obj, $pass, $key, $value
+        );
     }
 
     # second pass

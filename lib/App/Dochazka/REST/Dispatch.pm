@@ -1016,29 +1016,21 @@ sub handler_whoami {
 }
 
 
-=head3 handler_get_employee_self_full
-
-Handler for GET requests on 'employee/self/full'
+=head3 _handler_get_employee_full_pass2
 
 =cut
 
-sub handler_get_employee_self_full {
-    my ( $self, $pass ) = @_;
-    $log->debug( "Entering " . __PACKAGE__ . "::handler_get_employee_self_full" ); 
-
-    # first pass
-    return 1 if $pass == 1;
-
-    # second pass
+sub _handler_get_employee_full_pass2 {
+    my ( $self ) = @_;
     my $context = $self->context;
+    my $emp = $context->{'stashed_employee_object'};
     my $conn = $context->{'dbix_conn'};
-    my $current_emp = $context->{'current'};
-    my $current_priv = priv_by_eid( $conn, $current_emp->{'eid'} );
-    my $current_sched = schedule_by_eid( $conn, $current_emp->{'eid'} );
+    my $current_priv = priv_by_eid( $conn, $emp->{'eid'} );
+    my $current_sched = schedule_by_eid( $conn, $emp->{'eid'} );
     my %history;
     foreach my $prop ( 'priv', 'schedule' ) {
         my $status;
-        my @ARGS = ( $conn, $current_emp->{'eid'} );
+        my @ARGS = ( $conn, $emp->{'eid'} );
         if ( $prop eq 'priv' ) {
             $status = App::Dochazka::REST::Model::Privhistory->load_by_eid( @ARGS );
         } elsif ( $prop eq 'schedule' ) {
@@ -1050,15 +1042,37 @@ sub handler_get_employee_self_full {
     }
     $CELL->status_ok( 
         'DISPATCH_EMPLOYEE_PROFILE_FULL',
-        args => [ $current_emp->{'nick'}, $current_priv ], 
+        args => [ $emp->{'nick'}, $current_priv ],
         payload => { 
-            'emp' => $current_emp,
+            'emp' => $emp,
             'priv' => $current_priv,
             'privhistory' => $history{'priv'},
             'schedule' => $current_sched,
             'schedhistory' => $history{'schedule'},
         } 
     );
+}
+
+=head3 handler_get_employee_self_full
+
+Handler for GET requests on 'employee/self/full'
+
+=cut
+
+sub handler_get_employee_self_full {
+    my ( $self, $pass ) = @_;
+    $log->debug( "Entering " . __PACKAGE__ . "::handler_get_employee_self_full" );
+
+    my $context = $self->context;
+
+    # first pass
+    if ( $pass == 1 ) {
+        $context->{'stashed_employee_object'} = $context->{'current'};
+        return 1;
+    }
+
+    # second pass
+    return $self->_handler_get_employee_full_pass2();
 }
 
 
