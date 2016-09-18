@@ -1041,7 +1041,7 @@ sub handler_get_employee_self_full {
         payload => { 
             'priv' => $current_priv,
             'schedule' => $current_sched,
-            'current_emp' => $current_emp,
+            'emp' => $current_emp,
         } 
     );
 }

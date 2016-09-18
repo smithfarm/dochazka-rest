@@ -251,8 +251,8 @@ foreach my $base ( "employee/self/full" ) {
     ok( defined $status->payload );
     ok( exists $status->payload->{'priv'} );
     ok( exists $status->payload->{'schedule'} );
-    ok( exists $status->payload->{'current_emp'} );
-    is( $status->payload->{'current_emp'}->{'nick'}, 'demo' );
+    ok( exists $status->payload->{'emp'} );
+    is( $status->payload->{'emp'}->{'nick'}, 'demo' );
     is( $status->payload->{'priv'}, 'passerby' );
     is( $status->payload->{'schedule'}, undef );
     
@@ -262,8 +262,8 @@ foreach my $base ( "employee/self/full" ) {
     ok( defined $status->payload );
     ok( exists $status->payload->{'priv'} );
     ok( exists $status->payload->{'schedule'} );
-    ok( exists $status->payload->{'current_emp'} );
-    is( $status->payload->{'current_emp'}->{'nick'}, 'root' );
+    ok( exists $status->payload->{'emp'} );
+    is( $status->payload->{'emp'}->{'nick'}, 'root' );
     is( $status->payload->{'priv'}, 'admin' );
     is( $status->payload->{'schedule'}, undef );
     
