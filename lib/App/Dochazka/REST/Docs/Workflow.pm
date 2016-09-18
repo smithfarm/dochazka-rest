@@ -93,10 +93,10 @@ different ACL profiles depending on which HTTP method is used.
 
 =head3 Retrieve one's own employee profile
 
-Using C<GET employee/current>, any employee can view her own employee profile.
+Using C<GET employee/self>, any employee can view her own employee profile.
 The payload is a valid employee object.
 
-Alternatively, C<GET employee/current/priv> can be used, in which case the
+Alternatively, C<GET employee/self/full> can be used, in which case the
 employee's current privilege level and schedule are returned along with the
 employee object.
 

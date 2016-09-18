@@ -143,20 +143,19 @@ $status = req( $test, 405, 'root', 'DELETE', $base );
 
 
 note( '=============================' );
-note( '"employee/current" resource' );
 note( '"employee/self" resource' );
 note( '=============================' );
 
 my $ts_eid_inactive = create_inactive_employee( $test );
 my $ts_eid_active = create_active_employee( $test );
 
-foreach my $base ( "employee/current", "employee/self" ) {
+foreach my $base ( "employee/self" ) {
     docu_check($test, $base);
     
     note( "looping GET $base" );
     $status = req( $test, 200, 'demo', 'GET', $base );
     is( $status->level, 'OK' );
-    is( $status->code, 'DISPATCH_EMPLOYEE_CURRENT', "GET $base 3" );
+    is( $status->code, 'DISPATCH_EMPLOYEE_SELF', "GET $base 3" );
     ok( defined $status->payload, "GET $base 4" );
     is_deeply( $status->payload, {
         'eid' => 2,
@@ -170,7 +169,7 @@ foreach my $base ( "employee/current", "employee/self" ) {
     #
     $status = req( $test, 200, 'root', 'GET', $base );
     is( $status->level, 'OK' );
-    is( $status->code, 'DISPATCH_EMPLOYEE_CURRENT', "GET $base 8" );
+    is( $status->code, 'DISPATCH_EMPLOYEE_SELF', "GET $base 8" );
     ok( defined $status->payload, "GET $base 9" );
     is_deeply( $status->payload, {
         'eid' => 1,
@@ -240,48 +239,156 @@ foreach my $base ( "employee/current", "employee/self" ) {
 
 
 note( '=============================' );
-note( '"employee/current/priv" resource' );
-note( '"employee/self/priv" resource' );
+note( '"employee/self/full" resource' );
 note( '=============================' );
-foreach my $base ( "employee/current/priv", "employee/self/priv" ) {
-    docu_check($test, "employee/current/priv");
 
-    note( "looping: GET $base" );
-    $status = req( $test, 200, 'demo', 'GET', $base );
+$base = "employee/self";
+my $resource = "$base/full";
+docu_check( $test, $resource );
+
+foreach my $originator ( 'demo', 'inactive', 'active', 'root' ) {
+
+    my $uri;
+    if ( $base eq 'employee/nick' ) {
+        $uri = "employee/nick/$originator/full";
+    } elsif ( $base eq 'employee/self' ) {
+        $uri = 'employee/self/full';
+    } else {
+        diag( "Bad loop!" );
+        BAIL_OUT(0);
+    }
+
+    $status = req( $test, 200, $originator, 'GET', $uri );
     is( $status->level, 'OK' );
-    is( $status->code, 'DISPATCH_EMPLOYEE_CURRENT_PRIV' );
+    is( $status->code, 'DISPATCH_EMPLOYEE_PROFILE_FULL' );
     ok( defined $status->payload );
+    ok( exists $status->payload->{'emp'} );
     ok( exists $status->payload->{'priv'} );
+    ok( exists $status->payload->{'privhistory'} );
     ok( exists $status->payload->{'schedule'} );
-    ok( exists $status->payload->{'current_emp'} );
-    is( $status->payload->{'current_emp'}->{'nick'}, 'demo' );
-    is( $status->payload->{'priv'}, 'passerby' );
+    ok( exists $status->payload->{'schedhistory'} );
+    is( $status->payload->{'emp'}->{'nick'}, $originator );
+    if ( $originator eq 'demo' ) {
+        is( $status->payload->{'priv'}, 'passerby' );
+        is( $status->payload->{'privhistory'}, undef );
+    } elsif ( $originator eq 'inactive' ) {
+        is( $status->payload->{'priv'}, 'inactive' );
+        is( ref( $status->payload->{'privhistory'} ), 'HASH' );
+        ok( exists $status->payload->{'privhistory'}->{'phid'} );
+    } elsif ( $originator eq 'active' ) {
+        is( $status->payload->{'priv'}, 'active' );
+        is( ref( $status->payload->{'privhistory'} ), 'HASH' );
+        ok( exists $status->payload->{'privhistory'}->{'phid'} );
+    } elsif ( $originator eq 'root' ) {
+        is( $status->payload->{'priv'}, 'admin' );
+        is( ref( $status->payload->{'privhistory'} ), 'HASH' );
+        ok( exists $status->payload->{'privhistory'}->{'phid'} );
+    } else {
+        diag( "bad \$originator ($originator) in test loop" );
+        BAIL_OUT(0);
+    }
     is( $status->payload->{'schedule'}, undef );
-    
-    $status = req( $test, 200, 'root', 'GET', $base );
-    is( $status->level, 'OK' );
-    is( $status->code, 'DISPATCH_EMPLOYEE_CURRENT_PRIV' );
-    ok( defined $status->payload );
-    ok( exists $status->payload->{'priv'} );
-    ok( exists $status->payload->{'schedule'} );
-    ok( exists $status->payload->{'current_emp'} );
-    is( $status->payload->{'current_emp'}->{'nick'}, 'root' );
-    is( $status->payload->{'priv'}, 'admin' );
-    is( $status->payload->{'schedule'}, undef );
-    
-    note( "looping: PUT, POST, DELETE $base" );
-    $status = req( $test, 405, 'demo', 'PUT', $base );
-    $status = req( $test, 405, 'active', 'PUT', $base );
-    $status = req( $test, 405, 'root', 'PUT', $base );
-    $status = req( $test, 405, 'demo', 'POST', $base );
-    $status = req( $test, 405, 'active', 'POST', $base );
-    $status = req( $test, 405, 'root', 'POST', $base );
-    $status = req( $test, 405, 'demo', 'DELETE', $base );
-    $status = req( $test, 405, 'active', 'DELETE', $base );
-    $status = req( $test, 405, 'root', 'DELETE', $base );
+    is( $status->payload->{'schedhistory'}, undef );
+
+    note( "PUT, POST, DELETE $resource" );
+    $status = req( $test, 405, $originator, 'PUT', $uri );
+    $status = req( $test, 405, $originator, 'POST', $uri );
+    $status = req( $test, 405, $originator, 'DELETE', $uri );
+
 }
+
     
-    
+note( '=============================' );
+note( '"employee/eid/:eid/full" resource' );
+note( '"employee/nick/:nick/full" resource' );
+note( '=============================' );
+
+map { docu_check( $test, $_ ); } 
+    ( 'employee/eid/:eid/full', 'employee/nick/:nick/full' );
+
+my %eid_map = (
+    'demo' => $site->DOCHAZKA_EID_OF_DEMO,
+    'inactive' => $ts_eid_inactive,
+    'active' => $ts_eid_active,
+    'root' => $site->DOCHAZKA_EID_OF_ROOT,
+);
+
+foreach my $nick ( 'demo', 'inactive' ) {
+    my $eid = $eid_map{$nick};
+    foreach my $uri ( "employee/eid/$eid/full", "employee/nick/$nick/full" ) {
+        note( "$nick tries and fails to use $uri resource" );
+        req( $test, 403, $nick, 'GET', $uri );
+        req( $test, 405, $nick, 'PUT', $uri );
+        req( $test, 405, $nick, 'POST', $uri );
+        req( $test, 405, $nick, 'DELETE', $uri );
+    }
+}
+
+foreach my $nick ( 'demo', 'inactive', 'active' ) {
+    foreach my $uri ( "employee/eid/1/full", "employee/nick/root/full" ) {
+        note( "$nick tries and fails to use $uri resource" );
+        req( $test, 403, $nick, 'GET', $uri );
+        req( $test, 405, $nick, 'PUT', $uri );
+        req( $test, 405, $nick, 'POST', $uri );
+        req( $test, 405, $nick, 'DELETE', $uri );
+    }
+}
+
+sub _employee_full_success {
+    my ( $originator, $nick, $uri ) = @_;
+
+    note( "$nick tries and succeeds to use $uri resource" );
+    $status = req( $test, 200, $originator, 'GET', $uri );
+    is( $status->level, 'OK' );
+    is( $status->code, 'DISPATCH_EMPLOYEE_PROFILE_FULL' );
+    ok( defined $status->payload );
+    ok( exists $status->payload->{'emp'} );
+    ok( exists $status->payload->{'priv'} );
+    ok( exists $status->payload->{'privhistory'} );
+    ok( exists $status->payload->{'schedule'} );
+    ok( exists $status->payload->{'schedhistory'} );
+    is( $status->payload->{'emp'}->{'nick'}, $nick );
+    if ( $nick eq 'demo' ) {
+        is( $status->payload->{'priv'}, 'passerby' );
+        is( $status->payload->{'privhistory'}, undef );
+    } elsif ( $nick eq 'inactive' ) {
+        is( $status->payload->{'priv'}, 'inactive' );
+        is( ref( $status->payload->{'privhistory'} ), 'HASH' );
+        ok( exists $status->payload->{'privhistory'}->{'phid'} );
+    } elsif ( $nick eq 'active' ) {
+        is( $status->payload->{'priv'}, 'active' );
+        is( ref( $status->payload->{'privhistory'} ), 'HASH' );
+        ok( exists $status->payload->{'privhistory'}->{'phid'} );
+    } elsif ( $nick eq 'root' ) {
+        is( $status->payload->{'priv'}, 'admin' );
+        is( ref( $status->payload->{'privhistory'} ), 'HASH' );
+        ok( exists $status->payload->{'privhistory'}->{'phid'} );
+    } else {
+        diag( "bad \$nick ($nick) in test loop" );
+        BAIL_OUT(0);
+    }
+    is( $status->payload->{'schedule'}, undef );
+    is( $status->payload->{'schedhistory'}, undef );
+}
+
+foreach my $nick ( 'active', 'root' ) {
+    my $eid = $eid_map{$nick};
+    foreach my $uri ( "employee/eid/$eid/full", "employee/nick/$nick/full" ) {
+
+        _employee_full_success( $nick, $nick, $uri );
+
+        note( "PUT, POST, DELETE $resource" );
+        req( $test, 405, $nick, 'PUT', $uri );
+        req( $test, 405, $nick, 'POST', $uri );
+        req( $test, 405, $nick, 'DELETE', $uri );
+    }
+}
+
+foreach my $uri ( "employee/eid/$ts_eid_inactive/full", "employee/nick/inactive/full" ) {
+    _employee_full_success( 'root', 'inactive', $uri );
+}
+
+
 note( '=============================' );
 note( '"employee/eid" resource' );
 note( '=============================' );
@@ -291,12 +398,12 @@ note( "docu_check on $base" );
 docu_check($test, "employee/eid");
 
 note( "GET, PUT: $base" );
-$status = req( $test, 405, 'demo', 'GET', $base );
-$status = req( $test, 405, 'active', 'GET', $base );
-$status = req( $test, 405, 'root', 'GET', $base );
-$status = req( $test, 405, 'demo', 'PUT', $base );
-$status = req( $test, 405, 'active', 'PUT', $base );
-$status = req( $test, 405, 'root', 'PUT', $base );
+req( $test, 405, 'demo', 'GET', $base );
+req( $test, 405, 'active', 'GET', $base );
+req( $test, 405, 'root', 'GET', $base );
+req( $test, 405, 'demo', 'PUT', $base );
+req( $test, 405, 'active', 'PUT', $base );
+req( $test, 405, 'root', 'PUT', $base );
 
 note( "POST: $base" );
 

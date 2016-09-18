@@ -45,7 +45,7 @@ use Web::MREST::InitRouter;
 
 my $defs;
 my $tsrange_validation = qr/^[[(].*,.*[])]$/;
-my $ts_validation = qr/\d+-\d+-\d+/;
+my $ts_validation = qr/^(\"|\')?\d+-\d+-\d+( +\d+:\d+(:\d+)?)?(\"|\')?$/;
 my $term_validation = qr/^[[:alnum:]_][[:alnum:]_-]*$/;
 my $date_validation = qr/^\d{2,4}-\d{1,2}-\d{1,2}$/;
 my $priv_validation = qr/^(admin)|(active)|(inactive)|(passerby)$/i;
@@ -383,8 +383,7 @@ EOH
         documentation => <<'EOH',
 =pod
 
-Displays the profile of the currently logged-in employee (same as
-"employee/current")
+Displays the profile of the currently logged-in employee
 EOH
     },
 
@@ -770,63 +769,6 @@ given privlevel. Valid privlevels are:
 EOH
     },
 
-    # /employee/current
-    'employee/current' =>
-    { 
-        parent => 'employee',
-        handler => {
-            GET => 'handler_whoami',
-            POST => 'handler_post_employee_self',
-        },
-        acl_profile => {
-            'GET' => 'passerby', 
-            'POST' => 'inactive',
-        },
-        cli => 'employee current',
-        description => 'Retrieve (GET) and edit (POST) our own employee profile',
-        documentation => <<'EOH',
-=pod
-
-With this resource, we can retrieve (GET) and edit (POST) our own employee
-profile.
-
-=over
-
-=item * GET
-
-Displays the profile of the currently logged-in employee. The information
-is limited to just the employee object itself.
-
-=item * POST
-
-Provides a way for an employee to update certain fields of her own employee
-profile. Exactly which fields can be updated may differ from site to site
-(see the DOCHAZKA_PROFILE_EDITABLE_FIELDS site parameter).
-
-=back
-EOH
-    },
-
-    # /employee/current/priv
-    'employee/current/priv' =>
-    { 
-        parent => 'employee/current',
-        handler => {
-            GET => 'handler_get_employee_self_privsched', 
-        },
-        acl_profile => 'passerby',
-        cli => 'employee current priv',
-        description => 'Retrieve our own employee profile, including current privlevel and schedule', 
-        documentation => <<'EOH',
-=pod
-
-Displays the "full profile" of the currently logged-in employee. The
-information includes the full employee object (taken from the 'current_emp'
-property) as well as the employee's current privlevel and schedule, which are
-looked up from the database.
-EOH
-    },
-
     # /employee/eid
     'employee/eid' =>
     {
@@ -907,6 +849,28 @@ Deletes the employee with the given EID (will only work if the EID
 exists and nothing in the database refers to it).
 
 =back
+EOH
+    },
+
+    # /employee/eid/:eid/full
+    'employee/eid/:eid/full' =>
+    {
+        parent => 'employee/eid/:eid',
+        handler => {
+            GET => 'handler_get_employee_eid_full',
+        },
+        acl_profile => 'active',
+        cli => 'employee eid $EID full',
+        validations => {
+            eid => 'Int',
+        },
+        description => 'Full employee profile',
+        documentation => <<'EOH',
+=pod
+
+This resource enables any active employee to retrieve her own
+full employee profile. Admins and supervisors can retrieve the
+profiles of other employees.
 EOH
     },
 
@@ -1106,6 +1070,28 @@ parameter.
 EOH
     },
 
+    # /employee/nick/:nick/full
+    'employee/nick/:nick/full' =>
+    {
+        parent => 'employee/nick/:nick',
+        handler => {
+            GET => 'handler_get_employee_nick_full',
+        },
+        acl_profile => 'active',
+        cli => 'employee nick $nick full',
+        validations => {
+            nick => $term_validation,
+        },
+        description => 'Full employee profile',
+        documentation => <<'EOH',
+=pod
+
+This resource enables any active employee to retrieve her own
+full employee profile. Admins and supervisors can retrieve the
+profiles of other employees.
+EOH
+    },
+
     # /employee/nick/:nick/minimal
     'employee/nick/:nick/minimal' =>
     {
@@ -1274,12 +1260,12 @@ profile. Exactly which fields can be updated may differ from site to site
 EOH
     },
 
-    # /employee/self/priv
-    'employee/self/priv' =>
+    # /employee/self/full
+    'employee/self/full' =>
     { 
         parent => 'employee/self',
         handler => {
-            GET => 'handler_get_employee_self_privsched',
+            GET => 'handler_get_employee_self_full',
         },
         acl_profile => 'passerby',
         cli => 'employee current priv',
@@ -1392,7 +1378,7 @@ EOH
     { 
         parent => 'priv/history',
         handler => {
-            GET => 'handler_history_get', 
+            GET => 'handler_history_get_multiple',
             POST => 'handler_history_post',
         },
         acl_profile => {
@@ -1440,7 +1426,7 @@ EOH
     { 
         parent => 'schedule/history',
         handler => {
-            GET => 'handler_history_get', 
+            GET => 'handler_history_get_multiple',
             POST => 'handler_history_post',
         },
         acl_profile => {
@@ -1487,7 +1473,7 @@ EOH
     {
         parent => 'priv/history',
         handler => {
-            GET => 'handler_history_get', 
+            GET => 'handler_history_get_multiple',
         },
         acl_profile => 'inactive',
         cli => 'priv history eid $EID $TSRANGE',
@@ -1508,7 +1494,7 @@ EOH
     {
         parent => 'schedule/history',
         handler => {
-            GET => 'handler_history_get', 
+            GET => 'handler_history_get_multiple',
         },
         acl_profile => 'inactive',
         cli => 'schedule history eid $EID $TSRANGE',
@@ -1525,11 +1511,93 @@ Retrieves a slice (given by the tsrange argument) of the employee's
 EOH
     },
 
+    'priv/history/eid/:eid/:ts' =>
+    {
+        parent => 'priv/history',
+        handler => {
+            GET => 'handler_history_get_single',
+        },
+        acl_profile => 'inactive',
+        cli => 'priv history eid $EID $TS',
+        description => 'Get the privhistory record effective at a given timestamp',
+        validations => {
+            'eid' => 'Int',
+            'ts' => $ts_validation,
+        },
+        documentation => <<'EOH',
+=pod
+
+Retrieves an employee's effective privhistory record (status change) as of a
+given timestamp.
+EOH
+    },
+
+    'schedule/history/eid/:eid/:ts' =>
+    {
+        parent => 'schedule/history',
+        handler => {
+            GET => 'handler_history_get_single',
+        },
+        acl_profile => 'inactive',
+        cli => 'schedule history eid $EID $TS',
+        description => 'Get the privhistory record effective at a given timestamp',
+        validations => {
+            'eid' => 'Int',
+            'ts' => $ts_validation,
+        },
+        documentation => <<'EOH',
+=pod
+
+Retrieves an employee's effective schedhistory record (status change) as of a
+given timestamp.
+EOH
+    },
+
+    'priv/history/eid/:eid/now' =>
+    {
+        parent => 'priv/history',
+        handler => {
+            GET => 'handler_history_get_single',
+        },
+        acl_profile => 'inactive',
+        cli => 'priv history eid $EID now',
+        description => 'Get the privhistory record effective as of "now" (the current timestamp)',
+        validations => {
+            'eid' => 'Int',
+        },
+        documentation => <<'EOH',
+=pod
+
+Retrieves an employee's effective privhistory record (status change) as of
+"now" (the current timestamp).
+EOH
+    },
+
+    'schedule/history/eid/:eid/now' =>
+    {
+        parent => 'schedule/history',
+        handler => {
+            GET => 'handler_history_get_single',
+        },
+        acl_profile => 'inactive',
+        cli => 'schedule history eid $EID now',
+        description => 'Get the privhistory record effective as of "now" (the current timestamp)',
+        validations => {
+            'eid' => 'Int',
+        },
+        documentation => <<'EOH',
+=pod
+
+Retrieves an employee's effective schedhistory record (status change) as of
+"now" (the current timestamp).
+EOH
+    },
+
     'priv/history/nick/:nick' =>
     { 
         parent => 'priv/history',
         handler => {
-            GET => 'handler_history_get', 
+            GET => 'handler_history_get_multiple',
             POST => 'handler_history_post', 
         },
         acl_profile => {
@@ -1577,7 +1645,7 @@ EOH
     { 
         parent => 'schedule/history',
         handler => {
-            GET => 'handler_history_get', 
+            GET => 'handler_history_get_multiple',
             POST => 'handler_history_post', 
         },
         acl_profile => {
@@ -1624,7 +1692,7 @@ EOH
     { 
         parent => 'priv/history',
         handler => {
-            GET => 'handler_history_get', 
+            GET => 'handler_history_get_multiple',
         },
         acl_profile => 'inactive',
         cli => 'priv history nick $NICK $TSRANGE',
@@ -1646,7 +1714,7 @@ EOH
     { 
         parent => 'schedule/history',
         handler => {
-            GET => 'handler_history_get', 
+            GET => 'handler_history_get_multiple',
         },
         acl_profile => 'inactive',
         cli => 'schedule history nick $NICK $TSRANGE',

@@ -70,10 +70,10 @@ use App::Dochazka::REST::Model::Schedintvls;
 use App::Dochazka::REST::Model::Schedule qw( get_all_schedules );
 use App::Dochazka::REST::Model::Shared qw( 
     canonicalize_date
-    canonicalize_tsrange 
-    load_multiple 
-    priv_by_eid 
-    schedule_by_eid 
+    canonicalize_tsrange
+    load_multiple
+    priv_by_eid
+    schedule_by_eid
     select_set_of_single_scalar_rows
     split_tsrange
     timestamp_delta_plus
@@ -1011,40 +1011,112 @@ sub handler_whoami {
     delete $current_emp->{'passhash'};
     delete $current_emp->{'salt'};
     delete $current_emp->{'remark'} unless $context->{'current_priv'} eq 'admin';
-    $CELL->status_ok( 'DISPATCH_EMPLOYEE_CURRENT', args => 
+    $CELL->status_ok( 'DISPATCH_EMPLOYEE_SELF', args => 
         [ $current_emp->{'nick'} ], payload => $current_emp );
 }
 
 
-=head3 handler_get_employee_self_privsched
-
-Handler for GET requests on 'employee/self/priv' and 'employee/current/priv', 
-which are synonymous resources.
+=head3 _handler_get_employee_full_pass2
 
 =cut
 
-sub handler_get_employee_self_privsched {
-    my ( $self, $pass ) = @_;
-    $log->debug( "Entering " . __PACKAGE__ . "::handler_get_employee_self_privsched" ); 
-
-    # first pass
-    return 1 if $pass == 1;
-
-    # second pass
+sub _handler_get_employee_full_pass2 {
+    my ( $self ) = @_;
     my $context = $self->context;
+    my $emp = $context->{'stashed_employee_object'};
     my $conn = $context->{'dbix_conn'};
-    my $current_emp = $context->{'current'};
-    my $current_priv = priv_by_eid( $conn, $current_emp->{'eid'} );
-    my $current_sched = schedule_by_eid( $conn, $current_emp->{'eid'} );
+    my $current_priv = priv_by_eid( $conn, $emp->{'eid'} );
+    my $current_sched = schedule_by_eid( $conn, $emp->{'eid'} );
+    my %history;
+    foreach my $prop ( 'priv', 'schedule' ) {
+        my $status;
+        my @ARGS = ( $conn, $emp->{'eid'} );
+        if ( $prop eq 'priv' ) {
+            $status = App::Dochazka::REST::Model::Privhistory->load_by_eid( @ARGS );
+        } elsif ( $prop eq 'schedule' ) {
+            $status = App::Dochazka::REST::Model::Schedhistory->load_by_eid( @ARGS );
+        } else {
+            die "DEFDXXEGUG!";
+        }
+        $history{$prop} = $status->payload;
+    }
     $CELL->status_ok( 
-        'DISPATCH_EMPLOYEE_CURRENT_PRIV', 
-        args => [ $current_emp->{'nick'}, $current_priv ], 
+        'DISPATCH_EMPLOYEE_PROFILE_FULL',
+        args => [ $emp->{'nick'}, $current_priv ],
         payload => { 
+            'emp' => $emp,
             'priv' => $current_priv,
+            'privhistory' => $history{'priv'},
             'schedule' => $current_sched,
-            'current_emp' => $current_emp,
+            'schedhistory' => $history{'schedule'},
         } 
     );
+}
+
+=head3 handler_get_employee_self_full
+
+Handler for GET requests on 'employee/self/full'
+
+=cut
+
+sub handler_get_employee_self_full {
+    my ( $self, $pass ) = @_;
+    $log->debug( "Entering " . __PACKAGE__ . "::handler_get_employee_self_full" );
+
+    my $context = $self->context;
+
+    # first pass
+    if ( $pass == 1 ) {
+        $context->{'stashed_employee_object'} = $context->{'current'};
+        return 1;
+    }
+
+    # second pass
+    return $self->_handler_get_employee_full_pass2();
+}
+
+
+=head3 handler_get_employee_eid_full
+
+Handler for GET requests on 'employee/eid/:eid/full'
+
+=cut
+
+sub handler_get_employee_eid_full {
+    my ( $self, $pass ) = @_;
+    $log->debug( "Entering " . __PACKAGE__ . "::handler_get_employee_eid_full" );
+
+    my $context = $self->context;
+
+    # first pass
+    if ( $pass == 1 ) {
+        return shared_get_employee_pass1( $self, $pass, 'EID', $self->context->{'mapping'}->{'eid'} );
+    }
+
+    # second pass
+    return $self->_handler_get_employee_full_pass2();
+}
+
+
+=head3 handler_get_employee_nick_full
+
+Handler for GET requests on 'employee/nick/:nick/full'
+
+=cut
+
+sub handler_get_employee_nick_full {
+    my ( $self, $pass ) = @_;
+    $log->debug( "Entering " . __PACKAGE__ . "::handler_get_employee_nick_full" );
+
+    my $context = $self->context;
+
+    # first pass
+    if ( $pass == 1 ) {
+        return shared_get_employee_pass1( $self, $pass, 'nick', $self->context->{'mapping'}->{'nick'} );
+    }
+
+    # second pass
+    return $self->_handler_get_employee_full_pass2();
 }
 
 
@@ -1698,18 +1770,19 @@ sub handler_history_self {
 }
 
 
-=head3 handler_history_get
+=head3 handler_history_get_single
 
 Handler method for GET requests on the '/{priv,schedule}/history/eid/..' and
-'/{priv,schedule}/history/nick/..' resources.
+'/{priv,schedule}/history/nick/..' resources (potentially returning
+a single record).
 
 =cut
 
-sub handler_history_get {
+sub handler_history_get_single {
     my ( $self, $pass ) = @_;
-    $log->debug( "Entering " . __PACKAGE__ . "::handler_history_get" ); 
+    $log->debug( "Entering " . __PACKAGE__ . "::handler_history_get_single" ); 
 
-    my ( $context, $method, $mapping, $tsrange, $key, $value ) = shared_history_init( $self->context );
+    my ( $context, $method, $mapping, undef, $ts, $key, $value ) = shared_history_init( $self->context );
 
     # first pass
     if ( $pass == 1 ) {
@@ -1720,11 +1793,71 @@ sub handler_history_get {
     }
 
     # second pass
-    my ( $class, $prop, undef ) = shared_get_class_prop_id( $self->context );
+    my $prop = $context->{'components'}->[0];
+    my $emp = $self->context->{'stashed_employee_obj'};
+    my $status;
+    if ( $prop eq 'priv' ) {
+        $status = App::Dochazka::REST::Model::Privhistory->load_by_eid(
+            $context->{'dbix_conn'},
+            $emp->eid,
+            $ts
+        );
+    } elsif ( $prop eq 'schedule' ) {
+        $status = App::Dochazka::REST::Model::Schedhistory->load_by_eid(
+            $context->{'dbix_conn'},
+            $emp->eid,
+            $ts
+        );
+    } else {
+        die "BGUDFUUFF! Improper prop ->$prop<- seen!";
+    }
+    # - process return value
+    if ( $status->level eq 'NOTICE' and $status->code eq 'DISPATCH_NO_RECORDS_FOUND' ) {
+        my $tsmsg = ( $ts ) ? $ts : 'now';
+        $self->mrest_declare_status(
+            code => 404,
+            explanation => "No $prop history for $key $value as of $tsmsg",
+        );
+        return $fail;
+    } elsif ( $status->not_ok ) {
+        $self->mrest_declare_status(
+            code => 500,
+            explanation => $status->text,
+        );
+        return $fail;
+    }
+    return $status;
+}
+
+
+=head3 handler_history_get_multiple
+
+Handler method for GET requests on the '/{priv,schedule}/history/eid/..' and
+'/{priv,schedule}/history/nick/..' resources (all potentially returning
+multiple records).
+
+=cut
+
+sub handler_history_get_multiple {
+    my ( $self, $pass ) = @_;
+    $log->debug( "Entering " . __PACKAGE__ . "::handler_history_get_multiple" ); 
+
+    my ( $context, $method, $mapping, $tsrange, undef, $key, $value ) = shared_history_init( $self->context );
+
+    # first pass
+    if ( $pass == 1 ) {
+        my $emp = shared_first_pass_lookup( $self, $key, $value );
+        return 0 unless $emp;
+        $self->context->{'stashed_employee_obj'} = $emp;
+        return 1;
+    }
+
+    # second pass
+    my ( $class, $prop, undef ) = shared_get_class_prop_id( $context );
     my $emp = $self->context->{'stashed_employee_obj'};
     my $status = App::Dochazka::REST::Model::Shared::get_history( 
         $prop,
-        $self->context->{'dbix_conn'},
+        $context->{'dbix_conn'},
         eid => $emp->eid,
         nick => $emp->nick, 
         tsrange => $tsrange, 
@@ -1752,7 +1885,7 @@ sub handler_history_post {
     my ( $self, $pass ) = @_;
     $log->debug( "Entering " . __PACKAGE__ . "::handler_history_post" ); 
 
-    my ( $context, $method, $mapping, $tsrange, $key, $value ) = shared_history_init( $self->context );
+    my ( $context, undef, undef, undef, undef, $key, $value ) = shared_history_init( $self->context );
 
     # first pass
     if ( $pass == 1 ) {
@@ -1765,7 +1898,7 @@ sub handler_history_post {
     }
 
     # second pass
-    my ( $class, $prop, $id ) = shared_get_class_prop_id( $self->context );
+    my ( $class, $prop, $id ) = shared_get_class_prop_id( $context );
     my $emp = $context->{'stashed_employee_obj'};
 
     # - check entity for presence of certain properties
@@ -1790,9 +1923,16 @@ sub handler_history_post {
     if ( $status->not_ok ) {
         $self->context->{'create_path'} = $status->level;
         if ( $status->code eq 'DOCHAZKA_MALFORMED_400' ) {
-            return $self->mrest_declare_status( code => 400, explanation => "Check syntax of your request entity" );
+            return $self->mrest_declare_status(
+                code => 400,
+                explanation => "Check syntax of your request entity"
+            );
         }
-        return $self->mrest_declare_status( code => 500, explanation => $status->code, args => $status->args );
+        return $self->mrest_declare_status(
+            code => 500,
+            explanation => $status->code,
+            args => $status->args
+        );
     }
     $self->context->{'create_path'} = '.../history/phid/' . ( $status->payload->{$id} || 'UNDEF' );
     return $status;

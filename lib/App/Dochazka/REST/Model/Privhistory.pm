@@ -185,7 +185,7 @@ sub load_by_eid {
     my ( $conn, $eid, $ts ) = validate_pos( @_,
         { isa => 'DBIx::Connector' },
         { type => SCALAR },                # EID
-        { type => SCALAR, optional => 1 }, # timestamp
+        { type => SCALAR|UNDEF, optional => 1 }, # timestamp
     );
   
     if ( $ts ) {
