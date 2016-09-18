@@ -3648,3 +3648,22 @@ SPLIT OFF App::MREST into separate distribution
 - build/ops: package the new LDAP scripts in CPAN distro
 - build/ops: do not package run-tests.sh script
 
+0.544 2016-09-19 01:07 CEST
+- Drop employee/current and employee/current/priv resources
+- Add resource definitions for {priv,sched}/history/eid/:eid/:ts
+- Add resource definitions for {priv,sched}/history/eid/:eid/now
+- dispatch: distinguish single/multiple in history handler names
+- Shared.pm: include timestamp in shared_get_class_prop_id() return list
+- dispatch: implement GET handler for single-record history resources
+- model: handle undef timestamps in history load_by_eid methods
+- ResourceDefs.pm: better timestamp validation regex
+- tests: add dispatch tests for {priv,schedule}/eid/:eid/{:ts,now}
+- Add resource definitions for employee/{eid,nick}/{:eid,:nick}/full
+- In employee/self/full resource, rename current_emp property to "emp"
+- handlers: make employee/self/full return history objects
+- tests: test for history objects in employee/self/full output
+- dispatch: generalize pass 1 and 2 of GET employee/*/full handler
+- Implement "employee/{eid,nick}/{:eid,:nick}/full" handlers
+- tests: refactor "employee/self/full" dispatch tests
+- tests: functional tests for employee/{eid,nick}/{:eid,:nick}/full
+
