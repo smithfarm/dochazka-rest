@@ -241,48 +241,62 @@ foreach my $base ( "employee/self" ) {
 note( '=============================' );
 note( '"employee/self/full" resource' );
 note( '=============================' );
-foreach my $base ( "employee/self/full" ) {
-    docu_check($test, "employee/self/full");
 
-    note( "looping: GET $base" );
-    foreach my $originator ( 'demo', 'root' ) {
-        $status = req( $test, 200, $originator, 'GET', $base );
-        is( $status->level, 'OK' );
-        is( $status->code, 'DISPATCH_EMPLOYEE_PROFILE_FULL' );
-        ok( defined $status->payload );
-        ok( exists $status->payload->{'emp'} );
-        ok( exists $status->payload->{'priv'} );
-        ok( exists $status->payload->{'privhistory'} );
-        ok( exists $status->payload->{'schedule'} );
-        ok( exists $status->payload->{'schedhistory'} );
-        is( $status->payload->{'emp'}->{'nick'}, $originator );
-        if ( $originator eq 'demo' ) {
-            is( $status->payload->{'priv'}, 'passerby' );
-            is( $status->payload->{'privhistory'}, undef );
-        } elsif ( $originator eq 'root' ) {
-            is( $status->payload->{'priv'}, 'admin' );
-            is( ref( $status->payload->{'privhistory'} ), 'HASH' );
-            ok( exists $status->payload->{'privhistory'}->{'phid'} );
-        } else {
-            diag( "\$originator ($originator) is neither root nor demo" );
-            BAIL_OUT(0);
-        }
-        is( $status->payload->{'schedule'}, undef );
-        is( $status->payload->{'schedhistory'}, undef );
+$base = "employee/self";
+my $resource = "$base/full";
+docu_check( $test, $resource );
+
+foreach my $originator ( 'demo', 'inactive', 'active', 'root' ) {
+
+    my $uri;
+    if ( $base eq 'employee/nick' ) {
+        $uri = "employee/nick/$originator/full";
+    } elsif ( $base eq 'employee/self' ) {
+        $uri = 'employee/self/full';
+    } else {
+        diag( "Bad loop!" );
+        BAIL_OUT(0);
     }
-    
-    note( "looping: PUT, POST, DELETE $base" );
-    $status = req( $test, 405, 'demo', 'PUT', $base );
-    $status = req( $test, 405, 'active', 'PUT', $base );
-    $status = req( $test, 405, 'root', 'PUT', $base );
-    $status = req( $test, 405, 'demo', 'POST', $base );
-    $status = req( $test, 405, 'active', 'POST', $base );
-    $status = req( $test, 405, 'root', 'POST', $base );
-    $status = req( $test, 405, 'demo', 'DELETE', $base );
-    $status = req( $test, 405, 'active', 'DELETE', $base );
-    $status = req( $test, 405, 'root', 'DELETE', $base );
+
+    $status = req( $test, 200, $originator, 'GET', $uri );
+    is( $status->level, 'OK' );
+    is( $status->code, 'DISPATCH_EMPLOYEE_PROFILE_FULL' );
+    ok( defined $status->payload );
+    ok( exists $status->payload->{'emp'} );
+    ok( exists $status->payload->{'priv'} );
+    ok( exists $status->payload->{'privhistory'} );
+    ok( exists $status->payload->{'schedule'} );
+    ok( exists $status->payload->{'schedhistory'} );
+    is( $status->payload->{'emp'}->{'nick'}, $originator );
+    if ( $originator eq 'demo' ) {
+        is( $status->payload->{'priv'}, 'passerby' );
+        is( $status->payload->{'privhistory'}, undef );
+    } elsif ( $originator eq 'inactive' ) {
+        is( $status->payload->{'priv'}, 'inactive' );
+        is( ref( $status->payload->{'privhistory'} ), 'HASH' );
+        ok( exists $status->payload->{'privhistory'}->{'phid'} );
+    } elsif ( $originator eq 'active' ) {
+        is( $status->payload->{'priv'}, 'active' );
+        is( ref( $status->payload->{'privhistory'} ), 'HASH' );
+        ok( exists $status->payload->{'privhistory'}->{'phid'} );
+    } elsif ( $originator eq 'root' ) {
+        is( $status->payload->{'priv'}, 'admin' );
+        is( ref( $status->payload->{'privhistory'} ), 'HASH' );
+        ok( exists $status->payload->{'privhistory'}->{'phid'} );
+    } else {
+        diag( "\$originator ($originator) is neither root nor demo" );
+        BAIL_OUT(0);
+    }
+    is( $status->payload->{'schedule'}, undef );
+    is( $status->payload->{'schedhistory'}, undef );
+
+    note( "PUT, POST, DELETE $resource" );
+    $status = req( $test, 405, $originator, 'PUT', $uri );
+    $status = req( $test, 405, $originator, 'POST', $uri );
+    $status = req( $test, 405, $originator, 'DELETE', $uri );
+
 }
-    
+
     
 note( '=============================' );
 note( '"employee/eid" resource' );
