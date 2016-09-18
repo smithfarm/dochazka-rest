@@ -284,7 +284,7 @@ foreach my $originator ( 'demo', 'inactive', 'active', 'root' ) {
         is( ref( $status->payload->{'privhistory'} ), 'HASH' );
         ok( exists $status->payload->{'privhistory'}->{'phid'} );
     } else {
-        diag( "\$originator ($originator) is neither root nor demo" );
+        diag( "bad \$originator ($originator) in test loop" );
         BAIL_OUT(0);
     }
     is( $status->payload->{'schedule'}, undef );
@@ -299,6 +299,97 @@ foreach my $originator ( 'demo', 'inactive', 'active', 'root' ) {
 
     
 note( '=============================' );
+note( '"employee/eid/:eid/full" resource' );
+note( '"employee/nick/:nick/full" resource' );
+note( '=============================' );
+
+map { docu_check( $test, $_ ); } 
+    ( 'employee/eid/:eid/full', 'employee/nick/:nick/full' );
+
+my %eid_map = (
+    'demo' => $site->DOCHAZKA_EID_OF_DEMO,
+    'inactive' => $ts_eid_inactive,
+    'active' => $ts_eid_active,
+    'root' => $site->DOCHAZKA_EID_OF_ROOT,
+);
+
+foreach my $nick ( 'demo', 'inactive' ) {
+    my $eid = $eid_map{$nick};
+    foreach my $uri ( "employee/eid/$eid/full", "employee/nick/$nick/full" ) {
+        note( "$nick tries and fails to use $uri resource" );
+        req( $test, 403, $nick, 'GET', $uri );
+        req( $test, 405, $nick, 'PUT', $uri );
+        req( $test, 405, $nick, 'POST', $uri );
+        req( $test, 405, $nick, 'DELETE', $uri );
+    }
+}
+
+foreach my $nick ( 'demo', 'inactive', 'active' ) {
+    foreach my $uri ( "employee/eid/1/full", "employee/nick/root/full" ) {
+        note( "$nick tries and fails to use $uri resource" );
+        req( $test, 403, $nick, 'GET', $uri );
+        req( $test, 405, $nick, 'PUT', $uri );
+        req( $test, 405, $nick, 'POST', $uri );
+        req( $test, 405, $nick, 'DELETE', $uri );
+    }
+}
+
+sub _employee_full_success {
+    my ( $originator, $nick, $uri ) = @_;
+
+    note( "$nick tries and succeeds to use $uri resource" );
+    $status = req( $test, 200, $originator, 'GET', $uri );
+    is( $status->level, 'OK' );
+    is( $status->code, 'DISPATCH_EMPLOYEE_PROFILE_FULL' );
+    ok( defined $status->payload );
+    ok( exists $status->payload->{'emp'} );
+    ok( exists $status->payload->{'priv'} );
+    ok( exists $status->payload->{'privhistory'} );
+    ok( exists $status->payload->{'schedule'} );
+    ok( exists $status->payload->{'schedhistory'} );
+    is( $status->payload->{'emp'}->{'nick'}, $nick );
+    if ( $nick eq 'demo' ) {
+        is( $status->payload->{'priv'}, 'passerby' );
+        is( $status->payload->{'privhistory'}, undef );
+    } elsif ( $nick eq 'inactive' ) {
+        is( $status->payload->{'priv'}, 'inactive' );
+        is( ref( $status->payload->{'privhistory'} ), 'HASH' );
+        ok( exists $status->payload->{'privhistory'}->{'phid'} );
+    } elsif ( $nick eq 'active' ) {
+        is( $status->payload->{'priv'}, 'active' );
+        is( ref( $status->payload->{'privhistory'} ), 'HASH' );
+        ok( exists $status->payload->{'privhistory'}->{'phid'} );
+    } elsif ( $nick eq 'root' ) {
+        is( $status->payload->{'priv'}, 'admin' );
+        is( ref( $status->payload->{'privhistory'} ), 'HASH' );
+        ok( exists $status->payload->{'privhistory'}->{'phid'} );
+    } else {
+        diag( "bad \$nick ($nick) in test loop" );
+        BAIL_OUT(0);
+    }
+    is( $status->payload->{'schedule'}, undef );
+    is( $status->payload->{'schedhistory'}, undef );
+}
+
+foreach my $nick ( 'active', 'root' ) {
+    my $eid = $eid_map{$nick};
+    foreach my $uri ( "employee/eid/$eid/full", "employee/nick/$nick/full" ) {
+
+        _employee_full_success( $nick, $nick, $uri );
+
+        note( "PUT, POST, DELETE $resource" );
+        req( $test, 405, $nick, 'PUT', $uri );
+        req( $test, 405, $nick, 'POST', $uri );
+        req( $test, 405, $nick, 'DELETE', $uri );
+    }
+}
+
+foreach my $uri ( "employee/eid/$ts_eid_inactive/full", "employee/nick/inactive/full" ) {
+    _employee_full_success( 'root', 'inactive', $uri );
+}
+
+
+note( '=============================' );
 note( '"employee/eid" resource' );
 note( '=============================' );
 $base = "employee/eid";
@@ -307,12 +398,12 @@ note( "docu_check on $base" );
 docu_check($test, "employee/eid");
 
 note( "GET, PUT: $base" );
-$status = req( $test, 405, 'demo', 'GET', $base );
-$status = req( $test, 405, 'active', 'GET', $base );
-$status = req( $test, 405, 'root', 'GET', $base );
-$status = req( $test, 405, 'demo', 'PUT', $base );
-$status = req( $test, 405, 'active', 'PUT', $base );
-$status = req( $test, 405, 'root', 'PUT', $base );
+req( $test, 405, 'demo', 'GET', $base );
+req( $test, 405, 'active', 'GET', $base );
+req( $test, 405, 'root', 'GET', $base );
+req( $test, 405, 'demo', 'PUT', $base );
+req( $test, 405, 'active', 'PUT', $base );
+req( $test, 405, 'root', 'PUT', $base );
 
 note( "POST: $base" );
 
