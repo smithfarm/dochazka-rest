@@ -1467,6 +1467,48 @@ Retrieves a slice (given by the tsrange argument) of the employee's
 EOH
     },
 
+    'priv/history/eid/:eid/:ts' =>
+    {
+        parent => 'priv/history',
+        handler => {
+            GET => 'handler_history_get', 
+        },
+        acl_profile => 'inactive',
+        cli => 'priv history eid $EID $TS',
+        description => 'Get the privhistory record effective at a given timestamp',
+        validations => {
+            'eid' => 'Int',
+            'ts' => $ts_validation,
+        },
+        documentation => <<'EOH',
+=pod
+
+Retrieves an employee's effective privhistory record (status change) as of a
+given timestamp.
+EOH
+    },
+
+    'schedule/history/eid/:eid/:ts' =>
+    {
+        parent => 'schedule/history',
+        handler => {
+            GET => 'handler_history_get', 
+        },
+        acl_profile => 'inactive',
+        cli => 'schedule history eid $EID $TS',
+        description => 'Get the privhistory record effective at a given timestamp',
+        validations => {
+            'eid' => 'Int',
+            'ts' => $ts_validation,
+        },
+        documentation => <<'EOH',
+=pod
+
+Retrieves an employee's effective schedhistory record (status change) as of a
+given timestamp.
+EOH
+    },
+
     'priv/history/nick/:nick' =>
     { 
         parent => 'priv/history',
