@@ -1697,6 +1697,66 @@ sub handler_history_self {
 }
 
 
+=head3 handler_history_get_single
+
+Handler method for GET requests on the '/{priv,schedule}/history/eid/..' and
+'/{priv,schedule}/history/nick/..' resources (potentially returning
+a single record).
+
+=cut
+
+sub handler_history_get_single {
+    my ( $self, $pass ) = @_;
+    $log->debug( "Entering " . __PACKAGE__ . "::handler_history_get_single" ); 
+
+    my ( $context, $method, $mapping, undef, $ts, $key, $value ) = shared_history_init( $self->context );
+
+    # first pass
+    if ( $pass == 1 ) {
+        my $emp = shared_first_pass_lookup( $self, $key, $value );
+        return 0 unless $emp;
+        $self->context->{'stashed_employee_obj'} = $emp;
+        return 1;
+    }
+
+    # second pass
+    my $prop = $context->{'components'}->[0];
+    my $emp = $self->context->{'stashed_employee_obj'};
+    my $status;
+    if ( $prop eq 'priv' ) {
+        $status = App::Dochazka::REST::Model::Privhistory->load_by_eid(
+            $context->{'dbix_conn'},
+            $emp->eid,
+            $ts
+        );
+    } elsif ( $prop eq 'schedule' ) {
+        $status = App::Dochazka::REST::Model::Schedhistory->load_by_eid(
+            $context->{'dbix_conn'},
+            $emp->eid,
+            $ts
+        );
+    } else {
+        die "BGUDFUUFF! Improper prop ->$prop<- seen!";
+    }
+    # - process return value
+    if ( $status->level eq 'NOTICE' and $status->code eq 'DISPATCH_NO_RECORDS_FOUND' ) {
+        my $tsmsg = ( $ts ) ? $ts : 'now';
+        $self->mrest_declare_status(
+            code => 404,
+            explanation => "No $prop history for $key $value as of $tsmsg",
+        );
+        return $fail;
+    } elsif ( $status->not_ok ) {
+        $self->mrest_declare_status(
+            code => 500,
+            explanation => $status->text,
+        );
+        return $fail;
+    }
+    return $status;
+}
+
+
 =head3 handler_history_get_multiple
 
 Handler method for GET requests on the '/{priv,schedule}/history/eid/..' and
@@ -1709,7 +1769,7 @@ sub handler_history_get_multiple {
     my ( $self, $pass ) = @_;
     $log->debug( "Entering " . __PACKAGE__ . "::handler_history_get_multiple" ); 
 
-    my ( $context, $method, $mapping, $tsrange, $key, $value ) = shared_history_init( $self->context );
+    my ( $context, $method, $mapping, $tsrange, undef, $key, $value ) = shared_history_init( $self->context );
 
     # first pass
     if ( $pass == 1 ) {
@@ -1720,11 +1780,11 @@ sub handler_history_get_multiple {
     }
 
     # second pass
-    my ( $class, $prop, undef ) = shared_get_class_prop_id( $self->context );
+    my ( $class, $prop, undef ) = shared_get_class_prop_id( $context );
     my $emp = $self->context->{'stashed_employee_obj'};
     my $status = App::Dochazka::REST::Model::Shared::get_history( 
         $prop,
-        $self->context->{'dbix_conn'},
+        $context->{'dbix_conn'},
         eid => $emp->eid,
         nick => $emp->nick, 
         tsrange => $tsrange, 
@@ -1752,7 +1812,7 @@ sub handler_history_post {
     my ( $self, $pass ) = @_;
     $log->debug( "Entering " . __PACKAGE__ . "::handler_history_post" ); 
 
-    my ( $context, $method, $mapping, $tsrange, $key, $value ) = shared_history_init( $self->context );
+    my ( $context, undef, undef, undef, undef, $key, $value ) = shared_history_init( $self->context );
 
     # first pass
     if ( $pass == 1 ) {
@@ -1765,7 +1825,7 @@ sub handler_history_post {
     }
 
     # second pass
-    my ( $class, $prop, $id ) = shared_get_class_prop_id( $self->context );
+    my ( $class, $prop, $id ) = shared_get_class_prop_id( $context );
     my $emp = $context->{'stashed_employee_obj'};
 
     # - check entity for presence of certain properties
@@ -1790,9 +1850,16 @@ sub handler_history_post {
     if ( $status->not_ok ) {
         $self->context->{'create_path'} = $status->level;
         if ( $status->code eq 'DOCHAZKA_MALFORMED_400' ) {
-            return $self->mrest_declare_status( code => 400, explanation => "Check syntax of your request entity" );
+            return $self->mrest_declare_status(
+                code => 400,
+                explanation => "Check syntax of your request entity"
+            );
         }
-        return $self->mrest_declare_status( code => 500, explanation => $status->code, args => $status->args );
+        return $self->mrest_declare_status(
+            code => 500,
+            explanation => $status->code,
+            args => $status->args
+        );
     }
     $self->context->{'create_path'} = '.../history/phid/' . ( $status->payload->{$id} || 'UNDEF' );
     return $status;
