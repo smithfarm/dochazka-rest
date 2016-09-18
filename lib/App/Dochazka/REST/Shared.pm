@@ -414,7 +414,7 @@ sub shared_get_class_prop_id {
 =head2 shared_history_init
 
 For 'priv/history' and 'schedule/history' resources. Given the request context, 
-extract or generate six values needed by the resource handler.
+extract or generate values needed by the resource handler.
 
 =cut
 
@@ -426,6 +426,7 @@ sub shared_history_init {
 
     my $mapping = $context->{'mapping'};
     my $tsrange = $mapping->{'tsrange'};
+    my $ts = $mapping->{'ts'};
     my ( $key, $value );
     if ( defined( my $nick = $mapping->{'nick'} ) ) {
         $key = 'nick';
@@ -437,7 +438,7 @@ sub shared_history_init {
         die "AAFAAAGAGAGGAGAGGGGGGH! mapping contains neither nick nor eid property: " . Dumper( $mapping );
     }
 
-    return ( $context, $method, $mapping, $tsrange, $key, $value );
+    return ( $context, $method, $mapping, $tsrange, $ts, $key, $value );
 }
 
 
