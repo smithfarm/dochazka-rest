@@ -70,10 +70,10 @@ use App::Dochazka::REST::Model::Schedintvls;
 use App::Dochazka::REST::Model::Schedule qw( get_all_schedules );
 use App::Dochazka::REST::Model::Shared qw( 
     canonicalize_date
-    canonicalize_tsrange 
-    load_multiple 
-    priv_by_eid 
-    schedule_by_eid 
+    canonicalize_tsrange
+    load_multiple
+    priv_by_eid
+    schedule_by_eid
     select_set_of_single_scalar_rows
     split_tsrange
     timestamp_delta_plus
@@ -1697,16 +1697,17 @@ sub handler_history_self {
 }
 
 
-=head3 handler_history_get
+=head3 handler_history_get_multiple
 
 Handler method for GET requests on the '/{priv,schedule}/history/eid/..' and
-'/{priv,schedule}/history/nick/..' resources.
+'/{priv,schedule}/history/nick/..' resources (all potentially returning
+multiple records).
 
 =cut
 
-sub handler_history_get {
+sub handler_history_get_multiple {
     my ( $self, $pass ) = @_;
-    $log->debug( "Entering " . __PACKAGE__ . "::handler_history_get" ); 
+    $log->debug( "Entering " . __PACKAGE__ . "::handler_history_get_multiple" ); 
 
     my ( $context, $method, $mapping, $tsrange, $key, $value ) = shared_history_init( $self->context );
 

@@ -1334,7 +1334,7 @@ EOH
     { 
         parent => 'priv/history',
         handler => {
-            GET => 'handler_history_get', 
+            GET => 'handler_history_get_multiple',
             POST => 'handler_history_post',
         },
         acl_profile => {
@@ -1382,7 +1382,7 @@ EOH
     { 
         parent => 'schedule/history',
         handler => {
-            GET => 'handler_history_get', 
+            GET => 'handler_history_get_multiple',
             POST => 'handler_history_post',
         },
         acl_profile => {
@@ -1429,7 +1429,7 @@ EOH
     {
         parent => 'priv/history',
         handler => {
-            GET => 'handler_history_get', 
+            GET => 'handler_history_get_multiple',
         },
         acl_profile => 'inactive',
         cli => 'priv history eid $EID $TSRANGE',
@@ -1450,7 +1450,7 @@ EOH
     {
         parent => 'schedule/history',
         handler => {
-            GET => 'handler_history_get', 
+            GET => 'handler_history_get_multiple',
         },
         acl_profile => 'inactive',
         cli => 'schedule history eid $EID $TSRANGE',
@@ -1471,7 +1471,7 @@ EOH
     {
         parent => 'priv/history',
         handler => {
-            GET => 'handler_history_get',
+            GET => 'handler_history_get_single',
         },
         acl_profile => 'inactive',
         cli => 'priv history eid $EID $TS',
@@ -1492,7 +1492,7 @@ EOH
     {
         parent => 'schedule/history',
         handler => {
-            GET => 'handler_history_get',
+            GET => 'handler_history_get_single',
         },
         acl_profile => 'inactive',
         cli => 'schedule history eid $EID $TS',
@@ -1513,7 +1513,7 @@ EOH
     {
         parent => 'priv/history',
         handler => {
-            GET => 'handler_history_get',
+            GET => 'handler_history_get_single',
         },
         acl_profile => 'inactive',
         cli => 'priv history eid $EID now',
@@ -1533,7 +1533,7 @@ EOH
     {
         parent => 'schedule/history',
         handler => {
-            GET => 'handler_history_get',
+            GET => 'handler_history_get_single',
         },
         acl_profile => 'inactive',
         cli => 'schedule history eid $EID now',
@@ -1553,7 +1553,7 @@ EOH
     { 
         parent => 'priv/history',
         handler => {
-            GET => 'handler_history_get', 
+            GET => 'handler_history_get_multiple',
             POST => 'handler_history_post', 
         },
         acl_profile => {
@@ -1601,7 +1601,7 @@ EOH
     { 
         parent => 'schedule/history',
         handler => {
-            GET => 'handler_history_get', 
+            GET => 'handler_history_get_multiple',
             POST => 'handler_history_post', 
         },
         acl_profile => {
@@ -1648,7 +1648,7 @@ EOH
     { 
         parent => 'priv/history',
         handler => {
-            GET => 'handler_history_get', 
+            GET => 'handler_history_get_multiple',
         },
         acl_profile => 'inactive',
         cli => 'priv history nick $NICK $TSRANGE',
@@ -1670,7 +1670,7 @@ EOH
     { 
         parent => 'schedule/history',
         handler => {
-            GET => 'handler_history_get', 
+            GET => 'handler_history_get_multiple',
         },
         acl_profile => 'inactive',
         cli => 'schedule history nick $NICK $TSRANGE',
