@@ -1471,7 +1471,7 @@ EOH
     {
         parent => 'priv/history',
         handler => {
-            GET => 'handler_history_get', 
+            GET => 'handler_history_get',
         },
         acl_profile => 'inactive',
         cli => 'priv history eid $EID $TS',
@@ -1492,7 +1492,7 @@ EOH
     {
         parent => 'schedule/history',
         handler => {
-            GET => 'handler_history_get', 
+            GET => 'handler_history_get',
         },
         acl_profile => 'inactive',
         cli => 'schedule history eid $EID $TS',
@@ -1506,6 +1506,46 @@ EOH
 
 Retrieves an employee's effective schedhistory record (status change) as of a
 given timestamp.
+EOH
+    },
+
+    'priv/history/eid/:eid/now' =>
+    {
+        parent => 'priv/history',
+        handler => {
+            GET => 'handler_history_get',
+        },
+        acl_profile => 'inactive',
+        cli => 'priv history eid $EID now',
+        description => 'Get the privhistory record effective as of "now" (the current timestamp)',
+        validations => {
+            'eid' => 'Int',
+        },
+        documentation => <<'EOH',
+=pod
+
+Retrieves an employee's effective privhistory record (status change) as of
+"now" (the current timestamp).
+EOH
+    },
+
+    'schedule/history/eid/:eid/now' =>
+    {
+        parent => 'schedule/history',
+        handler => {
+            GET => 'handler_history_get',
+        },
+        acl_profile => 'inactive',
+        cli => 'schedule history eid $EID now',
+        description => 'Get the privhistory record effective as of "now" (the current timestamp)',
+        validations => {
+            'eid' => 'Int',
+        },
+        documentation => <<'EOH',
+=pod
+
+Retrieves an employee's effective schedhistory record (status change) as of
+"now" (the current timestamp).
 EOH
     },
 
