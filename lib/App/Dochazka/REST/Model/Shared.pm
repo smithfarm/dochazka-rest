@@ -632,7 +632,7 @@ sub load_multiple {
             args => [ $counter ], payload => $results, count => $counter, keys => $ARGS{'keys'} )
         : $CELL->status_notice( 'DISPATCH_NO_RECORDS_FOUND',
             payload => $results, count => $counter );
-    $log->debug( Dumper $status );
+    #$log->debug( Dumper $status );
     return $status;
 }
 
