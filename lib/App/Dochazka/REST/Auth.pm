@@ -52,6 +52,8 @@ use Web::MREST::InitRouter qw( $resources );
 # methods/attributes not defined in this module will be inherited from:
 use parent 'Web::MREST::Entity';
 
+our $session;
+
 
 =head1 NAME
 
@@ -87,6 +89,7 @@ object and push that onto the context, too.
 
 sub is_authorized {
     my ( $self, $auth_header ) = @_;
+    $log->debug( "Entering " . __PACKAGE__ . "::is_authorized" );
     
     # get database connection for this HTTP request
     App::Dochazka::REST::ConnBank::init_singleton();
@@ -109,6 +112,11 @@ sub is_authorized {
             } );
             $self->_init_session( $emp ) unless $meta->META_DOCHAZKA_UNIT_TESTING;
             return 1;
+        } else {
+            $log->error(
+                "_authenticate returned non-OK status. The entire status object is " . 
+                Dumper( $auth_status )
+            );
         }
     }
     return create_header(
@@ -130,8 +138,9 @@ Initialize the session. Takes an employee object.
 sub _init_session {
     my $self = shift;
     $log->debug( "Entering " . __PACKAGE__ . "::_init_session" );
+
     my ( $emp ) = validate_pos( @_, { type => HASHREF, can => 'eid' } );
-    my $session = Plack::Session->new( $self->request->{'env'} );
+    $session = Plack::Session->new( $self->request->{'env'} );
     my $eid = $emp->eid;
     $session->set( 'eid', $eid );
     $log->debug( "Saved EID ->$eid<- to session data" );
@@ -153,15 +162,23 @@ Validate the session
 
 sub _validate_session {
     my ( $self ) = @_;
+    $log->debug( "Entering " . __PACKAGE__ . "::_validate_session" );
 
     my $r = $self->request;
-    my $session = Plack::Session->new( $r->{'env'} );
-    my $remote_addr = $$r{'env'}{'REMOTE_ADDR'};
+
+    my $remote_addr = $r->{'env'}->{'REMOTE_ADDR'};
+    $log->debug( "Remote address is " . $remote_addr );
+
+    $session = %{ $r->{'env'}->{'psgix.session'} } ?
+        $r->{'env'}->{'psgix.session'} :
+        Plack::Session->new( $r->{'env'} );
+    $log->debug( "psgix.session is " . Dumper( $session ) );
 
     $self->push_onto_context( { 'session' => $session->dump  } );
     $self->push_onto_context( { 'session_id' => $session->id } );
     $log->debug( "Session ID is " . $session->id );
-    #$log->debug( "Remote address is " . $remote_addr );
+    $log->debug( "Session keys are " .
+        ( $session->keys ? $session->keys : "not present") );
     $log->debug( "Session EID is " . 
         ( $session->get('eid') ? $session->get('eid') : "not present") );
     #$log->debug( "Session IP address is " . 
@@ -190,7 +207,8 @@ sub _validate_session {
         return 1;
     }
 
-    $session->expire if $session->get('eid');  # invalid session: delete it
+    $log->notice( "Invalid session - deleting it" );
+    $session->expire;
     return;
 }
 
@@ -205,6 +223,7 @@ parameter, the return value is false, otherwise true.
 =cut
 
 sub _is_fresh {
+    $log->debug( "Entering " . __PACKAGE__ . "::_is_fresh" );
     my ( $last_seen ) = validate_pos( @_, { type => SCALAR } );
     return ( time - $last_seen > $site->DOCHAZKA_REST_SESSION_EXPIRATION_TIME )
         ? 0
@@ -224,6 +243,7 @@ on failure. In the latter case, there will be a declared status.
 sub _authenticate {
     my ( $self, $nick, $password ) = @_;
     my ( $status, $emp );
+    $log->debug( "Entering " . __PACKAGE__ . "::_authenticate" );
 
     # empty credentials: fall back to demo/demo
     if ( $nick ) {
