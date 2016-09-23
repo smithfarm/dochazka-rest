@@ -59,11 +59,11 @@ App::Dochazka::REST - Dochazka REST server
 
 =head1 VERSION
 
-Version 0.544
+Version 0.545
 
 =cut
 
-our $VERSION = '0.544';
+our $VERSION = '0.545';
 
 
 =head2 Development status
