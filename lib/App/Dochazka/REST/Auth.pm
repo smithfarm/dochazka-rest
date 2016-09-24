@@ -169,9 +169,7 @@ sub _validate_session {
     my $remote_addr = $r->{'env'}->{'REMOTE_ADDR'};
     $log->debug( "Remote address is " . $remote_addr );
 
-    $session = %{ $r->{'env'}->{'psgix.session'} } ?
-        $r->{'env'}->{'psgix.session'} :
-        Plack::Session->new( $r->{'env'} );
+    $session = Plack::Session->new( $r->{'env'} );
     $log->debug( "psgix.session is " . Dumper( $session ) );
 
     $self->push_onto_context( { 'session' => $session->dump  } );
@@ -207,9 +205,11 @@ sub _validate_session {
         return 1;
     }
 
-    $log->notice( "Invalid session - deleting it" );
-    $session->expire;
-    return;
+    if ( $session->get('eid') ) {
+        $log->notice( "Invalid existing session - deleting it" );
+        $session->expire;
+    }
+    return 0;
 }
 
 
