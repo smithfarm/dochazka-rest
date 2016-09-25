@@ -44,7 +44,6 @@ use App::Dochazka::REST::Model::Employee qw( autocreate_employee nick_exists );
 use Authen::Passphrase::SaltedDigest;
 use Data::Dumper;
 use Params::Validate qw(:all);
-use Plack::Session;
 use Try::Tiny;
 use Web::Machine::Util qw( create_header );
 use Web::MREST::InitRouter qw( $resources );
@@ -52,7 +51,7 @@ use Web::MREST::InitRouter qw( $resources );
 # methods/attributes not defined in this module will be inherited from:
 use parent 'Web::MREST::Entity';
 
-our $session;
+
 
 
 =head1 NAME
@@ -140,16 +139,18 @@ sub _init_session {
     $log->debug( "Entering " . __PACKAGE__ . "::_init_session" );
 
     my ( $emp ) = validate_pos( @_, { type => HASHREF, can => 'eid' } );
-    $session = Plack::Session->new( $self->request->{'env'} );
+
+    my $r = $self->request;
+    my $ip_addr = $r->{'env'}->{'REMOTE_ADDR'};
+    my $session = $r->{'env'}->{'psgix.session'};
     my $eid = $emp->eid;
-    $session->set( 'eid', $eid );
-    $log->debug( "Saved EID ->$eid<- to session data" );
-    my $ip_addr = $self->request->{'env'}->{'REMOTE_ADDR'};
-    $session->set( 'ip_addr', $ip_addr );
-    $log->debug( "Saved IP address ->$ip_addr<- to session data" );
-    my $last_seen = time;
-    $session->set( 'last_seen', $last_seen );
-    $log->debug( "Saved \"last seen\" time ->$last_seen<- to session data" );
+
+    $session->{'eid'} = $eid;
+    $session->{'ip_addr'} = $ip_addr;
+    $session->{'last_seen'} = time;
+
+    $log->info( "Initialized new session, EID $eid" );
+
     return;
 }
 
@@ -167,49 +168,30 @@ sub _validate_session {
     my $r = $self->request;
 
     my $remote_addr = $r->{'env'}->{'REMOTE_ADDR'};
-    $log->debug( "Remote address is " . $remote_addr );
 
-    $session = %{ $r->{'env'}->{'psgix.session'} } ?
-        $r->{'env'}->{'psgix.session'} :
-        Plack::Session->new( $r->{'env'} );
-    $log->debug( "psgix.session is " . Dumper( $session ) );
+    my $session = $r->{'env'}->{'psgix.session'};
+    return 0 unless %$session;
+    return 0 unless _is_fresh( $session->{'last_seen'} );
+    return 0 unless $session->{'ip_addr'} eq $remote_addr;
 
-    $self->push_onto_context( { 'session' => $session->dump  } );
-    $self->push_onto_context( { 'session_id' => $session->id } );
-    $log->debug( "Session ID is " . $session->id );
-    $log->debug( "Session keys are " .
-        ( $session->keys ? $session->keys : "not present") );
-    $log->debug( "Session EID is " . 
-        ( $session->get('eid') ? $session->get('eid') : "not present") );
-    #$log->debug( "Session IP address is " . 
-    #    ( $session->get('ip_addr') ? $session->get('ip_addr') : "not present" ) );
-    #$log->debug( "Session last_seen is " . 
-    #    ( $session->get('last_seen') ? $session->get('last_seen') : "not present" ) );
+    $log->info( "Detected valid existing session" .
+        ", EID " . $session->{'eid'} .
+        ", last seen " .  $session->{'last_seen'}
+    );
 
-    # validate session:
-    if ( $session->get('eid') and 
-         $session->get('ip_addr') and 
-         $session->get('last_seen') and
-         $session->get('ip_addr') eq $remote_addr and
-         _is_fresh( $session->get('last_seen') ) ) 
-    {
-        $log->debug( "Existing session!" );
-        my $emp = App::Dochazka::REST::Model::Employee->load_by_eid( $dbix_conn, $session->get('eid') )->payload;
-        die "missing employee object in session management" 
-            unless $emp->isa( "App::Dochazka::REST::Model::Employee" ); 
-        $self->push_onto_context( { 
-            current => $emp->TO_JSON, 
-            current_obj => $emp,
-            current_priv => $emp->priv( $dbix_conn ),
-            dbix_conn => $dbix_conn,
-        } );
-        $session->set('last_seen', time); 
-        return 1;
-    }
+    $session->{'last_seen'} = time;
 
-    $log->notice( "Invalid session - deleting it" );
-    $session->expire;
-    return;
+    my $emp = App::Dochazka::REST::Model::Employee->load_by_eid( $dbix_conn, $session->{'eid'} )->payload;
+    die "missing employee object in session management"
+        unless $emp->isa( "App::Dochazka::REST::Model::Employee" );
+    $self->push_onto_context( {
+        current => $emp->TO_JSON,
+        current_obj => $emp,
+        current_priv => $emp->priv( $dbix_conn ),
+        dbix_conn => $dbix_conn,
+    } );
+
+    return 1;
 }
 
 
@@ -225,9 +207,11 @@ parameter, the return value is false, otherwise true.
 sub _is_fresh {
     $log->debug( "Entering " . __PACKAGE__ . "::_is_fresh" );
     my ( $last_seen ) = validate_pos( @_, { type => SCALAR } );
-    return ( time - $last_seen > $site->DOCHAZKA_REST_SESSION_EXPIRATION_TIME )
-        ? 0
-        : 1;
+    if ( time - $last_seen > $site->DOCHAZKA_REST_SESSION_EXPIRATION_TIME ) {
+        $log->error( "Session expired!" );
+        return 0;
+    }
+    return 1;
 }
 
 
