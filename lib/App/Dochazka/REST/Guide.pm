@@ -909,22 +909,12 @@ Employees do not access the database directly, but only via HTTP requests.
 For authorization and auditing purposes, L<App::Dochazka::REST> needs to
 associate each incoming request to an EID. 
 
-When a request comes in, the headers and cookies are examined.
-Requests that belong to an existing session have a cookie that looks like:
-
-    Session ID: xdfke34irsdfslajoasdja;sldkf
-
-while requests for a new session have a header that looks like this:
-
-    Authorize: 
+The L<Plack::Middleware::Session> module associates each incoming request with
+a session. Sessions are validated by examining the session state in the
+L<App::Dochazka::REST::Auth> module.
 
 
 =head2 Existing session
-
-In the former case, since the request is being intermediated by a Plack-aware
-web server, the request will be accompanied by a Plack environment (hashref)
-containing a 'psgix.session' key. The value of this key is a hashref that
-contains the session state.
 
 If the session state is valid, it will contain:
 
@@ -942,9 +932,6 @@ If any of these are missing, or the difference between C<last_seen> and the
 current date/time is greater than the time interval defined in the
 C<DOCHAZKA_REST_SESSION_EXPIRATION_TIME>, the request is rejected with 401
 Unauthorized. 
-
-This takes pace in the C<_validate_session> routine of
-L<App::Dochazka::REST::Resource>.
 
 
 =head2 New session
