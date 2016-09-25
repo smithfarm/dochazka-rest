@@ -3671,3 +3671,7 @@ SPLIT OFF App::MREST into separate distribution
 - cleanup: reduce log verbosity of load_multile() in Model/Shared.pm
 - Auth.pm: add more debug log messages, session mgmt
 
+0.546 2016-09-25 09:44 CEST
+- Revamp session management
+- doc: update session management section of Guide
+
