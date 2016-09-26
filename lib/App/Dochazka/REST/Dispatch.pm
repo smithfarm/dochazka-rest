@@ -1354,27 +1354,27 @@ sub handler_get_employee_eid {
 }
 
 
-=head3 _check_ldap
+=head3 _ldap_sync_pass1
 
 =cut
 
-sub _ldap_ok {
-    my ( $self, $nick ) = @_;
-    die "UFFHDC! No nick in Dispatch.pm->_ldap_ok()!" unless $nick;
-    if ( ! $site->DOCHAZKA_LDAP ) {
-        $self->mrest_declare_status(
-            'code' => 501,
-            'explanation' => 'LDAP not configured on this server',
-        );
+sub _ldap_sync_pass1 {
+    my ( $self, $emp ) = @_;
+    $log->debug( "Entering " . __PACKAGE__ . "::_ldap_sync_pass1" ); 
+
+    my $status = $emp->ldap_sync();
+    $log->debug( "ldap_sync status: " . Dumper( $status ) );
+    if ( $status->not_ok ) {
+        if ( $status->code eq 'DOCHAZKA_LDAP_SYSTEM_USER_NOSYNC' ) {
+            # system user - 403
+            $status->{'http_code'} = 403;
+        } else {
+            $status->{'http_code'} = 404;
+        }
+        $self->mrest_declare_status( $status );
         return 0;
     }
-    if ( grep {/^$nick/} @{ $site->DOCHAZKA_SYSTEM_USERS } ) {
-        $self->mrest_declare_status(
-            'code' => 403,
-            'explanation' => "Employee ->$nick<- is a system user; no LDAP operations allowed!",
-        );
-        return 0;
-    }
+    $self->context->{'stashed_employee_object'} = $emp;
     return 1;
 }
 
@@ -1393,15 +1393,11 @@ sub handler_get_employee_ldap {
     my $nick = $context->{'mapping'}->{'nick'};
 
     if ( $pass == 1 ) {
-        return 0 unless $self->_ldap_ok( $nick );
         my $emp = App::Dochazka::REST::Model::Employee->spawn(
             'nick' => $nick,
             'sync' => 1,
         );
-        my $status = $emp->ldap_sync();
-        return 0 unless $status->ok;
-        $context->{'stashed_employee_object'} = $emp;
-        return 1;
+        return $self->_ldap_sync_pass1( $emp );
     }
 
     return $CELL->status_ok( 'DOCHAZKA_LDAP_LOOKUP', payload => $context->{'stashed_employee_object'} );
@@ -1425,7 +1421,6 @@ sub handler_put_employee_ldap {
 
     # first pass
     if ( $pass == 1 ) {
-        return 0 unless $self->_ldap_ok( $nick );
         # determine if this is an insert or an update
         my $emp = shared_first_pass_lookup( $self, 'nick', $nick );
         $self->nullify_declared_status;
@@ -1437,16 +1432,7 @@ sub handler_put_employee_ldap {
             $emp = App::Dochazka::REST::Model::Employee->spawn( 'nick' => $nick );
         }
         $emp->sync( 1 );
-        $status = $emp->ldap_sync();
-        if ( $status->ok ) {
-            $context->{'stashed_employee_object'} = $emp;
-            return 1;
-        }
-        $self->mrest_declare_status(
-            'code' => 404,
-            'explanation' => "Nick ->$nick<- not found in LDAP"
-        );
-        return 0;
+        return $self->_ldap_sync_pass1( $emp );
     }
 
     # second pass
