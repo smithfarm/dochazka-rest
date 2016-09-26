@@ -173,6 +173,7 @@ sub _validate_session {
     return 0 unless %$session;
     return 0 unless _is_fresh( $session->{'last_seen'} );
     return 0 unless $session->{'ip_addr'} eq $remote_addr;
+    return 0 unless exists( $session->{'eid'} ) and $session->{'eid'};
 
     $log->info( "Detected valid existing session" .
         ", EID " . $session->{'eid'} .
