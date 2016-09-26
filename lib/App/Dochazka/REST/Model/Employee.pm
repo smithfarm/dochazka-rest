@@ -417,7 +417,7 @@ sub ldap_sync {
     return $CELL->status_err(
         'DOCHAZKA_LDAP_SYSTEM_USER_NOSYNC',
         args => [ $nick ],
-    ) if grep {/^$nick/} @{ $site->DOCHAZKA_SYSTEM_USERS };
+    ) if grep { $nick eq $_; } @{ $site->DOCHAZKA_SYSTEM_USERS };
 
     $log->debug( "About to populate $nick from LDAP" );
 
