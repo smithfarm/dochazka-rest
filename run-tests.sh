@@ -33,12 +33,13 @@
 #
 # run-tests.sh
 #
-# Resets the database and runs the test suite. Set PGPASSWORD environment
-# variable to avoid the password prompt.
+# Resets the database in preparation for running the test suite. Set PGPASSWORD
+# environment variable to avoid the password prompt.
 #
 perl Build.PL
 ./Build
-sudo ./Build install 2&>1 >/dev/null
-dochazka-resetdb 2&>1 >/dev/null
+sudo ./Build install 2>&1 >/dev/null
+dochazka-resetdb 2>&1 >/dev/null
 dochazka-dbinit
+# do this manually:
 #prove -lr t/
