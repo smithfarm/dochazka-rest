@@ -518,9 +518,9 @@ sub handler_session {
     return 1 if $pass == 1;
 
     # second pass
+    my $session = $self->request->{'env'}->{'psgix.session'};
     return $CELL->status_ok( 'DISPATCH_SESSION_DATA', payload => {
-        session_id => $self->context->{'session_id'},
-        session => $self->context->{'session'},
+        session => $session,
     } );
 }
 
