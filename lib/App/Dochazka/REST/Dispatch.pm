@@ -504,7 +504,7 @@ sub handler_noop {
 }
 
 
-=head2
+=head3
 
 Handler for the C<session> resource.
 
@@ -522,6 +522,25 @@ sub handler_session {
     return $CELL->status_ok( 'DISPATCH_SESSION_DATA', payload => {
         session => $session,
     } );
+}
+
+
+=head3
+
+Handler for the C<session/terminate> resource.
+
+=cut
+
+sub handler_session_terminate {
+    my ( $self, $pass ) = @_;
+    $log->debug( "Entering " . __PACKAGE__ . "::handler_session_terminate" );
+
+    # first pass
+    return 1 if $pass == 1;
+
+    # second pass
+    $self->request->{'env'}->{'psgix.session'} = {};
+    return $CELL->status_ok;
 }
 
 

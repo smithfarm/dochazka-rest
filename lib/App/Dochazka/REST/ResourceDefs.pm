@@ -352,6 +352,23 @@ Dumps the current session data (server-side).
 EOH
     },
 
+    # session/terminate
+    'session/terminate' =>
+    {
+        parent => '/session',
+        handler => {
+            POST => 'handler_session_terminate',
+        },
+        acl_profile => 'passerby',
+        cli => 'session terminate',
+        description => 'Terminate the current session',
+        documentation => <<'EOH',
+=pod
+
+Terminates the current session
+EOH
+    },
+
     # version
     'version' =>
     { 
