@@ -170,6 +170,8 @@ sub _validate_session {
     my $remote_addr = $r->{'env'}->{'REMOTE_ADDR'};
 
     my $session = $r->{'env'}->{'psgix.session'};
+    $log->debug( "Session is " . Dumper( $session ) );
+
     return 0 unless %$session;
     return 0 unless _is_fresh( $session->{'last_seen'} );
     return 0 unless $session->{'ip_addr'} eq $remote_addr;
