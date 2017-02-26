@@ -2675,8 +2675,8 @@ This resource makes it possible to GET, PUT, or DELETE a schedule by its scode.
 
 =item * GET
 
-An integer scode must be given as an URI parameter. If a schedule
-with this scode is found, it is returned in the payload.
+An scode (string) must be given as a URI parameter. If a schedule with this
+scode is found (exact, case-sensitive match), it is returned in the payload.
 
 =item * PUT
 
