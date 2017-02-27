@@ -2695,7 +2695,7 @@ Properties other than these three cannot be modified using this resource.
 =item * DELETE
 
 The scode must be given as an URI parameter. If found, the schedule with that
-scode will be deleted in an atomic operation. If the operation is sucessful the
+scode will be deleted in an atomic operation. If the operation is successful the
 return status will be "OK".
 
 =back
@@ -2770,7 +2770,7 @@ Properties other than these three cannot be modified using this resource.
 =item * DELETE
 
 An integer SID must be given as an URI parameter. If found, the schedule with
-that SID will be deleted in an atomic operation. If the operation is sucessful
+that SID will be deleted in an atomic operation. If the operation is successful
 the return status will be "OK".
 
 =back
