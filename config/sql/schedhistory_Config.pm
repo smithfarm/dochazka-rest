@@ -65,9 +65,10 @@ set( 'SQL_SCHEDHISTORY_DELETE', q/
 #     SQL to select from schedhistory based on EID and arbitrary timestamp
 #
 set( 'SQL_SCHEDHISTORY_SELECT_ARBITRARY', q/
-      SELECT shid, eid, sid, effective, remark FROM schedhistory
-      WHERE eid = ? and effective <= ?
-      ORDER BY effective DESC
+      SELECT his.shid, his.eid, his.sid, sch.scode, his.effective, his.remark
+      FROM schedhistory his, schedules sch
+      WHERE his.sid = sch.sid and his.eid = ? and his.effective <= ?
+      ORDER BY his.effective DESC
       FETCH FIRST ROW ONLY
       / );
 
@@ -75,33 +76,40 @@ set( 'SQL_SCHEDHISTORY_SELECT_ARBITRARY', q/
 #     SQL to select from schedhistory based on EID and current timestamp
 #
 set( 'SQL_SCHEDHISTORY_SELECT_CURRENT', q/
-      SELECT shid, eid, sid, effective, remark FROM schedhistory
-      WHERE eid = ? and effective <= current_timestamp
-      ORDER BY effective DESC
+      SELECT his.shid AS shid, his.eid AS eid, his.sid AS sid,
+             sch.scode AS scode, his.effective AS effective, his.remark AS remark
+      FROM schedhistory his, schedules sch
+      WHERE his.sid = sch.sid and his.eid = ? and his.effective <= current_timestamp
+      ORDER BY his.effective DESC
       FETCH FIRST ROW ONLY
       / );
 
 # SQL_SCHEDHISTORY_SELECT_BY_SHID
 #     SQL to select a schedhistory record by its shid
 set( 'SQL_SCHEDHISTORY_SELECT_BY_SHID', q/
-      SELECT shid, eid, sid, effective, remark FROM schedhistory
-      WHERE shid = ? 
+      SELECT his.shid AS shid, his.eid AS eid, his.sid AS sid,
+             sch.scode AS scode, his.effective AS effective, his.remark AS remark
+      FROM schedhistory his, schedules sch
+      WHERE his.sid = sch.sid and his.shid = ?
       / );
 
 # SQL_SCHEDHISTORY_SELECT_RANGE_BY_EID
 #     SQL to select a range of SCHEDHISTORY records
 set( 'SQL_SCHEDHISTORY_SELECT_RANGE_BY_EID', q/
-      SELECT shid, eid, sid, effective, remark FROM SCHEDHISTORY 
-      WHERE eid = ? AND effective <@ CAST( ? AS tstzrange )
-      ORDER BY effective
+      SELECT his.shid AS shid, his.eid AS eid, his.sid AS sid,
+             sch.scode AS scode, his.effective AS effective, his.remark AS remark
+      FROM schedhistory his, schedules sch
+      WHERE his.sid = sch.sid and his.eid = ? and his.effective <@ CAST( ? AS tstzrange )
+      ORDER BY his.effective
       / );
 
 # SQL_SCHEDHISTORY_SELECT_RANGE_BY_NICK
 #     SQL to select a range of SCHEDHISTORY records
 set( 'SQL_SCHEDHISTORY_SELECT_RANGE_BY_NICK', q/
-      SELECT sh.shid AS shid, sh.eid AS eid, sh.sid AS sid, sh.effective AS effective, sh.remark AS remark 
-      FROM SCHEDHISTORY sh, employees em
-      WHERE sh.eid = em.eid AND em.nick = ? AND sh.effective <@ CAST( ? AS tstzrange )
+      SELECT sh.shid AS shid, sh.eid AS eid, sh.sid AS sid, sch.scode AS scode,
+             sh.effective AS effective, sh.remark AS remark
+      FROM schedhistory sh, employees em, schedules sch
+      WHERE sh.sid = sch.sid AND sh.eid = em.eid AND em.nick = ? AND sh.effective <@ CAST( ? AS tstzrange )
       ORDER BY sh.effective
       / );
 
