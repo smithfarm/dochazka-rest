@@ -77,6 +77,37 @@ WHERE eid=? and sid=$sid
 SQL
 ok( $shid > 0 );
 
+note( 'select it back with scode' );
+my ( $scode ) = do_select_single( $dbix_conn, <<"SQL", $shid );
+SELECT sch.scode AS scode FROM SCHEDHISTORY his, SCHEDULES sch
+WHERE sch.sid = his.sid AND his.shid = ?
+SQL
+ok( $scode eq "DEFAULT" );
+
+note( 'insert a schedule without an scode' );
+my ( $sid_without_scode ) = do_select_single( $dbix_conn, <<"SQL" );
+INSERT INTO schedules (schedule)
+VALUES ('[{"high_dow":"MON","high_time":"12:00","low_dow":"MON","low_time":"08:00"}]')
+RETURNING sid
+SQL
+#diag( "SID without scode is " . $sid_without_scode );
+
+note( 'insert an innocent schedhistory record' );
+my ( $shid_without_scode ) = do_select_single( $dbix_conn, <<"SQL" );
+INSERT INTO schedhistory (eid, sid, effective)
+VALUES ($eid_of_demo, $sid_without_scode, '2000-01-02')
+RETURNING shid
+SQL
+#diag( "SHID without scode is " . $shid_without_scode );
+
+note( 'select schedhistory record with scode when scode is not there' );
+my ( $t_sid, $t_scode ) = do_select_single( $dbix_conn, <<"SQL", $shid_without_scode );
+SELECT sch.sid AS sid, sch.scode AS scode FROM SCHEDHISTORY his, SCHEDULES sch
+WHERE sch.sid = his.sid AND his.shid = ?
+SQL
+is( $t_sid, $sid_without_scode );
+is( $t_scode, undef );
+
 note( 'give it an innocent remark' );
 test_sql_success( $dbix_conn, 1, <<"SQL" );
 UPDATE schedhistory SET remark = 'I am foobar!'
