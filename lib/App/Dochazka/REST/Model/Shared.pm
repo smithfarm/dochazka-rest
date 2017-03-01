@@ -433,9 +433,9 @@ sub decode_schedule_json {
 
 =head2 get_history
 
-This function takes a number of arguments. The first two are (1) a
-L<DBIx::Connector> object and (2) a SCALAR argument, which can be either 'priv'
-or 'schedule'. 
+This function takes a number of arguments. The first two are (1) a SCALAR
+argument, which can be either 'priv' or 'schedule', and (2) a L<DBIx::Connector>
+object.
 
 Following these there is a PARAMHASH which can have one or more of the
 properties 'eid', 'nick', and 'tsrange'. At least one of { 'eid', 'nick' } must
@@ -455,7 +455,7 @@ the payload will be undefined.
 =cut
 
 sub get_history { 
-    my $t = shift;
+    my $t = shift; # 'priv' or 'sched'
     my $conn = shift;
     validate_pos( @_, 1, 1, 0, 0, 0, 0 );
     my %ARGS = validate( @_, { 
