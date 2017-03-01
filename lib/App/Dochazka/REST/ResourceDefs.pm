@@ -1473,6 +1473,7 @@ For partial history, see 'schedule/history/eid/:eid/:tsrange'.
 
 Adds a record to the schedule history of the given employee. The content body should
 contain two properties: "effective" (a timestamp) and "sid" (the ID of the schedule).
+Alternatively, an "scode" property (schedule code) can be sent instead of "sid".
 
 It is assumed that schedule histories will be built up record-by-record; 
 insertion of multiple history records in a single request is not supported.
@@ -1692,6 +1693,7 @@ For partial histories, see 'schedule/history/nick/:nick/:tsrange'.
 
 Adds a record to the schedule history of the given employee. The content body should
 contain two properties: "effective" (a timestamp) and "sid" (the ID of the schedule).
+Alternatively, an "scode" property (schedule code) can be sent instead of "sid".
 
 It is assumed that schedule histories will be built up record-by-record; 
 insertion of multiple history records in a single request is not supported.
