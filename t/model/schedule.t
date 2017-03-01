@@ -156,6 +156,7 @@ is( $schedhistory->eid, $emp->{eid} );
 is( $schedhistory->sid, $schedule->{sid} );
 is( $schedhistory->effective, $today );
 is( $schedhistory->remark, 'TESTING' );
+is( $schedhistory->scode, undef, "scode property not populated yet" );
 
 $status = undef;
 $status = $schedhistory->insert( $faux_context );
@@ -166,7 +167,25 @@ is( $schedhistory->eid, $emp->{eid} );
 is( $schedhistory->sid, $schedule->{sid} );
 like( $schedhistory->effective, qr/$today_ts\+\d{2}/ );
 is( $schedhistory->remark, 'TESTING' );
+is( $schedhistory->scode, undef, "scode property not populated after insert" );
 is( noof( $dbix_conn, 'schedhistory' ), 1 );
+
+note('spawn a new Schedhistory object and load the data into it');
+my $foo_sho = App::Dochazka::REST::Model::Schedhistory->spawn;
+isa_ok( $foo_sho, 'App::Dochazka::REST::Model::Schedhistory', "schedhistory object is an object" );
+$status = $foo_sho->load_by_id( $dbix_conn, $schedhistory->shid );
+is( $status->level, 'OK' );
+$foo_sho->reset( $status->payload );
+
+note('check that same data is now in the new foo object, too');
+ok( $foo_sho->shid > 0, "schedhistory object shid is > 0" );
+is( $foo_sho->eid, $emp->{eid} );
+is( $foo_sho->sid, $schedule->{sid} );
+like( $foo_sho->effective, qr/$today_ts\+\d{2}/ );
+is( $foo_sho->remark, 'TESTING' );
+
+note('And now the scode is populated');
+is( $foo_sho->scode, 'test1', "scode property not populated after insert" );
 
 note('do a dastardly deed (insert the same schedhistory row a second time)');
 my $dastardly_sh = App::Dochazka::REST::Model::Schedhistory->spawn(
