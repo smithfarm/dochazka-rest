@@ -540,7 +540,7 @@ sub handler_session_terminate {
 
     # second pass
     $self->request->{'env'}->{'psgix.session'} = {};
-    return $CELL->status_ok;
+    return $CELL->status_ok( 'DOCHAZKA_SESSION_TERMINATED' );
 }
 
 
