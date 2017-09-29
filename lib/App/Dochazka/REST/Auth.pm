@@ -250,6 +250,7 @@ sub _authenticate {
     ) {
 
         $log->info( "Detected authentication attempt from $nick, a known LDAP user" );
+        #$log->debug( "Password provided: $password" );
 
         # - authenticate by LDAP bind
         if ( ldap_auth( $nick, $password ) ) {
