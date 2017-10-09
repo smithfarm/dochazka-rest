@@ -502,7 +502,7 @@ EOH
         handler => {
             GET => 'handler_get_activity_all',
         },
-        acl_profile => 'active', 
+        acl_profile => 'passerby',
         cli => 'activity all',
         description => 'Retrieve all activity objects (excluding disabled ones)',
         documentation => <<'EOH',
@@ -560,7 +560,7 @@ EOH
             DELETE => 'handler_delete_activity_code',
         },
         acl_profile => {
-            GET => 'active',
+            GET => 'passerby',
             PUT => 'admin',
             DELETE => 'admin',
         },
