@@ -1294,6 +1294,9 @@ Displays the "full profile" of the currently logged-in employee. The
 information includes the full employee object (taken from the 'current_emp'
 property) as well as the employee's current privlevel and schedule, which are
 looked up from the database.
+
+N.B. The value of the "schedule" property is just the SID, not the actual
+schedule record.
 EOH
     },
 
