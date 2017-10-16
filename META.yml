@@ -34,7 +34,7 @@ no_index:
 provides:
   App::Dochazka::REST:
     file: lib/App/Dochazka/REST.pm
-    version: 0.549
+    version: 0.550
   App::Dochazka::REST::ACL:
     file: lib/App/Dochazka/REST/ACL.pm
     version: 0
@@ -115,7 +115,7 @@ provides:
     version: 0
 requires:
   App::CELL: 0.215
-  App::Dochazka::Common: 0.205
+  App::Dochazka::Common: 0.207
   Authen::Passphrase::SaltedDigest: 0.008
   DBD::Pg: 0
   DBI: 0
@@ -141,4 +141,4 @@ resources:
   bugtracker: https://github.com/smithfarm/dochazka-rest/issues
   license: http://opensource.org/licenses/BSD-3-Clause
   repository: https://github.com/smithfarm/dochazka-rest
-version: 0.549
+version: 0.550
