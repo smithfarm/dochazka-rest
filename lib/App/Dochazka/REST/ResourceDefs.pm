@@ -2552,7 +2552,7 @@ EOH
         handler => {
             GET => 'handler_get_schedule_eid',
         },
-        acl_profile => 'admin', 
+        acl_profile => 'passerby',
         cli => 'schedule eid $EID [$TIMESTAMP]',
         validations => {
             'eid' => 'Int',
