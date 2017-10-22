@@ -716,6 +716,10 @@ the tsranges.
 If the C<dry_run> attribute is false, iterate over all those intervals and
 INSERT them into the intervals table.
 
+Alternatively, if C<dry_run> is true and C<clobber> is true, ignore existing
+attendance intervals that might conflict and just return the scheduled intervals.
+If C<dry_run> is false, C<clobber> setting is ignored.
+
 Returns a status object containing all the fillup intervals generated, divided
 into "success" and "failure" sets, with the latter containing any intervals
 that failed to be inserted for whatever reason. If C<dry_run> is true, all the
@@ -739,6 +743,11 @@ sub commit {
         # Iterate over the tempintvl objects, each of which corresponds
         # to a scheduled interval in the fillup period.
         TEMPINTVL_LOOP: foreach my $tempintvl ( @$tempintvls ) {
+
+            if ( $self->dry_run and $self->clobber ) {
+                push @result_set, $self->_gen_int( $tempintvl->intvl );
+                next TEMPINTVL_LOOP;
+            }
 
             # check for existing attendance intervals that conflict
             @conflicting = ();
