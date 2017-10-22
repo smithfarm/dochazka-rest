@@ -38,7 +38,7 @@ use 5.012;
 use strict;
 use warnings;
 
-#use App::CELL::Test::LogToFile;
+use App::CELL::Test::LogToFile;
 use App::CELL qw( $CELL $log $meta $site );
 use Data::Dumper;
 use App::Dochazka::REST::ConnBank qw( $dbix_conn );
@@ -681,60 +681,91 @@ $fo = App::Dochazka::REST::Fillup->new(
     context => $faux_context,
     tsrange => '[ 1998-05-09 00:00:00, 1998-05-15 24:00:00 )',
     emp_obj => $active,
-    dry_run => 0,
-    clobber => 0,
+    dry_run => 1,
 );
 isa_ok( $fo, 'App::Dochazka::REST::Fillup' );
 isa_ok( $fo->constructor_status, 'App::CELL::Status' );
 ok( $fo->constructor_status );
-is( $fo->dry_run, 0 );
+is( $fo->dry_run, 1 );
 like( $fo->tsrange->{'tsrange'}, qr/^\["1998-05-09 00:00:00...","1998-05-16 00:00:00..."\)$/ );
 
-note( $note = "commit fillup with conflict #1" );
+note( $note = "commit fillup with conflict #1 - dry run" );
 $log->info( "=== $note" );
 $status = $fo->commit;
 is( $status->level, 'OK' );
 is( $status->code, 'DISPATCH_FILLUP_INTERVALS_CREATED' );
-is( $status->payload->{'success'}->{count}, 9 );
-is( $status->payload->{'failure'}->{count}, 1 );
-is( $status->payload->{'failure'}->{'intervals'}->[0]->{'interval'}->intvl, 
-      '["1998-05-11 08:00:00+02","1998-05-11 12:00:00+02")' );
-like( $status->payload->{'failure'}->{'intervals'}->[0]->{'status'}->{'text'},
-      qr/conflicting key value violates exclusion constraint/ );
+my $pl = $status->payload;
+is( $pl->{'success'}->{count}, 11 );
+is( $pl->{'failure'}->{count}, 0 );
+my $success = $pl->{'success'}->{'intervals'};
+like( $success->[0]->intvl, qr/^\["1998-05-11 08:00:00...","1998-05-11 09:00:00..."\)$/ );
+like( $success->[1]->intvl, qr/^\["1998-05-11 09:15:00...","1998-05-11 12:00:00..."\)$/ );
+like( $success->[2]->intvl, qr/^\["1998-05-11 12:30:00...","1998-05-11 16:30:00..."\)$/ );
+like( $success->[3]->intvl, qr/^\["1998-05-12 08:00:00...","1998-05-12 12:00:00..."\)$/ );
+like( $success->[4]->intvl, qr/^\["1998-05-12 12:30:00...","1998-05-12 16:30:00..."\)$/ );
+like( $success->[5]->intvl, qr/^\["1998-05-13 08:00:00...","1998-05-13 12:00:00..."\)$/ );
+like( $success->[6]->intvl, qr/^\["1998-05-13 12:30:00...","1998-05-13 16:30:00..."\)$/ );
+like( $success->[7]->intvl, qr/^\["1998-05-14 08:00:00...","1998-05-14 12:00:00..."\)$/ );
+like( $success->[8]->intvl, qr/^\["1998-05-14 12:30:00...","1998-05-14 16:30:00..."\)$/ );
+like( $success->[9]->intvl, qr/^\["1998-05-15 08:00:00...","1998-05-15 12:00:00..."\)$/ );
+like( $success->[10]->intvl, qr/^\["1998-05-15 12:30:00...","1998-05-15 16:30:00..."\)$/ );
 
-note( $note = 'create a conflicting attendance interval #2' );
+note( $note = "commit fillup with conflict #1 - insert" );
 $log->info( "=== $note" );
-my $conflicting_int = App::Dochazka::REST::Model::Interval->spawn(
-    eid => $active->eid,
-    aid => $activity->aid,
-    intvl => "[ 1998-5-25 14:00, 1998-5-25 14:15 )",
-);
-$status = $conflicting_int->insert( $faux_context );
-is( $status->level, 'OK' );
-is( $status->code, 'DOCHAZKA_CUD_OK' );
-
-note( $note = 'fillup_tempintvls to conflict #2' );
-$log->info( "=== $note" );
-$fo = App::Dochazka::REST::Fillup->new(
-    context => $faux_context,
-    tsrange => '[ 1998-05-25 00:00:00, 1998-05-27 24:00:00 )',
-    emp_obj => $active,
-    dry_run => 0,
-    clobber => 1,
-);
-isa_ok( $fo, 'App::Dochazka::REST::Fillup' );
-isa_ok( $fo->constructor_status, 'App::CELL::Status' );
-ok( $fo->constructor_status );
+$fo->dry_run(0);
 is( $fo->dry_run, 0 );
-like( $fo->tsrange->{'tsrange'}, qr/^\["1998-05-25 00:00:00...","1998-05-28 00:00:00..."\)$/ );
-
-note( $note = "commit fillup with conflict" );
-$log->info( "=== $note" );
 $status = $fo->commit;
 is( $status->level, 'OK' );
 is( $status->code, 'DISPATCH_FILLUP_INTERVALS_CREATED' );
-is( $status->payload->{'success'}->{count}, 6 );
-is( $status->payload->{'clobbered'}->{count}, 1 );
+my $pl = $status->payload;
+is( $pl->{'success'}->{count}, 11 );
+is( $pl->{'failure'}->{count}, 0 );
+my $success = $pl->{'success'}->{'intervals'};
+like( $success->[0]->intvl, qr/^\["1998-05-11 08:00:00...","1998-05-11 09:00:00..."\)$/ );
+like( $success->[1]->intvl, qr/^\["1998-05-11 09:15:00...","1998-05-11 12:00:00..."\)$/ );
+like( $success->[2]->intvl, qr/^\["1998-05-11 12:30:00...","1998-05-11 16:30:00..."\)$/ );
+like( $success->[3]->intvl, qr/^\["1998-05-12 08:00:00...","1998-05-12 12:00:00..."\)$/ );
+like( $success->[4]->intvl, qr/^\["1998-05-12 12:30:00...","1998-05-12 16:30:00..."\)$/ );
+like( $success->[5]->intvl, qr/^\["1998-05-13 08:00:00...","1998-05-13 12:00:00..."\)$/ );
+like( $success->[6]->intvl, qr/^\["1998-05-13 12:30:00...","1998-05-13 16:30:00..."\)$/ );
+like( $success->[7]->intvl, qr/^\["1998-05-14 08:00:00...","1998-05-14 12:00:00..."\)$/ );
+like( $success->[8]->intvl, qr/^\["1998-05-14 12:30:00...","1998-05-14 16:30:00..."\)$/ );
+like( $success->[9]->intvl, qr/^\["1998-05-15 08:00:00...","1998-05-15 12:00:00..."\)$/ );
+like( $success->[10]->intvl, qr/^\["1998-05-15 12:30:00...","1998-05-15 16:30:00..."\)$/ );
+
+#note( $note = 'create a conflicting attendance interval #2' );
+#$log->info( "=== $note" );
+#my $conflicting_int = App::Dochazka::REST::Model::Interval->spawn(
+#    eid => $active->eid,
+#    aid => $activity->aid,
+#    intvl => "[ 1998-5-25 14:00, 1998-5-25 14:15 )",
+#);
+#$status = $conflicting_int->insert( $faux_context );
+#is( $status->level, 'OK' );
+#is( $status->code, 'DOCHAZKA_CUD_OK' );
+#
+#note( $note = 'fillup_tempintvls to conflict #2' );
+#$log->info( "=== $note" );
+#$fo = App::Dochazka::REST::Fillup->new(
+#    context => $faux_context,
+#    tsrange => '[ 1998-05-25 00:00:00, 1998-05-27 24:00:00 )',
+#    emp_obj => $active,
+#    dry_run => 0,
+#    clobber => 1,
+#);
+#isa_ok( $fo, 'App::Dochazka::REST::Fillup' );
+#isa_ok( $fo->constructor_status, 'App::CELL::Status' );
+#ok( $fo->constructor_status );
+#is( $fo->dry_run, 0 );
+#like( $fo->tsrange->{'tsrange'}, qr/^\["1998-05-25 00:00:00...","1998-05-28 00:00:00..."\)$/ );
+#
+#note( $note = "commit fillup with conflict" );
+#$log->info( "=== $note" );
+#$status = $fo->commit;
+#is( $status->level, 'OK' );
+#is( $status->code, 'DISPATCH_FILLUP_INTERVALS_CREATED' );
+#is( $status->payload->{'success'}->{count}, 6 );
+#is( $status->payload->{'clobbered'}->{count}, 1 );
 
 note( $note = "create fillup object with date_list instead of tsrange" );
 $log->info( "=== $note" );
@@ -755,8 +786,8 @@ $log->info( "=== $note" );
 $status = $fo->commit;
 is( $status->level, 'OK' );
 is( $status->code, 'DISPATCH_FILLUP_INTERVALS_CREATED' );
-#diag( "success count: " . $status->payload->{'success'}->{count} );
-#diag( "failure count: " . $status->payload->{'failure'}->{count} );
+diag( "success count: " . $status->payload->{'success'}->{count} );
+diag( "failure count: " . $status->payload->{'failure'}->{count} );
 my $success_hash = $status->payload->{'success'};
 is( $success_hash->{count}, 4 );
 # 1998-05-16 is a weekend, so it will be silently ignored
@@ -789,7 +820,7 @@ $log->info( "=== $note" );
 $status = $fo3->commit;
 is( $status->level, 'OK' );
 is( $status->code, 'DISPATCH_FILLUP_INTERVALS_CREATED' );
-my $success_hash = $status->payload->{'success'};
+$success_hash = $status->payload->{'success'};
 is( $success_hash->{count}, 1 );
 like( $success_hash->{intervals}->[0]->intvl, 
     qr/\["1998-06-01 10:00:00...","1998-06-01 10:30:00..."\)/ );
@@ -797,7 +828,7 @@ is( $status->payload->{'failure'}->{count}, 0 );
 
 note( $note = 'fillup on a very short tsrange #2' );
 $log->info( "=== $note" );
-my $fo3 = App::Dochazka::REST::Fillup->new(
+$fo3 = App::Dochazka::REST::Fillup->new(
     context => $faux_context,
     tsrange => '[ 1998-06-01 12:00:00, 1998-06-01 13:00:00 )',
     emp_obj => $active,
@@ -814,7 +845,7 @@ $log->info( "=== $note" );
 $status = $fo3->commit;
 is( $status->level, 'OK' );
 is( $status->code, 'DISPATCH_FILLUP_INTERVALS_CREATED' );
-my $success_hash = $status->payload->{'success'};
+$success_hash = $status->payload->{'success'};
 is( $success_hash->{count}, 1 );
 like( $success_hash->{intervals}->[0]->intvl, 
     qr/\["1998-06-01 12:30:00...","1998-06-01 13:00:00..."\)/ );
@@ -824,7 +855,7 @@ note( $note = 'generate an excessively long date_list' );
 $log->info( "=== $note" );
 my $excessive_dl = [ '2017-01-01' ];
 my $excessive_len = $site->DOCHAZKA_INTERVAL_FILLUP_MAX_DATELIST_ENTRIES + 1;
-my $count = 1;
+$count = 1;
 my $loop_date = $excessive_dl->[0];
 do {
     $loop_date = get_tomorrow( $loop_date );
