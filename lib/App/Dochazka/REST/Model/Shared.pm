@@ -169,6 +169,7 @@ sub canonicalize_tsrange {
         keys => [ $tsr ],
     );
     _replace_payload_array_with_string( $status ) if $status->ok;
+    return $CELL->status_not_ok() if $status->payload eq "empty";
     return $status;    
 }
 
