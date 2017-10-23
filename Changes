@@ -3714,3 +3714,10 @@ SPLIT OFF App::MREST into separate distribution
 0.551 2017-10-20 15:29 CEST
 - ResourceDefs: allow passerby to GET schedule/sid/:sid
 
+0.552 2017-10-23 11:53 CEST
+- ResourceDefs: fix permissions on schedule/eid/:eid/?:ts
+- Fillup: produce 100% schedule fulfillment without clobbering
+- Fillup: return just scheduled intervals if clobber is true
+- Model/Shared: make canonicalize_tsrange() fail on empty tsranges
+- fillup: get conflicting intervals list in chronological order
+
