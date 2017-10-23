@@ -38,7 +38,7 @@ use 5.012;
 use strict;
 use warnings;
 
-use App::CELL::Test::LogToFile;
+#use App::CELL::Test::LogToFile;
 use App::CELL qw( $CELL $log $meta $site );
 use Data::Dumper;
 use App::Dochazka::REST::ConnBank qw( $dbix_conn );
@@ -786,8 +786,8 @@ $log->info( "=== $note" );
 $status = $fo->commit;
 is( $status->level, 'OK' );
 is( $status->code, 'DISPATCH_FILLUP_INTERVALS_CREATED' );
-diag( "success count: " . $status->payload->{'success'}->{count} );
-diag( "failure count: " . $status->payload->{'failure'}->{count} );
+#diag( "success count: " . $status->payload->{'success'}->{count} );
+#diag( "failure count: " . $status->payload->{'failure'}->{count} );
 my $success_hash = $status->payload->{'success'};
 is( $success_hash->{count}, 4 );
 # 1998-05-16 is a weekend, so it will be silently ignored
