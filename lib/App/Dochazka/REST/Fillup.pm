@@ -752,6 +752,7 @@ sub commit {
             # check for existing attendance intervals that conflict
             @conflicting = ();
             push @conflicting, @{ $self->_conflicting_intervals( $tempintvl ) };
+            $log->debug( "Conflicting intervals" . Dumper \@conflicting );
 
             # for each conflicting interval, generate new intervals to 
             # reach 100% fulfillment of the scheduled interval
