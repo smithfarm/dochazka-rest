@@ -46,7 +46,10 @@ use App::Dochazka::REST::Holiday qw(
     canon_to_ymd
     get_tomorrow
 );
-use App::Dochazka::REST::Model::Interval qw( delete_intervals_by_eid_and_tsrange );
+use App::Dochazka::REST::Model::Interval qw(
+    delete_intervals_by_eid_and_tsrange
+    fetch_intervals_by_eid_and_tsrange
+);
 use App::Dochazka::REST::Fillup;
 use App::Dochazka::REST::Model::Tempintvl;
 use App::Dochazka::REST::Model::Shared qw( noof );
@@ -1105,12 +1108,81 @@ note( $note = "Commit \$fo4 (dry_run, no clobber) returned the expected interval
 $log->info( "=== $note" );
 $intervals = $status->payload->{"success"}->{"intervals"};
 is(scalar @$intervals, 6 );
+foreach my $i ( 0..5 ) {
+    isa_ok( $intervals->[$i], 'App::Dochazka::REST::Model::Interval' );
+    is( $intervals->[$i]->iid, undef );
+}
 like( $intervals->[0]->intvl, qr/^\["1998-06-08 10:05:00...","1998-06-08 12:00:00..."\)$/ );
 like( $intervals->[1]->intvl, qr/^\["1998-06-08 12:30:00...","1998-06-08 16:30:00..."\)$/ );
 like( $intervals->[2]->intvl, qr/^\["1998-06-09 08:00:00...","1998-06-09 12:00:00..."\)$/ );
 like( $intervals->[3]->intvl, qr/^\["1998-06-09 12:30:00...","1998-06-09 14:00:00..."\)$/ );
 like( $intervals->[4]->intvl, qr/^\["1998-06-09 14:15:00...","1998-06-09 16:30:00..."\)$/ );
 like( $intervals->[5]->intvl, qr/^\["1998-06-10 08:00:00...","1998-06-10 09:55:00..."\)$/ );
+
+note( $note = "GET interval/nick/active/[ \"1998-06-08 00:00\", \"1998-06-10 24:00\" )" );
+my @ARGS = (
+    $faux_context->{'dbix_conn'},
+    $eids_to_delete[0],
+    "[ \"1998-06-08 00:00\", \"1998-06-10 24:00\" )",
+);
+$status = fetch_intervals_by_eid_and_tsrange( @ARGS );
+$intervals = $status->payload;
+is(scalar @$intervals, 3 );
+isa_ok( $intervals->[0], 'App::Dochazka::REST::Model::Interval' );
+ok( $intervals->[0]->iid > 0 );
+like( $intervals->[0]->intvl, qr/^\["1998-06-08 09:55:00...","1998-06-08 10:05:00..."\)$/ );
+isa_ok( $intervals->[1], 'App::Dochazka::REST::Model::Interval' );
+ok( $intervals->[1]->iid > 0 );
+like( $intervals->[1]->intvl, qr/^\["1998-06-09 14:00:00...","1998-06-09 14:15:00..."\)$/ );
+isa_ok( $intervals->[2], 'App::Dochazka::REST::Model::Interval' );
+ok( $intervals->[2]->iid > 0 );
+like( $intervals->[2]->intvl, qr/^\["1998-06-10 09:55:00...","1998-06-10 10:05:00..."\)$/ );
+
+note( $note = "Commit \$fo4 - really insert the records" );
+$log->info( "=== $note" );
+$fo4->dry_run(0);
+$fo4->clobber(0);
+$status = $fo4->commit;
+is( $status->level, 'OK' );
+is( $status->code, 'DISPATCH_FILLUP_INTERVALS_CREATED' );
+
+note( $note = "Commit \$fo4 returned the expected intervals and they have iid populated" );
+$log->info( "=== $note" );
+$intervals = $status->payload->{"success"}->{"intervals"};
+is(scalar @$intervals, 6 );
+foreach my $i ( 0..5 ) {
+    isa_ok( $intervals->[$i], 'App::Dochazka::REST::Model::Interval' );
+    ok( $intervals->[$i]->iid > 0 );
+}
+like( $intervals->[0]->intvl, qr/^\["1998-06-08 10:05:00...","1998-06-08 12:00:00..."\)$/ );
+like( $intervals->[1]->intvl, qr/^\["1998-06-08 12:30:00...","1998-06-08 16:30:00..."\)$/ );
+like( $intervals->[2]->intvl, qr/^\["1998-06-09 08:00:00...","1998-06-09 12:00:00..."\)$/ );
+like( $intervals->[3]->intvl, qr/^\["1998-06-09 12:30:00...","1998-06-09 14:00:00..."\)$/ );
+like( $intervals->[4]->intvl, qr/^\["1998-06-09 14:15:00...","1998-06-09 16:30:00..."\)$/ );
+like( $intervals->[5]->intvl, qr/^\["1998-06-10 08:00:00...","1998-06-10 09:55:00..."\)$/ );
+
+note( $note = "GET interval/nick/active/[ \"1998-06-08 00:00\", \"1998-06-10 24:00\" )" );
+my @ARGS = (
+    $faux_context->{'dbix_conn'},
+    $eids_to_delete[0],
+    "[ \"1998-06-08 00:00\", \"1998-06-10 24:00\" )",
+);
+$status = fetch_intervals_by_eid_and_tsrange( @ARGS );
+$intervals = $status->payload;
+is(scalar @$intervals, 9 );
+foreach my $i ( 0..8 ) {
+    isa_ok( $intervals->[$i], 'App::Dochazka::REST::Model::Interval' );
+    ok( $intervals->[$i]->iid > 0 );
+}
+like( $intervals->[0]->intvl, qr/^\["1998-06-08 09:55:00...","1998-06-08 10:05:00..."\)$/ );
+like( $intervals->[1]->intvl, qr/^\["1998-06-08 10:05:00...","1998-06-08 12:00:00..."\)$/ );
+like( $intervals->[2]->intvl, qr/^\["1998-06-08 12:30:00...","1998-06-08 16:30:00..."\)$/ );
+like( $intervals->[3]->intvl, qr/^\["1998-06-09 08:00:00...","1998-06-09 12:00:00..."\)$/ );
+like( $intervals->[4]->intvl, qr/^\["1998-06-09 12:30:00...","1998-06-09 14:00:00..."\)$/ );
+like( $intervals->[5]->intvl, qr/^\["1998-06-09 14:00:00...","1998-06-09 14:15:00..."\)$/ );
+like( $intervals->[6]->intvl, qr/^\["1998-06-09 14:15:00...","1998-06-09 16:30:00..."\)$/ );
+like( $intervals->[7]->intvl, qr/^\["1998-06-10 08:00:00...","1998-06-10 09:55:00..."\)$/ );
+like( $intervals->[8]->intvl, qr/^\["1998-06-10 09:55:00...","1998-06-10 10:05:00..."\)$/ );
 
 note( $note = 'tear down' );
 $log->info( "=== $note" );
