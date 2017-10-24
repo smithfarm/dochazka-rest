@@ -452,7 +452,7 @@ $status = $fo->_vet_employee( emp_obj => $active );
 is( $status->level, 'ERR' );
 is( $status->code, 'DISPATCH_EMPLOYEE_NO_SCHEDULE' );
 
-note( $note = 'create a testing schedule' );
+note( $note = 'create a testing schedule MON-FRI 08:00-12:00, 12:30-16:30' );
 $log->info( "=== $note" );
 my $schedule = test_schedule_model( [ 
     '[ 1998-05-04 08:00, 1998-05-04 12:00 )',
@@ -629,7 +629,7 @@ ok( $fo2->constructor_status );
 isa_ok( $fo2->constructor_status, 'App::CELL::Status' );
 like( $fo2->tsrange->{'tsrange'}, qr/^\["1998-04-28 10:00:00...","1998-05-06 10:00:00..."\)$/ );
 
-note( $note = 'commit (dry run) on object created without using new()' );
+note( $note = 'commit (dry run) on two objects; one created without new() and the other with' );
 $log->info( "=== $note" );
 my $count = 11;
 foreach my $obj ( $fo, $fo2 ) {
@@ -732,40 +732,6 @@ like( $success->[7]->intvl, qr/^\["1998-05-14 08:00:00...","1998-05-14 12:00:00.
 like( $success->[8]->intvl, qr/^\["1998-05-14 12:30:00...","1998-05-14 16:30:00..."\)$/ );
 like( $success->[9]->intvl, qr/^\["1998-05-15 08:00:00...","1998-05-15 12:00:00..."\)$/ );
 like( $success->[10]->intvl, qr/^\["1998-05-15 12:30:00...","1998-05-15 16:30:00..."\)$/ );
-
-#note( $note = 'create a conflicting attendance interval #2' );
-#$log->info( "=== $note" );
-#my $conflicting_int = App::Dochazka::REST::Model::Interval->spawn(
-#    eid => $active->eid,
-#    aid => $activity->aid,
-#    intvl => "[ 1998-5-25 14:00, 1998-5-25 14:15 )",
-#);
-#$status = $conflicting_int->insert( $faux_context );
-#is( $status->level, 'OK' );
-#is( $status->code, 'DOCHAZKA_CUD_OK' );
-#
-#note( $note = 'fillup_tempintvls to conflict #2' );
-#$log->info( "=== $note" );
-#$fo = App::Dochazka::REST::Fillup->new(
-#    context => $faux_context,
-#    tsrange => '[ 1998-05-25 00:00:00, 1998-05-27 24:00:00 )',
-#    emp_obj => $active,
-#    dry_run => 0,
-#    clobber => 1,
-#);
-#isa_ok( $fo, 'App::Dochazka::REST::Fillup' );
-#isa_ok( $fo->constructor_status, 'App::CELL::Status' );
-#ok( $fo->constructor_status );
-#is( $fo->dry_run, 0 );
-#like( $fo->tsrange->{'tsrange'}, qr/^\["1998-05-25 00:00:00...","1998-05-28 00:00:00..."\)$/ );
-#
-#note( $note = "commit fillup with conflict" );
-#$log->info( "=== $note" );
-#$status = $fo->commit;
-#is( $status->level, 'OK' );
-#is( $status->code, 'DISPATCH_FILLUP_INTERVALS_CREATED' );
-#is( $status->payload->{'success'}->{count}, 6 );
-#is( $status->payload->{'clobbered'}->{count}, 1 );
 
 note( $note = "create fillup object with date_list instead of tsrange" );
 $log->info( "=== $note" );
@@ -877,6 +843,274 @@ isa_ok( $fo->constructor_status, 'App::CELL::Status' );
 is( $fo->constructor_status->level, 'ERR' );
 is( $fo->constructor_status->code, 'DOCHAZKA_INTERVAL_FILLUP_DATELIST_TOO_LONG' );
 
+note( $note = "Create Fillup object \"fo4\" with a two-day tsrange" );
+$log->info( "=== $note" );
+my $fo4 = App::Dochazka::REST::Fillup->new(
+    context => $faux_context,
+    tsrange => '[ 1998-06-08 10:00:00, 1998-06-10 10:00:00 )',
+    emp_obj => $active,
+    clobber => 1,
+    dry_run => 1,
+);
+isa_ok( $fo4, 'App::Dochazka::REST::Fillup' );
+is( $fo4->dry_run, 1 );
+ok( $fo4->constructor_status );
+isa_ok( $fo4->constructor_status, 'App::CELL::Status' );
+like( $fo4->tsrange->{'tsrange'}, qr/^\["1998-06-08 10:00:00...","1998-06-10 10:00:00..."\)$/ );
+
+note( $note = "Commit \$fo4 (dry_run, clobber)" );
+$log->info( "=== $note" );
+$status = $fo4->commit;
+is( $status->level, 'OK' );
+is( $status->code, 'DISPATCH_FILLUP_INTERVALS_CREATED' );
+
+note( $note = "Commit \$fo4 (dry_run, clobber) returned intervals as expected" );
+$log->info( "=== $note" );
+$intervals = $status->payload->{"success"}->{"intervals"};
+is(scalar @$intervals, 5 );
+like( $intervals->[0]->intvl, qr/^\["1998-06-08 10:00:00...","1998-06-08 12:00:00..."\)$/ );
+like( $intervals->[1]->intvl, qr/^\["1998-06-08 12:30:00...","1998-06-08 16:30:00..."\)$/ );
+like( $intervals->[2]->intvl, qr/^\["1998-06-09 08:00:00...","1998-06-09 12:00:00..."\)$/ );
+like( $intervals->[3]->intvl, qr/^\["1998-06-09 12:30:00...","1998-06-09 16:30:00..."\)$/ );
+like( $intervals->[4]->intvl, qr/^\["1998-06-10 08:00:00...","1998-06-10 10:00:00..."\)$/ );
+
+note( $note = "Introduce an attendance interval that conflicts with \$fo4" );
+$log->info( "=== $note" );
+$conflicting_int = App::Dochazka::REST::Model::Interval->spawn(
+    eid => $active->eid,
+    aid => $activity->aid,
+    intvl => "[ 1998-6-9 14:00, 1998-6-9 14:15 )",
+);
+$status = $conflicting_int->insert( $faux_context );
+is( $status->level, 'OK' );
+is( $status->code, 'DOCHAZKA_CUD_OK' );
+
+note( $note = "Commit \$fo4 (dry_run, clobber), take two" );
+$log->info( "=== $note" );
+$status = $fo4->commit;
+is( $status->level, 'OK' );
+is( $status->code, 'DISPATCH_FILLUP_INTERVALS_CREATED' );
+
+note( $note = "Commit \$fo4 (dry_run, clobber), take two, returned the same intervals as before - conflict is ignored" );
+$log->info( "=== $note" );
+$intervals = $status->payload->{"success"}->{"intervals"};
+is(scalar @$intervals, 5 );
+like( $intervals->[0]->intvl, qr/^\["1998-06-08 10:00:00...","1998-06-08 12:00:00..."\)$/ );
+like( $intervals->[1]->intvl, qr/^\["1998-06-08 12:30:00...","1998-06-08 16:30:00..."\)$/ );
+like( $intervals->[2]->intvl, qr/^\["1998-06-09 08:00:00...","1998-06-09 12:00:00..."\)$/ );
+like( $intervals->[3]->intvl, qr/^\["1998-06-09 12:30:00...","1998-06-09 16:30:00..."\)$/ );
+like( $intervals->[4]->intvl, qr/^\["1998-06-10 08:00:00...","1998-06-10 10:00:00..."\)$/ );
+
+note( $note = "Commit \$fo4 (dry_run, no clobber)" );
+$log->info( "=== $note" );
+$fo4->clobber(0);
+$status = $fo4->commit;
+is( $status->level, 'OK' );
+is( $status->code, 'DISPATCH_FILLUP_INTERVALS_CREATED' );
+
+note( $note = "Commit \$fo4 (dry_run, no clobber) returned the intervals as expected - i.e., 100% schedule fulfillment is achieved" );
+$log->info( "=== $note" );
+$intervals = $status->payload->{"success"}->{"intervals"};
+is(scalar @$intervals, 6 );
+like( $intervals->[0]->intvl, qr/^\["1998-06-08 10:00:00...","1998-06-08 12:00:00..."\)$/ );
+like( $intervals->[1]->intvl, qr/^\["1998-06-08 12:30:00...","1998-06-08 16:30:00..."\)$/ );
+like( $intervals->[2]->intvl, qr/^\["1998-06-09 08:00:00...","1998-06-09 12:00:00..."\)$/ );
+like( $intervals->[3]->intvl, qr/^\["1998-06-09 12:30:00...","1998-06-09 14:00:00..."\)$/ );
+like( $intervals->[4]->intvl, qr/^\["1998-06-09 14:15:00...","1998-06-09 16:30:00..."\)$/ );
+like( $intervals->[5]->intvl, qr/^\["1998-06-10 08:00:00...","1998-06-10 10:00:00..."\)$/ );
+
+note( $note = "Add an interval that almost conflicts, but not quite" );
+$log->info( "=== $note" );
+my $conflict1 = App::Dochazka::REST::Model::Interval->spawn(
+    eid => $active->eid,
+    aid => $activity->aid,
+    intvl => "[ 1998-6-8 8:00, 1998-6-8 10:00 )",
+);
+$status = $conflict1->insert( $faux_context );
+is( $status->level, 'OK' );
+is( $status->code, 'DOCHAZKA_CUD_OK' );
+
+note( $note = "Commit \$fo4 (dry_run, clobber), take three" );
+$log->info( "=== $note" );
+$fo4->clobber(1);
+$status = $fo4->commit;
+is( $status->level, 'OK' );
+is( $status->code, 'DISPATCH_FILLUP_INTERVALS_CREATED' );
+
+note( $note = "Commit \$fo4 (dry_run, clobber), take three, returned the same intervals as before - both potentially conflicting intervals are ignored" );
+$log->info( "=== $note" );
+$intervals = $status->payload->{"success"}->{"intervals"};
+is(scalar @$intervals, 5 );
+like( $intervals->[0]->intvl, qr/^\["1998-06-08 10:00:00...","1998-06-08 12:00:00..."\)$/ );
+like( $intervals->[1]->intvl, qr/^\["1998-06-08 12:30:00...","1998-06-08 16:30:00..."\)$/ );
+like( $intervals->[2]->intvl, qr/^\["1998-06-09 08:00:00...","1998-06-09 12:00:00..."\)$/ );
+like( $intervals->[3]->intvl, qr/^\["1998-06-09 12:30:00...","1998-06-09 16:30:00..."\)$/ );
+like( $intervals->[4]->intvl, qr/^\["1998-06-10 08:00:00...","1998-06-10 10:00:00..."\)$/ );
+
+note( $note = "Commit \$fo4 (dry_run, no clobber)" );
+$log->info( "=== $note" );
+$fo4->clobber(0);
+$status = $fo4->commit;
+is( $status->level, 'OK' );
+is( $status->code, 'DISPATCH_FILLUP_INTERVALS_CREATED' );
+
+note( $note = "Commit \$fo4 (dry_run, no clobber) returned the intervals as expected - i.e., 100% schedule fulfillment is achieved and the \"almost conflicting\" interval has no effect on the result" );
+$log->info( "=== $note" );
+$intervals = $status->payload->{"success"}->{"intervals"};
+is(scalar @$intervals, 6 );
+like( $intervals->[0]->intvl, qr/^\["1998-06-08 10:00:00...","1998-06-08 12:00:00..."\)$/ );
+like( $intervals->[1]->intvl, qr/^\["1998-06-08 12:30:00...","1998-06-08 16:30:00..."\)$/ );
+like( $intervals->[2]->intvl, qr/^\["1998-06-09 08:00:00...","1998-06-09 12:00:00..."\)$/ );
+like( $intervals->[3]->intvl, qr/^\["1998-06-09 12:30:00...","1998-06-09 14:00:00..."\)$/ );
+like( $intervals->[4]->intvl, qr/^\["1998-06-09 14:15:00...","1998-06-09 16:30:00..."\)$/ );
+like( $intervals->[5]->intvl, qr/^\["1998-06-10 08:00:00...","1998-06-10 10:00:00..."\)$/ );
+
+note( $note = "Add another interval that almost conflicts, but not quite" );
+$log->info( "=== $note" );
+my $conflict2 = App::Dochazka::REST::Model::Interval->spawn(
+    eid => $active->eid,
+    aid => $activity->aid,
+    intvl => "[ 1998-6-10 10:00, 1998-6-10 12:00 )",
+);
+$status = $conflict2->insert( $faux_context );
+is( $status->level, 'OK' );
+is( $status->code, 'DOCHAZKA_CUD_OK' );
+
+note( $note = "Commit \$fo4 (dry_run, clobber), take four" );
+$log->info( "=== $note" );
+$fo4->clobber(1);
+$status = $fo4->commit;
+is( $status->level, 'OK' );
+is( $status->code, 'DISPATCH_FILLUP_INTERVALS_CREATED' );
+
+note( $note = "Commit \$fo4 (dry_run, clobber), take four, returned the same intervals as before - all three potentially conflicting intervals are ignored" );
+$log->info( "=== $note" );
+$intervals = $status->payload->{"success"}->{"intervals"};
+is(scalar @$intervals, 5 );
+like( $intervals->[0]->intvl, qr/^\["1998-06-08 10:00:00...","1998-06-08 12:00:00..."\)$/ );
+like( $intervals->[1]->intvl, qr/^\["1998-06-08 12:30:00...","1998-06-08 16:30:00..."\)$/ );
+like( $intervals->[2]->intvl, qr/^\["1998-06-09 08:00:00...","1998-06-09 12:00:00..."\)$/ );
+like( $intervals->[3]->intvl, qr/^\["1998-06-09 12:30:00...","1998-06-09 16:30:00..."\)$/ );
+like( $intervals->[4]->intvl, qr/^\["1998-06-10 08:00:00...","1998-06-10 10:00:00..."\)$/ );
+
+note( $note = "Commit \$fo4 (dry_run, no clobber)" );
+$log->info( "=== $note" );
+$fo4->clobber(0);
+$status = $fo4->commit;
+is( $status->level, 'OK' );
+is( $status->code, 'DISPATCH_FILLUP_INTERVALS_CREATED' );
+
+note( $note = "Commit \$fo4 (dry_run, no clobber) returned the intervals as expected - i.e., 100% schedule fulfillment is achieved and the \"almost conflicting\" intervals have no effect on the result" );
+$log->info( "=== $note" );
+$intervals = $status->payload->{"success"}->{"intervals"};
+is(scalar @$intervals, 6 );
+like( $intervals->[0]->intvl, qr/^\["1998-06-08 10:00:00...","1998-06-08 12:00:00..."\)$/ );
+like( $intervals->[1]->intvl, qr/^\["1998-06-08 12:30:00...","1998-06-08 16:30:00..."\)$/ );
+like( $intervals->[2]->intvl, qr/^\["1998-06-09 08:00:00...","1998-06-09 12:00:00..."\)$/ );
+like( $intervals->[3]->intvl, qr/^\["1998-06-09 12:30:00...","1998-06-09 14:00:00..."\)$/ );
+like( $intervals->[4]->intvl, qr/^\["1998-06-09 14:15:00...","1998-06-09 16:30:00..."\)$/ );
+like( $intervals->[5]->intvl, qr/^\["1998-06-10 08:00:00...","1998-06-10 10:00:00..."\)$/ );
+
+note( $note = "Delete both \"almost conflicting\" intervals" );
+$log->info( "=== $note" );
+$status = $conflict1->delete( $faux_context );
+is( $status->level, 'OK' );
+is( $status->code, 'DOCHAZKA_CUD_OK' );
+$status = $conflict2->delete( $faux_context );
+is( $status->level, 'OK' );
+is( $status->code, 'DOCHAZKA_CUD_OK' );
+
+note( $note = "Insert an interval that overlaps the beginning of the fillup tsrange" );
+$log->info( "=== $note" );
+my $conflict3 = App::Dochazka::REST::Model::Interval->spawn(
+    eid => $active->eid,
+    aid => $activity->aid,
+    intvl => "[ 1998-6-8 9:55, 1998-6-8 10:05 )",
+);
+$status = $conflict3->insert( $faux_context );
+is( $status->level, 'OK' );
+is( $status->code, 'DOCHAZKA_CUD_OK' );
+
+note( $note = "Commit \$fo4 (dry_run, clobber), take five" );
+$log->info( "=== $note" );
+$fo4->clobber(1);
+$status = $fo4->commit;
+is( $status->level, 'OK' );
+is( $status->code, 'DISPATCH_FILLUP_INTERVALS_CREATED' );
+
+note( $note = "Commit \$fo4 (dry_run, clobber), take five, returned the same intervals as always" );
+$log->info( "=== $note" );
+$intervals = $status->payload->{"success"}->{"intervals"};
+is(scalar @$intervals, 5 );
+like( $intervals->[0]->intvl, qr/^\["1998-06-08 10:00:00...","1998-06-08 12:00:00..."\)$/ );
+like( $intervals->[1]->intvl, qr/^\["1998-06-08 12:30:00...","1998-06-08 16:30:00..."\)$/ );
+like( $intervals->[2]->intvl, qr/^\["1998-06-09 08:00:00...","1998-06-09 12:00:00..."\)$/ );
+like( $intervals->[3]->intvl, qr/^\["1998-06-09 12:30:00...","1998-06-09 16:30:00..."\)$/ );
+like( $intervals->[4]->intvl, qr/^\["1998-06-10 08:00:00...","1998-06-10 10:00:00..."\)$/ );
+
+note( $note = "Commit \$fo4 (dry_run, no clobber)" );
+$log->info( "=== $note" );
+$fo4->clobber(0);
+$status = $fo4->commit;
+is( $status->level, 'OK' );
+is( $status->code, 'DISPATCH_FILLUP_INTERVALS_CREATED' );
+
+note( $note = "Commit \$fo4 (dry_run, no clobber) returned the intervals as expected - i.e., the first interval starts at 10:05 instead of 10:00" );
+$log->info( "=== $note" );
+$intervals = $status->payload->{"success"}->{"intervals"};
+is(scalar @$intervals, 6 );
+like( $intervals->[0]->intvl, qr/^\["1998-06-08 10:05:00...","1998-06-08 12:00:00..."\)$/ );
+like( $intervals->[1]->intvl, qr/^\["1998-06-08 12:30:00...","1998-06-08 16:30:00..."\)$/ );
+like( $intervals->[2]->intvl, qr/^\["1998-06-09 08:00:00...","1998-06-09 12:00:00..."\)$/ );
+like( $intervals->[3]->intvl, qr/^\["1998-06-09 12:30:00...","1998-06-09 14:00:00..."\)$/ );
+like( $intervals->[4]->intvl, qr/^\["1998-06-09 14:15:00...","1998-06-09 16:30:00..."\)$/ );
+like( $intervals->[5]->intvl, qr/^\["1998-06-10 08:00:00...","1998-06-10 10:00:00..."\)$/ );
+
+note( $note = "Insert an interval that overlaps the end of the fillup tsrange" );
+$log->info( "=== $note" );
+my $conflict3 = App::Dochazka::REST::Model::Interval->spawn(
+    eid => $active->eid,
+    aid => $activity->aid,
+    intvl => "[ 1998-6-10 9:55, 1998-6-10 10:05 )",
+);
+$status = $conflict3->insert( $faux_context );
+is( $status->level, 'OK' );
+is( $status->code, 'DOCHAZKA_CUD_OK' );
+
+note( $note = "Commit \$fo4 (dry_run, clobber), take six" );
+$log->info( "=== $note" );
+$fo4->clobber(1);
+$status = $fo4->commit;
+is( $status->level, 'OK' );
+is( $status->code, 'DISPATCH_FILLUP_INTERVALS_CREATED' );
+
+note( $note = "Commit \$fo4 (dry_run, clobber), take six, returned the same intervals as always" );
+$log->info( "=== $note" );
+$intervals = $status->payload->{"success"}->{"intervals"};
+is(scalar @$intervals, 5 );
+like( $intervals->[0]->intvl, qr/^\["1998-06-08 10:00:00...","1998-06-08 12:00:00..."\)$/ );
+like( $intervals->[1]->intvl, qr/^\["1998-06-08 12:30:00...","1998-06-08 16:30:00..."\)$/ );
+like( $intervals->[2]->intvl, qr/^\["1998-06-09 08:00:00...","1998-06-09 12:00:00..."\)$/ );
+like( $intervals->[3]->intvl, qr/^\["1998-06-09 12:30:00...","1998-06-09 16:30:00..."\)$/ );
+like( $intervals->[4]->intvl, qr/^\["1998-06-10 08:00:00...","1998-06-10 10:00:00..."\)$/ );
+
+note( $note = "Commit \$fo4 (dry_run, no clobber)" );
+$log->info( "=== $note" );
+$fo4->clobber(0);
+$status = $fo4->commit;
+is( $status->level, 'OK' );
+is( $status->code, 'DISPATCH_FILLUP_INTERVALS_CREATED' );
+
+note( $note = "Commit \$fo4 (dry_run, no clobber) returned the expected intervals - i.e., the last interval ends at 09:55 instead of 10:00" );
+$log->info( "=== $note" );
+$intervals = $status->payload->{"success"}->{"intervals"};
+is(scalar @$intervals, 6 );
+like( $intervals->[0]->intvl, qr/^\["1998-06-08 10:05:00...","1998-06-08 12:00:00..."\)$/ );
+like( $intervals->[1]->intvl, qr/^\["1998-06-08 12:30:00...","1998-06-08 16:30:00..."\)$/ );
+like( $intervals->[2]->intvl, qr/^\["1998-06-09 08:00:00...","1998-06-09 12:00:00..."\)$/ );
+like( $intervals->[3]->intvl, qr/^\["1998-06-09 12:30:00...","1998-06-09 14:00:00..."\)$/ );
+like( $intervals->[4]->intvl, qr/^\["1998-06-09 14:15:00...","1998-06-09 16:30:00..."\)$/ );
+like( $intervals->[5]->intvl, qr/^\["1998-06-10 08:00:00...","1998-06-10 09:55:00..."\)$/ );
 
 note( $note = 'tear down' );
 $log->info( "=== $note" );
