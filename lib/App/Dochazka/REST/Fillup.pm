@@ -744,7 +744,7 @@ sub commit {
         # to a scheduled interval in the fillup period.
         TEMPINTVL_LOOP: foreach my $tempintvl ( @$tempintvls ) {
 
-            if ( $self->dry_run and $self->clobber ) {
+            if ( $self->clobber ) {
                 push @result_set, $self->_gen_int( $tempintvl->intvl );
                 next TEMPINTVL_LOOP;
             }
