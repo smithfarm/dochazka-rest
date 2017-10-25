@@ -501,14 +501,12 @@ $body$#,
 
     q#-- Given an EID and a tstzrange, returns a boolean value indicating
       -- whether or not the employee's privlevel changed during that tstzrange.
-      -- History changes lying on an inclusive boundary of the range
-      -- do not trigger a positive.
+      -- NOTE: history changes lying on an inclusive boundary of the range
+      -- do not trigger a positive!
       CREATE OR REPLACE FUNCTION priv_change_during_range(INTEGER, TSTZRANGE)
-      RETURNS boolean AS $$
-          SELECT priv_changed FROM
+      RETURNS integer AS $$
+          SELECT count(*)::integer FROM
               (
-                  SELECT 'f'::boolean AS priv_changed
-                  UNION ALL
                   SELECT
                       $2::tstzrange @> effective
                       AND NOT
@@ -521,19 +519,16 @@ $body$#,
                   FROM privhistory WHERE eid=$1
               ) AS tblalias
           WHERE priv_changed = 't'
-          LIMIT 1;
       $$ LANGUAGE sql IMMUTABLE#,
 
     q#-- Given an EID and a tstzrange, returns a boolean value indicating
       -- whether or not the employee's schedule changed during that tstzrange.
-      -- History changes lying on an inclusive boundary of the range
-      -- do not trigger a positive.
+      -- NOTE: history changes lying on an inclusive boundary of the range
+      -- do not trigger a positive!
       CREATE OR REPLACE FUNCTION schedule_change_during_range(INTEGER, TSTZRANGE)
-      RETURNS boolean AS $$
-          SELECT schedule_changed FROM
+      RETURNS integer AS $$
+          SELECT count(*)::integer FROM
               (
-                  SELECT 'f'::boolean AS schedule_changed
-                  UNION ALL
                   SELECT
                       $2::tstzrange @> effective
                       AND NOT
@@ -546,7 +541,6 @@ $body$#,
                   FROM schedhistory WHERE eid=$1
               ) AS tblalias
           WHERE schedule_changed = 't'
-          LIMIT 1;
       $$ LANGUAGE sql IMMUTABLE#,
 
     q#-- wrapper function to get priv as of current timestamp
