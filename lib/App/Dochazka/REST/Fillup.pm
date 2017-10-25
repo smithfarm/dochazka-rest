@@ -430,13 +430,14 @@ sub _vet_employee {
     die 'AKLDWW###%AAAAAH!' unless $ARGS{emp_obj}->eid;
     $self->{'emp_obj'} = $ARGS{emp_obj};
 
-    # check for priv and schedule changes during the tsrange
+    $log->debug( "Fillup _vet_employee(): check for priv changes during the tsrange" );
     if ( $self->{'emp_obj'}->priv_change_during_range( 
         $self->context->{'dbix_conn'}, 
         $self->tsrange->{'tsrange'},
     ) ) {
         return $CELL->status_err( 'DOCHAZKA_EMPLOYEE_PRIV_CHANGED' ); 
     }
+    $log->debug( "Fillup _vet_employee(): check for schedule changes during the tsrange" );
     if ( $self->{'emp_obj'}->schedule_change_during_range(
         $self->context->{'dbix_conn'}, 
         $self->tsrange->{'tsrange'},

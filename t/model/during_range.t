@@ -1,22 +1,22 @@
-# ************************************************************************* 
-# Copyright (c) 2014-2015, SUSE LLC
-# 
+# *************************************************************************
+# Copyright (c) 2014-2017, SUSE LLC
+#
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
-# 
+#
 # 1. Redistributions of source code must retain the above copyright notice,
 # this list of conditions and the following disclaimer.
-# 
+#
 # 2. Redistributions in binary form must reproduce the above copyright
 # notice, this list of conditions and the following disclaimer in the
 # documentation and/or other materials provided with the distribution.
-# 
+#
 # 3. Neither the name of SUSE LLC nor the names of its contributors may be
 # used to endorse or promote products derived from this software without
 # specific prior written permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 # AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 # IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -28,7 +28,7 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-# ************************************************************************* 
+# *************************************************************************
 #
 # test priv_during_range() and schedule_change_during_range() employee methods
 
@@ -38,7 +38,7 @@ use strict;
 use warnings;
 
 #use App::CELL::Test::LogToFile;
-use App::CELL qw( $meta $site );
+use App::CELL qw( $log $meta $site );
 use Data::Dumper;
 use App::Dochazka::REST::ConnBank qw( $dbix_conn );
 use App::Dochazka::REST::Model::Employee qw( nick_exists eid_exists );
@@ -49,20 +49,26 @@ use Test::Fatal;
 use Test::More;
 use Test::Warnings;
 
+my ( $note, $status );
 
-note( 'initialize, connect to database, and set up a testing plan' );
+note( $note = 'initialize, connect to database, and set up a testing plan' );
+$log->info( "=== $note" );
 my $app = initialize_regression_test();
 
-note( 'instantiate Plack::Test object' );
+note( $note = 'instantiate Plack::Test object' );
+$log->info( "=== $note" );
 my $test = Plack::Test->create( $app );
 
-note( 'get initial number of employees' );
+note( $note = 'get initial number of employees' );
+$log->info( "=== $note" );
 my $noof_employees = noof( $dbix_conn, 'employees' );
 
-note( 'root employee is created at dbinit time' );
+note( $note = 'root employee is created at dbinit time' );
+$log->info( "=== $note" );
 my $eid_of_root = $site->DOCHAZKA_EID_OF_ROOT;
 
-note( 'spawn mrfu' );
+note( $note = 'spawn mrfu' );
+$log->info( "=== $note" );
 my $emp = App::Dochazka::REST::Model::Employee->spawn( 
     nick => 'mrfu',
     fullname => 'Mr. Fu',
@@ -71,19 +77,22 @@ my $emp = App::Dochazka::REST::Model::Employee->spawn(
 );
 isa_ok( $emp, 'App::Dochazka::REST::Model::Employee' );
 
-note( 'insert mrfu' );
-my $status = $emp->insert( $faux_context );
+note( $note = 'insert mrfu' );
+$log->info( "=== $note" );
+$status = $emp->insert( $faux_context );
 is( $status->level, 'OK', "Mr. Fu inserted" );
 is( noof( $dbix_conn, 'employees' ), 3 );
 
-note( 're-load mrfu' );
+note( $note = 're-load mrfu' );
+$log->info( "=== $note" );
 $status = $emp->load_by_nick( $dbix_conn, 'mrfu' );
 is( $status->code, 'DISPATCH_RECORDS_FOUND', "mrfu re-load success" );
 my $mrfu = $status->payload;
 is( $mrfu->nick, 'mrfu' );
 is( $mrfu->sec_id, 1024 );
 
-note( 'spawn mrsfu' );
+note( $note = 'spawn mrsfu' );
+$log->info( "=== $note" );
 $emp = App::Dochazka::REST::Model::Employee->spawn( 
     nick => 'mrsfu',
     sec_id => 78923,
@@ -92,11 +101,13 @@ $emp = App::Dochazka::REST::Model::Employee->spawn(
 );
 isa_ok( $emp, 'App::Dochazka::REST::Model::Employee' );
 
-note( 'insert mrsfu' );
+note( $note = 'insert mrsfu' );
+$log->info( "=== $note" );
 $status = $emp->insert( $faux_context );
 ok( $status->ok, "Mrs. Fu inserted" );
 
-note( 're-load mrsfu' );
+note( $note = 're-load mrsfu' );
+$log->info( "=== $note" );
 $status = $emp->load_by_nick( $dbix_conn, 'mrsfu' );
 is( $status->code, 'DISPATCH_RECORDS_FOUND', "mrsfu re-load success" );
 my $mrsfu = $status->payload;
@@ -105,7 +116,8 @@ is( $mrsfu->sec_id, 78923, "Mrs. Fu's secondary ID is the right string" );
 
 my $test_sid = create_testing_schedule( $test );
 
-note( "make mrfu inactive as of 1995-01-01 00:00" );
+note( $note = "make mrfu inactive as of 1995-01-01 00:00" );
+$log->info( "=== $note" );
 $status = req( $test, 201, 'root', 'POST', "priv/history/eid/" . $mrfu->eid, 
     '{ "effective":"1995-01-01 00:00", "priv":"inactive", "remark":"mrfu test" }' );
 ok( $status->ok );
@@ -113,7 +125,8 @@ is( $status->code, 'DOCHAZKA_CUD_OK', "mrfu privhistory record insert OK" );
 my $phid_of_mrfu = $status->payload->{'phid'};
 ok( $phid_of_mrfu > 0 );
 
-note( "give mrfu schedule as of 1995-01-01 00:00" );
+note( $note = "give mrfu schedule as of 1995-01-01 00:00" );
+$log->info( "=== $note" );
 $status = req( $test, 201, 'root', 'POST', "schedule/history/eid/" . $mrfu->eid, 
     "{ \"effective\":\"1995-01-01 00:00\", \"sid\":$test_sid, \"remark\":\"mrfu test\" }" );
 ok( $status->ok );
@@ -121,7 +134,8 @@ is( $status->code, 'DOCHAZKA_CUD_OK', "mrfu schedhistory record insert OK" );
 my $shid_of_mrfu = $status->payload->{'shid'};
 ok( $shid_of_mrfu > 0 );
 
-note( "make mrsfu active as of 1997-01-01 00:00" );
+note( $note = "make mrsfu active as of 1997-01-01 00:00" );
+$log->info( "=== $note" );
 $status = req( $test, 201, 'root', 'POST', "priv/history/eid/" . $mrsfu->eid, 
     '{ "effective":"1997-01-01 00:00", "priv":"active", "remark":"mrsfu test" }' );
 ok( $status->ok );
@@ -129,7 +143,8 @@ is( $status->code, 'DOCHAZKA_CUD_OK', "mrsfu privhistory record insert OK" );
 my $phid_of_mrsfu = $status->payload->{'phid'};
 ok( $phid_of_mrsfu > 0 );
 
-note( "give mrsfu schedule as of 1997-01-01 00:00" );
+note( $note = "give mrsfu schedule as of 1997-01-01 00:00" );
+$log->info( "=== $note" );
 $status = req( $test, 201, 'root', 'POST', "schedule/history/eid/" . $mrsfu->eid, 
     "{ \"effective\":\"1997-01-01 00:00\", \"sid\":$test_sid, \"remark\":\"mrsfu test\" }" );
 ok( $status->ok );
@@ -137,14 +152,17 @@ is( $status->code, 'DOCHAZKA_CUD_OK', "mrsfu schedhistory record insert OK" );
 my $shid_of_mrsfu = $status->payload->{'shid'};
 ok( $shid_of_mrsfu > 0 );
 
-note( '===END_OF_SET_UP===' );
+note( $note = '===END_OF_SET_UP===' );
+$log->info( "=== $note" );
 
 my $range;
 
 
-note( 'priv_change_during_range' );
+note( $note = 'priv_change_during_range' );
+$log->info( "=== $note" );
 
-note( 'ranges that definitely have no change' );
+note( $note = 'ranges that definitely have no change' );
+$log->info( "=== $note" );
 $range = "( 1997-01-01, 1997-01-02 )";
 ok( ! $mrfu->priv_change_during_range( $dbix_conn, $range  ),
     "mrfu no priv change during $range" );
@@ -161,91 +179,129 @@ $range = "[ 1996-12-31, 1997-01-02 ]";
 ok( ! $mrfu->priv_change_during_range( $dbix_conn, $range  ),
     "mrfu: no priv change during $range" );
 
-note( 'ranges that definitely have a change' );
+note( $note = 'ranges that definitely have a change: 1' );
+$log->info( "=== $note" );
 $range = "( 1994-12-31, 1995-01-02 )";
 ok( $mrfu->priv_change_during_range( $dbix_conn, $range  ),
     "mrfu has priv change during $range" );
 
+note( $note = 'ranges that definitely have a change: 2' );
+$log->info( "=== $note" );
 $range = "[ 1994-12-31, 1995-01-02 )";
 ok( $mrfu->priv_change_during_range( $dbix_conn, $range  ),
     "mrfu has priv change during $range" );
 
+note( $note = 'ranges that definitely have a change: 3' );
+$log->info( "=== $note" );
 $range = "( 1994-12-31, 1995-01-02 ]";
 ok( $mrfu->priv_change_during_range( $dbix_conn, $range  ),
     "mrfu has priv change during $range" );
 
+note( $note = 'ranges that definitely have a change: 4' );
+$log->info( "=== $note" );
 $range = "[ 1994-12-31, 1995-01-02 ]";
 ok( $mrfu->priv_change_during_range( $dbix_conn, $range  ),
     "mrfu has priv change during $range" );
 
-note( 'borderline priv level change - negative' );
+note( $note = 'borderline priv level change - negative 1' );
+$log->info( "=== $note" );
 $range = "[ 1995-01-01 00:00, 1995-01-02 )";
 ok( ! $mrfu->priv_change_during_range( $dbix_conn, $range  ),
     "mrfu: no priv change during borderline range $range" );
 
+note( $note = 'borderline priv level change - negative 2' );
+$log->info( "=== $note" );
 $range = "( 1994-01-01, 1994-12-31 24:00 ]";
 ok( ! $mrfu->priv_change_during_range( $dbix_conn, $range  ),
     "mrfu: no priv change during borderline range $range" );
 
-note( 'borderline priv level change - positive' );
+note( $note = 'borderline priv level change - positive 1' );
+$log->info( "=== $note" );
 $range = "[ 1994-12-31 23:59, 1995-01-02 )";
 ok( $mrfu->priv_change_during_range( $dbix_conn, $range  ),
     "mrfu has priv change during borderline range $range" );
 
+note( $note = 'borderline priv level change - positive 2' );
+$log->info( "=== $note" );
 $range = "( 1994-01-01, 1995-01-01 00:01 ]";
 ok( $mrfu->priv_change_during_range( $dbix_conn, $range  ),
     "mrfu has priv change during borderline range $range" );
 
-note( 'schedule_change_during_range' );
+note( $note = '============================' );
+$log->info( "=== $note" );
+note( $note = 'schedule_change_during_range' );
+$log->info( "=== $note" );
+note( $note = '============================' );
+$log->info( "=== $note" );
 
-note( 'ranges that definitely have no change' );
+note( $note = 'ranges that definitely have no change: 1' );
+$log->info( "=== $note" );
 $range = "( 1997-01-01, 1997-01-02 )";
 ok( ! $mrfu->schedule_change_during_range( $dbix_conn, $range  ),
     "mrfu no schedule change during $range" );
 
+note( $note = 'ranges that definitely have no change: 2' );
+$log->info( "=== $note" );
 $range = "[ 1996-12-31, 1997-01-02 )";
 ok( ! $mrfu->schedule_change_during_range( $dbix_conn, $range  ),
     "mrfu: no schedule change during $range" );
 
+note( $note = 'ranges that definitely have no change: 3' );
+$log->info( "=== $note" );
 $range = "( 1996-12-31, 1997-01-02 ]";
 ok( ! $mrfu->schedule_change_during_range( $dbix_conn, $range  ),
     "mrfu: no schedule change during $range" );
 
+note( $note = 'ranges that definitely have no change: 4' );
+$log->info( "=== $note" );
 $range = "[ 1996-12-31, 1997-01-02 ]";
 ok( ! $mrfu->schedule_change_during_range( $dbix_conn, $range  ),
     "mrfu: no schedule change during $range" );
 
-note( 'ranges that definitely have a change' );
+note( $note = 'ranges that definitely have a change: 1' );
+$log->info( "=== $note" );
 $range = "( 1994-12-31, 1995-01-02 )";
 ok( $mrfu->schedule_change_during_range( $dbix_conn, $range  ),
     "mrfu has schedule change during $range" );
 
+note( $note = 'ranges that definitely have a change: 2' );
+$log->info( "=== $note" );
 $range = "[ 1994-12-31, 1995-01-02 )";
 ok( $mrfu->schedule_change_during_range( $dbix_conn, $range  ),
     "mrfu has schedule change during $range" );
 
+note( $note = 'ranges that definitely have a change: 3' );
+$log->info( "=== $note" );
 $range = "( 1994-12-31, 1995-01-02 ]";
 ok( $mrfu->schedule_change_during_range( $dbix_conn, $range  ),
     "mrfu has schedule change during $range" );
 
+note( $note = 'ranges that definitely have a change: 4' );
+$log->info( "=== $note" );
 $range = "[ 1994-12-31, 1995-01-02 ]";
 ok( $mrfu->schedule_change_during_range( $dbix_conn, $range  ),
     "mrfu has schedule change during $range" );
 
-note( 'borderline priv level change - negative' );
+note( $note = 'borderline schedule change - negative 1' );
+$log->info( "=== $note" );
 $range = "[ 1995-01-01 00:00, 1995-01-02 )";
 ok( ! $mrfu->schedule_change_during_range( $dbix_conn, $range  ),
     "mrfu: no schedule change during borderline range $range" );
 
+note( $note = 'borderline schedule change - negative 2' );
+$log->info( "=== $note" );
 $range = "( 1994-01-01, 1994-12-31 24:00 ]";
 ok( ! $mrfu->schedule_change_during_range( $dbix_conn, $range  ),
     "mrfu: no schedule change during borderline range $range" );
 
-note( 'borderline priv level change - positive' );
+note( $note = 'borderline schedule change - positive 1' );
+$log->info( "=== $note" );
 $range = "[ 1994-12-31 23:59, 1995-01-02 )";
 ok( $mrfu->schedule_change_during_range( $dbix_conn, $range  ),
     "mrfu has schedule change during borderline range $range" );
 
+note( $note = 'borderline schedule change - positive 2' );
+$log->info( "=== $note" );
 $range = "( 1994-01-01, 1995-01-01 00:01 ]";
 ok( $mrfu->schedule_change_during_range( $dbix_conn, $range  ),
     "mrfu has schedule change during borderline range $range" );
@@ -253,7 +309,7 @@ ok( $mrfu->schedule_change_during_range( $dbix_conn, $range  ),
 
 my ( $phobj, $shobj );
 
-note( 'privhistory_at_timestamp' );
+note( $note = 'privhistory_at_timestamp' );
 
 $phobj = undef;
 $phobj = $mrfu->privhistory_at_timestamp( $dbix_conn, '1995-01-01' );
@@ -274,10 +330,10 @@ is( $phobj->phid, undef );
 is( $phobj->remark, undef );
 
 
-note( 'privhistory_at_tsrange' );
+note( $note = 'privhistory_at_tsrange' );
 
 my $tsr = '[ 1997-01-02 00:00, 1997-01-03 00:00 )';
-note( "mrfu privhistory record applicable at $tsr" );
+note( $note = "mrfu privhistory record applicable at $tsr" );
 $phobj = undef;
 $phobj = $mrfu->privhistory_at_timestamp( $dbix_conn, $tsr );
 isa_ok( $phobj, 'App::Dochazka::REST::Model::Privhistory' );
@@ -285,7 +341,7 @@ is( $phobj->phid, $phid_of_mrfu );
 is( $phobj->remark, 'mrfu test' );
 
 $tsr = '[ 1995-01-01 00:00, 1997-01-03 00:00 )';
-note( "mrfu privhistory record applicable at $tsr" );
+note( $note = "mrfu privhistory record applicable at $tsr" );
 $phobj = undef;
 $phobj = $mrfu->privhistory_at_timestamp( $dbix_conn, $tsr );
 isa_ok( $phobj, 'App::Dochazka::REST::Model::Privhistory' );
@@ -293,7 +349,7 @@ is( $phobj->phid, $phid_of_mrfu );
 is( $phobj->remark, 'mrfu test' );
 
 $tsr = '[ 1994-12-31 00:00, 1997-01-03 00:00 )';
-note( "mrfu privhistory record applicable at $tsr" );
+note( $note = "mrfu privhistory record applicable at $tsr" );
 $phobj = undef;
 $phobj = $mrfu->privhistory_at_timestamp( $dbix_conn, $tsr );
 isa_ok( $phobj, 'App::Dochazka::REST::Model::Privhistory' );
@@ -301,7 +357,7 @@ is( $phobj->phid, undef );
 is( $phobj->remark, undef );
 
 
-note( 'schedhistory_at_timestamp' );
+note( $note = 'schedhistory_at_timestamp' );
 
 $shobj = undef;
 $shobj = $mrsfu->schedhistory_at_timestamp( $dbix_conn, '1997-01-01' );
@@ -322,10 +378,10 @@ is( $shobj->shid, undef );
 is( $shobj->remark, undef );
 
 
-note( 'schedhistory_at_tsrange' );
+note( $note = 'schedhistory_at_tsrange' );
 
 $tsr = '[ 1997-01-02 00:00, 1997-01-03 00:00 )';
-note( "mrfu schedhistory record applicable at $tsr" );
+note( $note = "mrfu schedhistory record applicable at $tsr" );
 $shobj = undef;
 $shobj = $mrfu->schedhistory_at_timestamp( $dbix_conn, $tsr );
 isa_ok( $shobj, 'App::Dochazka::REST::Model::Schedhistory' );
@@ -333,7 +389,7 @@ is( $shobj->shid, $shid_of_mrfu );
 is( $shobj->remark, 'mrfu test' );
 
 $tsr = '[ 1995-01-01 00:00, 1997-01-03 00:00 )';
-note( "mrfu schedhistory record applicable at $tsr" );
+note( $note = "mrfu schedhistory record applicable at $tsr" );
 $shobj = undef;
 $shobj = $mrfu->schedhistory_at_timestamp( $dbix_conn, $tsr );
 isa_ok( $shobj, 'App::Dochazka::REST::Model::Schedhistory' );
@@ -341,7 +397,7 @@ is( $shobj->shid, $shid_of_mrfu );
 is( $shobj->remark, 'mrfu test' );
 
 $tsr = '[ 1994-12-31 00:00, 1997-01-03 00:00 )';
-note( "mrfu schedhistory record applicable at $tsr" );
+note( $note = "mrfu schedhistory record applicable at $tsr" );
 $shobj = undef;
 $shobj = $mrfu->schedhistory_at_timestamp( $dbix_conn, $tsr );
 isa_ok( $shobj, 'App::Dochazka::REST::Model::Schedhistory' );
@@ -349,7 +405,7 @@ is( $shobj->shid, undef );
 is( $shobj->remark, undef );
 
 
-note( '===BEGIN_OF_TEAR_DOWN===' );
+note( $note = '===BEGIN_OF_TEAR_DOWN===' );
 
 $status = App::Dochazka::REST::Model::Privhistory->load_by_phid( $dbix_conn, $phid_of_mrfu );
 ok( $status->ok, "mrfu privhistory record loaded" );
@@ -377,16 +433,16 @@ ok( $status->ok, "mrsfu schedhistory record deleted" );
 
 delete_testing_schedule( $test_sid );
 
-note( 'delete Mr. and Mrs. Fu' );
+note( $note = 'delete Mr. and Mrs. Fu' );
 $status = $mrfu->delete( $faux_context );
 ok( $status->ok );
 $status = $mrsfu->delete( $faux_context );
 ok( $status->ok );
 
-note( 'employees table should now have the same number of records as at the beginning' );
+note( $note = 'employees table should now have the same number of records as at the beginning' );
 is( noof( $dbix_conn, 'employees' ), $noof_employees, 'same' );
 
-note( 'tear down' );
+note( $note = 'tear down' );
 $status = delete_all_attendance_data();
 BAIL_OUT(0) unless $status->ok;
 

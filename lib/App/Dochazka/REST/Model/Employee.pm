@@ -538,13 +538,34 @@ sub priv_change_during_range {
     );
     $log->debug( "Entering " . __PACKAGE__ . "::priv_change_during_range with argument $tsr" );
 
-    my ( $boolean_result ) = @{ select_single( 
+    my $status = select_single(
         conn => $conn, 
         sql => $site->SQL_EMPLOYEE_PRIV_CHANGE_DURING_RANGE, 
         keys => [ $self->eid, $tsr ], 
-    )->payload };
+    );
+    return _privsched_change_during_range_result( "SQL_EMPLOYEE_PRIV_CHANGE_DURING_RANGE", $status );
+}
 
-    return $boolean_result;
+sub _privsched_change_during_range_result {
+    my ( $sql_stmt, $status ) = @_;
+    # there should always be a single record, and it should be either 0 or 1
+    if ( ref( $status->payload ) ne 'ARRAY' ) {
+        die "Unexpected _privsched_change_during_range_result: status payload is not an array!";
+    }
+    my $pllen = scalar( @{ $status->payload } );
+    my $plval;
+    if ( $pllen > 1 ) {
+        die "Unexpected _privsched_change_during_range_result: payload array has more than one element!";
+    }
+    if ( $pllen == 0 or ! defined $plval ) {
+        $plval = 0;
+    }
+    if ( $plval == 0 or $plval == 1 ) {
+        return $status->payload->[0];
+    }
+    my $errmsg = "$sql_stmt returned unexpected status payload";
+    $log->crit( "$errmsg: " . Dumper( $status ) );
+    die $errmsg;
 }
 
 
@@ -605,13 +626,12 @@ sub schedule_change_during_range {
     );
     $log->debug( "Entering " . __PACKAGE__ . "::schedule_change_during_range with argument $tsr" );
 
-    my ( $boolean_result ) = @{ select_single( 
+    my $status = select_single(
         conn => $conn, 
         sql => $site->SQL_EMPLOYEE_SCHEDULE_CHANGE_DURING_RANGE,
         keys => [ $self->eid, $tsr ], 
-    )->payload };
-
-    return $boolean_result;
+    );
+    return _privsched_change_during_range_result( "SQL_EMPLOYEE_SCHEDULE_CHANGE_DURING_RANGE", $status );
 }
 
 

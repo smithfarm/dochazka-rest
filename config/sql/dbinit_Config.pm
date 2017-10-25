@@ -505,16 +505,23 @@ $body$#,
       -- do not trigger a positive.
       CREATE OR REPLACE FUNCTION priv_change_during_range(INTEGER, TSTZRANGE)
       RETURNS boolean AS $$
-          SELECT 
-              $2::tstzrange @> effective 
-              AND NOT
-              ( 
-                  ( lower_inc($2) AND effective = lower($2) )
-                  OR
-                  ( upper_inc($2) AND effective = upper($2) )
-              )
-          AS priv_change_during_range 
-          FROM privhistory WHERE eid=$1;
+          SELECT priv_changed FROM
+              (
+                  SELECT 'f'::boolean AS priv_changed
+                  UNION ALL
+                  SELECT
+                      $2::tstzrange @> effective
+                      AND NOT
+                      (
+                          ( lower_inc($2::tstzrange) AND effective = lower($2::tstzrange) )
+                          OR
+                          ( upper_inc($2::tstzrange) AND effective = upper($2::tstzrange) )
+                      )
+                  AS priv_changed
+                  FROM privhistory WHERE eid=$1
+              ) AS tblalias
+          WHERE priv_changed = 't'
+          LIMIT 1;
       $$ LANGUAGE sql IMMUTABLE#,
 
     q#-- Given an EID and a tstzrange, returns a boolean value indicating
@@ -523,16 +530,23 @@ $body$#,
       -- do not trigger a positive.
       CREATE OR REPLACE FUNCTION schedule_change_during_range(INTEGER, TSTZRANGE)
       RETURNS boolean AS $$
-          SELECT 
-              $2::tstzrange @> effective 
-              AND NOT
-              ( 
-                  ( lower_inc($2) AND effective = lower($2) )
-                  OR
-                  ( upper_inc($2) AND effective = upper($2) )
-              )
-          AS schedule_change_during_range 
-          FROM schedhistory WHERE eid=$1;
+          SELECT schedule_changed FROM
+              (
+                  SELECT 'f'::boolean AS schedule_changed
+                  UNION ALL
+                  SELECT
+                      $2::tstzrange @> effective
+                      AND NOT
+                      (
+                          ( lower_inc($2::tstzrange) AND effective = lower($2::tstzrange) )
+                          OR
+                          ( upper_inc($2::tstzrange) AND effective = upper($2::tstzrange) )
+                      )
+                  AS schedule_changed
+                  FROM schedhistory WHERE eid=$1
+              ) AS tblalias
+          WHERE schedule_changed = 't'
+          LIMIT 1;
       $$ LANGUAGE sql IMMUTABLE#,
 
     q#-- wrapper function to get priv as of current timestamp

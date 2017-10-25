@@ -52,7 +52,10 @@ use App::Dochazka::REST::Model::Interval qw(
 );
 use App::Dochazka::REST::Fillup;
 use App::Dochazka::REST::Model::Tempintvl;
-use App::Dochazka::REST::Model::Shared qw( noof );
+use App::Dochazka::REST::Model::Shared qw(
+    noof
+    schedule_by_eid
+);
 use App::Dochazka::REST::Model::Schedhistory;
 use App::Dochazka::REST::Test;
 use Test::More;
@@ -457,7 +460,7 @@ is( $status->code, 'DISPATCH_EMPLOYEE_NO_SCHEDULE' );
 
 note( $note = 'create a testing schedule MON-FRI 08:00-12:00, 12:30-16:30' );
 $log->info( "=== $note" );
-my $schedule = test_schedule_model( [ 
+my $schedule1 = test_schedule_model( [ 
     '[ 1998-05-04 08:00, 1998-05-04 12:00 )',
     '[ 1998-05-04 12:30, 1998-05-04 16:30 )',
     '[ 1998-05-05 08:00, 1998-05-05 12:00 )',
@@ -469,21 +472,23 @@ my $schedule = test_schedule_model( [
     '[ 1998-05-08 08:00, 1998-05-08 12:00 )',
     '[ 1998-05-08 12:30, 1998-05-08 16:30 )',
 ] );
-push my @sids_to_delete, $schedule->sid;
+push my @sids_to_delete, $schedule1->sid;
 
 note( $note = 'give active a schedhistory' );
 $log->info( "=== $note" );
 my $schedhistory = App::Dochazka::REST::Model::Schedhistory->spawn(
     eid => $active->eid,
-    sid => $schedule->sid,
+    sid => $schedule1->sid,
     effective => "1892-01-01",
     remark => 'TESTING',
 );
+my $first_active_eid = $active->eid;
 isa_ok( $schedhistory, 'App::Dochazka::REST::Model::Schedhistory', "schedhistory object is an object" );
 $status = $schedhistory->insert( $faux_context );
 is( $status->level, 'OK' );
 is( $status->code, 'DOCHAZKA_CUD_OK' );
 push my @shids_to_delete, $schedhistory->shid;
+is( noof( $dbix_conn, "schedhistory" ), 1 );
 
 note( $note = 'vet active - all green' );
 $log->info( "=== $note" );
@@ -630,6 +635,7 @@ isa_ok( $fo2, 'App::Dochazka::REST::Fillup' );
 is( $fo2->dry_run, 1 );
 ok( $fo2->constructor_status );
 isa_ok( $fo2->constructor_status, 'App::CELL::Status' );
+is( $fo2->constructor_status->level, "OK" );
 like( $fo2->tsrange->{'tsrange'}, qr/^\["1998-04-28 10:00:00...","1998-05-06 10:00:00..."\)$/ );
 
 note( $note = 'commit (dry run) on two objects; one created without new() and the other with' );
@@ -687,8 +693,9 @@ $fo = App::Dochazka::REST::Fillup->new(
     dry_run => 1,
 );
 isa_ok( $fo, 'App::Dochazka::REST::Fillup' );
-isa_ok( $fo->constructor_status, 'App::CELL::Status' );
 ok( $fo->constructor_status );
+isa_ok( $fo->constructor_status, 'App::CELL::Status' );
+is( $fo->constructor_status->level, "OK" );
 is( $fo->dry_run, 1 );
 like( $fo->tsrange->{'tsrange'}, qr/^\["1998-05-09 00:00:00...","1998-05-16 00:00:00..."\)$/ );
 
@@ -745,8 +752,9 @@ $fo = App::Dochazka::REST::Fillup->new(
     dry_run => 0,
 );
 isa_ok( $fo, 'App::Dochazka::REST::Fillup' );
-isa_ok( $fo->constructor_status, 'App::CELL::Status' );
 ok( $fo->constructor_status );
+isa_ok( $fo->constructor_status, 'App::CELL::Status' );
+is( $fo->constructor_status->level, "OK" );
 is( $fo->dry_run, 0 );
 like( $fo->tsrange->{'tsrange'}, qr/^\["1998-05-16 00:00:00...","1998-05-23 00:00:00..."\)$/ );
 
@@ -782,6 +790,7 @@ isa_ok( $fo3, 'App::Dochazka::REST::Fillup' );
 is( $fo3->dry_run, 0 );
 ok( $fo3->constructor_status );
 isa_ok( $fo3->constructor_status, 'App::CELL::Status' );
+is( $fo3->constructor_status->level, "OK" );
 like( $fo3->tsrange->{'tsrange'}, qr/^\["1998-06-01 10:00:00...","1998-06-01 10:30:00..."\)$/ );
 
 note( $note = 'fillup commit very short tsrange #1' );
@@ -807,6 +816,7 @@ isa_ok( $fo3, 'App::Dochazka::REST::Fillup' );
 is( $fo3->dry_run, 0 );
 ok( $fo3->constructor_status );
 isa_ok( $fo3->constructor_status, 'App::CELL::Status' );
+is( $fo3->constructor_status->level, "OK" );
 like( $fo3->tsrange->{'tsrange'}, qr/^\["1998-06-01 12:00:00...","1998-06-01 13:00:00..."\)$/ );
 
 note( $note = 'fillup commit very short tsrange' );
@@ -842,6 +852,7 @@ $fo = App::Dochazka::REST::Fillup->new(
     dry_run => 0,
 );
 isa_ok( $fo, 'App::Dochazka::REST::Fillup' );
+ok( $fo->constructor_status );
 isa_ok( $fo->constructor_status, 'App::CELL::Status' );
 is( $fo->constructor_status->level, 'ERR' );
 is( $fo->constructor_status->code, 'DOCHAZKA_INTERVAL_FILLUP_DATELIST_TOO_LONG' );
@@ -859,6 +870,7 @@ isa_ok( $fo4, 'App::Dochazka::REST::Fillup' );
 is( $fo4->dry_run, 1 );
 ok( $fo4->constructor_status );
 isa_ok( $fo4->constructor_status, 'App::CELL::Status' );
+is( $fo4->constructor_status->level, "OK" );
 like( $fo4->tsrange->{'tsrange'}, qr/^\["1998-06-08 10:00:00...","1998-06-10 10:00:00..."\)$/ );
 
 note( $note = "Commit \$fo4 (dry_run, clobber)" );
@@ -1122,7 +1134,7 @@ like( $intervals->[5]->intvl, qr/^\["1998-06-10 08:00:00...","1998-06-10 09:55:0
 note( $note = "GET interval/nick/active/[ \"1998-06-08 00:00\", \"1998-06-10 24:00\" )" );
 my @ARGS = (
     $faux_context->{'dbix_conn'},
-    $eids_to_delete[0],
+    $active->eid,
     "[ \"1998-06-08 00:00\", \"1998-06-10 24:00\" )",
 );
 $status = fetch_intervals_by_eid_and_tsrange( @ARGS );
@@ -1183,6 +1195,103 @@ like( $intervals->[5]->intvl, qr/^\["1998-06-09 14:00:00...","1998-06-09 14:15:0
 like( $intervals->[6]->intvl, qr/^\["1998-06-09 14:15:00...","1998-06-09 16:30:00..."\)$/ );
 like( $intervals->[7]->intvl, qr/^\["1998-06-10 08:00:00...","1998-06-10 09:55:00..."\)$/ );
 like( $intervals->[8]->intvl, qr/^\["1998-06-10 09:55:00...","1998-06-10 10:05:00..."\)$/ );
+
+note( $note = 'create a second testing schedule, exactly like the first except MON 08:00-12:00 is dropped' );
+$log->info( "=== $note" );
+my $schedule2 = test_schedule_model( [ 
+    '[ 1998-05-04 12:30, 1998-05-04 16:30 )',
+    '[ 1998-05-05 08:00, 1998-05-05 12:00 )',
+    '[ 1998-05-05 12:30, 1998-05-05 16:30 )',
+    '[ 1998-05-06 08:00, 1998-05-06 12:00 )',
+    '[ 1998-05-06 12:30, 1998-05-06 16:30 )',
+    '[ 1998-05-07 08:00, 1998-05-07 12:00 )',
+    '[ 1998-05-07 12:30, 1998-05-07 16:30 )',
+    '[ 1998-05-08 08:00, 1998-05-08 12:00 )',
+    '[ 1998-05-08 12:30, 1998-05-08 16:30 )',
+] );
+push my @sids_to_delete, $schedule2->sid;
+
+note( $note = "Put the second schedule in active\'s schedhistory, so we can test Fillup over a tsrange that has a schedule change in the middle of it" );
+$log->info( "=== $note" );
+my $second_active_eid = $active->eid;
+is( $first_active_eid, $second_active_eid );
+my $schedhistory2 = App::Dochazka::REST::Model::Schedhistory->spawn(
+    eid => $active->eid,
+    sid => $schedule2->sid,
+    effective => "1998-06-15 00:00",
+    remark => 'TESTING',
+);
+isa_ok( $schedhistory2, 'App::Dochazka::REST::Model::Schedhistory', "schedhistory object is an object" );
+$status = $schedhistory2->insert( $faux_context );
+is( $status->level, 'OK' );
+is( $status->code, 'DOCHAZKA_CUD_OK' );
+push my @shids_to_delete, $schedhistory2->shid;
+is( noof( $dbix_conn, "schedhistory" ), 2 );
+
+note( $note = "Get the prevailing schedule at \"1998-06-14 08:00:00\" and \"1998-06-15 08:00:00\" in order to assert there is a schedule change during the Fillup interval" );
+$log->info( "=== $note" );
+ok( $schedule1->sid > 0 );
+ok( $schedule2->sid > 0 );
+ok( $schedule1->sid != $schedule2->sid );
+is( schedule_by_eid( $dbix_conn, $active->eid, "1998-06-14 08:00:00" ), $schedule1->sid );
+#diag( "\$schedule1->sid == " . $schedule1->sid );
+is( schedule_by_eid( $dbix_conn, $active->eid, "1998-06-15 08:00:00" ), $schedule2->sid );
+#diag( "\$schedule2->sid == " . $schedule2->sid );
+ok( ! $active->schedule_change_during_range( $dbix_conn, '[ 1900-06-14 00:00:00, 1900-06-16 24:00:00 )' ) );
+ok( $active->schedule_change_during_range( $dbix_conn, '[ 1998-06-14 00:00:00, 1998-06-16 24:00:00 )' ) );
+ok( $active->schedule_change_during_range( $dbix_conn, '[ 1998-06-14 23:55:00, 1998-06-15 00:05:00 )' ) );
+
+note( $note = "Create Fillup object \"fo5\" with tsrange from SUN to TUE" );
+$log->info( "=== $note" );
+my $fo5 = App::Dochazka::REST::Fillup->new(
+    context => $faux_context,
+    tsrange => '[ 1998-06-14 00:00:00, 1998-06-16 24:00:00 )',
+    emp_obj => $active,
+    clobber => 1,
+    dry_run => 1,
+);
+isa_ok( $fo5, 'App::Dochazka::REST::Fillup' );
+ok( $fo5->constructor_status );
+isa_ok( $fo5->constructor_status, 'App::CELL::Status' );
+#diag( Dumper $fo5->constructor_status );
+is( $fo5->constructor_status->level, "ERR" );
+is( $fo5->constructor_status->code, "DOCHAZKA_EMPLOYEE_SCHEDULE_CHANGED" );
+
+note( $note = "Delete the conflicting schedule change" );
+$log->info( "=== $note" );
+$status = $schedhistory2->delete( $faux_context );
+isa_ok( $status, 'App::CELL::Status' );
+is( $status->level, 'OK' );
+is( $status->code, 'DOCHAZKA_CUD_OK' );
+is( noof( $dbix_conn, "schedhistory" ), 1 );
+
+note( $note = "Create Fillup object \"fo5\" with tsrange from SUN to TUE - second try" );
+$log->info( "=== $note" );
+$fo5 = App::Dochazka::REST::Fillup->new(
+    context => $faux_context,
+    tsrange => '[ 1998-06-14 00:00:00, 1998-06-16 24:00:00 )',
+    emp_obj => $active,
+    clobber => 1,
+    dry_run => 1,
+);
+isa_ok( $fo5, 'App::Dochazka::REST::Fillup' );
+ok( $fo5->constructor_status );
+isa_ok( $fo5->constructor_status, 'App::CELL::Status' );
+is( $fo5->constructor_status->level, "OK" );
+is( $fo5->constructor_status->code, "DOCHAZKA_TEMPINTVLS_INSERT_OK" );
+
+note( $note = "Commit \$fo5 (dry_run, clobber)" );
+$log->info( "=== $note" );
+$status = $fo5->commit;
+
+note( $note = "Commit \$fo5 (dry_run, clobber) returned intervals as expected" );
+$log->info( "=== $note" );
+$intervals = $status->payload->{"success"}->{"intervals"};
+is(scalar @$intervals, 4 );
+like( $intervals->[0]->intvl, qr/^\["1998-06-15 08:00:00...","1998-06-15 12:00:00..."\)$/ );
+like( $intervals->[1]->intvl, qr/^\["1998-06-15 12:30:00...","1998-06-15 16:30:00..."\)$/ );
+like( $intervals->[2]->intvl, qr/^\["1998-06-16 08:00:00...","1998-06-16 12:00:00..."\)$/ );
+like( $intervals->[3]->intvl, qr/^\["1998-06-16 12:30:00...","1998-06-16 16:30:00..."\)$/ );
 
 note( $note = 'tear down' );
 $log->info( "=== $note" );
