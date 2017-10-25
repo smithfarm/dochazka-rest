@@ -735,7 +735,7 @@ is( $phobj->remark, undef );
 
 note( $note = '============================' );
 $log->info( "=== $note" );
-note( $note = 'privhistory_at_timestamp, invalid arguments' );
+note( $note = 'privhistory_at_timestamp, except with tsrange argument instead of timestamp' );
 $log->info( "=== $note" );
 note( $note = '============================' );
 $log->info( "=== $note" );
@@ -744,17 +744,23 @@ $log->info( "=== $note" );
 $tsr = '[ 1997-01-02 00:00, 1997-01-03 00:00 )';
 note( $note = "mrfu privhistory record applicable at bogus timestamp $tsr" );
 $phobj = $mrfu->privhistory_at_timestamp( $dbix_conn, $tsr );
-is( $phobj, undef );
+isa_ok( $phobj, 'App::Dochazka::REST::Model::Privhistory' );
+is( $phobj->phid, $phid_of_mrfu_02, "The prevailing privhistory at $ts" );
+is( $phobj->remark, 'mrfu test 1995-01-02' );
 
 $tsr = '[ 1995-01-01 00:00, 1997-01-03 00:00 )';
 note( $note = "mrfu privhistory record applicable at bogus timestamp $tsr" );
 $phobj = $mrfu->privhistory_at_timestamp( $dbix_conn, $tsr );
-is( $phobj, undef );
+isa_ok( $phobj, 'App::Dochazka::REST::Model::Privhistory' );
+is( $phobj->phid, $phid_of_mrfu_01, "The prevailing privhistory at $ts" );
+is( $phobj->remark, 'mrfu test 1995-01-01' );
 
 $tsr = '[ 1994-12-31 00:00, 1997-01-03 00:00 )';
 note( $note = "mrfu privhistory record applicable at bogus timestamp $tsr" );
 $phobj = $mrfu->privhistory_at_timestamp( $dbix_conn, $tsr );
-is( $phobj, undef );
+isa_ok( $phobj, 'App::Dochazka::REST::Model::Privhistory' );
+is( $phobj->phid, undef, "The prevailing privhistory at $ts" );
+is( $phobj->remark, undef );
 
 
 note( $note = '============================' );
@@ -765,25 +771,28 @@ note( $note = '============================' );
 $log->info( "=== $note" );
 
 
-$shobj = $mrsfu->schedhistory_at_timestamp( $dbix_conn, '1997-01-01' );
+$ts = '1997-01-01';
+$shobj = $mrsfu->schedhistory_at_timestamp( $dbix_conn, $ts );
 isa_ok( $shobj, 'App::Dochazka::REST::Model::Schedhistory' );
-is( $shobj->shid, $shid_of_mrsfu_01 );
+is( $shobj->shid, $shid_of_mrsfu_01, "The prevailing schedhistory at $ts" );
 is( $shobj->remark, 'mrsfu test 1997-01-01' );
 
-$shobj = $mrsfu->schedhistory_at_timestamp( $dbix_conn, '2005-01-01' );
+$ts = '2005-01-01';
+$shobj = $mrsfu->schedhistory_at_timestamp( $dbix_conn, $ts );
 isa_ok( $shobj, 'App::Dochazka::REST::Model::Schedhistory' );
-is( $shobj->shid, $shid_of_mrsfu_02 );
+is( $shobj->shid, $shid_of_mrsfu_02, "The prevailing schedhistory at $ts" );
 is( $shobj->remark, 'mrsfu test 1997-01-02' );
 
-$shobj = $mrsfu->schedhistory_at_timestamp( $dbix_conn, '1985-01-01' );
+$ts = '1985-01-01';
+$shobj = $mrsfu->schedhistory_at_timestamp( $dbix_conn, $ts );
 isa_ok( $shobj, 'App::Dochazka::REST::Model::Schedhistory' );
-is( $shobj->shid, undef );
+is( $shobj->shid, undef, "The prevailing schedhistory at $ts" );
 is( $shobj->remark, undef );
 
 
 note( $note = '============================' );
 $log->info( "=== $note" );
-note( $note = 'schedhistory_at_timestamp, invalid arguments' );
+note( $note = 'schedhistory_at_timestamp, except with tsrange argument instead of timestamp' );
 $log->info( "=== $note" );
 note( $note = '============================' );
 $log->info( "=== $note" );
@@ -792,18 +801,23 @@ $log->info( "=== $note" );
 $tsr = '[ 1997-01-02 00:00, 1997-01-03 00:00 )';
 note( $note = "mrfu schedhistory record applicable at $tsr" );
 $shobj = $mrfu->schedhistory_at_timestamp( $dbix_conn, $tsr );
-is( $shobj, undef );
+isa_ok( $shobj, 'App::Dochazka::REST::Model::Schedhistory' );
+is( $shobj->shid, $shid_of_mrfu_02 );
+is( $shobj->remark, 'mrfu test 1995-01-02' );
 
 $tsr = '[ 1995-01-01 00:00, 1997-01-03 00:00 )';
 note( $note = "mrfu schedhistory record applicable at $tsr" );
-$shobj = undef;
 $shobj = $mrfu->schedhistory_at_timestamp( $dbix_conn, $tsr );
-is( $shobj, undef );
+isa_ok( $shobj, 'App::Dochazka::REST::Model::Schedhistory' );
+is( $shobj->shid, $shid_of_mrfu_01 );
+is( $shobj->remark, 'mrfu test 1995-01-01' );
 
 $tsr = '[ 1994-12-31 00:00, 1997-01-03 00:00 )';
 note( $note = "mrfu schedhistory record applicable at $tsr" );
 $shobj = $mrfu->schedhistory_at_timestamp( $dbix_conn, $tsr );
-is( $shobj, undef );
+isa_ok( $shobj, 'App::Dochazka::REST::Model::Schedhistory' );
+is( $shobj->shid, undef );
+is( $shobj->remark, undef );
 
 
 note( $note = '============================' );

@@ -570,10 +570,16 @@ sub _privsched_change_during_range_result {
 
 =head2 privhistory_at_timestamp
 
-Given a DBIx::Connector object and a string that must be a timestamp, returns
-an L<App::Dochazka::REST::Model::Privhistory> object containing the privhistory
-record applicable to the employee as of the timestamp. If there is no such
-record, the object's properties will be undefined.
+Given a DBIx::Connector object and a string that must be a timestamp (or a
+tsrange), returns an L<App::Dochazka::REST::Model::Privhistory> object
+containing the privhistory record applicable to the employee as of the
+timestamp (or the lower bound of the tsrange). If there is no such record, the
+object's properties will be undefined.
+
+NOTE: be careful that the argument really is a valid timestamp or tsrange. If
+it isn't valid, the DBD::Pg error will be logged and the return value will be
+undef (not a L<App::Dochazka::REST::Model::Schedhistory> object whose
+properties are set to undef).
 
 =cut
 
@@ -586,14 +592,14 @@ sub privhistory_at_timestamp {
     $log->debug( "Entering " . __PACKAGE__ . "::privhistory_at_timestamp with argument $arg" );
     $log->debug( "EID is " . $self->eid );
 
-    ## if it looks like a tsrange, use tsrange, otherwise use timestamp
-    #my $sql = ( $arg =~ m/[[(].*,.*[])]/ )
-    #    ? $site->SQL_EMPLOYEE_PRIVHISTORY_AT_TSRANGE
-    #    : $site->SQL_EMPLOYEE_PRIVHISTORY_AT_TIMESTAMP;
+    # if it looks like a tsrange, use tsrange, otherwise use timestamp
+    my $sql = ( $arg =~ m/[[(].*,.*[])]/ )
+        ? $site->SQL_EMPLOYEE_PRIVHISTORY_AT_TSRANGE
+        : $site->SQL_EMPLOYEE_PRIVHISTORY_AT_TIMESTAMP;
 
     my $status = select_single(
         conn => $conn, 
-        sql => $site->SQL_EMPLOYEE_PRIVHISTORY_AT_TIMESTAMP,
+        sql => $sql,
         keys => [ $self->eid, $arg ], 
     );
     return undef unless $status->ok;
@@ -638,15 +644,16 @@ sub schedule_change_during_range {
 
 =head2 schedhistory_at_timestamp
 
-Given a DBIx::Connector object and a string that must be a timestamp, returns
-an L<App::Dochazka::REST::Model::Schedhistory> object containing the history
-record applicable to the employee as of the timestamp. If there is no such
-record, the object's properties will be undefined.
+Given a DBIx::Connector object and a string that must be a timestamp (or a
+tsrange), returns an L<App::Dochazka::REST::Model::Schedhistory> object
+containing the history record applicable to the employee as of the timestamp
+(or the lower bound of the tsrange). If there is no such record, the object's
+properties will be undefined.
 
-NOTE: be careful that the argument really is a valid timestamp. If it isn't
-valid, the DBD::Pg error will be logged and the return value will be undef,
-instead of a L<App::Dochazka::REST::Model::Schedhistory> object whose
-properties are set to undef..
+NOTE: be careful that the argument really is a valid timestamp or tsrange. If
+it isn't valid, the DBD::Pg error will be logged and the return value will be
+undef (not a L<App::Dochazka::REST::Model::Schedhistory> object whose
+properties are set to undef).
 
 =cut
 
@@ -659,14 +666,14 @@ sub schedhistory_at_timestamp {
     $log->debug( "Entering " . __PACKAGE__ . "::schedhistory_at_timestamp with argument $arg" );
     $log->debug( "EID is " . $self->eid );
 
-    ## if it looks like a tsrange, use tsrange, otherwise use timestamp
-    #my $sql = ( $arg =~ m/[[(].*,.*[])]/ )
-    #    ? $site->SQL_EMPLOYEE_SCHEDHISTORY_AT_TSRANGE
-    #    : $site->SQL_EMPLOYEE_SCHEDHISTORY_AT_TIMESTAMP;
+    # if it looks like a tsrange, use tsrange, otherwise use timestamp
+    my $sql = ( $arg =~ m/[[(].*,.*[])]/ )
+        ? $site->SQL_EMPLOYEE_SCHEDHISTORY_AT_TSRANGE
+        : $site->SQL_EMPLOYEE_SCHEDHISTORY_AT_TIMESTAMP;
 
     my $status = select_single(
         conn => $conn, 
-        sql => $site->SQL_EMPLOYEE_SCHEDHISTORY_AT_TIMESTAMP,
+        sql => $sql,
         keys => [ $self->eid, $arg ], 
     );
     return undef unless $status->ok;
