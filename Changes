@@ -3721,3 +3721,10 @@ SPLIT OFF App::MREST into separate distribution
 - Model/Shared: make canonicalize_tsrange() fail on empty tsranges
 - fillup: get conflicting intervals list in chronological order
 
+0.553 2017-10-25 23:37 CEST
+- WISHLIST: add "GET ldap/info"
+- Dispatch: implement POST interval/scheduled
+- Shared.pm: rip out dead code
+- t/fillup.t: expand test coverage of Fillup
+- Fix {priv,schedule}_change_during_range, {priv,sched}history_at_timestamp
+
