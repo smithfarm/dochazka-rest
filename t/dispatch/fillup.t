@@ -189,7 +189,7 @@ $status = req( $test, 200, 'active', 'POST', 'interval/fillup', <<"EOH" );
 ] }
 EOH
 is( $status->level, 'OK' );
-is( $status->code, 'DISPATCH_FILLUP_NO_INTERVALS_CREATED' );
+is( $status->code, 'DISPATCH_NO_SCHEDULED_INTERVALS_CREATED' );
 is( $status->{'count'}, 0 );
 
 note( 'tear down' );

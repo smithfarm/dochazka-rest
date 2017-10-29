@@ -2731,7 +2731,7 @@ sub _handler_interval_fillup_scheduled {
     my $method = $context->{'method'};
     my $path = $context->{'path'};
     my $entity = $context->{'request_entity'};
-    my $clobber;
+    my ( $clobber, $dry_run );
 
     # first pass
     return 1 if $self->_first_pass_always_exists( $pass ); 
@@ -2754,8 +2754,12 @@ sub _handler_interval_fillup_scheduled {
     # clobber based on the resource ("scheduled" or "fillup")
     if ( $mode eq 'Fillup' ) {
         $clobber = 0;
+        $dry_run = {};
     } elsif ( $mode eq 'Scheduled' ) {
         $clobber = 1;
+        delete $entity->{'clobber'};
+        $dry_run = { 'dry_run' => '1' };
+        delete $entity->{'dry_run'};
     } else {
         die "ASSERTfillupscheduled";
     }
@@ -2766,6 +2770,7 @@ sub _handler_interval_fillup_scheduled {
         emp_obj => $emp,
         aid => $act->aid,
         clobber => $clobber,
+        %$dry_run,
         %$tsdl,
         %$entity,
     );

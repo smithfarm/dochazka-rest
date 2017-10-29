@@ -732,7 +732,7 @@ sub commit {
     my $self = shift;
     $log->debug( "Entering " . __PACKAGE__ . "::commit with dry_run " . ( $self->dry_run ? "TRUE" : "FALSE" ) );
 
-    my ( $status, @result_set, @conflicting, @success_set, @failure_set );
+    my ( $code, $status, @result_set, @conflicting, @success_set, @failure_set );
 
     foreach my $t_hash ( @{ $self->tsranges } ) {
         my $tempintvls = fetch_tempintvls_by_tiid_and_tsrange(
@@ -810,14 +810,16 @@ sub commit {
                 },
             };
     if ( my $count = scalar @result_set ) {
+        $code = 'DISPATCH_SCHEDULED_INTERVALS_' . ( $self->dry_run ? 'IDENTIFIED' : 'CREATED' );
         return $CELL->status_ok( 
-            'DISPATCH_FILLUP_INTERVALS_CREATED', 
+            $code,
             args => [ $count ],
             payload => $pl,
             count => $count, 
         );
     }
-    return $CELL->status_ok( 'DISPATCH_FILLUP_NO_INTERVALS_CREATED', count => 0 );
+    $code = 'DISPATCH_NO_SCHEDULED_INTERVALS_' . ( $self->dry_run ? 'IDENTIFIED' : 'CREATED' );
+    return $CELL->status_ok( 'DISPATCH_NO_SCHEDULED_INTERVALS_CREATED', count => 0 );
 }
 
 sub _gen_int {
