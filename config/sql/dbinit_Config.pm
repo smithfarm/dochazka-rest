@@ -886,6 +886,9 @@ set('DBINIT_MAKE_ROOT_IMMUTABLE', [
               IF NEW.nick <> 'root' THEN
                   RAISE EXCEPTION 'root employee is immutable'; 
               END IF;
+              IF NEW.supervisor IS NOT NULL THEN
+                  RAISE EXCEPTION 'root employee is immutable';
+              END IF;
           END IF;
           RETURN NEW;
       END;
