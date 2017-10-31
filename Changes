@@ -3728,3 +3728,9 @@ SPLIT OFF App::MREST into separate distribution
 - t/fillup.t: expand test coverage of Fillup
 - Fix {priv,schedule}_change_during_range, {priv,sched}history_at_timestamp
 
+0.554 2017-10-31 14:31 CET
+- Fillup: return different code when dry_run is set
+- tests: add 'interval/scheduled' coverage to t/dispatch/fillup.t
+- Fillup: fix success and failure messages
+- dbinit_Config: disallow modification of root supervisor field
+
