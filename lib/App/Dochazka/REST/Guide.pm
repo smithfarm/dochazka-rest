@@ -517,10 +517,11 @@ sent.
 This section describes the C<App::Dochazka::REST> data model. Conceptually, 
 Dochazka data can be seen to exist in the following classes of objects:
 
-=over
-
 ##=item * Policy (parameters set when database is first created)
 ##
+
+=over
+
 =item * Employee (an individual employee)
 
 =item * Privhistory (history of changes in an employee's privilege level)
@@ -806,7 +807,7 @@ with the provided arguments and the result (a string of characters that can
 be interpreted as, e.g., an HTML page) is returned in the response content
 body.
 
-=back
+
 
 
 =head2 Component class
