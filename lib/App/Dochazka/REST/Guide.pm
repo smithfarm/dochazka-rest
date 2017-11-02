@@ -517,9 +517,6 @@ sent.
 This section describes the C<App::Dochazka::REST> data model. Conceptually, 
 Dochazka data can be seen to exist in the following classes of objects:
 
-##=item * Policy (parameters set when database is first created)
-##
-
 =over
 
 =item * Employee (an individual employee)
@@ -537,6 +534,9 @@ Dochazka data can be seen to exist in the following classes of objects:
 =item * Locks (determining whether a reporting period is locked or not)
 
 =item * Components (Mason components, i.e. report templates)
+
+##=item * Policy (parameters set when database is first created)
+##
 
 =back
 

@@ -244,14 +244,14 @@ For basic workflow, see C<t/model/schedule.t>.
 This module provides the following exports:
 
 
-#=item * C<get_schedule_json>
-#
-
 =over 
 
 =item * C<get_all_schedules>
 
 =item * C<sid_exists> (boolean)
+
+#=item * C<get_schedule_json>
+#
 
 =back
 
