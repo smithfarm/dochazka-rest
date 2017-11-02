@@ -2193,19 +2193,10 @@ The request body takes the following parameters:
 
 =item * C<datelist> (a list of dates to create intervals for)
 
-=item * C<dry_run> (boolean value)
-
-=item * C<aid> (the AID of the activity; alternatively, C<code>)
-
-=item * C<long_desc> (optional interval description)
-
-=item * C<remark> (optional remark)
-
 =back
 
 If C<tsrange> is provided, C<datelist> should be omitted - and vice versa.
 
-If C<dry_run> is true, the resource does not change the database state.
 EOH
     },
 
