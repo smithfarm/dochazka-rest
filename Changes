@@ -3740,3 +3740,7 @@ SPLIT OFF App::MREST into separate distribution
 - Resource "POST interval/scheduled" no longer requires AID
 - ResourceDefs: adjust POD of "interval/scheduled"
 
+0.556 2017-11-02 23:20 CET
+- Fillup: fix status code when no intervals created/identified
+- Dispatch: fix regression in POST interval/fillup
+
