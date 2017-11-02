@@ -2741,7 +2741,7 @@ sub _handler_interval_fillup_scheduled {
     return 1 if $self->_first_pass_always_exists( $pass ); 
 
     # second pass
-    $log->debug( "handler_fillup(): Commencing pass #2, mode is $mode, entity is " .  Dumper( $entity ) );
+    $log->debug( "_handler_interval_fillup_scheduled(): Commencing pass #2, mode is $mode, entity is " .  Dumper( $entity ) );
 
     # extract employee from request entity
     $emp = $self->_extract_employee_spec( $entity );
@@ -2780,7 +2780,7 @@ sub _handler_interval_fillup_scheduled {
         %$entity,
     );
     if ($mode eq 'Fillup') {
-        $fillup->{'aid'} = $act->aid;
+        $fillup->act_obj( $act );
     }
     if ( ! defined( $fillup ) or ref( $fillup ) ne 'App::Dochazka::REST::Fillup' ) {
         $self->mrest_declare_status( 
