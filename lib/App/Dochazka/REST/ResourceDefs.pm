@@ -279,12 +279,15 @@ EOH
         validations => {
             'tsrange' => $tsrange_validation,
         },
-        description => 'Get a list of holidays that fall within the given tsrange',
+        description => 'Determine holidays and weekends within a tsrange',
         documentation => <<'EOH',
 =pod
 
-This resource takes a tsrange and returns a list of holidays (dates) that 
-fall within that tsrange.
+Used with GET. For a given tsrange, return an object keyed on dates. The for
+each date key is itself an object. If a date falls on a weekend, the value will
+contain a subobject { "weekend": true }. If a date is a holiday, it will
+contain a subobject { "holiday": true }. If a date is neither a weekend nor a
+holiday, the value will be an empty object.
 EOH
     },
 
