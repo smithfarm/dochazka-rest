@@ -280,6 +280,12 @@ is( $status->level, 'OK' );
 is( $status->code, 'DISPATCH_LIST_EMPLOYEE_NICKS_TEAM' );
 is_deeply( $status->payload, [ 'mrfu' ] );
 
+note( "Mrs. Fu has 1 report" );
+$status = $emp->has_reports( $dbix_conn );
+is( $status->level, 'OK' );
+is( $status->code, 'DISPATCH_EMPLOYEE_HAS_REPORTS_EID' );
+is_deeply( $status->payload, 1 );
+
 note( "attempt to change Mrs. Fu's EID" );
 my $saved_eid = $emp->eid;
 ok( $saved_eid > 1 );
