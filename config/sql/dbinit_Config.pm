@@ -209,7 +209,7 @@ $body$
       -- foobar
       CREATE OR REPLACE FUNCTION has_reports(INTEGER)
       RETURNS integer AS $$
-          SELECT count(*)::integer FROM employees WHERE eid = $1
+          SELECT count(*)::integer FROM employees WHERE supervisor = $1
       $$ LANGUAGE sql IMMUTABLE#,
 
     # the 'schedintvls' table
