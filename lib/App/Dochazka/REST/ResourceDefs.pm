@@ -1177,7 +1177,7 @@ EOH
         handler => {
             'GET' => 'handler_get_employee_search_nick',
         },
-        acl_profile => 'admin',
+        acl_profile => 'inactive',
         cli => 'employee search nick $KEY',
         description => 'Search employee profiles on nick (% is wild)',
         validations => {
