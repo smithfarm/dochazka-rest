@@ -210,8 +210,10 @@ foreach my $base ( "employee/self" ) {
         is( $status->level, 'OK' );
         is( $status->code, 'DOCHAZKA_CUD_OK' ); 
         
-        note( '- negative test' );
-        req( $test, 400, $user, 'POST', $base, 0 );
+        note( '- legal but bogus JSON in body' );
+        $status = req( $test, 200, $user, 'POST', $base, 0 );
+        is( $status->level, 'OK' );
+        is( $status->code, 'DISPATCH_UPDATE_NO_CHANGE_OK' ); 
         
         note( "- 'salt' is a permitted field, but 'inactive'/$user employees" );
         note( "  should not, for example, be allowed to change 'nick'" );
@@ -493,8 +495,10 @@ $status = req( $test, 500, 'root', 'POST', $base, '{ "eid" : "jj" }' );
 like( $status->text, qr/invalid input syntax for integer/ );
 
 note( 'and give it a bogus parameter (on update, bogus parameters cause REST to' );
-note( 'return 400 status code; on insert, they are ignored)' );
-req( $test, 400, 'root', 'POST', $base, '{ "eid" : 2, "bogus" : "json" }' ); 
+note( 'return 200 status code with DISPATCH_UPDATE_NO_CHANGE_OK; on insert, they are ignored)' );
+$status = req( $test, 200, 'root', 'POST', $base, '{ "eid" : 2, "bogus" : "json" }' ); 
+is( $status->level, "OK", "POST $base with bogus property in body 1" );
+is( $status->code, 'DISPATCH_UPDATE_NO_CHANGE_OK', "POST $base with bogus property in body 2" );
 
 note( 'update to existing nick' );
 dbi_err( $test, 500, 'root', 'POST', $base, 
@@ -713,7 +717,9 @@ note( 'with valid JSON that is not what we are expecting' );
 req( $test, 400, 'root', 'PUT', "$base/2", 0 );
 
 note( 'another kind of bogus JSON' );
-req( $test, 400, 'root', 'PUT', "$base/2", '{ "legal" : "json" }' );
+$status = req( $test, 200, 'root', 'PUT', "$base/2", '{ "legal" : "json" }' );
+is( $status->level, 'OK' );
+is( $status->code, 'DISPATCH_UPDATE_NO_CHANGE_OK' ); 
 
 note( 'invalid EIDs caught by Path::Router validations clause' );
 foreach my $eid ( @invalid_eids ) {
@@ -964,8 +970,10 @@ my $wombat_emp = App::Dochazka::REST::Model::Employee->spawn( $status->payload )
 
 note( 'POST with valid, yet bogus JSON -- wombat exists, so this is an update' );
 note( 'operation, but after the bogus property is filtered out there is no work to do' );
-$status = req( $test, 400, 'root', 'POST', $base, 
+$status = req( $test, 200, 'root', 'POST', $base, 
     '{ "nick" : "wombat", "bogus" : "json" }' );
+is( $status->level, 'OK' );
+is( $status->code, 'DISPATCH_UPDATE_NO_CHANGE_OK' );
 
 note( 'cleanup: delete wombat employee' ); 
 delete_bare_employee( $eid_of_wombat );
@@ -1136,7 +1144,9 @@ dbi_err( $test, 500, 'root', 'PUT', "$base/hapless",
     '{ "nick":null }', qr/violates not-null constraint/ );
 
 note( 'feed it some random bogusness' );
-req( $test, 400, 'root', 'PUT', "$base/hapless", '{ "legal" : "json" }' );
+$status = req( $test, 200, 'root', 'PUT', "$base/hapless", '{ "legal" : "json" }' );
+is( $status->level, 'OK' );
+is( $status->code, 'DISPATCH_UPDATE_NO_CHANGE_OK' ); 
 
 note( 'inactive and active users can not change passwords of other users' );
 foreach my $user ( qw( demo inactive active ) ) {
