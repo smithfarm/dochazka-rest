@@ -879,7 +879,7 @@ EOH
         handler => {
             GET => 'handler_get_employee_eid_full',
         },
-        acl_profile => 'active',
+        acl_profile => 'inactive',
         cli => 'employee eid $EID full',
         validations => {
             eid => 'Int',
