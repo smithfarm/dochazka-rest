@@ -473,7 +473,7 @@ Shared GET handler for 'priv' and 'schedule' lookups. Takes four arguments:
 
 =item C<$value> - EID or nick value to lookup
 
-=over
+=back
 
 =cut
 

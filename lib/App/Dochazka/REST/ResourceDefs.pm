@@ -495,6 +495,7 @@ Deletes the activity object whose AID is specified by the ':aid' URI parameter.
 This will work only if nothing in the database refers to this activity.
 
 =back
+
 EOH
     },
 
@@ -599,6 +600,7 @@ URI parameter.  This will work only if nothing in the database refers to this
 activity.
 
 =back
+
 EOH
     },
 
@@ -704,6 +706,7 @@ Deletes the component object whose cid is specified by the ':cid' URI parameter.
 This will work only if nothing in the database refers to this component.
 
 =back
+
 EOH
     },
 
@@ -786,6 +789,7 @@ given privlevel. Valid privlevels are:
 =item * admin
 
 =back
+
 EOH
     },
 
@@ -869,6 +873,7 @@ Deletes the employee with the given EID (will only work if the EID
 exists and nothing in the database refers to it).
 
 =back
+
 EOH
     },
 
@@ -1042,6 +1047,7 @@ exact nick exists and nothing else in the database refers to the employee
 in question.
 
 =back
+
 EOH
     },
 
@@ -1278,6 +1284,7 @@ profile. Exactly which fields can be updated may differ from site to site
 (see the DOCHAZKA_PROFILE_EDITABLE_FIELDS site parameter).
 
 =back
+
 EOH
     },
 
@@ -2783,6 +2790,7 @@ scode will be deleted in an atomic operation. If the operation is successful the
 return status will be "OK".
 
 =back
+
 EOH
     },
 
@@ -2858,6 +2866,7 @@ that SID will be deleted in an atomic operation. If the operation is successful
 the return status will be "OK".
 
 =back
+
 EOH
     },
 

@@ -519,8 +519,6 @@ Dochazka data can be seen to exist in the following classes of objects:
 
 =over
 
-##=item * Policy (parameters set when database is first created)
-##
 =item * Employee (an individual employee)
 
 =item * Privhistory (history of changes in an employee's privilege level)
@@ -536,6 +534,9 @@ Dochazka data can be seen to exist in the following classes of objects:
 =item * Locks (determining whether a reporting period is locked or not)
 
 =item * Components (Mason components, i.e. report templates)
+
+##=item * Policy (parameters set when database is first created)
+##
 
 =back
 
@@ -806,7 +807,7 @@ with the provided arguments and the result (a string of characters that can
 be interpreted as, e.g., an HTML page) is returned in the response content
 body.
 
-=back
+
 
 
 =head2 Component class

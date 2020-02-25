@@ -231,6 +231,7 @@ For basic workflow, see C<t/model/schedule.t>.
 
 #=item * L<get_schedule_json> function (get JSON string associated with a given SID)
 #
+
 =back
 
 For basic workflow, see C<t/model/schedule.t>.
@@ -242,13 +243,15 @@ For basic workflow, see C<t/model/schedule.t>.
 
 This module provides the following exports:
 
+
 =over 
 
-#=item * C<get_schedule_json>
-#
 =item * C<get_all_schedules>
 
 =item * C<sid_exists> (boolean)
+
+#=item * C<get_schedule_json>
+#
 
 =back
 
