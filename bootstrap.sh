@@ -3,4 +3,4 @@ set -e
 perl Build.PL
 ./Build
 sudo ./Build install
-prove -l t/
+prove -lr t/
