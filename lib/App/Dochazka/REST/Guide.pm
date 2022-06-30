@@ -156,7 +156,7 @@ Lastly, check if you can connect to the C<postgres> database using the password:
     Type "help" for help.
 
     postgres=# 
-    
+
 To exit, type C<\q> at the postgres prompt:
 
     postgres=# \q
@@ -501,15 +501,16 @@ sent.
 
 =head2 Additional processing (POST)
 
-=over 
-
+=for comment
+#=over
+#
 #=item * B<post_is_create>
 #
 #This test examines the POST request and places it into one of two
 #categories: (1) generic request for processing, (2) a request that creates
 #or otherwise manipulates a resource. 
-
-=back
+#
+#=back
 
 
 =head1 DATA MODEL
@@ -517,10 +518,12 @@ sent.
 This section describes the C<App::Dochazka::REST> data model. Conceptually, 
 Dochazka data can be seen to exist in the following classes of objects:
 
-=over
-
+=for comment
 ##=item * Policy (parameters set when database is first created)
 ##
+
+=over
+
 =item * Employee (an individual employee)
 
 =item * Privhistory (history of changes in an employee's privilege level)
@@ -806,8 +809,6 @@ with the provided arguments and the result (a string of characters that can
 be interpreted as, e.g., an HTML page) is returned in the response content
 body.
 
-=back
-
 
 =head2 Component class
 
@@ -978,6 +979,8 @@ stored in a cookie.
 
 
 =head1 AUTHORIZATION
+
+Future verbiage
 
 
 
