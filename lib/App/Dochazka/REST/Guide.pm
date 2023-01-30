@@ -1,5 +1,5 @@
 # ************************************************************************* 
-# Copyright (c) 2014-2015, SUSE LLC
+# Copyright (c) 2014-2023, SUSE LLC
 # 
 # All rights reserved.
 # 
@@ -103,8 +103,10 @@ It entails the following steps.
 =head2 Server preparation
 
 Dochazka REST needs hardware (either physical or virtualized) to run on. 
-The hardware will need to have a network connection, etc. Obviously, this
-step is entirely beyond the scope of this document.
+The hardware will need to have a network connection, etc. For playing
+around with Dochazka, almost anything will do. The sizing, procurement,
+and configuration of production hardware is entirely beyond the scope of this
+document.
 
 =head2 Software installation
 
